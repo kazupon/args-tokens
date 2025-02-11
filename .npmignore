@@ -1,0 +1,6 @@
+pnpm-lock.yaml
+.*
+*.log
+*.swp
+.eslintcache
+assets

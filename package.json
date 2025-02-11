@@ -1,0 +1,115 @@
+{
+  "name": "args-tokens",
+  "description": "parseArgs tokens compatibility and more high-performance parser",
+  "version": "0.0.0",
+  "author": {
+    "name": "kazuya kawaguchi",
+    "email": "kawakazu80@gmail.com"
+  },
+  "license": "MIT",
+  "funding": "https://github.com/sponsors/kazupon",
+  "bugs": {
+    "url": "https://github.com/kazupon/args-tokens/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kazupon/args-tokens.git"
+  },
+  "keywords": [
+    "cli",
+    "args",
+    "tokens",
+    "parseargs",
+    "args-parser"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "packageManager": "pnpm@10.3.0",
+  "engines": {
+    "node": ">= 18.18"
+  },
+  "files": [
+    "lib"
+  ],
+  "main": "lib/cjs/index.js",
+  "module": "lib/esm/index.js",
+  "exports": {
+    ".": {
+      "types": "./lib/cjs/index.d.ts",
+      "import": "./lib/esm/index.js",
+      "require": "./lib/cjs/index.js",
+      "default": "./lib/cjs/index.js"
+    },
+    "./package.json": "./package.json",
+    "./*": "./*"
+  },
+  "types": "lib/cjs/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "*": [
+        "./lib/cjs/*",
+        "./lib/esm/*",
+        "./*"
+      ]
+    }
+  },
+  "scripts": {
+    "build": "pnpm run --parallel --color \"/^build:/\"",
+    "build:cjs": "tsc -p ./tsconfig.cjs.json",
+    "build:esm": "tsc -p ./tsconfig.esm.json",
+    "changelog": "gh-changelogen --repo=kazupon/eslint-config",
+    "dev": "pnpx @eslint/config-inspector --config eslint.config.ts",
+    "dev:eslint": "pnpx @eslint/config-inspector --config eslint.config.ts",
+    "fix": "pnpm run --parallel --color \"/^fix:/\"",
+    "fix:eslint": "eslint . --fix",
+    "fix:knip": "knip --fix --no-exit-code",
+    "fix:prettier": "prettier . --write",
+    "lint": "pnpm run --parallel --color \"/^lint:/\"",
+    "lint:eslint": "eslint .",
+    "lint:knip": "knip",
+    "lint:prettier": "prettier . --check",
+    "prepack": "pnpm build",
+    "prepare": "git config --local core.hooksPath .githooks",
+    "release": "bumpp --commit \"release: v%s\" --all --push --tag",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@eslint/markdown": "^6.2.2",
+    "@kazupon/eslint-config": "^0.19.0",
+    "@kazupon/prettier-config": "^0.1.1",
+    "@types/node": "^22.13.1",
+    "@vitest/eslint-plugin": "^1.1.28",
+    "bumpp": "^10.0.2",
+    "eslint": "^9.20.0",
+    "eslint-config-prettier": "^10.0.1",
+    "eslint-plugin-jsonc": "^2.19.1",
+    "eslint-plugin-promise": "^7.2.1",
+    "eslint-plugin-regexp": "^2.7.0",
+    "eslint-plugin-unicorn": "^56.0.1",
+    "eslint-plugin-yml": "^1.16.0",
+    "gh-changelogen": "^0.2.8",
+    "knip": "^5.44.0",
+    "lint-staged": "^15.4.3",
+    "pkg-pr-new": "^0.0.39",
+    "prettier": "^3.5.0",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.24.0",
+    "vitest": "^3.0.5"
+  },
+  "prettier": "@kazupon/prettier-config",
+  "lint-staged": {
+    "*.ts?(x)": [
+      "prettier --parser=typescript --write",
+      "eslint --fix"
+    ],
+    "*.{js,mjs,cjs}": [
+      "prettier --write",
+      "eslint --fix"
+    ],
+    "*.{json,jsonc,json5,md,yml,yaml}": [
+      "prettier --write"
+    ]
+  }
+}
