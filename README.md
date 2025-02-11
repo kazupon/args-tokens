@@ -171,7 +171,7 @@ const { tokens: tokensNode } = parseArgsNode({
 })
 
 // args-tokens parseArgs tokens
-const tokens = parseArgs(['-a=1'])
+const tokens = parseArgs(['-a=1'], { allowCompatible: true }) // add `allowCompatible` option
 
 // validate
 deepStrictEqual(tokensNode, tokens)
