@@ -15,7 +15,31 @@
 
 ## ⏱️ Benchmark
 
-TODO:
+```
+pnpm bench
+
+> args-tokens@0.0.0 bench /path/to/projects/args-tokens
+> node --expose-gc bench/index.mjs
+
+clk: ~2.87 GHz
+cpu: Apple M1 Max
+runtime: node 18.19.1 (arm64-darwin)
+
+benchmark                   avg (min … max) p75 / p99    (min … top 1%)
+------------------------------------------- -------------------------------
+node:util parseArgs            4.69 µs/iter   4.76 µs      ▂     ▂  █
+                        (4.49 µs … 4.93 µs)   4.86 µs    ▅▅█▅ ▅  █ ▅█▅ ▅▅ ▅
+                    (  1.32 kb …   1.48 kb)   1.33 kb ▇▇▇████▁█▁▇█▁███▁██▁█
+
+args-tokens parseArgs        832.79 ns/iter 867.22 ns          ▆  █▂
+                    (727.04 ns … 955.02 ns) 934.01 ns      ██▇██▅▆███▅▇▂
+                    (  3.02 kb …   3.32 kb)   3.05 kb ▃▆▄▇██████████████▃▂▄
+
+                             ┌                                            ┐
+         node:util parseArgs ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 4.69 µs
+       args-tokens parseArgs ┤ 832.79 ns
+                             └                                            ┘
+```
 
 ## 🚀 Usage
 
