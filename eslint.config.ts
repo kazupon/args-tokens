@@ -31,7 +31,9 @@ const config: ReturnType<typeof defineConfig> = defineConfig(
   prettier(),
   {
     rules: {
-      '@typescript-eslint/ban-ts-comment': 'off'
+      '@typescript-eslint/ban-ts-comment': 'off',
+      'unicorn/prevent-abbreviations': 'off',
+      'unicorn/filename-case': 'off'
     }
   },
   {
