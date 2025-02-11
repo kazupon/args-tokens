@@ -56,7 +56,8 @@
     }
   },
   "scripts": {
-    "bench": "node --expose-gc bench/index.mjs",
+    "bench:mitata": "node --expose-gc bench/index.mjs",
+    "bench:vitest": "vitest bench --run",
     "build": "pnpm run --parallel --color \"/^build:/\"",
     "build:cjs": "tsc -p ./tsconfig.cjs.json",
     "build:esm": "tsc -p ./tsconfig.esm.json",
