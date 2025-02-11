@@ -5,9 +5,6 @@
 
 > [`parseArgs` tokens](https://nodejs.org/api/util.html#parseargs-tokens) compatibility and more high-performance parser
 
-> [!WARNING]
-> WIP, please don't use still this package.
-
 ## 🐱 Motivation
 
 - Although Node.js's [`parseArgs`](https://nodejs.org/api/util.html#utilparseargsconfig) can return tokens, tokens that the shot options are not in the format I expect. Of course, I know the background of [this issue](https://github.com/pkgjs/parseargs/issues/78).
