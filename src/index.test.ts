@@ -2,154 +2,102 @@ import { parseArgs as parseArgsNode } from 'node:util'
 import { describe, expect, test } from 'vitest'
 import { parseArgs } from './index'
 
-describe.only('short options', () => {
-  test('-a', () => {
-    const { tokens } = parseArgsNode({
-      allowPositionals: true,
-      strict: false,
-      args: ['-a'],
-      tokens: true
-    })
-    console.log('node', tokens)
-
-    const ret = parseArgs(['-a'])
-    console.log('jts', ret)
-    expect(1).toEqual(1)
-  })
-
-  test('-xFILES', () => {
-    const { tokens } = parseArgsNode({
-      allowPositionals: true,
-      strict: false,
-      args: ['-xFILES'],
-      tokens: true
-    })
-    console.log('node', tokens)
-
-    const ret = parseArgs(['-xFILES'])
-    console.log('jts', ret)
-    expect(1).toEqual(1)
-  })
-
-  test('-a 1', () => {
-    const { tokens } = parseArgsNode({
-      allowPositionals: true,
-      strict: false,
-      args: ['-a', '1'],
-      tokens: true
-    })
-    console.log('node', tokens)
-
-    const ret = parseArgs(['-a', '1'])
-    console.log('jts', ret)
-    expect(1).toEqual(1)
-  })
-
-  test('-abc=1 1', () => {
-    const { tokens } = parseArgsNode({
-      allowPositionals: true,
-      strict: false,
-      args: ['-abc=1', '1'],
-      tokens: true
-    })
-    console.log('node', tokens)
-
-    const ret = parseArgs(['-abc=1', '1'])
-    console.log('jts', ret)
-    expect(1).toEqual(1)
-  })
-
-  test.skip('-x-japan=kurenai 1', () => {
-    const args = ['-x-japan=kurenai', '1']
-    const { tokens } = parseArgsNode({
+describe('short options', () => {
+  test.each(['-foo', '-xJAPAN', '-foo 1'])('%s', argv => {
+    const args = argv.split(' ')
+    const { tokens: expectTokens } = parseArgsNode({
       allowPositionals: true,
       strict: false,
       args,
       tokens: true
     })
-    console.log('node', tokens)
 
-    const ret = parseArgs(args)
-    console.log('jts', ret)
-    expect(1).toEqual(1)
-  })
-})
-
-describe.only('long options', () => {
-  test('--a', () => {
-    const { tokens } = parseArgsNode({
-      allowPositionals: true,
-      strict: false,
-      args: ['--a'],
-      tokens: true
-    })
-    console.log('node', tokens)
-
-    const ret = parseArgs(['--a'])
-    console.log('jts', ret)
-    expect(1).toEqual(1)
+    const actualTokens = parseArgs(args)
+    expect(actualTokens).toEqual(expectTokens)
   })
 
-  test('--a 1', () => {
-    const { tokens } = parseArgsNode({
+  test('value with equal: -abc=1 2', () => {
+    const args = ['-abc=1', '2']
+    const { tokens: nodeTokens } = parseArgsNode({
       allowPositionals: true,
-      strict: false,
-      args: ['--a', '1'],
-      tokens: true
-    })
-    console.log('node', tokens)
-
-    const ret = parseArgs(['--a', '1'])
-    console.log('jts', ret)
-    expect(1).toEqual(1)
-  })
-
-  test('--abc=1 1', () => {
-    const { tokens } = parseArgsNode({
-      allowPositionals: true,
-      strict: false,
-      args: ['--abc=1', '1'],
-      tokens: true
-    })
-    console.log('node', tokens)
-
-    const ret = parseArgs(['--abc=1', '1'])
-    console.log('jts', ret)
-    expect(1).toEqual(1)
-  })
-
-  test('--no-color 1', () => {
-    const args = ['--no-color', '1']
-    const { tokens } = parseArgsNode({
-      allowPositionals: true,
-      allowNegative: true,
       strict: false,
       args,
       tokens: true
     })
-    console.log('node', tokens)
+    expect(nodeTokens).toMatchSnapshot('node:utils parseArgs')
+    expect(nodeTokens[3]).toEqual({
+      index: 0,
+      inlineValue: undefined,
+      kind: 'option',
+      name: '=',
+      rawName: '-=',
+      value: undefined
+    })
+    expect(nodeTokens[4]).toEqual({
+      index: 0,
+      inlineValue: undefined,
+      kind: 'option',
+      name: '1',
+      rawName: '-1',
+      value: undefined
+    })
 
-    const ret = parseArgs(args)
-    console.log('jts', ret)
-    expect(1).toEqual(1)
+    const tokens = parseArgs(args)
+    expect(tokens).toMatchSnapshot('args-tokens parseArgs')
+    expect(tokens[3]).toEqual({
+      index: 0,
+      inlineValue: true,
+      kind: 'option',
+      value: '1'
+    })
+  })
+
+  test('value with equal compatible: -abc=1 2', () => {
+    const args = ['-abc=1', '2']
+    const { tokens: nodeTokens } = parseArgsNode({
+      allowPositionals: true,
+      strict: false,
+      args,
+      tokens: true
+    })
+
+    const tokens = parseArgs(args, { allowCompatible: true })
+    expect(nodeTokens).toEqual(tokens)
   })
 })
 
-test.skip('positional arguments', () => {
-  const { tokens } = parseArgsNode({
+describe('long options', () => {
+  test.each(['--foo', '--foo bar', '--foo=bar', '--foo=bar baz', '--foo-bar=baz qux'])(
+    `%s`,
+    argv => {
+      const args = argv.split(' ')
+      const { tokens: expectTokens } = parseArgsNode({
+        allowPositionals: true,
+        strict: false,
+        args,
+        tokens: true
+      })
+
+      const actualTokens = parseArgs(args)
+      expect(actualTokens).toEqual(expectTokens)
+    }
+  )
+})
+
+test('positional arguments', () => {
+  const args = ['1', '2', '3']
+  const { tokens: expectTokens } = parseArgsNode({
     allowPositionals: true,
     strict: false,
-    args: ['1', '2', '3'],
+    args,
     tokens: true
   })
-  console.log('node', tokens)
 
-  const ret = parseArgs(['1', '2', '3'])
-  console.log('jts', ret)
-  expect(1).toEqual(1)
+  const actualTokens = parseArgs(args)
+  expect(actualTokens).toEqual(expectTokens)
 })
 
-test.skip('short and long options', () => {
+test('complex options', () => {
   const args = [
     '-x',
     '--foo',
@@ -157,35 +105,40 @@ test.skip('short and long options', () => {
     '-y',
     '2',
     '--bar=3',
-    '-z=4',
+    // '-z=4',
     '--baz',
     '-abcfFILE',
     '5',
-    'false'
+    'false',
+    'true',
+    '--',
+    '--x',
+    '6',
+    '7',
+    '8',
+    '9',
+    '10'
   ]
-  const { tokens } = parseArgsNode({
+  const { tokens: expectTokens } = parseArgsNode({
     allowPositionals: true,
     strict: false,
     args,
     tokens: true
   })
-  console.log('node', tokens)
 
-  const ret = parseArgs(args)
-  console.log('jts', ret)
-  expect(1).toEqual(1)
+  const actualTokens = parseArgs(args)
+  expect(actualTokens).toEqual(expectTokens)
 })
 
-test.skip('option terminator', () => {
-  const { tokens } = parseArgsNode({
+test('option terminator', () => {
+  const args = ['--a', '--', '--x', '1', '-a']
+  const { tokens: expectTokens } = parseArgsNode({
     allowPositionals: true,
     strict: false,
-    args: ['--a', '--', '--x', '1', '-a'],
+    args,
     tokens: true
   })
-  console.log('node', tokens)
 
-  const ret = parseArgs(['--a', '--', '--x', '1', '-a'])
-  console.log('jts', ret)
-  expect(1).toEqual(1)
+  const actualTokens = parseArgs(args)
+  expect(actualTokens).toEqual(expectTokens)
 })

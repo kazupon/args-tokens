@@ -24,16 +24,31 @@ const SHORT_OPTION_PREFIX = HYPHEN_CHAR
 const LONG_OPTION_PREFIX = '--'
 
 /**
+ * Parse Options
+ */
+export interface ParseOptions {
+  /**
+   * [Node.js parseArgs](https://nodejs.org/api/util.html#parseargs-tokens) tokens compatible mode
+   * @default false
+   */
+  allowCompatible?: boolean
+}
+
+/**
  * Parse command line arguments
  * @param args command line arguments
+ * @param options parse options
  * @returns argument tokens
  */
-export function parseArgs(args: string[]): ArgToken[] {
+export function parseArgs(args: string[], options: ParseOptions = {}): ArgToken[] {
+  const { allowCompatible = false } = options
+
   const tokens: ArgToken[] = []
+  const remainings = [...args]
   let index = -1
   let groupCount = 0
+  let hasShortValueSeparator = false
 
-  const remainings = [...args]
   while (remainings.length > 0) {
     const arg = remainings.shift()
 
@@ -78,7 +93,10 @@ export function parseArgs(args: string[]): ArgToken[] {
         })
         if (groupCount === 1 && hasOptionValue(nextArg)) {
           value = remainings.shift()
-          inlineValue = true
+          if (hasShortValueSeparator) {
+            inlineValue = true
+            hasShortValueSeparator = false
+          }
           tokens.push({
             kind: 'option',
             index,
@@ -109,13 +127,12 @@ export function parseArgs(args: string[]): ArgToken[] {
       // expend short option group (e.g. `-abc` => `-a -b -c`, `-f=bar` => `-f bar`)
       const expanded = []
       let shortValue = ''
-      let hasShortValueSeparator = false
       for (let i = 1; i < arg.length; i++) {
         const shortableOption = arg.charAt(i)
         if (hasShortValueSeparator) {
           shortValue += shortableOption
         } else {
-          if (shortableOption.codePointAt(0) === EQUAL_CODE) {
+          if (!allowCompatible && shortableOption.codePointAt(0) === EQUAL_CODE) {
             hasShortValueSeparator = true
           } else {
             expanded.push(`${SHORT_OPTION_PREFIX}${shortableOption}`)
@@ -237,5 +254,5 @@ function hasLongOptionPrefix(arg: string) {
  */
 function hasOptionValue(value: string | undefined): boolean {
   // eslint-disable-next-line unicorn/no-null
-  return !(value == null) // && value.codePointAt(0) !== HYPHEN_CODE
+  return !(value == null) && value.codePointAt(0) !== HYPHEN_CODE
 }
