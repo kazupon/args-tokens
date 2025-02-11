@@ -182,7 +182,7 @@ deepStrictEqual(tokensNode, tokens)
 
 ## 🙌 Contributing guidelines
 
-TODO:
+If you are interested in contributing to `args-tokens`, I highly recommend checking out [the contributing guidelines](/CONTRIBUTING.md) here. You'll find all the relevant information such as [how to make a PR](/CONTRIBUTING.md#pull-request-guidelines), [how to setup development](/CONTRIBUTING.md#development-setup)) etc., there.
 
 ## 💖 Credits
 
