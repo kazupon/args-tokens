@@ -107,7 +107,7 @@ export function parseArgs(args: string[]): ArgToken[] {
 
     if (isShortOptionGroup(arg)) {
       // expend short option group (e.g. `-abc` => `-a -b -c`, `-f=bar` => `-f bar`)
-      const expaned = []
+      const expanded = []
       let shortValue = ''
       let hasShortValueSeparator = false
       for (let i = 1; i < arg.length; i++) {
@@ -118,15 +118,15 @@ export function parseArgs(args: string[]): ArgToken[] {
           if (shortableOption.codePointAt(0) === EQUAL_CODE) {
             hasShortValueSeparator = true
           } else {
-            expaned.push(`${SHORT_OPTION_PREFIX}${shortableOption}`)
+            expanded.push(`${SHORT_OPTION_PREFIX}${shortableOption}`)
           }
         }
       }
       if (shortValue) {
-        expaned.push(shortValue)
+        expanded.push(shortValue)
       }
-      remainings.unshift(...expaned)
-      groupCount = expaned.length
+      remainings.unshift(...expanded)
+      groupCount = expanded.length
       continue
     }
 
