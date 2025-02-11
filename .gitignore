@@ -1,0 +1,12 @@
+node_modules
+.DS_Store
+.idea
+.eslintcache
+lib
+dist
+
+*.log
+*.swp
+*.tgz
+*.zip
+*~
