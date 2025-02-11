@@ -15,10 +15,12 @@
 
 ## ⏱️ Benchmark
 
-```
-pnpm bench
+With [mitata](https://github.com/evanwashere/mitata):
 
-> args-tokens@0.0.0 bench /path/to/projects/args-tokens
+```
+pnpm bench:mitata
+
+> args-tokens@0.0.0 bench:mitata /path/to/projects/args-tokens
 > node --expose-gc bench/index.mjs
 
 clk: ~2.87 GHz
@@ -27,23 +29,156 @@ runtime: node 18.19.1 (arm64-darwin)
 
 benchmark                   avg (min … max) p75 / p99    (min … top 1%)
 ------------------------------------------- -------------------------------
-node:util parseArgs            4.69 µs/iter   4.76 µs      ▂     ▂  █
-                        (4.49 µs … 4.93 µs)   4.86 µs    ▅▅█▅ ▅  █ ▅█▅ ▅▅ ▅
-                    (  1.32 kb …   1.48 kb)   1.33 kb ▇▇▇████▁█▁▇█▁███▁██▁█
+node:util parseArgs            4.69 µs/iter   4.78 µs      █ █     ██
+                        (4.49 µs … 4.91 µs)   4.85 µs    █ █ ██ █  ██  ███
+                    (  1.32 kb …   1.49 kb)   1.33 kb █▁██▁██████▁█████████
 
-args-tokens parseArgs        832.79 ns/iter 867.22 ns          ▆  █▂
-                    (727.04 ns … 955.02 ns) 934.01 ns      ██▇██▅▆███▅▇▂
-                    (  3.02 kb …   3.32 kb)   3.05 kb ▃▆▄▇██████████████▃▂▄
+args-tokens parseArgs        842.98 ns/iter 882.65 ns     ▄▄▄▇▃ ▄▃ █
+                    (734.10 ns … 984.32 ns) 966.06 ns   ▂▄█████▄████▅▅▄
+                    (  3.11 kb …   3.41 kb)   3.12 kb █▂███████████████▆▆▆▂
 
                              ┌                                            ┐
          node:util parseArgs ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 4.69 µs
-       args-tokens parseArgs ┤ 832.79 ns
+       args-tokens parseArgs ┤ 842.98 ns
                              └                                            ┘
+```
+
+With [vitest](https://vitest.dev/guide/features.html#benchmarking):
+
+```
+pnpm bench:vitest
+
+> args-tokens@0.0.0 bench:vitest /path/to/projects/args-tokens
+> vitest bench --run
+
+Benchmarking is an experimental feature.
+Breaking changes might not follow SemVer, please pin Vitest's version when using it.
+
+ RUN  v3.0.5 /path/to/projects/args-tokens
+
+
+ ✓ bench/vitest.bench.mjs > parseArgs 1466ms
+     name                   hz     min     max    mean     p75     p99    p995    p999     rme  samples
+   · node:util      194,911.34  0.0042  0.6821  0.0051  0.0046  0.0151  0.0292  0.1079  ±0.82%    97456
+   · args-tokens  1,101,845.21  0.0007  0.1883  0.0009  0.0009  0.0012  0.0031  0.0140  ±0.32%   550923   fastest
+
+ BENCH  Summary
+
+  args-tokens - bench/vitest.bench.mjs > parseArgs
+    5.65x faster than node:util
+```
+
+## ❓ What's different about parseArgs tokens?
+
+The token output for the short option `-x=v` is different:
+
+```js
+import { parseArgs as parseArgsNode } from 'node:util'
+import { parseArgs } from 'args-tokens'
+
+// Node.js parseArgs tokens
+const { tokens: tokensNode } = parseArgsNode({
+  allowPositionals: true,
+  strict: false,
+  args: ['-a=1'],
+  tokens: true
+})
+console.log(tokensNode)
+
+//   ({
+//     kind: 'option',
+//     name: 'a',
+//     rawName: '-a',
+//     index: 0,
+//     value: undefined,
+//     inlineValue: undefined
+//   },
+//   {
+//     kind: 'option',
+//     name: '=',
+//     rawName: '-=',
+//     index: 0,
+//     value: undefined,
+//     inlineValue: undefined
+//   },
+//   {
+//     kind: 'option',
+//     name: '1',
+//     rawName: '-1',
+//     index: 0,
+//     value: undefined,
+//     inlineValue: undefined
+//   })
+// ]
+
+// args-tokens parseArgs tokens
+const tokens = parseArgs(['-a=1'])
+console.log(tokens)
+
+// [
+//   {
+//     kind: 'option',
+//     name: 'a',
+//     rawName: '-a',
+//     index: 0,
+//     value: undefined,
+//     inlineValue: undefined
+//   },
+//   { kind: 'option', index: 0, value: '1', inlineValue: true }
+// ]
 ```
 
 ## 🚀 Usage
 
-TODO:
+### 💿 Installation
+
+```sh
+# npm
+npm install --save args-tokens
+
+## yarn
+yarn add args-tokens
+
+## pnpm
+pnpm add args-tokens
+```
+
+### 🍭 Codes
+
+```js
+import { parseArgs } from 'args-tokens'
+
+const tokens = parseArgs(['--foo', 'bar', '-x', '--bar=baz'])
+// do something with using tokens
+// ...
+console.log('tokens:', tokens)
+```
+
+## Node.js `parseArgs` tokens compatible
+
+If you want to use the same short options tokens as returned Node.js `parseArgs`, you can use `allowCompatible` parse option on `parseArgs`:
+
+```js
+import { parseArgs as parseArgsNode } from 'node:util'
+import { parseArgs } from 'args-tokens'
+import { deepStrictEqual } from 'node:assert'
+
+const args = ['-a=1', '2']
+
+// Node.js parseArgs tokens
+const { tokens: tokensNode } = parseArgsNode({
+  allowPositionals: true,
+  strict: false,
+  args,
+  tokens: true
+})
+
+// args-tokens parseArgs tokens
+const tokens = parseArgs(['-a=1'])
+
+// validate
+deepStrictEqual(tokensNode, tokens)
+```
 
 ## 🙌 Contributing guidelines
 
