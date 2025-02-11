@@ -5,7 +5,8 @@
 
 > [`parseArgs` tokens](https://nodejs.org/api/util.html#parseargs-tokens) compatibility and more high-performance parser
 
-> [!WARNING] WIP, please don't use still this package.
+> [!WARNING]
+> WIP, please don't use still this package.
 
 ## 🐱 Motivation
 
