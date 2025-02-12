@@ -10,7 +10,7 @@
   },
   "workspace": {
     "dependencies": [
-      "jsr:@kazupon/args-tokens@~0.2.2"
+      "jsr:@kazupon/args-tokens@~0.2.4"
     ]
   }
 }
