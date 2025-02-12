@@ -1,5 +1,6 @@
 {
   "name": "@kazupon/args-tokens",
+  "description": "parseArgs tokens compatibility and more high-performance parser",
   "version": "0.2.1",
   "license": "MIT",
   "publish": {

@@ -1,6 +1,7 @@
 # args-tokens
 
 [![Version][npm-version-src]][npm-version-href]
+[![JSR][jsr-src]][jsr-href]
 [![CI][ci-src]][ci-href]
 
 > [`parseArgs` tokens](https://nodejs.org/api/util.html#parseargs-tokens) compatibility and more high-performance parser
@@ -196,5 +197,7 @@ This project is inspired by:
 
 [npm-version-src]: https://img.shields.io/npm/v/args-tokens?style=flat
 [npm-version-href]: https://npmjs.com/package/args-tokens
+[jsr-src]: https://jsr.io/badges/@kazupon/args-tokens
+[jsr-href]: https://jsr.io/@kazupon/args-tokens
 [ci-src]: https://github.com/kazupon/args-tokens/actions/workflows/ci.yml/badge.svg
 [ci-href]: https://github.com/kazupon/args-tokens/actions/workflows/ci.yml
