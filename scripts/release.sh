@@ -17,3 +17,6 @@ fi
 TAG="latest"
 echo "⚡ Publishing $PKG with tag $TAG"
 pnpm publish --access public --no-git-checks --tag $TAG
+
+echo "⚡ Publishing $PKG for jsr registory"
+pnpx jsr publish -c jsr.json
