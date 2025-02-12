@@ -34,9 +34,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Building
-        run: pnpm build
-
       - name: Extract version tag
         if: startsWith( github.ref, 'refs/tags/v' )
         uses: jungwinter/split@v2
