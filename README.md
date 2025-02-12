@@ -126,9 +126,7 @@ console.log(tokens)
 // ]
 ```
 
-## 🚀 Usage
-
-### 💿 Installation
+## 💿 Installation
 
 ```sh
 # npm
@@ -141,10 +139,23 @@ yarn add args-tokens
 pnpm add args-tokens
 ```
 
-### 🍭 Codes
+### 🦕 Deno
+
+```sh
+deno add jsr:@kazupon/args-tokens
+```
+
+### 🥟 Bun
+
+```sh
+bun add args-tokens
+```
+
+## 🚀 Usage
 
 ```js
-import { parseArgs } from 'args-tokens'
+import { parseArgs } from 'args-tokens' // for Node.js and Bun
+// import { parseArgs } from 'jsr:@kazupon/args-tokens' // for Deno
 
 const tokens = parseArgs(['--foo', 'bar', '-x', '--bar=baz'])
 // do something with using tokens

@@ -1,0 +1,5 @@
+{
+  "imports": {
+    "@kazupon/args-tokens": "jsr:@kazupon/args-tokens@^0.2.2"
+  }
+}
