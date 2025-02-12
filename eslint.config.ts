@@ -43,7 +43,7 @@ const config: ReturnType<typeof defineConfig> = defineConfig(
       'lib',
       'tsconfig.json',
       'playground/deno/**',
-      'playground/bun/tsconfig.json',
+      'playground/bun/**',
       'pnpm-lock.yaml',
       'eslint.config.ts'
     ]
