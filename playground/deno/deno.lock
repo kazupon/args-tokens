@@ -1,0 +1,16 @@
+{
+  "version": "4",
+  "specifiers": {
+    "jsr:@kazupon/args-tokens@*": "0.2.2"
+  },
+  "jsr": {
+    "@kazupon/args-tokens@0.2.2": {
+      "integrity": "367aed7682932a3e2445063591f043b77b3d34f2fac4827a0cbe3eb99a630f9c"
+    }
+  },
+  "workspace": {
+    "dependencies": [
+      "jsr:@kazupon/args-tokens@~0.2.2"
+    ]
+  }
+}

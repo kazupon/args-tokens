@@ -37,7 +37,16 @@ const config: ReturnType<typeof defineConfig> = defineConfig(
     }
   },
   {
-    ignores: ['.vscode', '.github', 'lib', 'tsconfig.json', 'pnpm-lock.yaml', 'eslint.config.ts']
+    ignores: [
+      '.vscode',
+      '.github',
+      'lib',
+      'tsconfig.json',
+      'playground/deno/**',
+      'playground/bun/tsconfig.json',
+      'pnpm-lock.yaml',
+      'eslint.config.ts'
+    ]
   }
 )
 
