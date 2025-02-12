@@ -5,13 +5,42 @@
 // Author: Node.js contributors
 // Code url: https://github.com/nodejs/node/blob/main/lib/internal/util/parse_args/parse_args.js
 
-type ArgTokenKind = 'option' | 'option-terminator' | 'positional'
+/**
+ * Argument token Kind
+ * - `option`: option token, support short option (e.g. `-x`) and long option (e.g. `--foo`)
+ * - `option-terminator`: option terminator (`--`) token, see guideline 10 in https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap12.html
+ * - `positional`: positional token
+ */
+export type ArgTokenKind = 'option' | 'option-terminator' | 'positional'
+
+/**
+ * Argument token
+ */
 export interface ArgToken {
+  /**
+   * Argument token kind
+   */
   kind: ArgTokenKind
+  /**
+   * Argument token index, e.g `--foo bar` => `--foo` index is 0, `bar` index is 1
+   */
   index: number
+  /**
+   * Option name, e.g. `--foo` => `foo`, `-x` => `x`
+   */
   name?: string
+  /**
+   * Raw option name, e.g. `--foo` => `--foo`, `-x` => `-x`
+   */
   rawName?: string
+  /**
+   * Option value, e.g. `--foo=bar` => `bar`, `-x=bar` => `bar`.
+   * If the `allowCompatible` option is `true`, short option value wiil be same as Node.js `parseArgs` behavior.
+   */
   value?: string
+  /**
+   * Inline value, e.g. `--foo=bar` => `true`, `-x=bar` => `true`.
+   */
   inlineValue?: boolean
 }
 
@@ -36,6 +65,16 @@ export interface ParseOptions {
 
 /**
  * Parse command line arguments
+ * @example
+ * ```js
+ * import { parseArgs } from 'args-tokens' // for Node.js and Bun
+ * // import { parseArgs } from 'jsr:@kazupon/args-tokens' // for Deno
+ *
+ * const tokens = parseArgs(['--foo', 'bar', '-x', '--bar=baz'])
+ * // do something with using tokens
+ * // ...
+ * console.log('tokens:', tokens)
+ * ```
  * @param args command line arguments
  * @param options parse options
  * @returns argument tokens
