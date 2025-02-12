@@ -1,0 +1,10 @@
+{
+  "name": "@kazupon/args-tokens",
+  "version": "0.1.0",
+  "license": "MIT",
+  "publish": {
+    "include": ["src/**/*.ts", "package.json", "jsr.json", "README.md", "CHANGELOG.md", "LICENSE"],
+    "exclude": ["src/**/*.test.ts", "**/__snapshots__/**"]
+  },
+  "exports": "./src/index.ts"
+}
