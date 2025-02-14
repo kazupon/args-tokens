@@ -1,0 +1,91 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`short options > value with equal: -abc=1 2 > args-tokens parseArgs 1`] = `
+[
+  {
+    "index": 0,
+    "inlineValue": undefined,
+    "kind": "option",
+    "name": "a",
+    "rawName": "-a",
+    "value": undefined,
+  },
+  {
+    "index": 0,
+    "inlineValue": undefined,
+    "kind": "option",
+    "name": "b",
+    "rawName": "-b",
+    "value": undefined,
+  },
+  {
+    "index": 0,
+    "inlineValue": undefined,
+    "kind": "option",
+    "name": "c",
+    "rawName": "-c",
+    "value": undefined,
+  },
+  {
+    "index": 0,
+    "inlineValue": true,
+    "kind": "option",
+    "value": "1",
+  },
+  {
+    "index": 1,
+    "kind": "positional",
+    "value": "2",
+  },
+]
+`;
+
+exports[`short options > value with equal: -abc=1 2 > node:utils parseArgs 1`] = `
+[
+  {
+    "index": 0,
+    "inlineValue": undefined,
+    "kind": "option",
+    "name": "a",
+    "rawName": "-a",
+    "value": undefined,
+  },
+  {
+    "index": 0,
+    "inlineValue": undefined,
+    "kind": "option",
+    "name": "b",
+    "rawName": "-b",
+    "value": undefined,
+  },
+  {
+    "index": 0,
+    "inlineValue": undefined,
+    "kind": "option",
+    "name": "c",
+    "rawName": "-c",
+    "value": undefined,
+  },
+  {
+    "index": 0,
+    "inlineValue": undefined,
+    "kind": "option",
+    "name": "=",
+    "rawName": "-=",
+    "value": undefined,
+  },
+  {
+    "index": 0,
+    "inlineValue": undefined,
+    "kind": "option",
+    "name": "1",
+    "rawName": "-1",
+    "value": undefined,
+  },
+  {
+    "index": 1,
+    "kind": "positional",
+    "value": "2",
+  },
+]
+`;

@@ -1,0 +1,97 @@
+import { describe, expect, test } from 'vitest'
+import { parseArgs } from './parser'
+import type { ArgOptions } from './resolver'
+import { resolveArgs } from './resolver'
+
+const options = {
+  help: {
+    type: 'boolean',
+    short: 'h'
+  },
+  version: {
+    type: 'boolean',
+    short: 'v'
+  },
+  port: {
+    type: 'string',
+    short: 'p',
+    default: '8080'
+  },
+  host: {
+    type: 'string',
+    short: 'o',
+    required: true
+  }
+} as const satisfies ArgOptions
+
+describe('resolveArgs', () => {
+  test('basic', () => {
+    const args = ['dev', '--port=9131', '--host=example.com', '--help']
+    const tokens = parseArgs(args)
+    const { values, positionals } = resolveArgs(options, tokens)
+    expect(values).toEqual({
+      port: '9131',
+      host: 'example.com',
+      help: true
+    })
+    expect(positionals).toEqual(['dev'])
+  })
+
+  test('missing required option', () => {
+    const args = ['dev']
+    const tokens = parseArgs(args)
+    expect(() => resolveArgs(options, tokens)).toThrowErrorMatchingSnapshot()
+  })
+
+  test('missing defaultable option', () => {
+    const args = ['dev', '--host=example.com']
+    const tokens = parseArgs(args)
+    const { values, positionals } = resolveArgs(options, tokens)
+    expect(values).toEqual({
+      port: '8080',
+      host: 'example.com'
+    })
+    expect(positionals).toEqual(['dev'])
+  })
+
+  test('missing positionals', () => {
+    const args = ['--port=9131', '--host=example.com']
+    const tokens = parseArgs(args)
+    const { values, positionals } = resolveArgs(options, tokens)
+    expect(values).toEqual({
+      port: '9131',
+      host: 'example.com'
+    })
+    expect(positionals).toEqual([])
+  })
+
+  test('positionals', () => {
+    const args = ['dev', '--host=example.com', 'foo', 'bar']
+    const tokens = parseArgs(args)
+    const { positionals } = resolveArgs(options, tokens)
+    expect(positionals).toEqual(['dev', 'foo', 'bar'])
+  })
+
+  test('short options value specified with equals', () => {
+    const args = ['dev', '-p=9131', '-o=example.com', '-h']
+    const tokens = parseArgs(args)
+    const { values, positionals } = resolveArgs(options, tokens)
+    expect(values).toEqual({
+      port: '9131',
+      host: 'example.com',
+      help: true
+    })
+    expect(positionals).toEqual(['dev'])
+  })
+
+  test('short options value specified with concatination', () => {
+    const args = ['dev', '-p9131', '-oexample.com']
+    const tokens = parseArgs(args)
+    const { values, positionals } = resolveArgs(options, tokens)
+    expect(values).toEqual({
+      port: '9131',
+      host: 'example.com'
+    })
+    expect(positionals).toEqual(['dev'])
+  })
+})
