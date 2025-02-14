@@ -4,7 +4,7 @@
   "type": "module",
   "module": "index.ts",
   "dependencies": {
-    "args-tokens": "^0.2.4"
+    "args-tokens": "^0.3.0"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
