@@ -23,7 +23,7 @@ const args = [
 ]
 console.log('benchmark arguments:', args)
 
-const token = parseArgs(args)
+const tokens = parseArgs(args)
 
 barplot(() => {
   bench('node:util parseArgs', () => {
@@ -50,7 +50,25 @@ barplot(() => {
           required: true
         }
       },
-      token
+      tokens
+    )
+  })
+
+  bench('args-tokens parseArgs + resolveArgs', () => {
+    const tokens = parseArgs(args)
+    resolveArgs(
+      {
+        foo: {
+          type: 'boolean',
+          short: 'f'
+        },
+        bar: {
+          type: 'number',
+          short: 'b',
+          required: true
+        }
+      },
+      tokens
     )
   })
 })
