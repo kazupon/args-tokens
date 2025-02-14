@@ -133,7 +133,7 @@ export function resolveArgs<T extends ArgOptions>(
         }
       } else {
         // short option value
-        if (currentShortOption && currentShortOption.index == token.index) {
+        if (currentShortOption && currentShortOption.index == token.index && token.inlineValue) {
           currentShortOption.value = token.value
           shortOptionTokens.push({ ...currentShortOption })
           currentShortOption = undefined
