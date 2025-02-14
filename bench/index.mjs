@@ -1,6 +1,6 @@
 import { barplot, bench, run } from 'mitata'
 import { parseArgs as parseArgsNode } from 'node:util'
-import { parseArgs } from '../lib/esm/index.js'
+import { parseArgs, resolveArgs } from '../lib/esm/index.js'
 
 const args = [
   '-x',
@@ -23,6 +23,8 @@ const args = [
 ]
 console.log('benchmark arguments:', args)
 
+const token = parseArgs(args)
+
 barplot(() => {
   bench('node:util parseArgs', () => {
     parseArgsNode({
@@ -34,6 +36,19 @@ barplot(() => {
   })
   bench('args-tokens parseArgs', () => {
     parseArgs(args)
+  })
+  bench('args-tokens resolveArgs', () => {
+    resolveArgs(
+      {
+        foo: {
+          type: 'boolean'
+        },
+        bar: {
+          type: 'string'
+        }
+      },
+      token
+    )
   })
 })
 

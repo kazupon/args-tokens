@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Modifier: kazuya kawaguchi (a.k.a. kazupon)
 
-import { hasLongOptionPrefix } from './parser'
+import { hasLongOptionPrefix, isShortOption } from './parser'
 
 import type { ArgToken } from './parser'
 
@@ -76,46 +76,174 @@ export function resolveArgs<T extends ArgOptions>(
   options: T,
   tokens: ArgToken[]
 ): { values: ArgValues<T>; positionals: string[] } {
-  // console.log('tokens', tokens)
-  const positionals = [] as string[]
   const values = {} as ArgValues<T>
+  const positionals = [] as string[]
+
+  const longOptionTokens: ArgToken[] = []
+  const shortOptionTokens: ArgToken[] = []
+
+  let currentShortOption: ArgToken | undefined
+  const expandableShortOptions: ArgToken[] = []
+
+  function toValue(): string | undefined {
+    if (expandableShortOptions.length === 0) {
+      return undefined
+    } else {
+      const value = expandableShortOptions.map(token => token.name).join('')
+      expandableShortOptions.length = 0
+      return value
+    }
+  }
+
+  function applyShortOptionValue(): void {
+    if (currentShortOption) {
+      currentShortOption.value = toValue()
+      shortOptionTokens.push({ ...currentShortOption })
+      currentShortOption = undefined
+    }
+  }
+
+  /**
+   * separate tokens into positionals, long options, and short options, after that resolve values
+   */
 
   // eslint-disable-next-line unicorn/no-for-loop
   for (let i = 0; i < tokens.length; i++) {
     const token = tokens[i]
     if (token.kind === 'positional') {
       positionals.push(token.value!)
-      continue
+      applyShortOptionValue() // check if previous short option is not resolved
+    } else if (token.kind === 'option') {
+      if (token.rawName) {
+        if (hasLongOptionPrefix(token.rawName)) {
+          longOptionTokens.push({ ...token })
+          applyShortOptionValue() // check if previous short option is not resolved
+        } else if (isShortOption(token.rawName)) {
+          if (currentShortOption) {
+            if (currentShortOption.index === token.index) {
+              expandableShortOptions.push({ ...token })
+            } else {
+              currentShortOption.value = toValue()
+              shortOptionTokens.push({ ...currentShortOption })
+              currentShortOption = { ...token }
+            }
+          } else {
+            currentShortOption = { ...token }
+          }
+        }
+      } else {
+        // short option value
+        if (currentShortOption && currentShortOption.index == token.index) {
+          currentShortOption.value = token.value
+          shortOptionTokens.push({ ...currentShortOption })
+          currentShortOption = undefined
+        }
+      }
+    } else {
+      applyShortOptionValue() // check if previous short option is not resolved
+    }
+  }
+
+  /**
+   * check if the last short option is not resolved
+   */
+
+  applyShortOptionValue()
+
+  /**
+   * resolve values
+   */
+
+  for (const [option, schema] of Object.entries(options)) {
+    if (longOptionTokens.length === 0 && shortOptionTokens.length === 0 && schema.required) {
+      throw createRequireError(option, schema)
+    }
+
+    // eslint-disable-next-line unicorn/no-for-loop
+    for (let i = 0; i < longOptionTokens.length; i++) {
+      const token = longOptionTokens[i]
+      // eslint-disable-next-line unicorn/no-null
+      if (option === token.name && token.rawName != null && hasLongOptionPrefix(token.rawName)) {
+        validateRequire(token, option, schema)
+
+        if (schema.type !== 'boolean') {
+          validateValue(token, option, schema)
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+        ;(values as any)[option] = resolveOptionValue(token, schema)
+        continue
+      }
+    }
+
+    // eslint-disable-next-line unicorn/no-for-loop
+    for (let i = 0; i < shortOptionTokens.length; i++) {
+      const token = shortOptionTokens[i]
+
+      // eslint-disable-next-line unicorn/no-null
+      if (schema.short === token.name && token.rawName != null && isShortOption(token.rawName)) {
+        validateRequire(token, option, schema)
+
+        if (schema.type !== 'boolean') {
+          validateValue(token, option, schema)
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+        ;(values as any)[option] = resolveOptionValue(token, schema)
+        continue
+      }
     }
 
     // eslint-disable-next-line unicorn/no-null
-    if (token.rawName != null && hasLongOptionPrefix(token.rawName) && token.name != null) {
-      const schema = options[token.name]
-
-      validateRequire(token, schema)
-
-      if (schema.type !== 'boolean') {
-        validateValue(token, schema)
-      }
-
+    if (values[option] == null && schema.default != null) {
+      // check if the default value is in values
       // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-      ;(values as any)[token.name] = resolveOptionValue(token, schema)
+      ;(values as any)[option] = schema.default
     }
   }
 
   return { values, positionals }
 }
 
-function validateRequire(token: ArgToken, schema: ArgOptionSchema): void {
+function createRequireError(option: string, schema: ArgOptionSchema): Error {
+  return new Error(
+    `Option '--${option}' ${schema.short ? `or '-${schema.short}'` : ''} is required`
+  )
+}
+
+function validateRequire(token: ArgToken, option: string, schema: ArgOptionSchema): void {
   if (schema.required && schema.type !== 'boolean' && !token.value) {
-    throw new Error(`Option ${token.rawName} is required`)
+    throw createRequireError(option, schema)
   }
 }
 
-function validateValue(token: ArgToken, schema: ArgOptionSchema): void {
-  if (typeof token.value !== schema.type) {
-    throw new TypeError(`Option ${token.rawName} should be ${schema.type}`)
+function validateValue(token: ArgToken, option: string, schema: ArgOptionSchema): void {
+  switch (schema.type) {
+    case 'number': {
+      if (!isNumeric(token.value!)) {
+        throw createTypeError(option, schema)
+      }
+      break
+    }
+    case 'string': {
+      if (typeof token.value !== 'string') {
+        throw createTypeError(option, schema)
+      }
+      break
+    }
   }
+}
+
+function isNumeric(str: string): boolean {
+  // @ts-ignore
+  // eslint-disable-next-line unicorn/prefer-number-properties
+  return str.trim() !== '' && !isNaN(str)
+}
+
+function createTypeError(option: string, schema: ArgOptionSchema): TypeError {
+  return new TypeError(
+    `Option '--${option}' ${schema.short ? `or '-${schema.short}'` : ''} should be '${schema.type}'`
+  )
 }
 
 function resolveOptionValue(
@@ -123,13 +251,12 @@ function resolveOptionValue(
   schema: ArgOptionSchema
 ): string | boolean | number | undefined {
   if (token.value) {
-    return token.value
+    return schema.type === 'number' ? +token.value : token.value
   }
 
   if (schema.type === 'boolean') {
     return true
   }
 
-  console.log('resolveOptionValue', schema, token)
-  return schema.default
+  return schema.type === 'number' ? +(schema.default || '') : schema.default
 }

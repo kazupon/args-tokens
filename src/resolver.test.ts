@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'vitest'
 import { parseArgs } from './parser'
-import type { ArgOptions } from './resolver'
 import { resolveArgs } from './resolver'
+
+import type { ArgOptions } from './resolver'
 
 const options = {
   help: {
@@ -13,9 +14,13 @@ const options = {
     short: 'v'
   },
   port: {
-    type: 'string',
+    type: 'number',
     short: 'p',
-    default: '8080'
+    default: 8080
+  },
+  mode: {
+    type: 'string',
+    short: 'm'
   },
   host: {
     type: 'string',
@@ -30,7 +35,7 @@ describe('resolveArgs', () => {
     const tokens = parseArgs(args)
     const { values, positionals } = resolveArgs(options, tokens)
     expect(values).toEqual({
-      port: '9131',
+      port: 9131,
       host: 'example.com',
       help: true
     })
@@ -48,10 +53,19 @@ describe('resolveArgs', () => {
     const tokens = parseArgs(args)
     const { values, positionals } = resolveArgs(options, tokens)
     expect(values).toEqual({
-      port: '8080',
+      port: 8080,
       host: 'example.com'
     })
     expect(positionals).toEqual(['dev'])
+  })
+
+  test('invalid value', () => {
+    const args = ['dev', '--port=foo']
+    const tokens = parseArgs(args)
+    expect(() => {
+      const r = resolveArgs(options, tokens)
+      console.log(r)
+    }).toThrowErrorMatchingSnapshot()
   })
 
   test('missing positionals', () => {
@@ -59,7 +73,7 @@ describe('resolveArgs', () => {
     const tokens = parseArgs(args)
     const { values, positionals } = resolveArgs(options, tokens)
     expect(values).toEqual({
-      port: '9131',
+      port: 9131,
       host: 'example.com'
     })
     expect(positionals).toEqual([])
@@ -77,7 +91,7 @@ describe('resolveArgs', () => {
     const tokens = parseArgs(args)
     const { values, positionals } = resolveArgs(options, tokens)
     expect(values).toEqual({
-      port: '9131',
+      port: 9131,
       host: 'example.com',
       help: true
     })
@@ -89,9 +103,32 @@ describe('resolveArgs', () => {
     const tokens = parseArgs(args)
     const { values, positionals } = resolveArgs(options, tokens)
     expect(values).toEqual({
-      port: '9131',
+      port: 9131,
       host: 'example.com'
     })
     expect(positionals).toEqual(['dev'])
+  })
+
+  test('complex options', () => {
+    const args = [
+      'dev',
+      '-p9131',
+      '--host=example.com',
+      'foo',
+      '-m=production',
+      '-h',
+      '--version',
+      'bar'
+    ]
+    const tokens = parseArgs(args)
+    const { values, positionals } = resolveArgs(options, tokens)
+    expect(values).toEqual({
+      port: 9131,
+      host: 'example.com',
+      mode: 'production',
+      help: true,
+      version: true
+    })
+    expect(positionals).toEqual(['dev', 'foo', 'bar'])
   })
 })

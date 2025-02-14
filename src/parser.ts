@@ -11,7 +11,7 @@
  * - `option-terminator`: option terminator (`--`) token, see guideline 10 in https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap12.html
  * - `positional`: positional token
  */
-export type ArgTokenKind = 'option' | 'option-terminator' | 'positional'
+type ArgTokenKind = 'option' | 'option-terminator' | 'positional'
 
 /**
  * Argument token
@@ -232,7 +232,7 @@ export function parseArgs(args: string[], options: ParseOptions = {}): ArgToken[
  * @param arg the argument to check
  * @returns whether `arg` is a short option
  */
-function isShortOption(arg: string) {
+export function isShortOption(arg: string) {
   return (
     arg.length === 2 && arg.codePointAt(0) === HYPHEN_CODE && arg.codePointAt(1) !== HYPHEN_CODE
   )

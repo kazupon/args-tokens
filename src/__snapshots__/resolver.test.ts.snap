@@ -1,0 +1,5 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`resolveArgs > invalid value 1`] = `[TypeError: Option '--port' or '-p' should be 'number']`;
+
+exports[`resolveArgs > missing required option 1`] = `[Error: Option '--host' or '-o' is required]`;
