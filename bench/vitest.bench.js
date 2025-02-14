@@ -1,0 +1,76 @@
+import { parseArgs as parseArgsNode } from 'node:util'
+import { bench, describe } from 'vitest'
+import { parseArgs, resolveArgs } from '../lib/esm/index.js'
+
+const args = [
+  '-x',
+  '--foo',
+  '1',
+  '-y',
+  '2',
+  '--bar=3',
+  '-z=4',
+  '--baz',
+  '-abcfFILE',
+  '5',
+  'false',
+  '--',
+  '6',
+  '7',
+  '8',
+  '9',
+  '10'
+]
+
+describe('parseArgs', () => {
+  bench('node:util', () => {
+    parseArgsNode({
+      allowPositionals: true,
+      strict: false,
+      args,
+      tokens: true
+    })
+  })
+  bench('args-tokens', () => {
+    parseArgs(args)
+  })
+})
+
+describe('parseArgs + resolveArgs', () => {
+  bench('node:util', () => {
+    parseArgsNode({
+      allowPositionals: true,
+      strict: false,
+      args,
+      options: {
+        foo: {
+          type: 'boolean',
+          short: 'f'
+        },
+        bar: {
+          type: 'string',
+          short: 'b'
+        }
+      },
+      tokens: true
+    })
+  })
+
+  bench('args-tokens', () => {
+    const tokens = parseArgs(args)
+    resolveArgs(
+      {
+        foo: {
+          type: 'boolean',
+          short: 'f'
+        },
+        bar: {
+          type: 'number',
+          short: 'b',
+          required: true
+        }
+      },
+      tokens
+    )
+  })
+})

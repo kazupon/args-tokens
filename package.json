@@ -42,6 +42,18 @@
       "require": "./lib/cjs/index.js",
       "default": "./lib/cjs/index.js"
     },
+    "./parser": {
+      "types": "./lib/cjs/parser.d.ts",
+      "import": "./lib/esm/parser.js",
+      "require": "./lib/cjs/parser.js",
+      "default": "./lib/cjs/parser.js"
+    },
+    "./resolver": {
+      "types": "./lib/cjs/resolver.d.ts",
+      "import": "./lib/esm/resolver.js",
+      "require": "./lib/cjs/resolver.js",
+      "default": "./lib/cjs/resolver.js"
+    },
     "./package.json": "./package.json",
     "./*": "./*"
   },
@@ -56,7 +68,7 @@
     }
   },
   "scripts": {
-    "bench:mitata": "node --expose-gc bench/index.mjs",
+    "bench:mitata": "node --expose-gc bench/index.js",
     "bench:vitest": "vitest bench --run",
     "build": "pnpm run --parallel --color \"/^build:/\"",
     "build:cjs": "tsc -p ./tsconfig.cjs.json",
