@@ -1,4 +1,4 @@
-export { parseArgs } from './parser'
-export * from './resolver'
+export { parseArgs } from './parser.js'
+export * from './resolver.js'
 
 export type { ArgToken, ParseOptions } from './parser'

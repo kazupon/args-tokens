@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Modifier: kazuya kawaguchi (a.k.a. kazupon)
 
-import { hasLongOptionPrefix, isShortOption } from './parser'
+import { hasLongOptionPrefix, isShortOption } from './parser.js'
 
 import type { ArgToken } from './parser'
 
