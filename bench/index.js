@@ -41,10 +41,13 @@ barplot(() => {
     resolveArgs(
       {
         foo: {
-          type: 'boolean'
+          type: 'boolean',
+          short: 'f'
         },
         bar: {
-          type: 'string'
+          type: 'number',
+          short: 'b',
+          required: true
         }
       },
       token
