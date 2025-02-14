@@ -98,7 +98,7 @@ describe('resolveArgs', () => {
     expect(positionals).toEqual(['dev'])
   })
 
-  test('short options value specified with concatination', () => {
+  test('short options value specified with concatenation', () => {
     const args = ['dev', '-p9131', '-oexample.com']
     const tokens = parseArgs(args)
     const { values, positionals } = resolveArgs(options, tokens)
