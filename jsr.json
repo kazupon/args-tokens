@@ -5,7 +5,11 @@
   "license": "MIT",
   "publish": {
     "include": ["src/**/*.ts", "package.json", "jsr.json", "README.md", "CHANGELOG.md", "LICENSE"],
-    "exclude": ["src/**/*.test.ts", "**/__snapshots__/**"]
+    "exclude": ["src/**/*.test.ts", "src/**/*.test-d.ts", "**/__snapshots__/**"]
   },
-  "exports": "./src/index.ts"
+  "exports": {
+    ".": "./src/index.ts",
+    "./parser": "./src/parser.ts",
+    "./resolver": "./src/resolver.ts"
+  }
 }
