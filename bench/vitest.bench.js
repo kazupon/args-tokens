@@ -1,6 +1,6 @@
 import { parseArgs as parseArgsNode } from 'node:util'
 import { bench, describe } from 'vitest'
-import { parseArgs, resolveArgs } from '../lib/esm/index.js'
+import { parse, parseArgs } from '../lib/esm/index.js'
 
 const args = [
   '-x',
@@ -57,9 +57,8 @@ describe('parseArgs + resolveArgs', () => {
   })
 
   bench('args-tokens', () => {
-    const tokens = parseArgs(args)
-    resolveArgs(
-      {
+    parse(args, {
+      options: {
         foo: {
           type: 'boolean',
           short: 'f'
@@ -69,8 +68,7 @@ describe('parseArgs + resolveArgs', () => {
           short: 'b',
           required: true
         }
-      },
-      tokens
-    )
+      }
+    })
   })
 })

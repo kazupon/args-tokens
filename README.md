@@ -153,6 +153,10 @@ bun add args-tokens
 
 ## 🚀 Usage
 
+### Parse args to tokens
+
+`parseArgs` will transform arguments into tokens. This function is useful if you want to analyze arguments yourself based on the tokens. It's faster than `node:util` parseArgs because it only focuses on token transformation.
+
 ```js
 import { parseArgs } from 'args-tokens' // for Node.js and Bun
 // import { parseArgs } from 'jsr:@kazupon/args-tokens' // for Deno
@@ -161,6 +165,86 @@ const tokens = parseArgs(['--foo', 'bar', '-x', '--bar=baz'])
 // do something with using tokens
 // ...
 console.log('tokens:', tokens)
+```
+
+## Resolve args value with tokens and arg option schema
+
+`resolveArgs` is a useful function when you want to resolve values from the tokens obtained by `parseArgs`.
+
+```js
+import { parseArgs, resolveArgs } from 'args-tokens' // for Node.js and Bun
+// import { parseArgs, resolveArgs } from 'jsr:@kazupon/args-tokens' // for Deno
+
+const args = ['dev', '-p=9131', '--host=example.com', '--mode=production']
+const tokens = parseArgs(args)
+const { values, positionals } = resolveArgs(
+  {
+    help: {
+      type: 'boolean',
+      short: 'h'
+    },
+    version: {
+      type: 'boolean',
+      short: 'v'
+    },
+    port: {
+      type: 'number',
+      short: 'p',
+      default: 8080
+    },
+    mode: {
+      type: 'string',
+      short: 'm'
+    },
+    host: {
+      type: 'string',
+      short: 'o',
+      required: true
+    }
+  },
+  tokens
+)
+console.log('values:', values)
+console.log('positionals:', positionals)
+```
+
+## Convenient argument parsing
+
+Using the `parse,` you can transform the arguments into tokens and resolve the argument values once:
+
+```js
+import { parse } from 'args-tokens' // for Node.js and Bun
+// import { parse } from 'jsr:@kazupon/args-tokens' // for Deno
+
+const args = ['dev', '-p=9131', '--host=example.com', '--mode=production']
+const { values, positionals } = parse(args, {
+  options: {
+    help: {
+      type: 'boolean',
+      short: 'h'
+    },
+    version: {
+      type: 'boolean',
+      short: 'v'
+    },
+    port: {
+      type: 'number',
+      short: 'p',
+      default: 8080
+    },
+    mode: {
+      type: 'string',
+      short: 'm'
+    },
+    host: {
+      type: 'string',
+      short: 'o',
+      required: true
+    }
+  }
+})
+console.log('values:', values)
+console.log('positionals:', positionals)
 ```
 
 ## Node.js `parseArgs` tokens compatible

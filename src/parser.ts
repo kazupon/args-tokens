@@ -53,9 +53,9 @@ const SHORT_OPTION_PREFIX = HYPHEN_CHAR
 const LONG_OPTION_PREFIX = '--'
 
 /**
- * Parse Options
+ * Parser Options
  */
-export interface ParseOptions {
+export interface ParserOptions {
   /**
    * [Node.js parseArgs](https://nodejs.org/api/util.html#parseargs-tokens) tokens compatible mode
    * @default false
@@ -79,7 +79,7 @@ export interface ParseOptions {
  * @param options parse options
  * @returns argument tokens
  */
-export function parseArgs(args: string[], options: ParseOptions = {}): ArgToken[] {
+export function parseArgs(args: string[], options: ParserOptions = {}): ArgToken[] {
   const { allowCompatible = false } = options
 
   const tokens: ArgToken[] = []
