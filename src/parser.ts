@@ -232,7 +232,7 @@ export function parseArgs(args: string[], options: ParseOptions = {}): ArgToken[
  * @param arg the argument to check
  * @returns whether `arg` is a short option
  */
-export function isShortOption(arg: string) {
+export function isShortOption(arg: string): boolean {
   return (
     arg.length === 2 && arg.codePointAt(0) === HYPHEN_CODE && arg.codePointAt(1) !== HYPHEN_CODE
   )
@@ -282,7 +282,8 @@ function isLongOptionAndValue(arg: string) {
  * @param arg the argument to check
  * @returns whether `arg` is a long option prefix
  */
-export function hasLongOptionPrefix(arg: string) {
+export function hasLongOptionPrefix(arg: string): boolean {
+  // @ts-ignore -- NOTE: `~` is a bitwise NOT operator
   return arg.length > 2 && ~arg.indexOf(LONG_OPTION_PREFIX)
 }
 
