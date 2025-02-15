@@ -1,16 +1,16 @@
 {
   "version": "4",
   "specifiers": {
-    "jsr:@kazupon/args-tokens@*": "0.3.0"
+    "jsr:@kazupon/args-tokens@*": "0.3.2"
   },
   "jsr": {
-    "@kazupon/args-tokens@0.3.0": {
-      "integrity": "35289c4b94cf9595293dbc7f27d654cab98b808abc5be93bc9fa7d71c4326532"
+    "@kazupon/args-tokens@0.3.2": {
+      "integrity": "72d6666abc92c6531c9fa2c7a05b879715440afa2beea9fd56723636aa95717b"
     }
   },
   "workspace": {
     "dependencies": [
-      "jsr:@kazupon/args-tokens@0.3"
+      "jsr:@kazupon/args-tokens@~0.3.2"
     ]
   }
 }
