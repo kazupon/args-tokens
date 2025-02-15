@@ -1,7 +1,7 @@
 {
   "name": "args-tokens",
   "description": "parseArgs tokens compatibility and more high-performance parser",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "author": {
     "name": "kazuya kawaguchi",
     "email": "kawakazu80@gmail.com"
