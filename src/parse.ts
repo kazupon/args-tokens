@@ -7,7 +7,7 @@ import type { ArgOptions, ArgValues } from './resolver'
 /**
  * Parse options for {@link parse} function
  */
-interface ParseOptions<O extends ArgOptions> extends ParserOptions {
+export interface ParseOptions<O extends ArgOptions> extends ParserOptions {
   /**
    * Command line options, about details see {@link ArgOptions}
    */
@@ -17,7 +17,7 @@ interface ParseOptions<O extends ArgOptions> extends ParserOptions {
 /**
  * Parsed command line arguments
  */
-type ParsedArgs<T extends ArgOptions> = {
+export type ParsedArgs<T extends ArgOptions> = {
   /**
    * Parsed values, same as `values` in {@link resolveArgs}
    */
