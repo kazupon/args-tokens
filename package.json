@@ -25,7 +25,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "packageManager": "pnpm@10.3.0",
+  "packageManager": "pnpm@10.4.1",
   "engines": {
     "node": ">= 18.18"
   },
@@ -95,10 +95,10 @@
     "@eslint/markdown": "^6.2.2",
     "@kazupon/eslint-config": "^0.19.0",
     "@kazupon/prettier-config": "^0.1.1",
-    "@types/node": "^22.13.1",
-    "@vitest/eslint-plugin": "^1.1.28",
-    "bumpp": "^10.0.2",
-    "eslint": "^9.20.0",
+    "@types/node": "^22.13.4",
+    "@vitest/eslint-plugin": "^1.1.31",
+    "bumpp": "^10.0.3",
+    "eslint": "^9.20.1",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-jsonc": "^2.19.1",
     "eslint-plugin-promise": "^7.2.1",
@@ -107,11 +107,11 @@
     "eslint-plugin-yml": "^1.16.0",
     "gh-changelogen": "^0.2.8",
     "jsr": "^0.13.3",
-    "knip": "^5.44.0",
+    "knip": "^5.44.1",
     "lint-staged": "^15.4.3",
     "mitata": "^1.0.34",
     "pkg-pr-new": "^0.0.39",
-    "prettier": "^3.5.0",
+    "prettier": "^3.5.1",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.24.0",
     "vitest": "^3.0.5"
