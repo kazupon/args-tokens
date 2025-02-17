@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Modifier: kazuya kawaguchi (a.k.a. kazupon)
+
 import { parseArgs } from './parser.js'
 import { resolveArgs } from './resolver.js'
 
