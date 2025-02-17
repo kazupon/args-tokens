@@ -8,7 +8,7 @@
 
 ## 🐱 Motivation
 
-- Although Node.js's [`parseArgs`](https://nodejs.org/api/util.html#utilparseargsconfig) can return tokens, tokens that the short options are not in the format I expect. Of course, I recoginize the background of [this issue](https://github.com/pkgjs/parseargs/issues/78).
+- Although Node.js [`parseArgs`](https://nodejs.org/api/util.html#utilparseargsconfig) can return tokens, that the short options are not in the format I expect. Of course, I recoginize the background of [this issue](https://github.com/pkgjs/parseargs/issues/78).
 - `parseArgs` gives the command line args parser a useful util, so the resolution of the options values and the parsing of the tokens are tightly coupled. As a result, Performance is sacrificed. Of course, I recoginize that's the trade-off.
 
 ## ⏱️ Benchmark
@@ -167,7 +167,7 @@ const tokens = parseArgs(['--foo', 'bar', '-x', '--bar=baz'])
 console.log('tokens:', tokens)
 ```
 
-## Resolve args value with tokens and arg option schema
+## Resolve args values with tokens and arg option schema
 
 `resolveArgs` is a useful function when you want to resolve values from the tokens obtained by `parseArgs`.
 
@@ -281,7 +281,7 @@ If you are interested in contributing to `args-tokens`, I highly recommend check
 
 This project is inspired by:
 
-- [`utils.parseArgs`](https://nodejs.org/api/util.html#utilparseargsconfig), created by Node.js contributors and [OpenJS Foundation](https://openjsf.org/)
+- [`util.parseArgs`](https://nodejs.org/api/util.html#utilparseargsconfig), created by Node.js contributors and [OpenJS Foundation](https://openjsf.org/)
 - [`pkgjs/parseargs`](https://github.com/pkgjs/parseargs), created by Node.js CLI package maintainers and Node.js community.
 
 ## ©️ License
