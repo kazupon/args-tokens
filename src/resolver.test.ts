@@ -86,6 +86,17 @@ describe('resolveArgs', () => {
     expect(positionals).toEqual(['dev', 'foo', 'bar'])
   })
 
+  test('long options value captured from positionals', () => {
+    const args = ['dev', '--port', '9131', '--host', 'example.com', 'bar']
+    const tokens = parseArgs(args)
+    const { values, positionals } = resolveArgs(options, tokens)
+    expect(values).toEqual({
+      port: 9131,
+      host: 'example.com'
+    })
+    expect(positionals).toEqual(['dev', '9131', 'example.com', 'bar'])
+  })
+
   test('short options value specified with equals', () => {
     const args = ['dev', '-p=9131', '-o=example.com', '-h']
     const tokens = parseArgs(args)
@@ -109,16 +120,29 @@ describe('resolveArgs', () => {
     expect(positionals).toEqual(['dev'])
   })
 
+  test('short options value captured from positionals', () => {
+    const args = ['dev', '-p', '9131', '-o', 'example.com', 'bar']
+    const tokens = parseArgs(args)
+    const { values, positionals } = resolveArgs(options, tokens)
+    expect(values).toEqual({
+      port: 9131,
+      host: 'example.com'
+    })
+    expect(positionals).toEqual(['dev', '9131', 'example.com', 'bar'])
+  })
+
   test('complex options', () => {
     const args = [
       'dev',
       '-p9131',
-      '--host=example.com',
+      '--host',
+      'example.com',
       'foo',
       '-m=production',
       '-h',
       '--version',
-      'bar'
+      'bar',
+      'baz'
     ]
     const tokens = parseArgs(args)
     const { values, positionals } = resolveArgs(options, tokens)
@@ -129,6 +153,6 @@ describe('resolveArgs', () => {
       help: true,
       version: true
     })
-    expect(positionals).toEqual(['dev', 'foo', 'bar'])
+    expect(positionals).toEqual(['dev', 'example.com', 'foo', 'bar', 'baz'])
   })
 })

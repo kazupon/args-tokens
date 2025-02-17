@@ -32,12 +32,14 @@ test('parse', () => {
   const args = [
     'dev',
     '-p9131',
-    '--host=example.com',
+    '--host',
+    'example.com',
     'foo',
     '-m=production',
     '-h',
     '--version',
-    'bar'
+    'bar',
+    'baz'
   ]
   const { values, positionals } = parse(args, { options })
   expect(values).toEqual({
@@ -47,5 +49,5 @@ test('parse', () => {
     help: true,
     version: true
   })
-  expect(positionals).toEqual(['dev', 'foo', 'bar'])
+  expect(positionals).toEqual(['dev', 'example.com', 'foo', 'bar', 'baz'])
 })

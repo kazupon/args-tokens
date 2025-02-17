@@ -82,10 +82,11 @@ export function resolveArgs<T extends ArgOptions>(
   const longOptionTokens: ArgToken[] = []
   const shortOptionTokens: ArgToken[] = []
 
+  let currentLongOption: ArgToken | undefined
   let currentShortOption: ArgToken | undefined
   const expandableShortOptions: ArgToken[] = []
 
-  function toValue(): string | undefined {
+  function toShortValue(): string | undefined {
     if (expandableShortOptions.length === 0) {
       return undefined
     } else {
@@ -95,16 +96,25 @@ export function resolveArgs<T extends ArgOptions>(
     }
   }
 
-  function applyShortOptionValue(): void {
+  function applyLongOptionValue(value: string | undefined = undefined): void {
+    if (currentLongOption) {
+      currentLongOption.value = value
+      longOptionTokens.push({ ...currentLongOption })
+      currentLongOption = undefined
+    }
+  }
+
+  function applyShortOptionValue(value: string | undefined = undefined): void {
     if (currentShortOption) {
-      currentShortOption.value = toValue()
+      currentShortOption.value = value || toShortValue()
       shortOptionTokens.push({ ...currentShortOption })
       currentShortOption = undefined
     }
   }
 
   /**
-   * separate tokens into positionals, long options, and short options, after that resolve values
+   * analyze phase to resolve value
+   * separate tokens into positionals, long and short options, after that resolve values
    */
 
   // eslint-disable-next-line unicorn/no-for-loop
@@ -112,23 +122,34 @@ export function resolveArgs<T extends ArgOptions>(
     const token = tokens[i]
     if (token.kind === 'positional') {
       positionals.push(token.value!)
-      applyShortOptionValue() // check if previous short option is not resolved
+      // check if previous option is not resolved
+      applyLongOptionValue(token.value)
+      applyShortOptionValue(token.value)
     } else if (token.kind === 'option') {
       if (token.rawName) {
         if (hasLongOptionPrefix(token.rawName)) {
-          longOptionTokens.push({ ...token })
-          applyShortOptionValue() // check if previous short option is not resolved
+          if (token.inlineValue) {
+            longOptionTokens.push({ ...token })
+          } else {
+            currentLongOption = { ...token }
+          }
+          // check if previous short option is not resolved
+          applyShortOptionValue()
         } else if (isShortOption(token.rawName)) {
           if (currentShortOption) {
             if (currentShortOption.index === token.index) {
               expandableShortOptions.push({ ...token })
             } else {
-              currentShortOption.value = toValue()
+              currentShortOption.value = toShortValue()
               shortOptionTokens.push({ ...currentShortOption })
               currentShortOption = { ...token }
             }
+            // check if previous long option is not resolved
+            applyLongOptionValue()
           } else {
             currentShortOption = { ...token }
+            // check if previous long option is not resolved
+            applyLongOptionValue()
           }
         }
       } else {
@@ -138,16 +159,21 @@ export function resolveArgs<T extends ArgOptions>(
           shortOptionTokens.push({ ...currentShortOption })
           currentShortOption = undefined
         }
+        // check if previous long option is not resolved
+        applyLongOptionValue()
       }
     } else {
-      applyShortOptionValue() // check if previous short option is not resolved
+      // check if previous option is not resolved
+      applyLongOptionValue()
+      applyShortOptionValue()
     }
   }
 
   /**
-   * check if the last short option is not resolved
+   * check if the last long or short option is not resolved
    */
 
+  applyLongOptionValue()
   applyShortOptionValue()
 
   /**
@@ -166,7 +192,10 @@ export function resolveArgs<T extends ArgOptions>(
       if (option === token.name && token.rawName != null && hasLongOptionPrefix(token.rawName)) {
         validateRequire(token, option, schema)
 
-        if (schema.type !== 'boolean') {
+        if (schema.type === 'boolean') {
+          // NOTE: re-set value to undefined, because long boolean type option is set on analyze phase
+          token.value = undefined
+        } else {
           validateValue(token, option, schema)
         }
 
@@ -184,7 +213,10 @@ export function resolveArgs<T extends ArgOptions>(
       if (schema.short === token.name && token.rawName != null && isShortOption(token.rawName)) {
         validateRequire(token, option, schema)
 
-        if (schema.type !== 'boolean') {
+        if (schema.type === 'boolean') {
+          // NOTE: re-set value to undefined, because short boolean type option is set on analyze phase
+          token.value = undefined
+        } else {
           validateValue(token, option, schema)
         }
 

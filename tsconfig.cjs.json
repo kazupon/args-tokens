@@ -7,5 +7,5 @@
     "outDir": "lib/cjs"
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["src/**/*.test.ts", "eslint.config.ts", "knip.config.ts"]
+  "exclude": ["src/**/*.test.ts", "src/**/*.test-d.ts", "eslint.config.ts", "knip.config.ts"]
 }
