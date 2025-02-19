@@ -7,4 +7,4 @@ export { resolveArgs } from './resolver.js'
 
 export type { ParsedArgs, ParseOptions } from './parse'
 export type { ArgToken, ParserOptions } from './parser'
-export type { ArgOptions, ArgOptionSchema } from './resolver'
+export type { ArgOptions, ArgOptionSchema, ArgValues } from './resolver'
