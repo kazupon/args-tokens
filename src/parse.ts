@@ -29,6 +29,10 @@ export type ParsedArgs<T extends ArgOptions> = {
    * Positional arguments, same as `positionals` in {@link resolveArgs}
    */
   positionals: string[]
+  /**
+   * Validation errors, same as `errors` in {@link resolveArgs}
+   */
+  error: AggregateError | undefined
 }
 
 const DEFAULT_OPTIONS = {
@@ -55,8 +59,7 @@ const DEFAULT_OPTIONS = {
  * ```
  * @param args - command line arguments
  * @param options - parse options, about details see {@link ParseOptions}
- * @throws if command line arguments are invalid, this function will cause {@link AggregateError | validation errors}.
- * @returns parsed values
+ * @returns An object that contains the values of the arguments, positional arguments, and {@link AggregateError | validation errors}.
  */
 export function parse<O extends ArgOptions>(
   args: string[],
