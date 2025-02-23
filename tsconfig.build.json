@@ -2,9 +2,9 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "target": "ESNext",
-    "module": "CommonJS",
-    "moduleResolution": "node",
-    "outDir": "lib/cjs"
+    "module": "Preserve",
+    "moduleResolution": "bundler",
+    "outDir": "lib"
   },
   "include": ["src/**/*.ts"],
   "exclude": ["src/**/*.test.ts", "src/**/*.test-d.ts", "eslint.config.ts", "knip.config.ts"]

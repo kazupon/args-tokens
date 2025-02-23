@@ -1,6 +1,6 @@
 import { parseArgs as parseArgsNode } from 'node:util'
 import { bench, describe } from 'vitest'
-import { parse, parseArgs } from '../lib/esm/index.js'
+import { parse, parseArgs } from '../lib/index.js'
 
 const args = [
   '-x',
