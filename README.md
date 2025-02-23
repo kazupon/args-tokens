@@ -9,11 +9,12 @@
 
 ## ✨ Features
 
-- ✅ High performance parser and resolver
+- ✅ High performance
 - ✅ `util.parseArgs` token compatibility
-- ✅ Type safe argument values
-- ✅ ES Modules distribution library
-- ✅ Support multi runtime: Browser, Node.js, Deno, Bun
+- ✅ ES Modules and modern JavaScript
+- ✅ Type safe
+- ✅ Zero dependencies
+- ✅ Universal runtime
 
 ## 🐱 Motivation
 
