@@ -33,24 +33,20 @@ describe('resolveArgs', () => {
   test('basic', () => {
     const args = ['dev', '--port=9131', '--host=example.com', '--help']
     const tokens = parseArgs(args)
-    const { values, positionals } = resolveArgs(options, tokens)
+    const { values, positionals, error } = resolveArgs(options, tokens)
     expect(values).toEqual({
       port: 9131,
       host: 'example.com',
       help: true
     })
     expect(positionals).toEqual(['dev'])
+    expect(error).toBeUndefined()
   })
 
   test('missing required option', () => {
     const args = ['dev']
     const tokens = parseArgs(args)
-    let error: AggregateError | undefined
-    try {
-      resolveArgs(options, tokens)
-    } catch (error_: unknown) {
-      error = error_ as AggregateError
-    }
+    const { error } = resolveArgs(options, tokens)
     expect(error?.errors.length).toBe(1)
     expect((error?.errors[0] as Error).message).toEqual("Option '--host' or '-o' is required")
   })
@@ -69,12 +65,7 @@ describe('resolveArgs', () => {
   test('invalid value', () => {
     const args = ['dev', '--port=foo', '--host=example.com']
     const tokens = parseArgs(args)
-    let error: AggregateError | undefined
-    try {
-      resolveArgs(options, tokens)
-    } catch (error_: unknown) {
-      error = error_ as AggregateError
-    }
+    const { error } = resolveArgs(options, tokens)
     expect(error?.errors.length).toBe(1)
     expect((error?.errors[0] as Error).message).toEqual(
       "Option '--port' or '-p' should be 'number'"
@@ -84,12 +75,7 @@ describe('resolveArgs', () => {
   test('multiple errors', () => {
     const args = ['dev', '--port=foo']
     const tokens = parseArgs(args)
-    let error: AggregateError | undefined
-    try {
-      resolveArgs(options, tokens)
-    } catch (error_: unknown) {
-      error = error_ as AggregateError
-    }
+    const { error } = resolveArgs(options, tokens)
     expect(error?.errors.length).toBe(2)
     expect((error?.errors[0] as Error).message).toEqual(
       "Option '--port' or '-p' should be 'number'"
@@ -111,8 +97,9 @@ describe('resolveArgs', () => {
   test('positionals', () => {
     const args = ['dev', '--host=example.com', 'foo', 'bar']
     const tokens = parseArgs(args)
-    const { positionals } = resolveArgs(options, tokens)
+    const { positionals, error } = resolveArgs(options, tokens)
     expect(positionals).toEqual(['dev', 'foo', 'bar'])
+    expect(error).toBeUndefined()
   })
 
   test('long options value captured from positionals', () => {
@@ -129,35 +116,38 @@ describe('resolveArgs', () => {
   test('short options value specified with equals', () => {
     const args = ['dev', '-p=9131', '-o=example.com', '-h']
     const tokens = parseArgs(args)
-    const { values, positionals } = resolveArgs(options, tokens)
+    const { values, positionals, error } = resolveArgs(options, tokens)
     expect(values).toEqual({
       port: 9131,
       host: 'example.com',
       help: true
     })
     expect(positionals).toEqual(['dev'])
+    expect(error).toBeUndefined()
   })
 
   test('short options value specified with concatenation', () => {
     const args = ['dev', '-p9131', '-oexample.com']
     const tokens = parseArgs(args)
-    const { values, positionals } = resolveArgs(options, tokens)
+    const { values, positionals, error } = resolveArgs(options, tokens)
     expect(values).toEqual({
       port: 9131,
       host: 'example.com'
     })
     expect(positionals).toEqual(['dev'])
+    expect(error).toBeUndefined()
   })
 
   test('short options value captured from positionals', () => {
     const args = ['dev', '-p', '9131', '-o', 'example.com', 'bar']
     const tokens = parseArgs(args)
-    const { values, positionals } = resolveArgs(options, tokens)
+    const { values, positionals, error } = resolveArgs(options, tokens)
     expect(values).toEqual({
       port: 9131,
       host: 'example.com'
     })
     expect(positionals).toEqual(['dev', '9131', 'example.com', 'bar'])
+    expect(error).toBeUndefined()
   })
 
   test('complex options', () => {
@@ -174,7 +164,7 @@ describe('resolveArgs', () => {
       'baz'
     ]
     const tokens = parseArgs(args)
-    const { values, positionals } = resolveArgs(options, tokens)
+    const { values, positionals, error } = resolveArgs(options, tokens)
     expect(values).toEqual({
       port: 9131,
       host: 'example.com',
@@ -183,5 +173,6 @@ describe('resolveArgs', () => {
       version: true
     })
     expect(positionals).toEqual(['dev', 'example.com', 'foo', 'bar', 'baz'])
+    expect(error).toBeUndefined()
   })
 })

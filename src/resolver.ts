@@ -76,13 +76,12 @@ type FilterArgs<
  * Resolve command line arguments
  * @param options - An options that contains {@link ArgOptionSchema | options schema}.
  * @param tokens - An array of {@link ArgToken | tokens}.
- * @throws if command line arguments are invalid, this function will cause {@link AggregateError | validation errors}.
- * @returns An object that contains the values of the arguments and positional arguments.
+ * @returns An object that contains the values of the arguments, positional arguments, and {@link AggregateError | validation errors}.
  */
 export function resolveArgs<T extends ArgOptions>(
   options: T,
   tokens: ArgToken[]
-): { values: ArgValues<T>; positionals: string[] } {
+): { values: ArgValues<T>; positionals: string[]; error: AggregateError | undefined } {
   const values = {} as ArgValues<T>
   const positionals = [] as string[]
 
@@ -265,12 +264,8 @@ export function resolveArgs<T extends ArgOptions>(
     }
   }
 
-  if (errors.length > 0) {
-    // eslint-disable-next-line unicorn/error-message
-    throw new AggregateError(errors)
-  }
-
-  return { values, positionals }
+  // eslint-disable-next-line unicorn/error-message
+  return { values, positionals, error: errors.length > 0 ? new AggregateError(errors) : undefined }
 }
 
 function createRequireError(option: string, schema: ArgOptionSchema): Error {
