@@ -7,6 +7,14 @@
 
 > [`parseArgs` tokens](https://nodejs.org/api/util.html#parseargs-tokens) compatibility and more high-performance parser
 
+## ✨ Features
+
+- ✅ High performance parser and resolver
+- ✅ `util.parseArgs` token compatibility
+- ✅ Type safe argument values
+- ✅ ES Modules distribution library
+- ✅ Support multi runtime: Browser, Node.js, Deno, Bun
+
 ## 🐱 Motivation
 
 - Although Node.js [`parseArgs`](https://nodejs.org/api/util.html#utilparseargsconfig) can return tokens, that the short options are not in the format I expect. Of course, I recoginize the background of [this issue](https://github.com/pkgjs/parseargs/issues/78).
