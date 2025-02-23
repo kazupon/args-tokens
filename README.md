@@ -2,6 +2,7 @@
 
 [![Version][npm-version-src]][npm-version-href]
 [![JSR][jsr-src]][jsr-href]
+[![InstallSize][install-size-src]][install-size-src]
 [![CI][ci-src]][ci-href]
 
 > [`parseArgs` tokens](https://nodejs.org/api/util.html#parseargs-tokens) compatibility and more high-performance parser
@@ -294,5 +295,7 @@ This project is inspired by:
 [npm-version-href]: https://npmjs.com/package/args-tokens
 [jsr-src]: https://jsr.io/badges/@kazupon/args-tokens
 [jsr-href]: https://jsr.io/@kazupon/args-tokens
+[install-size-src]: https://pkg-size.dev/badge/install/35082
+[install-size-href]: https://pkg-size.dev/args-tokens
 [ci-src]: https://github.com/kazupon/args-tokens/actions/workflows/ci.yml/badge.svg
 [ci-href]: https://github.com/kazupon/args-tokens/actions/workflows/ci.yml
