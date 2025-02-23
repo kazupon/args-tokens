@@ -22,22 +22,8 @@ const args = [
   '10'
 ]
 
-describe('parseArgs', () => {
-  bench('node:util', () => {
-    parseArgsNode({
-      allowPositionals: true,
-      strict: false,
-      args,
-      tokens: true
-    })
-  })
-  bench('args-tokens', () => {
-    parseArgs(args)
-  })
-})
-
-describe('parseArgs + resolveArgs', () => {
-  bench('node:util', () => {
+describe('parse and resolve', () => {
+  bench('util.parseArgs', () => {
     parseArgsNode({
       allowPositionals: true,
       strict: false,
@@ -56,7 +42,7 @@ describe('parseArgs + resolveArgs', () => {
     })
   })
 
-  bench('args-tokens', () => {
+  bench('args-tokens parse', () => {
     parse(args, {
       options: {
         foo: {
@@ -70,5 +56,19 @@ describe('parseArgs + resolveArgs', () => {
         }
       }
     })
+  })
+})
+
+describe('parseArgs', () => {
+  bench('node:util', () => {
+    parseArgsNode({
+      allowPositionals: true,
+      strict: false,
+      args,
+      tokens: true
+    })
+  })
+  bench('args-tokens', () => {
+    parseArgs(args)
   })
 })

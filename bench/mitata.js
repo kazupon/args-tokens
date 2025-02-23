@@ -1,6 +1,6 @@
 import { barplot, bench, run } from 'mitata'
 import { parseArgs as parseArgsNode } from 'node:util'
-import { parseArgs, resolveArgs } from '../lib/index.js'
+import { parse, parseArgs, resolveArgs } from '../lib/index.js'
 
 const args = [
   '-x',
@@ -26,7 +26,7 @@ console.log('benchmark arguments:', args)
 const tokens = parseArgs(args)
 
 barplot(() => {
-  bench('node:util parseArgs', () => {
+  bench('util.parseArgs', () => {
     parseArgsNode({
       allowPositionals: true,
       strict: false,
@@ -34,12 +34,9 @@ barplot(() => {
       tokens: true
     })
   })
-  bench('args-tokens parseArgs', () => {
-    parseArgs(args)
-  })
-  bench('args-tokens resolveArgs', () => {
-    resolveArgs(
-      {
+  bench('args-tokens parse (equivalent to util.parseArgs)', () => {
+    parse(args, {
+      options: {
         foo: {
           type: 'boolean',
           short: 'f'
@@ -49,13 +46,15 @@ barplot(() => {
           short: 'b',
           required: true
         }
-      },
-      tokens
-    )
+      }
+    })
   })
 
-  bench('args-tokens parseArgs + resolveArgs', () => {
-    const tokens = parseArgs(args)
+  bench('args-tokens parseArgs', () => {
+    parseArgs(args)
+  })
+
+  bench('args-tokens resolveArgs', () => {
     resolveArgs(
       {
         foo: {

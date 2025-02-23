@@ -28,26 +28,36 @@ With [mitata](https://github.com/evanwashere/mitata):
 pnpm bench:mitata
 
 > args-tokens@0.0.0 bench:mitata /path/to/projects/args-tokens
-> node --expose-gc bench/index.mjs
+> node --expose-gc bench/mitata.js
 
 clk: ~2.87 GHz
 cpu: Apple M1 Max
 runtime: node 18.19.1 (arm64-darwin)
 
-benchmark                   avg (min … max) p75 / p99    (min … top 1%)
-------------------------------------------- -------------------------------
-node:util parseArgs            4.69 µs/iter   4.78 µs      █ █     ██
-                        (4.49 µs … 4.91 µs)   4.85 µs    █ █ ██ █  ██  ███
-                    (  1.32 kb …   1.49 kb)   1.33 kb █▁██▁██████▁█████████
+benchmark                                       avg (min … max) p75 / p99    (min … top 1%)
+--------------------------------------------------------------- -------------------------------
+util.parseArgs                                     4.16 µs/iter   4.20 µs █
+                                            (4.09 µs … 4.29 µs)   4.28 µs ██ ▅▅▅       ▅
+                                        (  1.36 kb …   1.52 kb)   1.37 kb ██▁████▅▅█▅▁██▁▁▅▁█▅█
 
-args-tokens parseArgs        842.98 ns/iter 882.65 ns     ▄▄▄▇▃ ▄▃ █
-                    (734.10 ns … 984.32 ns) 966.06 ns   ▂▄█████▄████▅▅▄
-                    (  3.11 kb …   3.41 kb)   3.12 kb █▂███████████████▆▆▆▂
+args-tokens parse (equivalent to util.parseArgs)   1.65 µs/iter   1.66 µs    █
+                                            (1.61 µs … 1.80 µs)   1.79 µs ▅▃ █▂ ▄
+                                        (  1.95 kb …   2.66 kb)   1.97 kb █████▆█▄▃▃▅▃▁▃▃▁▄▁▁▁▂
 
-                             ┌                                            ┐
-         node:util parseArgs ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 4.69 µs
-       args-tokens parseArgs ┤ 842.98 ns
-                             └                                            ┘
+args-tokens parseArgs                            729.56 ns/iter 734.11 ns         █
+                                        (697.43 ns … 797.08 ns) 774.93 ns        ▂█▅▂
+                                        (  2.87 kb …   3.54 kb)   3.11 kb ▂▂▃▇▆▅▆████▃▃▄▂▂▂▂▂▁▂
+
+args-tokens resolveArgs                          886.78 ns/iter 887.70 ns       █
+                                        (853.96 ns … 978.89 ns) 957.24 ns       █
+                                        (  2.51 kb …   2.87 kb)   2.79 kb ▂▃█▃▄▅█▄▃▂▂▃▃▂▂▂▂▂▁▁▁
+
+                                                 ┌                                            ┐
+                                  util.parseArgs ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 4.16 µs
+args-tokens parse (equivalent to util.parseArgs) ┤■■■■■■■■■ 1.65 µs
+                           args-tokens parseArgs ┤ 729.56 ns
+                         args-tokens resolveArgs ┤■■ 886.78 ns
+                                                 └                                            ┘
 ```
 
 With [vitest](https://vitest.dev/guide/features.html#benchmarking):
@@ -64,15 +74,24 @@ Breaking changes might not follow SemVer, please pin Vitest's version when using
  RUN  v3.0.5 /path/to/projects/args-tokens
 
 
- ✓ bench/vitest.bench.mjs > parseArgs 1466ms
+ ✓ bench/vitest.bench.js > parse and resolve 1350ms
+     name                       hz     min     max    mean     p75     p99    p995    p999     rme  samples
+   · util.parseArgs     221,285.36  0.0041  0.2700  0.0045  0.0044  0.0054  0.0063  0.0629  ±0.38%   110643
+   · args-tokens parse  527,127.11  0.0017  0.2153  0.0019  0.0019  0.0023  0.0027  0.0055  ±0.38%   263564   fastest
+
+ ✓ bench/vitest.bench.js > parseArgs 1434ms
      name                   hz     min     max    mean     p75     p99    p995    p999     rme  samples
-   · node:util      194,911.34  0.0042  0.6821  0.0051  0.0046  0.0151  0.0292  0.1079  ±0.82%    97456
-   · args-tokens  1,101,845.21  0.0007  0.1883  0.0009  0.0009  0.0012  0.0031  0.0140  ±0.32%   550923   fastest
+   · node:util      235,217.05  0.0039  0.2665  0.0043  0.0042  0.0048  0.0058  0.0139  ±0.43%   117609
+   · args-tokens  1,307,135.24  0.0006  0.1737  0.0008  0.0008  0.0009  0.0010  0.0016  ±0.43%   653568   fastest
 
  BENCH  Summary
 
-  args-tokens - bench/vitest.bench.mjs > parseArgs
-    5.65x faster than node:util
+  args-tokens parse - bench/vitest.bench.js > parse and resolve
+    2.38x faster than util.parseArgs
+
+  args-tokens - bench/vitest.bench.js > parseArgs
+    5.56x faster than node:util
+
 ```
 
 ## ❓ What's different about parseArgs tokens?
