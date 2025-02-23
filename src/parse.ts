@@ -53,8 +53,9 @@ const DEFAULT_OPTIONS = {
  * console.log('values', values)
  * console.log('positionals', positionals)
  * ```
- * @param args command line arguments
- * @param options parse options, about details see {@link ParseOptions}
+ * @param args - command line arguments
+ * @param options - parse options, about details see {@link ParseOptions}
+ * @throws if command line arguments are invalid, this function will cause {@link AggregateError | validation errors}.
  * @returns parsed values
  */
 export function parse<O extends ArgOptions>(

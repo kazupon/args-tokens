@@ -72,6 +72,13 @@ type FilterArgs<
   [Option in keyof O as O[Option][K] extends {} ? Option : never]: V[Option]
 }
 
+/**
+ * Resolve command line arguments
+ * @param options - An options that contains {@link ArgOptionSchema | options schema}.
+ * @param tokens - An array of {@link ArgToken | tokens}.
+ * @throws if command line arguments are invalid, this function will cause {@link AggregateError | validation errors}.
+ * @returns An object that contains the values of the arguments and positional arguments.
+ */
 export function resolveArgs<T extends ArgOptions>(
   options: T,
   tokens: ArgToken[]
@@ -180,9 +187,17 @@ export function resolveArgs<T extends ArgOptions>(
    * resolve values
    */
 
+  const errors: Error[] = []
+
   for (const [option, schema] of Object.entries(options)) {
-    if (longOptionTokens.length === 0 && shortOptionTokens.length === 0 && schema.required) {
-      throw createRequireError(option, schema)
+    if (schema.required) {
+      const found =
+        longOptionTokens.find(token => token.name === option) ||
+        (schema.short && shortOptionTokens.find(token => token.name === schema.short))
+      if (!found) {
+        errors.push(createRequireError(option, schema))
+        continue
+      }
     }
 
     // eslint-disable-next-line unicorn/no-for-loop
@@ -190,13 +205,21 @@ export function resolveArgs<T extends ArgOptions>(
       const token = longOptionTokens[i]
       // eslint-disable-next-line unicorn/no-null
       if (option === token.name && token.rawName != null && hasLongOptionPrefix(token.rawName)) {
-        validateRequire(token, option, schema)
+        const invalid = validateRequire(token, option, schema)
+        if (invalid) {
+          errors.push(invalid)
+          continue
+        }
 
         if (schema.type === 'boolean') {
           // NOTE: re-set value to undefined, because long boolean type option is set on analyze phase
           token.value = undefined
         } else {
-          validateValue(token, option, schema)
+          const invalid = validateValue(token, option, schema)
+          if (invalid) {
+            errors.push(invalid)
+            continue
+          }
         }
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
@@ -211,13 +234,21 @@ export function resolveArgs<T extends ArgOptions>(
 
       // eslint-disable-next-line unicorn/no-null
       if (schema.short === token.name && token.rawName != null && isShortOption(token.rawName)) {
-        validateRequire(token, option, schema)
+        const invalid = validateRequire(token, option, schema)
+        if (invalid) {
+          errors.push(invalid)
+          continue
+        }
 
         if (schema.type === 'boolean') {
           // NOTE: re-set value to undefined, because short boolean type option is set on analyze phase
           token.value = undefined
         } else {
-          validateValue(token, option, schema)
+          const invalid = validateValue(token, option, schema)
+          if (invalid) {
+            errors.push(invalid)
+            continue
+          }
         }
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
@@ -234,6 +265,11 @@ export function resolveArgs<T extends ArgOptions>(
     }
   }
 
+  if (errors.length > 0) {
+    // eslint-disable-next-line unicorn/error-message
+    throw new AggregateError(errors)
+  }
+
   return { values, positionals }
 }
 
@@ -243,23 +279,31 @@ function createRequireError(option: string, schema: ArgOptionSchema): Error {
   )
 }
 
-function validateRequire(token: ArgToken, option: string, schema: ArgOptionSchema): void {
+function validateRequire(
+  token: ArgToken,
+  option: string,
+  schema: ArgOptionSchema
+): Error | undefined {
   if (schema.required && schema.type !== 'boolean' && !token.value) {
-    throw createRequireError(option, schema)
+    return createRequireError(option, schema)
   }
 }
 
-function validateValue(token: ArgToken, option: string, schema: ArgOptionSchema): void {
+function validateValue(
+  token: ArgToken,
+  option: string,
+  schema: ArgOptionSchema
+): Error | undefined {
   switch (schema.type) {
     case 'number': {
       if (!isNumeric(token.value!)) {
-        throw createTypeError(option, schema)
+        return createTypeError(option, schema)
       }
       break
     }
     case 'string': {
       if (typeof token.value !== 'string') {
-        throw createTypeError(option, schema)
+        return createTypeError(option, schema)
       }
       break
     }
