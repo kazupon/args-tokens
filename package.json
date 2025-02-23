@@ -29,39 +29,38 @@
   "engines": {
     "node": ">= 20"
   },
+  "type": "module",
   "files": [
     "lib"
   ],
-  "main": "lib/cjs/index.js",
-  "module": "lib/esm/index.js",
+  "module": "lib/index.js",
   "exports": {
     ".": {
-      "types": "./lib/cjs/index.d.ts",
-      "import": "./lib/esm/index.js",
-      "require": "./lib/cjs/index.js",
-      "default": "./lib/cjs/index.js"
+      "types": "./lib/index.d.ts",
+      "import": "./lib/index.js",
+      "require": "./lib/index.js",
+      "default": "./lib/index.js"
     },
     "./parser": {
-      "types": "./lib/cjs/parser.d.ts",
-      "import": "./lib/esm/parser.js",
-      "require": "./lib/cjs/parser.js",
-      "default": "./lib/cjs/parser.js"
+      "types": "./lib/parser.d.ts",
+      "import": "./lib/parser.js",
+      "require": "./lib/parser.js",
+      "default": "./lib/parser.js"
     },
     "./resolver": {
-      "types": "./lib/cjs/resolver.d.ts",
-      "import": "./lib/esm/resolver.js",
-      "require": "./lib/cjs/resolver.js",
-      "default": "./lib/cjs/resolver.js"
+      "types": "./lib/resolver.d.ts",
+      "import": "./lib/resolver.js",
+      "require": "./lib/resolver.js",
+      "default": "./lib/resolver.js"
     },
     "./package.json": "./package.json",
     "./*": "./*"
   },
-  "types": "lib/cjs/index.d.ts",
+  "types": "lib/index.d.ts",
   "typesVersions": {
     "*": {
       "*": [
-        "./lib/cjs/*",
-        "./lib/esm/*",
+        "./lib/*",
         "./*"
       ]
     }
@@ -69,9 +68,7 @@
   "scripts": {
     "bench:mitata": "node --expose-gc bench/mitata.js",
     "bench:vitest": "vitest bench --run",
-    "build": "pnpm run --parallel --color \"/^build:/\"",
-    "build:cjs": "tsc -p ./tsconfig.cjs.json",
-    "build:esm": "tsc -p ./tsconfig.esm.json",
+    "build": "tsc -p ./tsconfig.build.json",
     "changelog": "gh-changelogen --repo=kazupon/eslint-config",
     "dev": "pnpx @eslint/config-inspector --config eslint.config.ts",
     "dev:eslint": "pnpx @eslint/config-inspector --config eslint.config.ts",

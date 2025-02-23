@@ -1,6 +1,6 @@
 import { barplot, bench, run } from 'mitata'
 import { parseArgs as parseArgsNode } from 'node:util'
-import { parseArgs, resolveArgs } from '../lib/esm/index.js'
+import { parseArgs, resolveArgs } from '../lib/index.js'
 
 const args = [
   '-x',
