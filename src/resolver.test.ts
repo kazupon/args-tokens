@@ -45,7 +45,14 @@ describe('resolveArgs', () => {
   test('missing required option', () => {
     const args = ['dev']
     const tokens = parseArgs(args)
-    expect(() => resolveArgs(options, tokens)).toThrowErrorMatchingSnapshot()
+    let error: AggregateError | undefined
+    try {
+      resolveArgs(options, tokens)
+    } catch (error_: unknown) {
+      error = error_ as AggregateError
+    }
+    expect(error?.errors.length).toBe(1)
+    expect((error?.errors[0] as Error).message).toEqual("Option '--host' or '-o' is required")
   })
 
   test('missing defaultable option', () => {
@@ -60,12 +67,34 @@ describe('resolveArgs', () => {
   })
 
   test('invalid value', () => {
+    const args = ['dev', '--port=foo', '--host=example.com']
+    const tokens = parseArgs(args)
+    let error: AggregateError | undefined
+    try {
+      resolveArgs(options, tokens)
+    } catch (error_: unknown) {
+      error = error_ as AggregateError
+    }
+    expect(error?.errors.length).toBe(1)
+    expect((error?.errors[0] as Error).message).toEqual(
+      "Option '--port' or '-p' should be 'number'"
+    )
+  })
+
+  test('multiple errors', () => {
     const args = ['dev', '--port=foo']
     const tokens = parseArgs(args)
-    expect(() => {
-      const r = resolveArgs(options, tokens)
-      console.log(r)
-    }).toThrowErrorMatchingSnapshot()
+    let error: AggregateError | undefined
+    try {
+      resolveArgs(options, tokens)
+    } catch (error_: unknown) {
+      error = error_ as AggregateError
+    }
+    expect(error?.errors.length).toBe(2)
+    expect((error?.errors[0] as Error).message).toEqual(
+      "Option '--port' or '-p' should be 'number'"
+    )
+    expect((error?.errors[1] as Error).message).toEqual("Option '--host' or '-o' is required")
   })
 
   test('missing positionals', () => {
