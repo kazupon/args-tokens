@@ -82,7 +82,6 @@ export function resolveArgs<T extends ArgOptions>(
   options: T,
   tokens: ArgToken[]
 ): { values: ArgValues<T>; positionals: string[]; error: AggregateError | undefined } {
-  const values = {} as ArgValues<T>
   const positionals = [] as string[]
 
   const longOptionTokens: ArgToken[] = []
@@ -186,6 +185,7 @@ export function resolveArgs<T extends ArgOptions>(
    * resolve values
    */
 
+  const values = Object.create(null) as ArgValues<T>
   const errors: Error[] = []
 
   for (const [option, schema] of Object.entries(options)) {

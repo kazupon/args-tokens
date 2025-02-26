@@ -175,4 +175,26 @@ describe('resolveArgs', () => {
     expect(positionals).toEqual(['dev', 'example.com', 'foo', 'bar', 'baz'])
     expect(error).toBeUndefined()
   })
+
+  test('sanitize options', () => {
+    const args = ['dev', '--__proto__', '{ "polluted": 1 }']
+    const tokens = parseArgs(args)
+    const { values, positionals, error } = resolveArgs(
+      {
+        __proto__: {
+          type: 'string'
+        },
+        foo: {
+          type: 'string',
+          default: 'foo'
+        }
+      },
+      tokens
+    )
+    expect(values).toEqual({
+      foo: 'foo'
+    })
+    expect(positionals).toEqual(['dev', '{ "polluted": 1 }'])
+    expect(error).toBeUndefined()
+  })
 })
