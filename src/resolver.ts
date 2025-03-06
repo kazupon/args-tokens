@@ -270,7 +270,7 @@ export function resolveArgs<T extends ArgOptions>(
 
 function createRequireError(option: string, schema: ArgOptionSchema): Error {
   return new Error(
-    `Option '--${option}' ${schema.short ? `or '-${schema.short}'` : ''} is required`
+    `Option '--${option}' ${schema.short ? `or '-${schema.short}' ` : ''}is required`
   )
 }
 
@@ -313,7 +313,7 @@ function isNumeric(str: string): boolean {
 
 function createTypeError(option: string, schema: ArgOptionSchema): TypeError {
   return new TypeError(
-    `Option '--${option}' ${schema.short ? `or '-${schema.short}'` : ''} should be '${schema.type}'`
+    `Option '--${option}' ${schema.short ? `or '-${schema.short}' ` : ''}should be '${schema.type}'`
   )
 }
 
