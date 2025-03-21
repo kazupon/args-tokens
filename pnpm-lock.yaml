@@ -12,8 +12,8 @@ importers:
         specifier: ^6.2.2
         version: 6.2.2
       '@kazupon/eslint-config':
-        specifier: ^0.22.0
-        version: 0.22.0(@eslint/markdown@6.2.2)(@vitest/eslint-plugin@1.1.36(@typescript-eslint/utils@8.26.0(eslint@9.21.0(jiti@2.4.2))(typescript@5.8.2))(eslint@9.21.0(jiti@2.4.2))(typescript@5.8.2)(vitest@3.0.7(@types/debug@4.1.12)(@types/node@22.13.9)(jiti@2.4.2)(yaml@2.7.0)))(eslint-config-prettier@10.0.2(eslint@9.21.0(jiti@2.4.2)))(eslint-plugin-jsonc@2.19.1(eslint@9.21.0(jiti@2.4.2)))(eslint-plugin-promise@7.2.1(eslint@9.21.0(jiti@2.4.2)))(eslint-plugin-regexp@2.7.0(eslint@9.21.0(jiti@2.4.2)))(eslint-plugin-unicorn@57.0.0(eslint@9.21.0(jiti@2.4.2)))(eslint-plugin-yml@1.17.0(eslint@9.21.0(jiti@2.4.2)))(eslint@9.21.0(jiti@2.4.2))(typescript-eslint@8.26.0(eslint@9.21.0(jiti@2.4.2))(typescript@5.8.2))(typescript@5.8.2)
+        specifier: ^0.24.0
+        version: 0.24.0(@eslint/markdown@6.2.2)(@vitest/eslint-plugin@1.1.36(@typescript-eslint/utils@8.26.0(eslint@9.21.0(jiti@2.4.2))(typescript@5.8.2))(eslint@9.21.0(jiti@2.4.2))(typescript@5.8.2)(vitest@3.0.7(@types/debug@4.1.12)(@types/node@22.13.9)(jiti@2.4.2)(yaml@2.7.0)))(eslint-config-prettier@10.0.2(eslint@9.21.0(jiti@2.4.2)))(eslint-plugin-jsonc@2.19.1(eslint@9.21.0(jiti@2.4.2)))(eslint-plugin-promise@7.2.1(eslint@9.21.0(jiti@2.4.2)))(eslint-plugin-regexp@2.7.0(eslint@9.21.0(jiti@2.4.2)))(eslint-plugin-unicorn@57.0.0(eslint@9.21.0(jiti@2.4.2)))(eslint-plugin-yml@1.17.0(eslint@9.21.0(jiti@2.4.2)))(eslint@9.21.0(jiti@2.4.2))(typescript-eslint@8.26.0(eslint@9.21.0(jiti@2.4.2))(typescript@5.8.2))(typescript@5.8.2)
       '@kazupon/prettier-config':
         specifier: ^0.1.1
         version: 0.1.1
@@ -286,6 +286,10 @@ packages:
     resolution: {integrity: sha512-BqStZ3HX8Yz6LvsF5ByXYrtigrV5AXADWLAGc7PH/1SxOb7/FIYYMszZZWiUou/GB9P2lXWk2SV4d+Z8h0nknw==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
+  '@eslint/js@9.22.0':
+    resolution: {integrity: sha512-vLFajx9o8d1/oL2ZkpMYbkLv8nDB6yaIwFNt7nI4+I80U/z03SxmfOMsLbvWr3p7C+Wnoh//aOu2pQW8cS0HCQ==}
+    engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+
   '@eslint/markdown@6.2.2':
     resolution: {integrity: sha512-U0/KgzI9BVUuHDQ9M2fuVgB0QZ1fSyzwm8jKmHr1dlsLHGHYzoeIA9yqLMdTbV3ivZfp6rTdt6zqre3TfNExUQ==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
@@ -333,8 +337,8 @@ packages:
     resolution: {integrity: sha512-f5DRIOZf7wxogefH03RjMPMdBF7ADTWUMoOs9kaJo06EfwF+aFhMZMDZxHg/Xe12hptN9xoZjGso2fdjapBRIA==}
     engines: {node: '>=10'}
 
-  '@kazupon/eslint-config@0.22.0':
-    resolution: {integrity: sha512-qkYZ8C9b8BA3cBRRLBtEIePWyfRtTcyEKGpV3qgjDZpwsSwenZGNw/yiLOXTWEbmDUVc1zrD+RKdOew+UN3JYQ==}
+  '@kazupon/eslint-config@0.24.0':
+    resolution: {integrity: sha512-Q1AYw0elIDrPsqukTjXkMjAhbNNmc8k9zbQELbE0DG7Gs+ETeSmRFLj5LIjYrlheB95ApYjT1v2gLLTv/mqkYQ==}
     engines: {node: '>= 20'}
     peerDependencies:
       '@eslint/css': '>=0.4.0'
@@ -348,8 +352,8 @@ packages:
       eslint-plugin-jsonc: '>=2.16.0'
       eslint-plugin-promise: '>=6.4.0'
       eslint-plugin-react: '>=7.35.0'
-      eslint-plugin-react-hooks: '>=4.6.0'
-      eslint-plugin-react-refresh: '>=0.4.0'
+      eslint-plugin-react-hooks: '>=5.2.0'
+      eslint-plugin-react-refresh: '>=0.4.19'
       eslint-plugin-regexp: '>=2.6.0'
       eslint-plugin-svelte: '>=2.43.0'
       eslint-plugin-toml: '>=0.11.0'
@@ -412,9 +416,9 @@ packages:
       typescript-eslint:
         optional: true
 
-  '@kazupon/jts-utils@0.5.0':
-    resolution: {integrity: sha512-5cMOjvdh6O/2P7w2I8XfbGBtI6rvFj2Nv6G0gaaxLW/eUfUr9Po00LcD8O2wgQv+Vc4TKETrRcAl9uK6gWODlA==}
-    engines: {node: '>= 18.18'}
+  '@kazupon/jts-utils@0.6.0':
+    resolution: {integrity: sha512-DYmeKgWI2jtTjITFtgbH70WIC3sdXF9C7Kt8k0UXGbs5MuUibhc4rlDiRzfsH4r1Y6EHp+Q34cwSEv4myuXQ9A==}
+    engines: {node: '>= 20'}
     peerDependencies:
       '@vue/reactivity': ^3.4
     peerDependenciesMeta:
@@ -2521,6 +2525,8 @@ snapshots:
 
   '@eslint/js@9.21.0': {}
 
+  '@eslint/js@9.22.0': {}
+
   '@eslint/markdown@6.2.2':
     dependencies:
       '@eslint/core': 0.10.0
@@ -2567,11 +2573,11 @@ snapshots:
       string-argv: 0.3.2
       type-detect: 4.1.0
 
-  '@kazupon/eslint-config@0.22.0(@eslint/markdown@6.2.2)(@vitest/eslint-plugin@1.1.36(@typescript-eslint/utils@8.26.0(eslint@9.21.0(jiti@2.4.2))(typescript@5.8.2))(eslint@9.21.0(jiti@2.4.2))(typescript@5.8.2)(vitest@3.0.7(@types/debug@4.1.12)(@types/node@22.13.9)(jiti@2.4.2)(yaml@2.7.0)))(eslint-config-prettier@10.0.2(eslint@9.21.0(jiti@2.4.2)))(eslint-plugin-jsonc@2.19.1(eslint@9.21.0(jiti@2.4.2)))(eslint-plugin-promise@7.2.1(eslint@9.21.0(jiti@2.4.2)))(eslint-plugin-regexp@2.7.0(eslint@9.21.0(jiti@2.4.2)))(eslint-plugin-unicorn@57.0.0(eslint@9.21.0(jiti@2.4.2)))(eslint-plugin-yml@1.17.0(eslint@9.21.0(jiti@2.4.2)))(eslint@9.21.0(jiti@2.4.2))(typescript-eslint@8.26.0(eslint@9.21.0(jiti@2.4.2))(typescript@5.8.2))(typescript@5.8.2)':
+  '@kazupon/eslint-config@0.24.0(@eslint/markdown@6.2.2)(@vitest/eslint-plugin@1.1.36(@typescript-eslint/utils@8.26.0(eslint@9.21.0(jiti@2.4.2))(typescript@5.8.2))(eslint@9.21.0(jiti@2.4.2))(typescript@5.8.2)(vitest@3.0.7(@types/debug@4.1.12)(@types/node@22.13.9)(jiti@2.4.2)(yaml@2.7.0)))(eslint-config-prettier@10.0.2(eslint@9.21.0(jiti@2.4.2)))(eslint-plugin-jsonc@2.19.1(eslint@9.21.0(jiti@2.4.2)))(eslint-plugin-promise@7.2.1(eslint@9.21.0(jiti@2.4.2)))(eslint-plugin-regexp@2.7.0(eslint@9.21.0(jiti@2.4.2)))(eslint-plugin-unicorn@57.0.0(eslint@9.21.0(jiti@2.4.2)))(eslint-plugin-yml@1.17.0(eslint@9.21.0(jiti@2.4.2)))(eslint@9.21.0(jiti@2.4.2))(typescript-eslint@8.26.0(eslint@9.21.0(jiti@2.4.2))(typescript@5.8.2))(typescript@5.8.2)':
     dependencies:
       '@eslint-community/eslint-plugin-eslint-comments': 4.4.1(eslint@9.21.0(jiti@2.4.2))
-      '@eslint/js': 9.21.0
-      '@kazupon/jts-utils': 0.5.0(typescript@5.8.2)
+      '@eslint/js': 9.22.0
+      '@kazupon/jts-utils': 0.6.0(typescript@5.8.2)
       eslint: 9.21.0(jiti@2.4.2)
       eslint-flat-config-utils: 2.0.1
       globals: 16.0.0
@@ -2595,7 +2601,7 @@ snapshots:
       - typescript
       - unplugin-unused
 
-  '@kazupon/jts-utils@0.5.0(typescript@5.8.2)':
+  '@kazupon/jts-utils@0.6.0(typescript@5.8.2)':
     dependencies:
       tsdown: 0.6.0(typescript@5.8.2)
     transitivePeerDependencies:
