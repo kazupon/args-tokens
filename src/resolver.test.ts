@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { parseArgs } from './parser'
-import { resolveArgs } from './resolver'
+import { OptionResolveError, resolveArgs } from './resolver'
 
 import type { ArgOptions } from './resolver'
 
@@ -49,6 +49,8 @@ describe('resolveArgs', () => {
     const { error } = resolveArgs(options, tokens)
     expect(error?.errors.length).toBe(1)
     expect((error?.errors[0] as Error).message).toEqual("Option '--host' or '-o' is required")
+    expect((error?.errors[0] as OptionResolveError).name).toEqual('host')
+    expect((error?.errors[0] as OptionResolveError).schema.type).toEqual('string')
   })
 
   test('missing defaultable option', () => {
@@ -67,9 +69,11 @@ describe('resolveArgs', () => {
     const tokens = parseArgs(args)
     const { error } = resolveArgs(options, tokens)
     expect(error?.errors.length).toBe(1)
-    expect((error?.errors[0] as Error).message).toEqual(
+    expect((error?.errors[0] as OptionResolveError).message).toEqual(
       "Option '--port' or '-p' should be 'number'"
     )
+    expect((error?.errors[0] as OptionResolveError).name).toEqual('port')
+    expect((error?.errors[0] as OptionResolveError).schema.type).toEqual('number')
   })
 
   test('multiple errors', () => {
@@ -80,7 +84,11 @@ describe('resolveArgs', () => {
     expect((error?.errors[0] as Error).message).toEqual(
       "Option '--port' or '-p' should be 'number'"
     )
-    expect((error?.errors[1] as Error).message).toEqual("Option '--host' or '-o' is required")
+    expect((error?.errors[1] as OptionResolveError).message).toEqual(
+      "Option '--host' or '-o' is required"
+    )
+    expect((error?.errors[1] as OptionResolveError).name).toEqual('host')
+    expect((error?.errors[1] as OptionResolveError).schema.type).toEqual('string')
   })
 
   test('missing positionals', () => {
