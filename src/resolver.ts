@@ -268,10 +268,22 @@ export function resolveArgs<T extends ArgOptions>(
   return { values, positionals, error: errors.length > 0 ? new AggregateError(errors) : undefined }
 }
 
-function createRequireError(option: string, schema: ArgOptionSchema): Error {
-  return new Error(
-    `Option '--${option}' ${schema.short ? `or '-${schema.short}' ` : ''}is required`
+function createRequireError(option: string, schema: ArgOptionSchema): OptionResolveError {
+  return new OptionResolveError(
+    `Option '--${option}' ${schema.short ? `or '-${schema.short}' ` : ''}is required`,
+    option,
+    schema
   )
+}
+
+export class OptionResolveError extends Error {
+  name: string
+  schema: ArgOptionSchema
+  constructor(message: string, name: string, schema: ArgOptionSchema) {
+    super(message)
+    this.name = name
+    this.schema = schema
+  }
 }
 
 function validateRequire(
@@ -312,8 +324,10 @@ function isNumeric(str: string): boolean {
 }
 
 function createTypeError(option: string, schema: ArgOptionSchema): TypeError {
-  return new TypeError(
-    `Option '--${option}' ${schema.short ? `or '-${schema.short}' ` : ''}should be '${schema.type}'`
+  return new OptionResolveError(
+    `Option '--${option}' ${schema.short ? `or '-${schema.short}' ` : ''}should be '${schema.type}'`,
+    option,
+    schema
   )
 }
 
