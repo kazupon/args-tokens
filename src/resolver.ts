@@ -221,7 +221,7 @@ export function resolveArgs<T extends ArgOptions>(
           }
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ;(values as any)[option] = resolveOptionValue(token, schema)
         continue
       }
@@ -250,7 +250,7 @@ export function resolveArgs<T extends ArgOptions>(
           }
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ;(values as any)[option] = resolveOptionValue(token, schema)
         continue
       }
@@ -259,7 +259,7 @@ export function resolveArgs<T extends ArgOptions>(
     // eslint-disable-next-line unicorn/no-null
     if (values[option] == null && schema.default != null) {
       // check if the default value is in values
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ;(values as any)[option] = schema.default
     }
   }

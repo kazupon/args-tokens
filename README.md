@@ -25,7 +25,7 @@
 
 With [mitata](https://github.com/evanwashere/mitata):
 
-```
+```sh
 pnpm bench:mitata
 
 > args-tokens@0.0.0 bench:mitata /path/to/projects/args-tokens
@@ -63,7 +63,7 @@ args-tokens parse (equivalent to util.parseArgs) ┤■■■■■■■■■ 
 
 With [vitest](https://vitest.dev/guide/features.html#benchmarking):
 
-```
+```sh
 pnpm bench:vitest
 
 > args-tokens@0.0.0 bench:vitest /path/to/projects/args-tokens
