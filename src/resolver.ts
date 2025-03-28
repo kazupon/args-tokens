@@ -7,6 +7,12 @@ import type { ArgToken } from './parser'
 
 /**
  * An option schema for an argument.
+ *
+ * @description This schema is similar to the schema of the `node:utils`.
+ * defference is that:
+ * - `multiple` property is not supported
+ * - `required` property and `description` property are added
+ * - `default` property type, not suuport multiple types
  */
 export interface ArgOptionSchema {
   /**
@@ -17,6 +23,10 @@ export interface ArgOptionSchema {
    * A single character alias for the option.
    */
   short?: string
+  /**
+   * A description of the argument.
+   */
+  description?: string
   /**
    * Whether the argument is required or not.
    */
