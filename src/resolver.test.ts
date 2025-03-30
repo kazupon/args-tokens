@@ -50,6 +50,7 @@ describe('resolveArgs', () => {
     expect(error?.errors.length).toBe(1)
     expect((error?.errors[0] as Error).message).toEqual("Option '--host' or '-o' is required")
     expect((error?.errors[0] as OptionResolveError).name).toEqual('host')
+    expect((error?.errors[0] as OptionResolveError).type).toEqual('required')
     expect((error?.errors[0] as OptionResolveError).schema.type).toEqual('string')
   })
 
@@ -73,6 +74,7 @@ describe('resolveArgs', () => {
       "Option '--port' or '-p' should be 'number'"
     )
     expect((error?.errors[0] as OptionResolveError).name).toEqual('port')
+    expect((error?.errors[0] as OptionResolveError).type).toEqual('type')
     expect((error?.errors[0] as OptionResolveError).schema.type).toEqual('number')
   })
 
@@ -84,10 +86,13 @@ describe('resolveArgs', () => {
     expect((error?.errors[0] as Error).message).toEqual(
       "Option '--port' or '-p' should be 'number'"
     )
+    expect((error?.errors[0] as OptionResolveError).name).toEqual('port')
+    expect((error?.errors[0] as OptionResolveError).type).toEqual('type')
     expect((error?.errors[1] as OptionResolveError).message).toEqual(
       "Option '--host' or '-o' is required"
     )
     expect((error?.errors[1] as OptionResolveError).name).toEqual('host')
+    expect((error?.errors[1] as OptionResolveError).type).toEqual('required')
     expect((error?.errors[1] as OptionResolveError).schema.type).toEqual('string')
   })
 
