@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 // Modifier: kazuya kawaguchi (a.k.a. kazupon)
 
-import { parseArgs } from './parser.js'
-import { resolveArgs } from './resolver.js'
+import { parseArgs } from './parser.ts'
+import { resolveArgs } from './resolver.ts'
 
-import type { ParserOptions } from './parser'
-import type { ArgOptions, ArgValues } from './resolver'
+import type { ParserOptions } from './parser.ts'
+import type { ArgOptions, ArgValues } from './resolver.ts'
 
 /**
  * Parse options for {@link parse} function

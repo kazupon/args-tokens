@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest'
-import { parse } from './parse.js'
+import { parse } from './parse.ts'
 
-import type { ArgOptions } from './resolver'
+import type { ArgOptions } from './resolver.ts'
 
 const options = {
   help: {

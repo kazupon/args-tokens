@@ -1,6 +1,6 @@
 import { parseArgs as parseArgsNode } from 'node:util'
 import { describe, expect, test } from 'vitest'
-import { parseArgs } from './parser'
+import { parseArgs } from './parser.ts'
 
 describe('short options', () => {
   test.each(['-foo', '-xJAPAN', '-foo 1'])('%s', argv => {

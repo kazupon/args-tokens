@@ -1,5 +1,5 @@
 import { expectTypeOf, test } from 'vitest'
-import type { ArgValues } from './resolver'
+import type { ArgValues } from './resolver.ts'
 
 test('ArgValues', () => {
   type Options = {
