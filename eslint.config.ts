@@ -25,7 +25,11 @@ const config: ReturnType<typeof defineConfig> = defineConfig(
     json5: true,
     jsonc: true
   }),
-  yaml(),
+  yaml({
+    rules: {
+      'yml/quotes': 'off'
+    }
+  }),
   markdown(),
   vitest(),
   prettier(),
@@ -39,13 +43,11 @@ const config: ReturnType<typeof defineConfig> = defineConfig(
   {
     ignores: [
       '.vscode',
-      '.github',
       'lib',
       'tsconfig.json',
       'playground/deno/**',
       'playground/bun/**',
-      'pnpm-lock.yaml',
-      'eslint.config.ts'
+      'pnpm-lock.yaml'
     ]
   }
 )

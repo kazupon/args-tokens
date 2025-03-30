@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'vitest'
-import { parseArgs } from './parser'
-import { OptionResolveError, resolveArgs } from './resolver'
+import { parseArgs } from './parser.ts'
+import { OptionResolveError, resolveArgs } from './resolver.ts'
 
-import type { ArgOptions } from './resolver'
+import type { ArgOptions } from './resolver.ts'
 
 const options = {
   help: {

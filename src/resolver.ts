@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 // Modifier: kazuya kawaguchi (a.k.a. kazupon)
 
-import { hasLongOptionPrefix, isShortOption } from './parser.js'
+import { hasLongOptionPrefix, isShortOption } from './parser.ts'
 
-import type { ArgToken } from './parser'
+import type { ArgToken } from './parser.ts'
 
 /**
  * An option schema for an argument.
@@ -287,7 +287,7 @@ function createRequireError(option: string, schema: ArgOptionSchema): OptionReso
 }
 
 export class OptionResolveError extends Error {
-  name: string
+  override name: string
   schema: ArgOptionSchema
   constructor(message: string, name: string, schema: ArgOptionSchema) {
     super(message)
