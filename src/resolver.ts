@@ -1,6 +1,11 @@
 // SPDX-License-Identifier: MIT
 // Modifier: kazuya kawaguchi (a.k.a. kazupon)
 
+/**
+ * Entry point of argument optoins resolver.
+ * @module
+ */
+
 import { hasLongOptionPrefix, isShortOption } from './parser.ts'
 
 import type { ArgToken } from './parser.ts'

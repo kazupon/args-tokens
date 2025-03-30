@@ -6,6 +6,11 @@
 // Code url: https://github.com/nodejs/node/blob/main/lib/internal/util/parse_args/parse_args.js
 
 /**
+ * Entry point of argument parser.
+ * @module
+ */
+
+/**
  * Argument token Kind.
  * - `option`: option token, support short option (e.g. `-x`) and long option (e.g. `--foo`)
  * - `option-terminator`: option terminator (`--`) token, see guideline 10 in https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap12.html
