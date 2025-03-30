@@ -286,9 +286,15 @@ function createRequireError(option: string, schema: ArgOptionSchema): OptionReso
   return new OptionResolveError(
     `Option '--${option}' ${schema.short ? `or '-${schema.short}' ` : ''}is required`,
     option,
+    'required',
     schema
   )
 }
+
+/**
+ * An error type for {@link OptionResolveError}.
+ */
+export type OptionResolveErrorType = 'type' | 'required'
 
 /**
  * An error that occurs when resolving options.
@@ -297,9 +303,16 @@ function createRequireError(option: string, schema: ArgOptionSchema): OptionReso
 export class OptionResolveError extends Error {
   override name: string
   schema: ArgOptionSchema
-  constructor(message: string, name: string, schema: ArgOptionSchema) {
+  type: OptionResolveErrorType
+  constructor(
+    message: string,
+    name: string,
+    type: OptionResolveErrorType,
+    schema: ArgOptionSchema
+  ) {
     super(message)
     this.name = name
+    this.type = type
     this.schema = schema
   }
 }
@@ -345,6 +358,7 @@ function createTypeError(option: string, schema: ArgOptionSchema): TypeError {
   return new OptionResolveError(
     `Option '--${option}' ${schema.short ? `or '-${schema.short}' ` : ''}should be '${schema.type}'`,
     option,
+    'type',
     schema
   )
 }
