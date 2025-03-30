@@ -8,29 +8,29 @@ import type { ParserOptions } from './parser.ts'
 import type { ArgOptions, ArgValues } from './resolver.ts'
 
 /**
- * Parse options for {@link parse} function
+ * Parse options for {@link parse} function.
  */
 export interface ParseOptions<O extends ArgOptions> extends ParserOptions {
   /**
-   * Command line options, about details see {@link ArgOptions}
+   * Command line options, about details see {@link ArgOptions}.
    */
   options?: O
 }
 
 /**
- * Parsed command line arguments
+ * Parsed command line arguments.
  */
 export type ParsedArgs<T extends ArgOptions> = {
   /**
-   * Parsed values, same as `values` in {@link resolveArgs}
+   * Parsed values, same as `values` in {@link resolveArgs}.
    */
   values: ArgValues<T>
   /**
-   * Positional arguments, same as `positionals` in {@link resolveArgs}
+   * Positional arguments, same as `positionals` in {@link resolveArgs}.
    */
   positionals: string[]
   /**
-   * Validation errors, same as `errors` in {@link resolveArgs}
+   * Validation errors, same as `errors` in {@link resolveArgs}.
    */
   error: AggregateError | undefined
 }
@@ -47,8 +47,8 @@ const DEFAULT_OPTIONS = {
 } as const satisfies ArgOptions
 
 /**
- * Parse command line arguments
- * @description This function is a convenient API, that is used {@link parseArgs} and {@link resolveArgs} in internal.
+ * Parse command line arguments.
+ * This function is a convenient API, that is used {@link parseArgs} and {@link resolveArgs} in internal.
  * @example
  * ```js
  * import { parse } from 'args-tokens'

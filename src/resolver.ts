@@ -7,8 +7,7 @@ import type { ArgToken } from './parser.ts'
 
 /**
  * An option schema for an argument.
- *
- * @description This schema is similar to the schema of the `node:utils`.
+ * This schema is similar to the schema of the `node:utils`.
  * difference is that:
  * - `multiple` property is not supported
  * - `required` property and `description` property are added
@@ -83,7 +82,7 @@ type FilterArgs<
 }
 
 /**
- * Resolve command line arguments
+ * Resolve command line arguments.
  * @param options - An options that contains {@link ArgOptionSchema | options schema}.
  * @param tokens - An array of {@link ArgToken | tokens}.
  * @returns An object that contains the values of the arguments, positional arguments, and {@link AggregateError | validation errors}.
@@ -286,6 +285,10 @@ function createRequireError(option: string, schema: ArgOptionSchema): OptionReso
   )
 }
 
+/**
+ * An error that occurs when resolving options.
+ * This error is thrown when the option is not valid.
+ */
 export class OptionResolveError extends Error {
   override name: string
   schema: ArgOptionSchema

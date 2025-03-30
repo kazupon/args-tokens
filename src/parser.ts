@@ -6,7 +6,7 @@
 // Code url: https://github.com/nodejs/node/blob/main/lib/internal/util/parse_args/parse_args.js
 
 /**
- * Argument token Kind
+ * Argument token Kind.
  * - `option`: option token, support short option (e.g. `-x`) and long option (e.g. `--foo`)
  * - `option-terminator`: option terminator (`--`) token, see guideline 10 in https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap12.html
  * - `positional`: positional token
@@ -14,23 +14,23 @@
 type ArgTokenKind = 'option' | 'option-terminator' | 'positional'
 
 /**
- * Argument token
+ * Argument token.
  */
 export interface ArgToken {
   /**
-   * Argument token kind
+   * Argument token kind.
    */
   kind: ArgTokenKind
   /**
-   * Argument token index, e.g `--foo bar` => `--foo` index is 0, `bar` index is 1
+   * Argument token index, e.g `--foo bar` => `--foo` index is 0, `bar` index is 1.
    */
   index: number
   /**
-   * Option name, e.g. `--foo` => `foo`, `-x` => `x`
+   * Option name, e.g. `--foo` => `foo`, `-x` => `x`.
    */
   name?: string
   /**
-   * Raw option name, e.g. `--foo` => `--foo`, `-x` => `-x`
+   * Raw option name, e.g. `--foo` => `--foo`, `-x` => `-x`.
    */
   rawName?: string
   /**
@@ -53,18 +53,18 @@ const SHORT_OPTION_PREFIX = HYPHEN_CHAR
 const LONG_OPTION_PREFIX = '--'
 
 /**
- * Parser Options
+ * Parser Options.
  */
 export interface ParserOptions {
   /**
-   * [Node.js parseArgs](https://nodejs.org/api/util.html#parseargs-tokens) tokens compatible mode
+   * [Node.js parseArgs](https://nodejs.org/api/util.html#parseargs-tokens) tokens compatible mode.
    * @default false
    */
   allowCompatible?: boolean
 }
 
 /**
- * Parse command line arguments
+ * Parse command line arguments.
  * @example
  * ```js
  * import { parseArgs } from 'args-tokens' // for Node.js and Bun
@@ -77,7 +77,7 @@ export interface ParserOptions {
  * ```
  * @param args command line arguments
  * @param options parse options
- * @returns argument tokens
+ * @returns Argument tokens.
  */
 export function parseArgs(args: string[], options: ParserOptions = {}): ArgToken[] {
   const { allowCompatible = false } = options
@@ -228,9 +228,9 @@ export function parseArgs(args: string[], options: ParserOptions = {}): ArgToken
 }
 
 /**
- * Check if `arg` is a short option (e.g. `-f`)
+ * Check if `arg` is a short option (e.g. `-f`).
  * @param arg the argument to check
- * @returns whether `arg` is a short option
+ * @returns whether `arg` is a short option.
  */
 export function isShortOption(arg: string): boolean {
   return (
@@ -239,9 +239,9 @@ export function isShortOption(arg: string): boolean {
 }
 
 /**
- * Check if `arg` is a short option group (e.g. `-abc`)
+ * Check if `arg` is a short option group (e.g. `-abc`).
  * @param arg the argument to check
- * @returns whether `arg` is a short option group
+ * @returns whether `arg` is a short option group.
  */
 function isShortOptionGroup(arg: string) {
   if (arg.length <= 2) {
@@ -260,27 +260,27 @@ function isShortOptionGroup(arg: string) {
 }
 
 /**
- * Check if `arg` is a long option (e.g. `--foo`)
+ * Check if `arg` is a long option (e.g. `--foo`).
  * @param arg the argument to check
- * @returns whether `arg` is a long option
+ * @returns whether `arg` is a long option.
  */
 function isLongOption(arg: string) {
   return hasLongOptionPrefix(arg) && !arg.includes(EQUAL_CHAR, 3)
 }
 
 /**
- * Check if `arg` is a long option with value (e.g. `--foo=bar`)
+ * Check if `arg` is a long option with value (e.g. `--foo=bar`).
  * @param arg the argument to check
- * @returns whether `arg` is a long option
+ * @returns whether `arg` is a long option.
  */
 function isLongOptionAndValue(arg: string) {
   return hasLongOptionPrefix(arg) && arg.includes(EQUAL_CHAR, 3)
 }
 
 /**
- * Check if `arg` is a long option prefix (e.g. `--`)
+ * Check if `arg` is a long option prefix (e.g. `--`).
  * @param arg the argument to check
- * @returns whether `arg` is a long option prefix
+ * @returns whether `arg` is a long option prefix.
  */
 export function hasLongOptionPrefix(arg: string): boolean {
   // @ts-ignore -- NOTE: `~` is a bitwise NOT operator
@@ -288,9 +288,9 @@ export function hasLongOptionPrefix(arg: string): boolean {
 }
 
 /**
- * Check if a `value` is an option value
+ * Check if a `value` is an option value.
  * @param value a value to check
- * @returns whether a `value` is an option value
+ * @returns whether a `value` is an option value.
  */
 function hasOptionValue(value: string | undefined): boolean {
   // eslint-disable-next-line unicorn/no-null

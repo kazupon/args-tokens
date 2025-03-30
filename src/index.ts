@@ -1,6 +1,11 @@
 // SPDX-License-Identifier: MIT
 // Modifier: kazuya kawaguchi (a.k.a. kazupon)
 
+/**
+ * Main entry point of `args-tokens`.
+ * @module default
+ */
+
 export { parse } from './parse.ts'
 export { parseArgs } from './parser.ts'
 export { OptionResolveError, resolveArgs } from './resolver.ts'
