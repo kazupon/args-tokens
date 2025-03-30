@@ -2,7 +2,7 @@
 // Modifier: kazuya kawaguchi (a.k.a. kazupon)
 
 /**
- * Entry point of argument optoins resolver.
+ * Entry point of argument options resolver.
  * @module
  */
 
