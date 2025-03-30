@@ -89,7 +89,7 @@
   },
   "devDependencies": {
     "@eslint/markdown": "^6.3.0",
-    "@kazupon/eslint-config": "^0.26.0",
+    "@kazupon/eslint-config": "^0.26.1",
     "@kazupon/prettier-config": "^0.1.1",
     "@types/node": "^22.13.14",
     "@vitest/eslint-plugin": "^1.1.38",
@@ -103,7 +103,7 @@
     "eslint-plugin-yml": "^1.17.0",
     "gh-changelogen": "^0.2.8",
     "jsr": "^0.13.4",
-    "knip": "^5.46.2",
+    "knip": "^5.46.3",
     "lint-staged": "^15.5.0",
     "mitata": "^1.0.34",
     "pkg-pr-new": "^0.0.41",
