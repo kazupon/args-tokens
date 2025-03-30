@@ -25,7 +25,11 @@ const config: ReturnType<typeof defineConfig> = defineConfig(
     json5: true,
     jsonc: true
   }),
-  yaml(),
+  yaml({
+    rules: {
+      'yml/quotes': 'off'
+    }
+  }),
   markdown(),
   vitest(),
   prettier(),
