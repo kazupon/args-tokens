@@ -313,6 +313,16 @@ This project is inspired by:
 - [`util.parseArgs`](https://nodejs.org/api/util.html#utilparseargsconfig), created by Node.js contributors and [OpenJS Foundation](https://openjsf.org/)
 - [`pkgjs/parseargs`](https://github.com/pkgjs/parseargs), created by Node.js CLI package maintainers and Node.js community.
 
+## 🤝 Sponsors
+
+The development of Gunish is supported by my OSS sponsors!
+
+<p align="center">
+  <a href="https://cdn.jsdelivr.net/gh/kazupon/sponsors/sponsors.svg">
+    <img src='https://cdn.jsdelivr.net/gh/kazupon/sponsors/sponsors.svg'/>
+  </a>
+</p>
+
 ## ©️ License
 
 [MIT](http://opensource.org/licenses/MIT)
