@@ -1,9 +1,11 @@
-// SPDX-License-Identifier: MIT
-// Modifier: kazuya kawaguchi (a.k.a. kazupon)
-
 /**
  * Entry point of argument options resolver.
  * @module
+ */
+
+/**
+ * @author kazuya kawaguchi (a.k.a. kazupon)
+ * @license MIT
  */
 
 import { hasLongOptionPrefix, isShortOption } from './parser.ts'

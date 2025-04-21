@@ -12,11 +12,25 @@ import {
   vitest,
   yaml
 } from '@kazupon/eslint-config'
+import { globalIgnores } from 'eslint/config'
+
+import type { Linter } from 'eslint'
 
 const config: ReturnType<typeof defineConfig> = defineConfig(
   javascript(),
   typescript(),
-  comments(),
+  comments({
+    kazupon: {
+      ignores: [
+        '**/*.test.ts',
+        '**/*.test.js',
+        '**/*.test-d.ts',
+        '**/*.spec.ts',
+        '**/*.spec.js',
+        'bench/**.js'
+      ]
+    }
+  }),
   promise(),
   regexp(),
   unicorn(),
@@ -40,16 +54,14 @@ const config: ReturnType<typeof defineConfig> = defineConfig(
       'unicorn/filename-case': 'off'
     }
   },
-  {
-    ignores: [
-      '.vscode',
-      'lib',
-      'tsconfig.json',
-      'playground/deno/**',
-      'playground/bun/**',
-      'pnpm-lock.yaml'
-    ]
-  }
+  globalIgnores([
+    '.vscode',
+    'lib',
+    'tsconfig.json',
+    'playground/deno/**',
+    'playground/bun/**',
+    'pnpm-lock.yaml'
+  ]) as Linter.Config
 )
 
 export default config

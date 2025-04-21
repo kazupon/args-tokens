@@ -1,13 +1,15 @@
-// SPDX-License-Identifier: MIT
-// Modifier: kazuya kawaguchi (a.k.a. kazupon)
-// Forked from `nodejs/node` (`pkgjs/parseargs`)
-// Repository url: https://github.com/nodejs/node (https://github.com/pkgjs/parseargs)
-// Author: Node.js contributors
-// Code url: https://github.com/nodejs/node/blob/main/lib/internal/util/parse_args/parse_args.js
-
 /**
  * Entry point of argument parser.
  * @module
+ */
+
+/**
+ * forked from `nodejs/node` (`pkgjs/parseargs`)
+ * repository url: https://github.com/nodejs/node (https://github.com/pkgjs/parseargs)
+ * code url: https://github.com/nodejs/node/blob/main/lib/internal/util/parse_args/parse_args.js
+ *
+ * @author kazuya kawaguchi (a.k.a. kazupon)
+ * @license MIT
  */
 
 /**

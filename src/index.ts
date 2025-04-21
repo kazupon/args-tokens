@@ -1,9 +1,11 @@
-// SPDX-License-Identifier: MIT
-// Modifier: kazuya kawaguchi (a.k.a. kazupon)
-
 /**
  * Main entry point of `args-tokens`.
  * @module default
+ */
+
+/**
+ * @author kazuya kawaguchi (a.k.a. kazupon)
+ * @license MIT
  */
 
 export { parse } from './parse.ts'

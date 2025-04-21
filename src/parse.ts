@@ -1,5 +1,7 @@
-// SPDX-License-Identifier: MIT
-// Modifier: kazuya kawaguchi (a.k.a. kazupon)
+/**
+ * @author kazuya kawaguchi (a.k.a. kazupon)
+ * @license MIT
+ */
 
 import { parseArgs } from './parser.ts'
 import { resolveArgs } from './resolver.ts'
