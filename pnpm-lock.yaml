@@ -74,6 +74,9 @@ importers:
       tsdown:
         specifier: ^0.9.1
         version: 0.9.1(typescript@5.8.3)
+      tsdown-jsr-exports-lint:
+        specifier: ^0.1.4
+        version: 0.1.4
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
@@ -2445,6 +2448,10 @@ packages:
     engines: {node: '>=18.12'}
     peerDependencies:
       typescript: '>=4.8.4'
+
+  tsdown-jsr-exports-lint@0.1.4:
+    resolution: {integrity: sha512-D/604VHOXT26dAnHNcplClLZM5S//0/5+2KmGBOTt1LfD5Fbg4SvVSdNPVj27mHYi4suMwajQEG3TYNP2lqpGw==}
+    engines: {node: '>= 20'}
 
   tsdown@0.6.10:
     resolution: {integrity: sha512-z8+r/9ToKADbsCoGY29z6h7gzJGCB/65NMFou492ZwqXSO50Z3RaV9FHnB8zqpR1tVdSdQJJap7vE3IpjwDV/Q==}
@@ -5095,6 +5102,10 @@ snapshots:
   ts-api-utils@2.0.1(typescript@5.8.3):
     dependencies:
       typescript: 5.8.3
+
+  tsdown-jsr-exports-lint@0.1.4:
+    dependencies:
+      picocolors: 1.1.1
 
   tsdown@0.6.10(typescript@5.8.3):
     dependencies:
