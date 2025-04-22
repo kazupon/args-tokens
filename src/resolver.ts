@@ -152,11 +152,27 @@ export function resolveArgs<T extends ArgOptions>(
    * separate tokens into positionals, long and short options, after that resolve values
    */
 
+  const schemas = Object.values(options)
+
   // eslint-disable-next-line unicorn/no-for-loop
   for (let i = 0; i < tokens.length; i++) {
     const token = tokens[i]
     if (token.kind === 'positional') {
-      positionals.push(token.value!)
+      if (currentShortOption) {
+        const found = schemas.find(
+          schema => schema.short === currentShortOption!.name && schema.type === 'boolean'
+        )
+        if (found) {
+          positionals.push(token.value!)
+        }
+      } else if (currentLongOption) {
+        const found = options[currentLongOption.name!]?.type === 'boolean'
+        if (found) {
+          positionals.push(token.value!)
+        }
+      } else {
+        positionals.push(token.value!)
+      }
       // check if previous option is not resolved
       applyLongOptionValue(token.value)
       applyShortOptionValue(token.value)
