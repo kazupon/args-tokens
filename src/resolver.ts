@@ -405,7 +405,7 @@ function validateValue(
     case 'enum': {
       if (schema.choices && !schema.choices.includes(token.value!)) {
         return new OptionResolveError(
-          `Option '--${option}' ${schema.short ? `or '-${schema.short}' ` : ''}should be choiced from '${schema.type}' [${schema.choices.map(c => JSON.stringify(c)).join(', ')}] values`,
+          `Option '--${option}' ${schema.short ? `or '-${schema.short}' ` : ''}should be chosen from '${schema.type}' [${schema.choices.map(c => JSON.stringify(c)).join(', ')}] values`,
           option,
           'type',
           schema
