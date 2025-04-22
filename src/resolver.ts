@@ -89,14 +89,28 @@ type FilterArgs<
 }
 
 /**
+ * An options for {@link resolveArgs | resolve arguments}.
+ */
+export interface ResolveArgsOptions {
+  /**
+   * Whether to group short options.
+   * @default false
+   * @see guideline 5 in https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/V1_chap12.html
+   */
+  optionGrouping?: boolean
+}
+
+/**
  * Resolve command line arguments.
  * @param options - An options that contains {@link ArgOptionSchema | options schema}.
  * @param tokens - An array of {@link ArgToken | tokens}.
+ * @param resolveArgsOptions - An options that contains {@link resolveArgsOptions | resolve arguments options}.
  * @returns An object that contains the values of the arguments, positional arguments, and {@link AggregateError | validation errors}.
  */
 export function resolveArgs<T extends ArgOptions>(
   options: T,
-  tokens: ArgToken[]
+  tokens: ArgToken[],
+  { optionGrouping = false }: ResolveArgsOptions = {}
 ): { values: ArgValues<T>; positionals: string[]; error: AggregateError | undefined } {
   const positionals = [] as string[]
 
@@ -159,7 +173,13 @@ export function resolveArgs<T extends ArgOptions>(
         } else if (isShortOption(token.rawName)) {
           if (currentShortOption) {
             if (currentShortOption.index === token.index) {
-              expandableShortOptions.push({ ...token })
+              if (optionGrouping) {
+                currentShortOption.value = token.value
+                shortOptionTokens.push({ ...currentShortOption })
+                currentShortOption = { ...token }
+              } else {
+                expandableShortOptions.push({ ...token })
+              }
             } else {
               currentShortOption.value = toShortValue()
               shortOptionTokens.push({ ...currentShortOption })

@@ -7,12 +7,12 @@ import { parseArgs } from './parser.ts'
 import { resolveArgs } from './resolver.ts'
 
 import type { ParserOptions } from './parser.ts'
-import type { ArgOptions, ArgValues } from './resolver.ts'
+import type { ArgOptions, ArgValues, ResolveArgsOptions } from './resolver.ts'
 
 /**
  * Parse options for {@link parse} function.
  */
-export interface ParseOptions<O extends ArgOptions> extends ParserOptions {
+export interface ParseOptions<O extends ArgOptions> extends ParserOptions, ResolveArgsOptions {
   /**
    * Command line options, about details see {@link ArgOptions}.
    */
