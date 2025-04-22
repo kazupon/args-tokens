@@ -123,7 +123,7 @@ describe('resolveArgs', () => {
       port: 9131,
       host: 'example.com'
     })
-    expect(positionals).toEqual(['dev', '9131', 'example.com', 'bar'])
+    expect(positionals).toEqual(['dev', 'bar'])
   })
 
   test('short options value specified with equals', () => {
@@ -159,7 +159,7 @@ describe('resolveArgs', () => {
       port: 9131,
       host: 'example.com'
     })
-    expect(positionals).toEqual(['dev', '9131', 'example.com', 'bar'])
+    expect(positionals).toEqual(['dev', 'bar'])
     expect(error).toBeUndefined()
   })
 
@@ -185,7 +185,7 @@ describe('resolveArgs', () => {
       help: true,
       version: true
     })
-    expect(positionals).toEqual(['dev', 'example.com', 'foo', 'bar', 'baz'])
+    expect(positionals).toEqual(['dev', 'foo', 'bar', 'baz'])
     expect(error).toBeUndefined()
   })
 
@@ -207,7 +207,7 @@ describe('resolveArgs', () => {
     expect(values).toEqual({
       foo: 'foo'
     })
-    expect(positionals).toEqual(['dev', '{ "polluted": 1 }'])
+    expect(positionals).toEqual(['dev'])
     expect(error).toBeUndefined()
   })
 })
@@ -271,7 +271,7 @@ describe('option group', () => {
       tokens,
       { optionGrouping: true }
     )
-    expect(positionals).toEqual(['dev', 'example.com', 'foo', 'bar'])
+    expect(positionals).toEqual(['dev', 'foo', 'bar'])
     expect(values).toEqual({
       debug: true,
       silent: true,

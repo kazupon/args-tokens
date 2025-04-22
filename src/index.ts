@@ -14,4 +14,10 @@ export { OptionResolveError, resolveArgs } from './resolver.ts'
 
 export type { ParsedArgs, ParseOptions } from './parse.ts'
 export type { ArgToken, ParserOptions } from './parser.ts'
-export type { ArgOptions, ArgOptionSchema, ArgValues, OptionResolveErrorType } from './resolver.ts'
+export type {
+  ArgOptions,
+  ArgOptionSchema,
+  ArgValues,
+  OptionResolveErrorType,
+  ResolveArgsOptions
+} from './resolver.ts'

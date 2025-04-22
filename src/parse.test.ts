@@ -49,5 +49,5 @@ test('parse', () => {
     help: true,
     version: true
   })
-  expect(positionals).toEqual(['dev', 'example.com', 'foo', 'bar', 'baz'])
+  expect(positionals).toEqual(['dev', 'foo', 'bar', 'baz'])
 })
