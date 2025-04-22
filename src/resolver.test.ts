@@ -317,7 +317,7 @@ describe('enum option', () => {
     )
     expect(error?.errors.length).toBe(1)
     expect((error?.errors[0] as OptionResolveError).message).toEqual(
-      `Option '--log' or '-l' should be choiced from 'enum' ["debug", "info", "warn", "error"] values`
+      `Option '--log' or '-l' should be chosen from 'enum' ["debug", "info", "warn", "error"] values`
     )
     expect((error?.errors[0] as OptionResolveError).name).toEqual('log')
     expect((error?.errors[0] as OptionResolveError).type).toEqual('type')
@@ -399,7 +399,7 @@ describe('enum option', () => {
     )
     expect(error?.errors.length).toBe(1)
     expect((error?.errors[0] as OptionResolveError).message).toEqual(
-      `Option '--log' or '-l' should be choiced from 'enum' ["debug", "info", "warn", "error"] values`
+      `Option '--log' or '-l' should be chosen from 'enum' ["debug", "info", "warn", "error"] values`
     )
     expect((error?.errors[0] as OptionResolveError).name).toEqual('log')
     expect((error?.errors[0] as OptionResolveError).type).toEqual('type')
