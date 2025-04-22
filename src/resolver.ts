@@ -18,13 +18,14 @@ import type { ArgToken } from './parser.ts'
  * difference is that:
  * - `multiple` property is not supported
  * - `required` property and `description` property are added
+ * - `type` is not only 'string' and 'boolean', but also 'number' and 'enum' too.
  * - `default` property type, not support multiple types
  */
 export interface ArgOptionSchema {
   /**
    * Type of argument.
    */
-  type: 'string' | 'boolean' | 'number'
+  type: 'string' | 'boolean' | 'number' | 'enum'
   /**
    * A single character alias for the option.
    */
@@ -38,7 +39,12 @@ export interface ArgOptionSchema {
    */
   required?: true
   /**
+   * The allowed values of the argument, and string only. This property is only used when the type is 'enum'.
+   */
+  choices?: string[]
+  /**
    * The default value of the argument.
+   * if the type is 'enum', the default value must be one of the allowed values.
    */
   default?: string | boolean | number
 }
@@ -64,22 +70,35 @@ export type ArgValues<T> = T extends ArgOptions
       [option: string]: string | boolean | number | undefined
     }
 
-type ExtractOptionValue<O extends ArgOptionSchema> = O['type'] extends 'string'
+/**
+ * @internal
+ */
+export type ExtractOptionValue<O extends ArgOptionSchema> = O['type'] extends 'string'
   ? string
   : O['type'] extends 'boolean'
     ? boolean
     : O['type'] extends 'number'
       ? number
-      : string | boolean | number
+      : O['type'] extends 'enum'
+        ? O['choices'] extends string[]
+          ? O['choices'][number]
+          : never
+        : string | boolean | number
 
-type ResolveArgValues<O extends ArgOptions, V extends Record<keyof O, unknown>> = {
+/**
+ * @internal
+ */
+export type ResolveArgValues<O extends ArgOptions, V extends Record<keyof O, unknown>> = {
   -readonly [Option in keyof O]?: V[Option]
 } & FilterArgs<O, V, 'default'> &
   FilterArgs<O, V, 'required'> extends infer P
   ? { [K in keyof P]: P[K] }
   : never
 
-type FilterArgs<
+/**
+ * @internal
+ */
+export type FilterArgs<
   O extends ArgOptions,
   V extends Record<keyof O, unknown>,
   K extends keyof ArgOptionSchema
@@ -380,6 +399,17 @@ function validateValue(
     case 'string': {
       if (typeof token.value !== 'string') {
         return createTypeError(option, schema)
+      }
+      break
+    }
+    case 'enum': {
+      if (schema.choices && !schema.choices.includes(token.value!)) {
+        return new OptionResolveError(
+          `Option '--${option}' ${schema.short ? `or '-${schema.short}' ` : ''}should be choiced from '${schema.type}' [${schema.choices.map(c => JSON.stringify(c)).join(', ')}] values`,
+          option,
+          'type',
+          schema
+        )
       }
       break
     }

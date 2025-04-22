@@ -281,3 +281,128 @@ describe('option group', () => {
     })
   })
 })
+
+describe('enum option', () => {
+  test('basic', () => {
+    const args = ['dev', '--log=debug']
+    const tokens = parseArgs(args)
+    const { values, positionals } = resolveArgs(
+      {
+        log: {
+          type: 'enum',
+          short: 'l',
+          choices: ['debug', 'info', 'warn', 'error']
+        }
+      },
+      tokens
+    )
+    expect(values).toEqual({
+      log: 'debug'
+    })
+    expect(positionals).toEqual(['dev'])
+  })
+
+  test('invalid value', () => {
+    const args = ['dev', '--log=foo']
+    const tokens = parseArgs(args)
+    const { error } = resolveArgs(
+      {
+        log: {
+          type: 'enum',
+          short: 'l',
+          choices: ['debug', 'info', 'warn', 'error']
+        }
+      },
+      tokens
+    )
+    expect(error?.errors.length).toBe(1)
+    expect((error?.errors[0] as OptionResolveError).message).toEqual(
+      `Option '--log' or '-l' should be choiced from 'enum' ["debug", "info", "warn", "error"] values`
+    )
+    expect((error?.errors[0] as OptionResolveError).name).toEqual('log')
+    expect((error?.errors[0] as OptionResolveError).type).toEqual('type')
+    expect((error?.errors[0] as OptionResolveError).schema.type).toEqual('enum')
+  })
+
+  test('required', () => {
+    const args = ['dev']
+    const tokens = parseArgs(args)
+    const { error } = resolveArgs(
+      {
+        log: {
+          type: 'enum',
+          short: 'l',
+          choices: ['debug', 'info', 'warn', 'error'],
+          required: true
+        }
+      },
+      tokens
+    )
+    expect(error?.errors.length).toBe(1)
+    expect((error?.errors[0] as Error).message).toEqual("Option '--log' or '-l' is required")
+    expect((error?.errors[0] as OptionResolveError).name).toEqual('log')
+    expect((error?.errors[0] as OptionResolveError).type).toEqual('required')
+    expect((error?.errors[0] as OptionResolveError).schema.type).toEqual('enum')
+  })
+
+  test('missing', () => {
+    const args = ['dev', '--', 'bar']
+    const tokens = parseArgs(args)
+    const { error, values, positionals } = resolveArgs(
+      {
+        log: {
+          type: 'enum',
+          short: 'l',
+          choices: ['debug', 'info', 'warn', 'error']
+        }
+      },
+      tokens
+    )
+    expect(error).toBeUndefined()
+    expect(values).toEqual({})
+    expect(positionals).toEqual(['dev', 'bar'])
+  })
+
+  test('default', () => {
+    const args = ['dev']
+    const tokens = parseArgs(args)
+    const { values, positionals } = resolveArgs(
+      {
+        log: {
+          type: 'enum',
+          short: 'l',
+          choices: ['debug', 'info', 'warn', 'error'],
+          default: 'info'
+        }
+      },
+      tokens
+    )
+    expect(values).toEqual({
+      log: 'info'
+    })
+    expect(positionals).toEqual(['dev'])
+  })
+
+  test('invalid default', () => {
+    const args = ['dev', '--log']
+    const tokens = parseArgs(args)
+    const { error } = resolveArgs(
+      {
+        log: {
+          type: 'enum',
+          short: 'l',
+          choices: ['debug', 'info', 'warn', 'error'],
+          default: 'foo'
+        }
+      },
+      tokens
+    )
+    expect(error?.errors.length).toBe(1)
+    expect((error?.errors[0] as OptionResolveError).message).toEqual(
+      `Option '--log' or '-l' should be choiced from 'enum' ["debug", "info", "warn", "error"] values`
+    )
+    expect((error?.errors[0] as OptionResolveError).name).toEqual('log')
+    expect((error?.errors[0] as OptionResolveError).type).toEqual('type')
+    expect((error?.errors[0] as OptionResolveError).schema.type).toEqual('enum')
+  })
+})
