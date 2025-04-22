@@ -250,7 +250,7 @@ export function isShortOption(arg: string): boolean {
  * @param arg the argument to check
  * @returns whether `arg` is a short option group.
  */
-function isShortOptionGroup(arg: string) {
+function isShortOptionGroup(arg: string): boolean {
   if (arg.length <= 2) {
     return false
   }

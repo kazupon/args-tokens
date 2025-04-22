@@ -211,3 +211,73 @@ describe('resolveArgs', () => {
     expect(error).toBeUndefined()
   })
 })
+
+describe('option group', () => {
+  test('basic', () => {
+    const args = ['dev', '-dsV']
+    const tokens = parseArgs(args)
+    const { values, positionals } = resolveArgs(
+      {
+        debug: {
+          type: 'boolean',
+          short: 'd'
+        },
+        silent: {
+          type: 'boolean',
+          short: 's'
+        },
+        verbose: {
+          type: 'boolean',
+          short: 'V'
+        }
+      },
+      tokens,
+      { optionGrouping: true }
+    )
+    expect(positionals).toEqual(['dev'])
+    expect(values).toEqual({
+      debug: true,
+      silent: true,
+      verbose: true
+    })
+  })
+
+  test('mix option grouping and long option', () => {
+    const args = ['dev', '-ds', '--host', 'example.com', '-Vm', 'foo', 'bar']
+    const tokens = parseArgs(args)
+    const { values, positionals } = resolveArgs(
+      {
+        debug: {
+          type: 'boolean',
+          short: 'd'
+        },
+        silent: {
+          type: 'boolean',
+          short: 's'
+        },
+        verbose: {
+          type: 'boolean',
+          short: 'V'
+        },
+        host: {
+          type: 'string',
+          short: 'o'
+        },
+        minify: {
+          type: 'boolean',
+          short: 'm'
+        }
+      },
+      tokens,
+      { optionGrouping: true }
+    )
+    expect(positionals).toEqual(['dev', 'example.com', 'foo', 'bar'])
+    expect(values).toEqual({
+      debug: true,
+      silent: true,
+      verbose: true,
+      minify: true,
+      host: 'example.com'
+    })
+  })
+})
