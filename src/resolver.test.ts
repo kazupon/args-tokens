@@ -129,7 +129,7 @@ describe('resolveArgs', () => {
     expect(rest).toEqual([])
   })
 
-  test('long options boolean nagative value', () => {
+  test('long options boolean negative value', () => {
     const args = ['dev', '--no-help']
     const tokens = parseArgs(args)
     const { values, positionals, rest } = resolveArgs(options, tokens, { allowNegative: true })
