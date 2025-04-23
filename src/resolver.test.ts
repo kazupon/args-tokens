@@ -169,7 +169,7 @@ describe('resolveArgs', () => {
     expect(error).toBeUndefined()
   })
 
-  test.only('complex options', () => {
+  test('complex options', () => {
     const args = [
       'dev',
       '-p9131',
@@ -363,7 +363,7 @@ describe('enum option', () => {
   test('missing', () => {
     const args = ['dev', '--', 'bar']
     const tokens = parseArgs(args)
-    const { error, values, positionals } = resolveArgs(
+    const { error, values, positionals, rest } = resolveArgs(
       {
         log: {
           type: 'enum',
@@ -375,7 +375,8 @@ describe('enum option', () => {
     )
     expect(error).toBeUndefined()
     expect(values).toEqual({})
-    expect(positionals).toEqual(['dev', 'bar'])
+    expect(positionals).toEqual(['dev'])
+    expect(rest).toEqual(['bar'])
   })
 
   test('default', () => {
