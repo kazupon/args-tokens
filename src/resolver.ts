@@ -124,14 +124,20 @@ export interface ResolveArgsOptions {
  * @param options - An options that contains {@link ArgOptionSchema | options schema}.
  * @param tokens - An array of {@link ArgToken | tokens}.
  * @param resolveArgsOptions - An options that contains {@link resolveArgsOptions | resolve arguments options}.
- * @returns An object that contains the values of the arguments, positional arguments, and {@link AggregateError | validation errors}.
+ * @returns An object that contains the values of the arguments, positional arguments, rest arguments, and {@link AggregateError | validation errors}.
  */
 export function resolveArgs<T extends ArgOptions>(
   options: T,
   tokens: ArgToken[],
   { optionGrouping = false }: ResolveArgsOptions = {}
-): { values: ArgValues<T>; positionals: string[]; error: AggregateError | undefined } {
+): {
+  values: ArgValues<T>
+  positionals: string[]
+  rest: string[]
+  error: AggregateError | undefined
+} {
   const positionals = [] as string[]
+  const rest = [] as string[]
 
   const longOptionTokens: ArgToken[] = []
   const shortOptionTokens: ArgToken[] = []
@@ -172,11 +178,17 @@ export function resolveArgs<T extends ArgOptions>(
    */
 
   const schemas = Object.values(options)
+  let terminated = false
 
   // eslint-disable-next-line unicorn/no-for-loop
   for (let i = 0; i < tokens.length; i++) {
     const token = tokens[i]
     if (token.kind === 'positional') {
+      // if the option-terminator is found, the rest of the tokens are positional arguments
+      if (terminated && token.value) {
+        rest.push(token.value)
+        continue
+      }
       if (currentShortOption) {
         const found = schemas.find(
           schema => schema.short === currentShortOption!.name && schema.type === 'boolean'
@@ -239,6 +251,9 @@ export function resolveArgs<T extends ArgOptions>(
         applyLongOptionValue()
       }
     } else {
+      if (token.kind === 'option-terminator') {
+        terminated = true
+      }
       // check if previous option is not resolved
       applyLongOptionValue()
       applyShortOptionValue()
@@ -335,8 +350,13 @@ export function resolveArgs<T extends ArgOptions>(
     }
   }
 
-  // eslint-disable-next-line unicorn/error-message
-  return { values, positionals, error: errors.length > 0 ? new AggregateError(errors) : undefined }
+  return {
+    values,
+    positionals,
+    rest,
+    // eslint-disable-next-line unicorn/error-message
+    error: errors.length > 0 ? new AggregateError(errors) : undefined
+  }
 }
 
 function createRequireError(option: string, schema: ArgOptionSchema): OptionResolveError {
