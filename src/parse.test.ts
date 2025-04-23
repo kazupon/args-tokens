@@ -40,9 +40,14 @@ test('parse', () => {
     '-h',
     '--version',
     'bar',
-    'baz'
+    'baz',
+    '--',
+    '--help',
+    '--version',
+    '--port',
+    '8080'
   ]
-  const { values, positionals, tokens } = parse(args, { options })
+  const { values, positionals, rest, tokens } = parse(args, { options })
   expect(values).toEqual({
     port: 9131,
     host: 'example.com',
@@ -51,5 +56,6 @@ test('parse', () => {
     version: true
   })
   expect(positionals).toEqual(['dev', 'foo', 'bar', 'baz'])
+  expect(rest).toEqual(['--help', '--version', '--port', '8080'])
   expect(tokens).toEqual(parseArgs(args))
 })

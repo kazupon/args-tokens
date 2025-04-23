@@ -32,6 +32,10 @@ export type ParsedArgs<T extends ArgOptions> = {
    */
   positionals: string[]
   /**
+   * Rest arguments, same as `rest` in {@link resolveArgs}.
+   */
+  rest: string[]
+  /**
    * Validation errors, same as `errors` in {@link resolveArgs}.
    */
   error: AggregateError | undefined

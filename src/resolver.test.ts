@@ -33,13 +33,14 @@ describe('resolveArgs', () => {
   test('basic', () => {
     const args = ['dev', '--port=9131', '--host=example.com', '--help']
     const tokens = parseArgs(args)
-    const { values, positionals, error } = resolveArgs(options, tokens)
+    const { values, positionals, rest, error } = resolveArgs(options, tokens)
     expect(values).toEqual({
       port: 9131,
       host: 'example.com',
       help: true
     })
     expect(positionals).toEqual(['dev'])
+    expect(rest).toEqual([])
     expect(error).toBeUndefined()
   })
 
@@ -57,12 +58,13 @@ describe('resolveArgs', () => {
   test('missing defaultable option', () => {
     const args = ['dev', '--host=example.com']
     const tokens = parseArgs(args)
-    const { values, positionals } = resolveArgs(options, tokens)
+    const { values, positionals, rest } = resolveArgs(options, tokens)
     expect(values).toEqual({
       port: 8080,
       host: 'example.com'
     })
     expect(positionals).toEqual(['dev'])
+    expect(rest).toEqual([])
   })
 
   test('invalid value', () => {
@@ -118,48 +120,52 @@ describe('resolveArgs', () => {
   test('long options value captured from positionals', () => {
     const args = ['dev', '--port', '9131', '--host', 'example.com', 'bar']
     const tokens = parseArgs(args)
-    const { values, positionals } = resolveArgs(options, tokens)
+    const { values, positionals, rest } = resolveArgs(options, tokens)
     expect(values).toEqual({
       port: 9131,
       host: 'example.com'
     })
     expect(positionals).toEqual(['dev', 'bar'])
+    expect(rest).toEqual([])
   })
 
   test('short options value specified with equals', () => {
     const args = ['dev', '-p=9131', '-o=example.com', '-h']
     const tokens = parseArgs(args)
-    const { values, positionals, error } = resolveArgs(options, tokens)
+    const { values, positionals, rest, error } = resolveArgs(options, tokens)
     expect(values).toEqual({
       port: 9131,
       host: 'example.com',
       help: true
     })
     expect(positionals).toEqual(['dev'])
+    expect(rest).toEqual([])
     expect(error).toBeUndefined()
   })
 
   test('short options value specified with concatenation', () => {
     const args = ['dev', '-p9131', '-oexample.com']
     const tokens = parseArgs(args)
-    const { values, positionals, error } = resolveArgs(options, tokens)
+    const { values, positionals, rest, error } = resolveArgs(options, tokens)
     expect(values).toEqual({
       port: 9131,
       host: 'example.com'
     })
     expect(positionals).toEqual(['dev'])
+    expect(rest).toEqual([])
     expect(error).toBeUndefined()
   })
 
   test('short options value captured from positionals', () => {
     const args = ['dev', '-p', '9131', '-o', 'example.com', 'bar']
     const tokens = parseArgs(args)
-    const { values, positionals, error } = resolveArgs(options, tokens)
+    const { values, positionals, rest, error } = resolveArgs(options, tokens)
     expect(values).toEqual({
       port: 9131,
       host: 'example.com'
     })
     expect(positionals).toEqual(['dev', 'bar'])
+    expect(rest).toEqual([])
     expect(error).toBeUndefined()
   })
 
@@ -174,10 +180,14 @@ describe('resolveArgs', () => {
       '-h',
       '--version',
       'bar',
-      'baz'
+      'baz',
+      '--',
+      '--foo',
+      '--bar',
+      'test'
     ]
     const tokens = parseArgs(args)
-    const { values, positionals, error } = resolveArgs(options, tokens)
+    const { values, positionals, rest, error } = resolveArgs(options, tokens)
     expect(values).toEqual({
       port: 9131,
       host: 'example.com',
@@ -186,13 +196,14 @@ describe('resolveArgs', () => {
       version: true
     })
     expect(positionals).toEqual(['dev', 'foo', 'bar', 'baz'])
+    expect(rest).toEqual(['--foo', '--bar', 'test'])
     expect(error).toBeUndefined()
   })
 
   test('sanitize options', () => {
     const args = ['dev', '--__proto__', '{ "polluted": 1 }']
     const tokens = parseArgs(args)
-    const { values, positionals, error } = resolveArgs(
+    const { values, positionals, rest, error } = resolveArgs(
       {
         __proto__: {
           type: 'string'
@@ -208,6 +219,7 @@ describe('resolveArgs', () => {
       foo: 'foo'
     })
     expect(positionals).toEqual(['dev'])
+    expect(rest).toEqual([])
     expect(error).toBeUndefined()
   })
 })
@@ -216,7 +228,7 @@ describe('option group', () => {
   test('basic', () => {
     const args = ['dev', '-dsV']
     const tokens = parseArgs(args)
-    const { values, positionals } = resolveArgs(
+    const { values, positionals, rest } = resolveArgs(
       {
         debug: {
           type: 'boolean',
@@ -235,6 +247,7 @@ describe('option group', () => {
       { optionGrouping: true }
     )
     expect(positionals).toEqual(['dev'])
+    expect(rest).toEqual([])
     expect(values).toEqual({
       debug: true,
       silent: true,
@@ -245,7 +258,7 @@ describe('option group', () => {
   test('mix option grouping and long option', () => {
     const args = ['dev', '-ds', '--host', 'example.com', '-Vm', 'foo', 'bar']
     const tokens = parseArgs(args)
-    const { values, positionals } = resolveArgs(
+    const { values, positionals, rest } = resolveArgs(
       {
         debug: {
           type: 'boolean',
@@ -272,6 +285,7 @@ describe('option group', () => {
       { optionGrouping: true }
     )
     expect(positionals).toEqual(['dev', 'foo', 'bar'])
+    expect(rest).toEqual([])
     expect(values).toEqual({
       debug: true,
       silent: true,
@@ -286,7 +300,7 @@ describe('enum option', () => {
   test('basic', () => {
     const args = ['dev', '--log=debug']
     const tokens = parseArgs(args)
-    const { values, positionals } = resolveArgs(
+    const { values, positionals, rest } = resolveArgs(
       {
         log: {
           type: 'enum',
@@ -300,6 +314,7 @@ describe('enum option', () => {
       log: 'debug'
     })
     expect(positionals).toEqual(['dev'])
+    expect(rest).toEqual([])
   })
 
   test('invalid value', () => {
@@ -348,7 +363,7 @@ describe('enum option', () => {
   test('missing', () => {
     const args = ['dev', '--', 'bar']
     const tokens = parseArgs(args)
-    const { error, values, positionals } = resolveArgs(
+    const { error, values, positionals, rest } = resolveArgs(
       {
         log: {
           type: 'enum',
@@ -360,7 +375,8 @@ describe('enum option', () => {
     )
     expect(error).toBeUndefined()
     expect(values).toEqual({})
-    expect(positionals).toEqual(['dev', 'bar'])
+    expect(positionals).toEqual(['dev'])
+    expect(rest).toEqual(['bar'])
   })
 
   test('default', () => {
