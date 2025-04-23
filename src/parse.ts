@@ -6,7 +6,7 @@
 import { parseArgs } from './parser.ts'
 import { resolveArgs } from './resolver.ts'
 
-import type { ParserOptions } from './parser.ts'
+import type { ArgToken, ParserOptions } from './parser.ts'
 import type { ArgOptions, ArgValues, ResolveArgsOptions } from './resolver.ts'
 
 /**
@@ -35,6 +35,10 @@ export type ParsedArgs<T extends ArgOptions> = {
    * Validation errors, same as `errors` in {@link resolveArgs}.
    */
   error: AggregateError | undefined
+  /**
+   * Argument tokens, same as `tokens` which is parsed by {@link parseArgs}.
+   */
+  tokens: ArgToken[]
 }
 
 const DEFAULT_OPTIONS = {
@@ -61,7 +65,7 @@ const DEFAULT_OPTIONS = {
  * ```
  * @param args - command line arguments
  * @param options - parse options, about details see {@link ParseOptions}
- * @returns An object that contains the values of the arguments, positional arguments, and {@link AggregateError | validation errors}.
+ * @returns An object that contains the values of the arguments, positional arguments, {@link AggregateError | validation errors}, and {@link ArgToken | argument tokens}.
  */
 export function parse<O extends ArgOptions>(
   args: string[],
@@ -69,5 +73,9 @@ export function parse<O extends ArgOptions>(
 ): ParsedArgs<O> {
   const { options: argOptions, allowCompatible = false } = options
   const tokens = parseArgs(args, { allowCompatible })
-  return resolveArgs<O>((argOptions as O) || DEFAULT_OPTIONS, tokens)
+  return Object.assign(
+    Object.create(null),
+    resolveArgs<O>((argOptions as O) || DEFAULT_OPTIONS, tokens),
+    { tokens }
+  )
 }
