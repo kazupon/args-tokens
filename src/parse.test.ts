@@ -1,5 +1,6 @@
 import { expect, test } from 'vitest'
 import { parse } from './parse.ts'
+import { parseArgs } from './parser.ts'
 
 import type { ArgOptions } from './resolver.ts'
 
@@ -41,7 +42,7 @@ test('parse', () => {
     'bar',
     'baz'
   ]
-  const { values, positionals } = parse(args, { options })
+  const { values, positionals, tokens } = parse(args, { options })
   expect(values).toEqual({
     port: 9131,
     host: 'example.com',
@@ -50,4 +51,5 @@ test('parse', () => {
     version: true
   })
   expect(positionals).toEqual(['dev', 'foo', 'bar', 'baz'])
+  expect(tokens).toEqual(parseArgs(args))
 })
