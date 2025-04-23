@@ -117,6 +117,11 @@ export interface ResolveArgsOptions {
    * @see guideline 5 in https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/V1_chap12.html
    */
   optionGrouping?: boolean
+  /**
+   * Whether to set the flag value of options prefixed with `--no-` to negative.
+   * @default false
+   */
+  allowNegative?: boolean
 }
 
 /**
@@ -129,7 +134,7 @@ export interface ResolveArgsOptions {
 export function resolveArgs<T extends ArgOptions>(
   options: T,
   tokens: ArgToken[],
-  { optionGrouping = false }: ResolveArgsOptions = {}
+  { optionGrouping = false, allowNegative = false }: ResolveArgsOptions = {}
 ): {
   values: ArgValues<T>
   positionals: string[]
@@ -274,6 +279,17 @@ export function resolveArgs<T extends ArgOptions>(
   const values = Object.create(null) as ArgValues<T>
   const errors: Error[] = []
 
+  function checkTokenName(option: string, schema: ArgOptionSchema, token: ArgToken): boolean {
+    return (
+      token.name ===
+      (schema.type === 'boolean'
+        ? allowNegative && token.name?.startsWith('no-')
+          ? `no-${option}`
+          : option
+        : option)
+    )
+  }
+
   for (const [option, schema] of Object.entries(options)) {
     if (schema.required) {
       const found =
@@ -288,8 +304,12 @@ export function resolveArgs<T extends ArgOptions>(
     // eslint-disable-next-line unicorn/no-for-loop
     for (let i = 0; i < longOptionTokens.length; i++) {
       const token = longOptionTokens[i]
-      // eslint-disable-next-line unicorn/no-null
-      if (option === token.name && token.rawName != null && hasLongOptionPrefix(token.rawName)) {
+
+      if (
+        checkTokenName(option, schema, token) &&
+        token.rawName != undefined &&
+        hasLongOptionPrefix(token.rawName)
+      ) {
         const invalid = validateRequire(token, option, schema)
         if (invalid) {
           errors.push(invalid)
@@ -308,7 +328,7 @@ export function resolveArgs<T extends ArgOptions>(
         }
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ;(values as any)[option] = resolveOptionValue(token, schema)
+        ;(values as any)[option] = resolveOptionValue(token, schema, allowNegative)
         continue
       }
     }
@@ -453,14 +473,15 @@ function createTypeError(option: string, schema: ArgOptionSchema): TypeError {
 
 function resolveOptionValue(
   token: ArgToken,
-  schema: ArgOptionSchema
+  schema: ArgOptionSchema,
+  allowNegative = false
 ): string | boolean | number | undefined {
   if (token.value) {
     return schema.type === 'number' ? +token.value : token.value
   }
 
   if (schema.type === 'boolean') {
-    return true
+    return allowNegative && token.name!.startsWith('no-') ? false : true
   }
 
   return schema.type === 'number' ? +(schema.default || '') : schema.default

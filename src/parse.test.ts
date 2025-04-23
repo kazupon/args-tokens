@@ -22,6 +22,9 @@ const options = {
     type: 'string',
     short: 'm'
   },
+  silent: {
+    type: 'boolean'
+  },
   host: {
     type: 'string',
     short: 'o',
@@ -37,6 +40,7 @@ test('parse', () => {
     'example.com',
     'foo',
     '-m=production',
+    '--no-silent',
     '-h',
     '--version',
     'bar',
@@ -47,12 +51,13 @@ test('parse', () => {
     '--port',
     '8080'
   ]
-  const { values, positionals, rest, tokens } = parse(args, { options })
+  const { values, positionals, rest, tokens } = parse(args, { options, allowNegative: true })
   expect(values).toEqual({
     port: 9131,
     host: 'example.com',
     mode: 'production',
     help: true,
+    silent: false,
     version: true
   })
   expect(positionals).toEqual(['dev', 'foo', 'bar', 'baz'])

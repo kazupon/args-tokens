@@ -129,6 +129,18 @@ describe('resolveArgs', () => {
     expect(rest).toEqual([])
   })
 
+  test('long options boolean nagative value', () => {
+    const args = ['dev', '--no-help']
+    const tokens = parseArgs(args)
+    const { values, positionals, rest } = resolveArgs(options, tokens, { allowNegative: true })
+    expect(values).toEqual({
+      port: 8080,
+      help: false
+    })
+    expect(positionals).toEqual(['dev'])
+    expect(rest).toEqual([])
+  })
+
   test('short options value specified with equals', () => {
     const args = ['dev', '-p=9131', '-o=example.com', '-h']
     const tokens = parseArgs(args)
