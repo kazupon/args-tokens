@@ -215,6 +215,8 @@ export function resolveArgs<T extends ArgOptions>(
     } else if (token.kind === 'option') {
       if (token.rawName) {
         if (hasLongOptionPrefix(token.rawName)) {
+          // check if previous long option is not resolved
+          applyLongOptionValue()
           if (token.inlineValue) {
             longOptionTokens.push({ ...token })
           } else {
