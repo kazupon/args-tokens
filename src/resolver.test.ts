@@ -13,6 +13,11 @@ const options = {
     type: 'boolean',
     short: 'v'
   },
+  silent: {
+    type: 'boolean',
+    short: 's',
+    negatable: true
+  },
   port: {
     type: 'number',
     short: 'p',
@@ -130,13 +135,13 @@ describe('resolveArgs', () => {
   })
 
   test('long options boolean negative value', () => {
-    const args = ['dev', '--no-help', '--version']
+    const args = ['dev', '--version', '--no-silent']
     const tokens = parseArgs(args)
-    const { values, positionals, rest } = resolveArgs(options, tokens, { allowNegative: true })
+    const { values, positionals, rest } = resolveArgs(options, tokens)
     expect(values).toEqual({
       port: 8080,
-      help: false,
-      version: true
+      version: true,
+      silent: false
     })
     expect(positionals).toEqual(['dev'])
     expect(rest).toEqual([])

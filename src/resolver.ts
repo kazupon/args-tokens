@@ -39,6 +39,10 @@ export interface ArgOptionSchema {
    */
   required?: true
   /**
+   * Whether the negatable option for `boolean` type
+   */
+  negatable?: boolean
+  /**
    * The allowed values of the argument, and string only. This property is only used when the type is 'enum'.
    */
   choices?: string[]
@@ -117,11 +121,6 @@ export interface ResolveArgsOptions {
    * @see guideline 5 in https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/V1_chap12.html
    */
   optionGrouping?: boolean
-  /**
-   * Whether to set the flag value of options prefixed with `--no-` to negative.
-   * @default false
-   */
-  allowNegative?: boolean
 }
 
 /**
@@ -134,7 +133,7 @@ export interface ResolveArgsOptions {
 export function resolveArgs<T extends ArgOptions>(
   options: T,
   tokens: ArgToken[],
-  { optionGrouping = false, allowNegative = false }: ResolveArgsOptions = {}
+  { optionGrouping = false }: ResolveArgsOptions = {}
 ): {
   values: ArgValues<T>
   positionals: string[]
@@ -285,7 +284,7 @@ export function resolveArgs<T extends ArgOptions>(
     return (
       token.name ===
       (schema.type === 'boolean'
-        ? allowNegative && token.name?.startsWith('no-')
+        ? schema.negatable && token.name?.startsWith('no-')
           ? `no-${option}`
           : option
         : option)
@@ -330,7 +329,7 @@ export function resolveArgs<T extends ArgOptions>(
         }
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ;(values as any)[option] = resolveOptionValue(token, schema, allowNegative)
+        ;(values as any)[option] = resolveOptionValue(token, schema)
         continue
       }
     }
@@ -475,15 +474,14 @@ function createTypeError(option: string, schema: ArgOptionSchema): TypeError {
 
 function resolveOptionValue(
   token: ArgToken,
-  schema: ArgOptionSchema,
-  allowNegative = false
+  schema: ArgOptionSchema
 ): string | boolean | number | undefined {
   if (token.value) {
     return schema.type === 'number' ? +token.value : token.value
   }
 
   if (schema.type === 'boolean') {
-    return allowNegative && token.name!.startsWith('no-') ? false : true
+    return schema.negatable && token.name!.startsWith('no-') ? false : true
   }
 
   return schema.type === 'number' ? +(schema.default || '') : schema.default

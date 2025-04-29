@@ -23,7 +23,8 @@ const options = {
     short: 'm'
   },
   silent: {
-    type: 'boolean'
+    type: 'boolean',
+    negatable: true
   },
   host: {
     type: 'string',
@@ -51,7 +52,7 @@ test('parse', () => {
     '--port',
     '8080'
   ]
-  const { values, positionals, rest, tokens } = parse(args, { options, allowNegative: true })
+  const { values, positionals, rest, tokens } = parse(args, { options })
   expect(values).toEqual({
     port: 9131,
     host: 'example.com',

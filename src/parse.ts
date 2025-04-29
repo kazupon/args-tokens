@@ -75,11 +75,11 @@ export function parse<O extends ArgOptions>(
   args: string[],
   options: ParseOptions<O> = {}
 ): ParsedArgs<O> {
-  const { options: argOptions, allowCompatible = false, allowNegative = false } = options
+  const { options: argOptions, allowCompatible = false } = options
   const tokens = parseArgs(args, { allowCompatible })
   return Object.assign(
     Object.create(null),
-    resolveArgs<O>((argOptions as O) || DEFAULT_OPTIONS, tokens, { allowNegative }),
+    resolveArgs<O>((argOptions as O) || DEFAULT_OPTIONS, tokens),
     { tokens }
   )
 }
