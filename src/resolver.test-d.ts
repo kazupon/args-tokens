@@ -40,6 +40,13 @@ test('ExtractOptionValue', () => {
     ExtractOptionValue<{
       type: 'enum'
       short: 's'
+      choices: readonly ['a', 'b']
+    }>
+  >().toEqualTypeOf<'a' | 'b'>()
+  expectTypeOf<
+    ExtractOptionValue<{
+      type: 'enum'
+      short: 's'
     }>
   >().toEqualTypeOf<never>()
 })
