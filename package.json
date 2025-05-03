@@ -78,7 +78,7 @@
     "fix:prettier": "prettier . --write",
     "lint": "pnpm run --parallel --color \"/^lint:/\"",
     "lint:eslint": "eslint .",
-    "lint:jsr": "jsr publish --dry-run --allow-dirty",
+    "lint:jsr": "jsr publish --config jsr.json --dry-run --allow-dirty",
     "lint:knip": "knip",
     "lint:prettier": "prettier . --check",
     "prepack": "pnpm build",
