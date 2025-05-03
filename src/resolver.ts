@@ -45,7 +45,7 @@ export interface ArgOptionSchema {
   /**
    * The allowed values of the argument, and string only. This property is only used when the type is 'enum'.
    */
-  choices?: string[]
+  choices?: string[] | readonly string[]
   /**
    * The default value of the argument.
    * if the type is 'enum', the default value must be one of the allowed values.
@@ -84,7 +84,7 @@ export type ExtractOptionValue<O extends ArgOptionSchema> = O['type'] extends 's
     : O['type'] extends 'number'
       ? number
       : O['type'] extends 'enum'
-        ? O['choices'] extends string[]
+        ? O['choices'] extends string[] | readonly string[]
           ? O['choices'][number]
           : never
         : string | boolean | number
