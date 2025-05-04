@@ -10,14 +10,8 @@
 
 export { parse } from './parse.ts'
 export { parseArgs } from './parser.ts'
-export { OptionResolveError, resolveArgs } from './resolver.ts'
+export { ArgResolveError, resolveArgs } from './resolver.ts'
 
 export type { ParsedArgs, ParseOptions } from './parse.ts'
 export type { ArgToken, ParserOptions } from './parser.ts'
-export type {
-  ArgOptions,
-  ArgOptionSchema,
-  ArgValues,
-  OptionResolveErrorType,
-  ResolveArgsOptions
-} from './resolver.ts'
+export type { ArgResolveErrorType, Args, ArgSchema, ArgValues, ResolveArgs } from './resolver.ts'

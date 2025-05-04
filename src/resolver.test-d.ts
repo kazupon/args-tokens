@@ -149,7 +149,7 @@ test('ResolveArgValues', () => {
 })
 
 test('ArgValues', () => {
-  type Options = {
+  type Args = {
     help: {
       type: 'boolean'
       short: 'h'
@@ -175,7 +175,7 @@ test('ArgValues', () => {
     }
   }
 
-  expectTypeOf<ArgValues<Options>>().toEqualTypeOf<{
+  expectTypeOf<ArgValues<Args>>().toEqualTypeOf<{
     help?: boolean
     version?: boolean
     port: number

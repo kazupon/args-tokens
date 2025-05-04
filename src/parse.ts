@@ -7,26 +7,26 @@ import { parseArgs } from './parser.ts'
 import { resolveArgs } from './resolver.ts'
 
 import type { ArgToken, ParserOptions } from './parser.ts'
-import type { ArgOptions, ArgValues, ResolveArgsOptions } from './resolver.ts'
+import type { Args, ArgValues, ResolveArgs } from './resolver.ts'
 
 /**
  * Parse options for {@link parse} function.
  */
-export interface ParseOptions<O extends ArgOptions> extends ParserOptions, ResolveArgsOptions {
+export interface ParseOptions<A extends Args> extends ParserOptions, ResolveArgs {
   /**
-   * Command line options, about details see {@link ArgOptions}.
+   * Command line arguments, about details see {@link Args}.
    */
-  options?: O
+  args?: A
 }
 
 /**
  * Parsed command line arguments.
  */
-export type ParsedArgs<T extends ArgOptions> = {
+export type ParsedArgs<A extends Args> = {
   /**
    * Parsed values, same as `values` in {@link resolveArgs}.
    */
-  values: ArgValues<T>
+  values: ArgValues<A>
   /**
    * Positional arguments, same as `positionals` in {@link resolveArgs}.
    */
@@ -54,7 +54,7 @@ const DEFAULT_OPTIONS = {
     type: 'boolean',
     short: 'v'
   }
-} as const satisfies ArgOptions
+} as const satisfies Args
 
 /**
  * Parse command line arguments.
@@ -71,15 +71,15 @@ const DEFAULT_OPTIONS = {
  * @param options - parse options, about details see {@link ParseOptions}
  * @returns An object that contains the values of the arguments, positional arguments, {@link AggregateError | validation errors}, and {@link ArgToken | argument tokens}.
  */
-export function parse<O extends ArgOptions>(
+export function parse<A extends Args>(
   args: string[],
-  options: ParseOptions<O> = {}
-): ParsedArgs<O> {
-  const { options: argOptions, allowCompatible = false } = options
+  options: ParseOptions<A> = {}
+): ParsedArgs<A> {
+  const { args: _args, allowCompatible = false } = options
   const tokens = parseArgs(args, { allowCompatible })
   return Object.assign(
     Object.create(null),
-    resolveArgs<O>((argOptions as O) || DEFAULT_OPTIONS, tokens),
+    resolveArgs<A>((_args as A) || DEFAULT_OPTIONS, tokens),
     { tokens }
   )
 }
