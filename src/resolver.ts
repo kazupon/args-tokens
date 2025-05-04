@@ -154,7 +154,6 @@ export function resolveArgs<A extends Args>(
       ? Math.max(skipPositional, SKIP_POSITIONAL_DEFAULT)
       : SKIP_POSITIONAL_DEFAULT
 
-  const positionals = [] as string[]
   const rest = [] as string[]
 
   const longOptionTokens: ArgToken[] = []
@@ -213,17 +212,14 @@ export function resolveArgs<A extends Args>(
           schema => schema.short === currentShortOption!.name && schema.type === 'boolean'
         )
         if (found) {
-          positionals.push(token.value!)
           positionalTokens.push({ ...token })
         }
       } else if (currentLongOption) {
         const found = args[currentLongOption.name!]?.type === 'boolean'
         if (found) {
-          positionals.push(token.value!)
           positionalTokens.push({ ...token })
         }
       } else {
-        positionals.push(token.value!)
         positionalTokens.push({ ...token })
       }
       // check if previous option is not resolved
@@ -415,7 +411,7 @@ export function resolveArgs<A extends Args>(
 
   return {
     values,
-    positionals,
+    positionals: positionalTokens.map(token => token.value!),
     rest,
     // eslint-disable-next-line unicorn/error-message
     error: errors.length > 0 ? new AggregateError(errors) : undefined
