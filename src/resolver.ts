@@ -13,7 +13,7 @@ import { hasLongOptionPrefix, isShortOption } from './parser.ts'
 import type { ArgToken } from './parser.ts'
 
 /**
- * An option schema for an argument.
+ * An argument schema
  * This schema is similar to the schema of the `node:utils`.
  * difference is that:
  * - `multiple` property is not supported
@@ -21,7 +21,7 @@ import type { ArgToken } from './parser.ts'
  * - `type` is not only 'string' and 'boolean', but also 'number' and 'enum' too.
  * - `default` property type, not support multiple types
  */
-export interface ArgOptionSchema {
+export interface ArgSchema {
   /**
    * Type of argument.
    */
@@ -54,20 +54,20 @@ export interface ArgOptionSchema {
 }
 
 /**
- * An object that contains {@link ArgOptionSchema | options schema}.
+ * An object that contains {@link ArgSchema | argument schema}.
  */
-export interface ArgOptions {
-  [option: string]: ArgOptionSchema
+export interface Args {
+  [option: string]: ArgSchema
 }
 
 /**
  * An object that contains the values of the arguments.
  */
-export type ArgValues<T> = T extends ArgOptions
+export type ArgValues<T> = T extends Args
   ? ResolveArgValues<
       T,
       {
-        [Option in keyof T]: ExtractOptionValue<T[Option]>
+        [Arg in keyof T]: ExtractOptionValue<T[Arg]>
       }
     >
   : {
@@ -77,25 +77,25 @@ export type ArgValues<T> = T extends ArgOptions
 /**
  * @internal
  */
-export type ExtractOptionValue<O extends ArgOptionSchema> = O['type'] extends 'string'
+export type ExtractOptionValue<A extends ArgSchema> = A['type'] extends 'string'
   ? string
-  : O['type'] extends 'boolean'
+  : A['type'] extends 'boolean'
     ? boolean
-    : O['type'] extends 'number'
+    : A['type'] extends 'number'
       ? number
-      : O['type'] extends 'enum'
-        ? O['choices'] extends string[] | readonly string[]
-          ? O['choices'][number]
+      : A['type'] extends 'enum'
+        ? A['choices'] extends string[] | readonly string[]
+          ? A['choices'][number]
           : never
         : string | boolean | number
 
 /**
  * @internal
  */
-export type ResolveArgValues<O extends ArgOptions, V extends Record<keyof O, unknown>> = {
-  -readonly [Option in keyof O]?: V[Option]
-} & FilterArgs<O, V, 'default'> &
-  FilterArgs<O, V, 'required'> extends infer P
+export type ResolveArgValues<A extends Args, V extends Record<keyof A, unknown>> = {
+  -readonly [Arg in keyof A]?: V[Arg]
+} & FilterArgs<A, V, 'default'> &
+  FilterArgs<A, V, 'required'> extends infer P
   ? { [K in keyof P]: P[K] }
   : never
 
@@ -103,18 +103,18 @@ export type ResolveArgValues<O extends ArgOptions, V extends Record<keyof O, unk
  * @internal
  */
 export type FilterArgs<
-  O extends ArgOptions,
-  V extends Record<keyof O, unknown>,
-  K extends keyof ArgOptionSchema
+  A extends Args,
+  V extends Record<keyof A, unknown>,
+  K extends keyof ArgSchema
 > = {
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-  [Option in keyof O as O[Option][K] extends {} ? Option : never]: V[Option]
+  [Arg in keyof A as A[Arg][K] extends {} ? Arg : never]: V[Arg]
 }
 
 /**
- * An options for {@link resolveArgs | resolve arguments}.
+ * An arguments for {@link resolveArgs | resolve arguments}.
  */
-export interface ResolveArgsOptions {
+export interface ResolveArgs {
   /**
    * Whether to group short options.
    * @default false
@@ -125,17 +125,17 @@ export interface ResolveArgsOptions {
 
 /**
  * Resolve command line arguments.
- * @param options - An options that contains {@link ArgOptionSchema | options schema}.
+ * @param args - An arguments that contains {@link ArgSchema | arguments schema}.
  * @param tokens - An array of {@link ArgToken | tokens}.
- * @param resolveArgsOptions - An options that contains {@link resolveArgsOptions | resolve arguments options}.
+ * @param resolveArgs - An arguments that contains {@link ResolveArgs | resolve arguments}.
  * @returns An object that contains the values of the arguments, positional arguments, rest arguments, and {@link AggregateError | validation errors}.
  */
-export function resolveArgs<T extends ArgOptions>(
-  options: T,
+export function resolveArgs<A extends Args>(
+  args: A,
   tokens: ArgToken[],
-  { optionGrouping = false }: ResolveArgsOptions = {}
+  { optionGrouping = false }: ResolveArgs = {}
 ): {
-  values: ArgValues<T>
+  values: ArgValues<A>
   positionals: string[]
   rest: string[]
   error: AggregateError | undefined
@@ -181,7 +181,7 @@ export function resolveArgs<T extends ArgOptions>(
    * separate tokens into positionals, long and short options, after that resolve values
    */
 
-  const schemas = Object.values(options)
+  const schemas = Object.values(args)
   let terminated = false
 
   // eslint-disable-next-line unicorn/no-for-loop
@@ -201,7 +201,7 @@ export function resolveArgs<T extends ArgOptions>(
           positionals.push(token.value!)
         }
       } else if (currentLongOption) {
-        const found = options[currentLongOption.name!]?.type === 'boolean'
+        const found = args[currentLongOption.name!]?.type === 'boolean'
         if (found) {
           positionals.push(token.value!)
         }
@@ -277,10 +277,10 @@ export function resolveArgs<T extends ArgOptions>(
    * resolve values
    */
 
-  const values = Object.create(null) as ArgValues<T>
+  const values = Object.create(null) as ArgValues<A>
   const errors: Error[] = []
 
-  function checkTokenName(option: string, schema: ArgOptionSchema, token: ArgToken): boolean {
+  function checkTokenName(option: string, schema: ArgSchema, token: ArgToken): boolean {
     return (
       token.name ===
       (schema.type === 'boolean'
@@ -291,7 +291,7 @@ export function resolveArgs<T extends ArgOptions>(
     )
   }
 
-  for (const [option, schema] of Object.entries(options)) {
+  for (const [option, schema] of Object.entries(args)) {
     if (schema.required) {
       const found =
         longOptionTokens.find(token => token.name === option) ||
@@ -329,7 +329,7 @@ export function resolveArgs<T extends ArgOptions>(
         }
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ;(values as any)[option] = resolveOptionValue(token, schema)
+        ;(values as any)[option] = resolveArgumentValue(token, schema)
         continue
       }
     }
@@ -358,7 +358,7 @@ export function resolveArgs<T extends ArgOptions>(
         }
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ;(values as any)[option] = resolveOptionValue(token, schema)
+        ;(values as any)[option] = resolveArgumentValue(token, schema)
         continue
       }
     }
@@ -380,8 +380,8 @@ export function resolveArgs<T extends ArgOptions>(
   }
 }
 
-function createRequireError(option: string, schema: ArgOptionSchema): OptionResolveError {
-  return new OptionResolveError(
+function createRequireError(option: string, schema: ArgSchema): ArgResolveError {
+  return new ArgResolveError(
     `Option '--${option}' ${schema.short ? `or '-${schema.short}' ` : ''}is required`,
     option,
     'required',
@@ -390,24 +390,19 @@ function createRequireError(option: string, schema: ArgOptionSchema): OptionReso
 }
 
 /**
- * An error type for {@link OptionResolveError}.
+ * An error type for {@link ArgResolveError}.
  */
-export type OptionResolveErrorType = 'type' | 'required'
+export type ArgResolveErrorType = 'type' | 'required'
 
 /**
- * An error that occurs when resolving options.
- * This error is thrown when the option is not valid.
+ * An error that occurs when resolving arguments.
+ * This error is thrown when the argument is not valid.
  */
-export class OptionResolveError extends Error {
+export class ArgResolveError extends Error {
   override name: string
-  schema: ArgOptionSchema
-  type: OptionResolveErrorType
-  constructor(
-    message: string,
-    name: string,
-    type: OptionResolveErrorType,
-    schema: ArgOptionSchema
-  ) {
+  schema: ArgSchema
+  type: ArgResolveErrorType
+  constructor(message: string, name: string, type: ArgResolveErrorType, schema: ArgSchema) {
     super(message)
     this.name = name
     this.type = type
@@ -415,21 +410,13 @@ export class OptionResolveError extends Error {
   }
 }
 
-function validateRequire(
-  token: ArgToken,
-  option: string,
-  schema: ArgOptionSchema
-): Error | undefined {
+function validateRequire(token: ArgToken, option: string, schema: ArgSchema): Error | undefined {
   if (schema.required && schema.type !== 'boolean' && !token.value) {
     return createRequireError(option, schema)
   }
 }
 
-function validateValue(
-  token: ArgToken,
-  option: string,
-  schema: ArgOptionSchema
-): Error | undefined {
+function validateValue(token: ArgToken, option: string, schema: ArgSchema): Error | undefined {
   switch (schema.type) {
     case 'number': {
       if (!isNumeric(token.value!)) {
@@ -445,7 +432,7 @@ function validateValue(
     }
     case 'enum': {
       if (schema.choices && !schema.choices.includes(token.value!)) {
-        return new OptionResolveError(
+        return new ArgResolveError(
           `Option '--${option}' ${schema.short ? `or '-${schema.short}' ` : ''}should be chosen from '${schema.type}' [${schema.choices.map(c => JSON.stringify(c)).join(', ')}] values`,
           option,
           'type',
@@ -463,8 +450,8 @@ function isNumeric(str: string): boolean {
   return str.trim() !== '' && !isNaN(str)
 }
 
-function createTypeError(option: string, schema: ArgOptionSchema): TypeError {
-  return new OptionResolveError(
+function createTypeError(option: string, schema: ArgSchema): TypeError {
+  return new ArgResolveError(
     `Option '--${option}' ${schema.short ? `or '-${schema.short}' ` : ''}should be '${schema.type}'`,
     option,
     'type',
@@ -472,9 +459,9 @@ function createTypeError(option: string, schema: ArgOptionSchema): TypeError {
   )
 }
 
-function resolveOptionValue(
+function resolveArgumentValue(
   token: ArgToken,
-  schema: ArgOptionSchema
+  schema: ArgSchema
 ): string | boolean | number | undefined {
   if (token.value) {
     return schema.type === 'number' ? +token.value : token.value

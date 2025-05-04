@@ -2,9 +2,9 @@ import { expect, test } from 'vitest'
 import { parse } from './parse.ts'
 import { parseArgs } from './parser.ts'
 
-import type { ArgOptions } from './resolver.ts'
+import type { Args } from './resolver.ts'
 
-const options = {
+const args = {
   help: {
     type: 'boolean',
     short: 'h'
@@ -31,10 +31,10 @@ const options = {
     short: 'o',
     required: true
   }
-} as const satisfies ArgOptions
+} as const satisfies Args
 
 test('parse', () => {
-  const args = [
+  const argv = [
     'dev',
     '-p9131',
     '--host',
@@ -52,7 +52,7 @@ test('parse', () => {
     '--port',
     '8080'
   ]
-  const { values, positionals, rest, tokens } = parse(args, { options })
+  const { values, positionals, rest, tokens } = parse(argv, { args })
   expect(values).toEqual({
     port: 9131,
     host: 'example.com',
@@ -63,5 +63,5 @@ test('parse', () => {
   })
   expect(positionals).toEqual(['dev', 'foo', 'bar', 'baz'])
   expect(rest).toEqual(['--help', '--version', '--port', '8080'])
-  expect(tokens).toEqual(parseArgs(args))
+  expect(tokens).toEqual(parseArgs(argv))
 })
