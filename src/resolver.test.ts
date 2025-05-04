@@ -440,3 +440,262 @@ describe('enum option', () => {
     expect((error?.errors[0] as ArgResolveError).schema.type).toEqual('enum')
   })
 })
+
+describe('positional arguments', () => {
+  test('basic', () => {
+    const argv = ['dev', '--help']
+    const tokens = parseArgs(argv)
+    const { values, positionals, rest } = resolveArgs(
+      {
+        command: {
+          type: 'positional'
+        },
+        help: {
+          type: 'boolean',
+          short: 'h'
+        }
+      },
+      tokens
+    )
+    expect(values).toEqual({
+      command: 'dev',
+      help: true
+    })
+    expect(positionals).toEqual(['dev'])
+    expect(rest).toEqual([])
+  })
+
+  test('missing', () => {
+    const argv = ['--help']
+    const tokens = parseArgs(argv)
+    const { error } = resolveArgs(
+      {
+        command: {
+          type: 'positional'
+        },
+        help: {
+          type: 'boolean',
+          short: 'h'
+        }
+      },
+      tokens
+    )
+    expect(error?.errors.length).toBe(1)
+    expect((error?.errors[0] as ArgResolveError).message).toEqual(
+      `Positional argument 'command' is required`
+    )
+  })
+
+  test('argument order', () => {
+    const argv = ['--help', 'dev']
+    const tokens = parseArgs(argv)
+    const { values, positionals, rest } = resolveArgs(
+      {
+        command: {
+          type: 'positional'
+        },
+        help: {
+          type: 'boolean',
+          short: 'h'
+        }
+      },
+      tokens
+    )
+    expect(values).toEqual({
+      command: 'dev',
+      help: true
+    })
+    expect(positionals).toEqual(['dev'])
+    expect(rest).toEqual([])
+  })
+
+  test('multiple positionals', () => {
+    const argv = ['dev', '--help', 'info', 'foo']
+    const tokens = parseArgs(argv)
+    const { values, positionals, rest } = resolveArgs(
+      {
+        command: {
+          type: 'positional'
+        },
+        log: {
+          type: 'positional'
+        },
+        help: {
+          type: 'boolean',
+          short: 'h'
+        }
+      },
+      tokens
+    )
+    expect(values).toEqual({
+      command: 'dev',
+      log: 'info',
+      help: true
+    })
+    expect(positionals).toEqual(['dev', 'info', 'foo'])
+    expect(rest).toEqual([])
+  })
+
+  test('positionals & termination', () => {
+    const argv = ['dev', '--help', 'info', 'foo', '--', 'bar']
+    const tokens = parseArgs(argv)
+    const { values, positionals, rest } = resolveArgs(
+      {
+        command: {
+          type: 'positional'
+        },
+        log: {
+          type: 'positional'
+        },
+        help: {
+          type: 'boolean',
+          short: 'h'
+        }
+      },
+      tokens
+    )
+    expect(values).toEqual({
+      command: 'dev',
+      log: 'info',
+      help: true
+    })
+    expect(positionals).toEqual(['dev', 'info', 'foo'])
+    expect(rest).toEqual(['bar'])
+  })
+
+  describe('skipPositional', () => {
+    test('basic', () => {
+      const argv = ['dev', '--help', 'info', 'foo']
+      const tokens = parseArgs(argv)
+      const { values, positionals, rest } = resolveArgs(
+        {
+          log: {
+            type: 'positional'
+          },
+          help: {
+            type: 'boolean',
+            short: 'h'
+          }
+        },
+        tokens,
+        {
+          skipPositional: 0
+        }
+      )
+      expect(values).toEqual({
+        log: 'info',
+        help: true
+      })
+      expect(positionals).toEqual(['dev', 'info', 'foo'])
+      expect(rest).toEqual([])
+    })
+
+    test('multiple positional', () => {
+      const argv = ['dev', '--help', 'info', 'foo', 'bar', 'baz']
+      const tokens = parseArgs(argv)
+      const { values, positionals, rest } = resolveArgs(
+        {
+          log: {
+            type: 'positional'
+          },
+          test: {
+            type: 'positional'
+          },
+          help: {
+            type: 'boolean',
+            short: 'h'
+          }
+        },
+        tokens,
+        {
+          skipPositional: 0
+        }
+      )
+      expect(values).toEqual({
+        log: 'info',
+        test: 'foo',
+        help: true
+      })
+      expect(positionals).toEqual(['dev', 'info', 'foo', 'bar', 'baz'])
+      expect(rest).toEqual([])
+    })
+
+    test('skipPositional < -1', () => {
+      const argv = ['dev', '--help', 'info', 'foo']
+      const tokens = parseArgs(argv)
+      const { values, positionals, rest } = resolveArgs(
+        {
+          log: {
+            type: 'positional'
+          },
+          help: {
+            type: 'boolean',
+            short: 'h'
+          }
+        },
+        tokens,
+        {
+          skipPositional: -10
+        }
+      )
+      expect(values).toEqual({
+        log: 'dev',
+        help: true
+      })
+      expect(positionals).toEqual(['dev', 'info', 'foo'])
+      expect(rest).toEqual([])
+    })
+
+    test('skipPositional over arguments length', () => {
+      const argv = ['dev', '--help', 'info', 'foo']
+      const tokens = parseArgs(argv)
+      const { error, positionals, rest } = resolveArgs(
+        {
+          log: {
+            type: 'positional'
+          },
+          help: {
+            type: 'boolean',
+            short: 'h'
+          }
+        },
+        tokens,
+        {
+          skipPositional: 10
+        }
+      )
+      expect(positionals).toEqual(['dev', 'info', 'foo'])
+      expect(rest).toEqual([])
+      expect(error?.errors.length).toBe(1)
+      expect((error?.errors[0] as ArgResolveError).message).toEqual(
+        `Positional argument 'log' is required`
+      )
+    })
+
+    test('skipPositional over arguments length on termination', () => {
+      const argv = ['dev', '--help', 'info', '--', 'foo']
+      const tokens = parseArgs(argv)
+      const { error, positionals, rest } = resolveArgs(
+        {
+          log: {
+            type: 'positional'
+          },
+          help: {
+            type: 'boolean',
+            short: 'h'
+          }
+        },
+        tokens,
+        {
+          skipPositional: 10
+        }
+      )
+      expect(positionals).toEqual(['dev', 'info'])
+      expect(rest).toEqual(['foo'])
+      expect(error?.errors.length).toBe(1)
+      expect((error?.errors[0] as ArgResolveError).message).toEqual(
+        `Positional argument 'log' is required`
+      )
+    })
+  })
+})

@@ -18,14 +18,14 @@ import type { ArgToken } from './parser.ts'
  * difference is that:
  * - `multiple` property is not supported
  * - `required` property and `description` property are added
- * - `type` is not only 'string' and 'boolean', but also 'number' and 'enum' too.
+ * - `type` is not only 'string' and 'boolean', but also 'number', 'enum' and 'positional' too.
  * - `default` property type, not support multiple types
  */
 export interface ArgSchema {
   /**
    * Type of argument.
    */
-  type: 'string' | 'boolean' | 'number' | 'enum'
+  type: 'string' | 'boolean' | 'number' | 'enum' | 'positional'
   /**
    * A single character alias for the option.
    */
@@ -83,11 +83,13 @@ export type ExtractOptionValue<A extends ArgSchema> = A['type'] extends 'string'
     ? boolean
     : A['type'] extends 'number'
       ? number
-      : A['type'] extends 'enum'
-        ? A['choices'] extends string[] | readonly string[]
-          ? A['choices'][number]
-          : never
-        : string | boolean | number
+      : A['type'] extends 'positional'
+        ? string
+        : A['type'] extends 'enum'
+          ? A['choices'] extends string[] | readonly string[]
+            ? A['choices'][number]
+            : never
+          : string | boolean | number
 
 /**
  * @internal
@@ -121,7 +123,14 @@ export interface ResolveArgs {
    * @see guideline 5 in https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/V1_chap12.html
    */
   optionGrouping?: boolean
+  /**
+   * Skip positional arguments index.
+   * @default -1
+   */
+  skipPositional?: number
 }
+
+const SKIP_POSITIONAL_DEFAULT = -1
 
 /**
  * Resolve command line arguments.
@@ -133,18 +142,24 @@ export interface ResolveArgs {
 export function resolveArgs<A extends Args>(
   args: A,
   tokens: ArgToken[],
-  { optionGrouping = false }: ResolveArgs = {}
+  { optionGrouping = false, skipPositional = SKIP_POSITIONAL_DEFAULT }: ResolveArgs = {}
 ): {
   values: ArgValues<A>
   positionals: string[]
   rest: string[]
   error: AggregateError | undefined
 } {
+  const skipPositionalIndex =
+    typeof skipPositional === 'number'
+      ? Math.max(skipPositional, SKIP_POSITIONAL_DEFAULT)
+      : SKIP_POSITIONAL_DEFAULT
+
   const positionals = [] as string[]
   const rest = [] as string[]
 
   const longOptionTokens: ArgToken[] = []
   const shortOptionTokens: ArgToken[] = []
+  const positionalTokens: ArgToken[] = []
 
   let currentLongOption: ArgToken | undefined
   let currentShortOption: ArgToken | undefined
@@ -199,14 +214,17 @@ export function resolveArgs<A extends Args>(
         )
         if (found) {
           positionals.push(token.value!)
+          positionalTokens.push({ ...token })
         }
       } else if (currentLongOption) {
         const found = args[currentLongOption.name!]?.type === 'boolean'
         if (found) {
           positionals.push(token.value!)
+          positionalTokens.push({ ...token })
         }
       } else {
         positionals.push(token.value!)
+        positionalTokens.push({ ...token })
       }
       // check if previous option is not resolved
       applyLongOptionValue(token.value)
@@ -291,6 +309,12 @@ export function resolveArgs<A extends Args>(
     )
   }
 
+  const positionalItemCount = tokens.filter(token => token.kind === 'positional').length
+  function getPositionalSkipIndex() {
+    return Math.min(skipPositionalIndex, positionalItemCount)
+  }
+
+  let positionalsCount = 0
   for (const [option, schema] of Object.entries(args)) {
     if (schema.required) {
       const found =
@@ -300,6 +324,24 @@ export function resolveArgs<A extends Args>(
         errors.push(createRequireError(option, schema))
         continue
       }
+    }
+
+    if (schema.type === 'positional') {
+      if (skipPositionalIndex > SKIP_POSITIONAL_DEFAULT) {
+        while (positionalsCount <= getPositionalSkipIndex()) {
+          positionalsCount++
+        }
+      }
+      const positional = positionalTokens[positionalsCount]
+      // eslint-disable-next-line unicorn/no-null, unicorn/no-negated-condition
+      if (positional != null) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ;(values as any)[option] = positional.value!
+      } else {
+        errors.push(createRequireError(option, schema))
+      }
+      positionalsCount++
+      continue
     }
 
     // eslint-disable-next-line unicorn/no-for-loop
@@ -381,12 +423,11 @@ export function resolveArgs<A extends Args>(
 }
 
 function createRequireError(option: string, schema: ArgSchema): ArgResolveError {
-  return new ArgResolveError(
-    `Option '--${option}' ${schema.short ? `or '-${schema.short}' ` : ''}is required`,
-    option,
-    'required',
-    schema
-  )
+  const message =
+    schema.type === 'positional'
+      ? `Positional argument '${option}' is required`
+      : `Option '--${option}' ${schema.short ? `or '-${schema.short}' ` : ''}is required`
+  return new ArgResolveError(message, option, 'required', schema)
 }
 
 /**
