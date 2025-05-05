@@ -1,7 +1,7 @@
 {
   "name": "@kazupon/args-tokens",
   "description": "parseArgs tokens compatibility and more high-performance parser",
-  "version": "0.17.0",
+  "version": "0.17.1",
   "license": "MIT",
   "publish": {
     "include": ["src/**/*.ts", "package.json", "jsr.json", "README.md", "CHANGELOG.md", "LICENSE"],
