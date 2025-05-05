@@ -54,7 +54,9 @@ describe('resolveArgs', () => {
     const tokens = parseArgs(argv)
     const { error } = resolveArgs(args, tokens)
     expect(error?.errors.length).toBe(1)
-    expect((error?.errors[0] as Error).message).toEqual("Option '--host' or '-o' is required")
+    expect((error?.errors[0] as Error).message).toEqual(
+      "Optional argument '--host' or '-o' is required"
+    )
     expect((error?.errors[0] as ArgResolveError).name).toEqual('host')
     expect((error?.errors[0] as ArgResolveError).type).toEqual('required')
     expect((error?.errors[0] as ArgResolveError).schema.type).toEqual('string')
@@ -78,7 +80,7 @@ describe('resolveArgs', () => {
     const { error } = resolveArgs(args, tokens)
     expect(error?.errors.length).toBe(1)
     expect((error?.errors[0] as ArgResolveError).message).toEqual(
-      "Option '--port' or '-p' should be 'number'"
+      "Optional argument '--port' or '-p' should be 'number'"
     )
     expect((error?.errors[0] as ArgResolveError).name).toEqual('port')
     expect((error?.errors[0] as ArgResolveError).type).toEqual('type')
@@ -91,12 +93,12 @@ describe('resolveArgs', () => {
     const { error } = resolveArgs(args, tokens)
     expect(error?.errors.length).toBe(2)
     expect((error?.errors[0] as Error).message).toEqual(
-      "Option '--port' or '-p' should be 'number'"
+      "Optional argument '--port' or '-p' should be 'number'"
     )
     expect((error?.errors[0] as ArgResolveError).name).toEqual('port')
     expect((error?.errors[0] as ArgResolveError).type).toEqual('type')
     expect((error?.errors[1] as ArgResolveError).message).toEqual(
-      "Option '--host' or '-o' is required"
+      "Optional argument '--host' or '-o' is required"
     )
     expect((error?.errors[1] as ArgResolveError).name).toEqual('host')
     expect((error?.errors[1] as ArgResolveError).type).toEqual('required')
@@ -350,7 +352,7 @@ describe('enum option', () => {
     )
     expect(error?.errors.length).toBe(1)
     expect((error?.errors[0] as ArgResolveError).message).toEqual(
-      `Option '--log' or '-l' should be chosen from 'enum' ["debug", "info", "warn", "error"] values`
+      `Optional argument '--log' or '-l' should be chosen from 'enum' ["debug", "info", "warn", "error"] values`
     )
     expect((error?.errors[0] as ArgResolveError).name).toEqual('log')
     expect((error?.errors[0] as ArgResolveError).type).toEqual('type')
@@ -372,7 +374,9 @@ describe('enum option', () => {
       tokens
     )
     expect(error?.errors.length).toBe(1)
-    expect((error?.errors[0] as Error).message).toEqual("Option '--log' or '-l' is required")
+    expect((error?.errors[0] as Error).message).toEqual(
+      "Optional argument '--log' or '-l' is required"
+    )
     expect((error?.errors[0] as ArgResolveError).name).toEqual('log')
     expect((error?.errors[0] as ArgResolveError).type).toEqual('required')
     expect((error?.errors[0] as ArgResolveError).schema.type).toEqual('enum')
@@ -433,7 +437,7 @@ describe('enum option', () => {
     )
     expect(error?.errors.length).toBe(1)
     expect((error?.errors[0] as ArgResolveError).message).toEqual(
-      `Option '--log' or '-l' should be chosen from 'enum' ["debug", "info", "warn", "error"] values`
+      `Optional argument '--log' or '-l' should be chosen from 'enum' ["debug", "info", "warn", "error"] values`
     )
     expect((error?.errors[0] as ArgResolveError).name).toEqual('log')
     expect((error?.errors[0] as ArgResolveError).type).toEqual('type')
