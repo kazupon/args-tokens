@@ -422,7 +422,7 @@ function createRequireError(option: string, schema: ArgSchema): ArgResolveError 
   const message =
     schema.type === 'positional'
       ? `Positional argument '${option}' is required`
-      : `Option '--${option}' ${schema.short ? `or '-${schema.short}' ` : ''}is required`
+      : `Optional argument '--${option}' ${schema.short ? `or '-${schema.short}' ` : ''}is required`
   return new ArgResolveError(message, option, 'required', schema)
 }
 
@@ -470,7 +470,7 @@ function validateValue(token: ArgToken, option: string, schema: ArgSchema): Erro
     case 'enum': {
       if (schema.choices && !schema.choices.includes(token.value!)) {
         return new ArgResolveError(
-          `Option '--${option}' ${schema.short ? `or '-${schema.short}' ` : ''}should be chosen from '${schema.type}' [${schema.choices.map(c => JSON.stringify(c)).join(', ')}] values`,
+          `Optional argument '--${option}' ${schema.short ? `or '-${schema.short}' ` : ''}should be chosen from '${schema.type}' [${schema.choices.map(c => JSON.stringify(c)).join(', ')}] values`,
           option,
           'type',
           schema
@@ -489,7 +489,7 @@ function isNumeric(str: string): boolean {
 
 function createTypeError(option: string, schema: ArgSchema): TypeError {
   return new ArgResolveError(
-    `Option '--${option}' ${schema.short ? `or '-${schema.short}' ` : ''}should be '${schema.type}'`,
+    `Optional argument '--${option}' ${schema.short ? `or '-${schema.short}' ` : ''}should be '${schema.type}'`,
     option,
     'type',
     schema
