@@ -106,7 +106,7 @@
     "eslint-plugin-yml": "^1.18.0",
     "gh-changelogen": "^0.2.8",
     "jsr": "^0.13.4",
-    "jsr-exports-lint": "^0.2.0",
+    "jsr-exports-lint": "^0.4.0",
     "knip": "^5.52.0",
     "lint-staged": "^15.5.1",
     "mitata": "^1.0.34",
