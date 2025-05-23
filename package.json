@@ -87,13 +87,14 @@
     "test": "vitest run",
     "typecheck": "pnpm run --parallel --color \"/^typecheck:/\"",
     "typecheck:deno": "deno check src",
-    "typecheck:tsc": "tsc --noEmit"
+    "typecheck:tsc": "tsgo --noEmit"
   },
   "devDependencies": {
     "@eslint/markdown": "^6.4.0",
     "@kazupon/eslint-config": "^0.29.0",
     "@kazupon/prettier-config": "^0.1.1",
     "@types/node": "^22.15.21",
+    "@typescript/native-preview": "7.0.0-dev.20250522.2",
     "@vitest/eslint-plugin": "^1.2.0",
     "bumpp": "^10.1.1",
     "deno": "^2.3.3",

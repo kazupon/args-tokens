@@ -703,3 +703,127 @@ describe('positional arguments', () => {
     })
   })
 })
+
+describe('multiple values', () => {
+  test('long option', () => {
+    const argv = ['build', '--define=foo', '--define', 'bar', '--help']
+    const tokens = parseArgs(argv)
+    const { values, positionals, rest } = resolveArgs(
+      {
+        define: {
+          type: 'string',
+          multiple: true,
+          short: 'd'
+        },
+        help: {
+          type: 'boolean',
+          short: 'h'
+        }
+      },
+      tokens
+    )
+    expect(values).toEqual({
+      define: ['foo', 'bar'],
+      help: true
+    })
+    expect(positionals).toEqual(['build'])
+    expect(rest).toEqual([])
+  })
+
+  test('short option', () => {
+    const argv = ['build', '-d=foo', '-d', 'bar', '--help', 'baz', '--', 'one', 'two']
+    const tokens = parseArgs(argv)
+    const { values, positionals, rest } = resolveArgs(
+      {
+        define: {
+          type: 'string',
+          multiple: true,
+          short: 'd'
+        },
+        help: {
+          type: 'boolean',
+          short: 'h'
+        }
+      },
+      tokens
+    )
+    expect(values).toEqual({
+      define: ['foo', 'bar'],
+      help: true
+    })
+    expect(positionals).toEqual(['build', 'baz'])
+    expect(rest).toEqual(['one', 'two'])
+  })
+
+  test('long and short option', () => {
+    const argv = ['build', '-d=foo', '--define', 'bar', 'foo', 'bar', 'baz', '--help']
+    const tokens = parseArgs(argv)
+    const { values, positionals, rest } = resolveArgs(
+      {
+        define: {
+          type: 'string',
+          multiple: true,
+          short: 'd'
+        },
+        help: {
+          type: 'boolean',
+          short: 'h'
+        }
+      },
+      tokens
+    )
+    expect(values).toEqual({
+      define: ['foo', 'bar'],
+      help: true
+    })
+    expect(positionals).toEqual(['build', 'foo', 'bar', 'baz'])
+    expect(rest).toEqual([])
+  })
+
+  test('boolean option', () => {
+    const argv = ['build', '--foo', '--no-foo', '--foo', '--help']
+    const tokens = parseArgs(argv)
+    const { values, positionals, rest } = resolveArgs(
+      {
+        foo: {
+          type: 'boolean',
+          multiple: true,
+          negatable: true,
+          short: 'f'
+        },
+        help: {
+          type: 'boolean',
+          short: 'h'
+        }
+      },
+      tokens
+    )
+    expect(values).toEqual({
+      foo: [true, false, true],
+      help: true
+    })
+    expect(positionals).toEqual(['build'])
+    expect(rest).toEqual([])
+  })
+
+  test('enum option', () => {
+    const argv = ['eat', '--fruits=banana', '-f', 'apple', '--fruits', 'orange']
+    const tokens = parseArgs(argv)
+    const { values, positionals, rest } = resolveArgs(
+      {
+        fruits: {
+          type: 'enum',
+          multiple: true,
+          short: 'f',
+          choices: ['banana', 'apple', 'orange']
+        }
+      },
+      tokens
+    )
+    expect(values).toEqual({
+      fruits: ['banana', 'apple', 'orange']
+    })
+    expect(positionals).toEqual(['eat'])
+    expect(rest).toEqual([])
+  })
+})

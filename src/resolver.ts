@@ -16,7 +16,6 @@ import type { ArgToken } from './parser.ts'
  * An argument schema
  * This schema is similar to the schema of the `node:utils`.
  * difference is that:
- * - `multiple` property is not supported
  * - `required` property and `description` property are added
  * - `type` is not only 'string' and 'boolean', but also 'number', 'enum' and 'positional' too.
  * - `default` property type, not support multiple types
@@ -38,6 +37,10 @@ export interface ArgSchema {
    * Whether the argument is required or not.
    */
   required?: true
+  /**
+   * Whether the argument allow multiple values or not.
+   */
+  multiple?: true
   /**
    * Whether the negatable option for `boolean` type
    */
@@ -71,25 +74,27 @@ export type ArgValues<T> = T extends Args
       }
     >
   : {
-      [option: string]: string | boolean | number | undefined
+      [option: string]: string | boolean | number | (string | boolean | number)[] | undefined
     }
 
 /**
  * @internal
  */
 export type ExtractOptionValue<A extends ArgSchema> = A['type'] extends 'string'
-  ? string
+  ? ResolveOptionValue<A, string>
   : A['type'] extends 'boolean'
-    ? boolean
+    ? ResolveOptionValue<A, boolean>
     : A['type'] extends 'number'
-      ? number
+      ? ResolveOptionValue<A, number>
       : A['type'] extends 'positional'
-        ? string
+        ? ResolveOptionValue<A, string>
         : A['type'] extends 'enum'
           ? A['choices'] extends string[] | readonly string[]
-            ? A['choices'][number]
+            ? ResolveOptionValue<A, A['choices'][number]>
             : never
-          : string | boolean | number
+          : ResolveOptionValue<A, string | boolean | number>
+
+type ResolveOptionValue<A extends ArgSchema, T> = A['multiple'] extends true ? T[] : T
 
 /**
  * @internal
@@ -156,8 +161,7 @@ export function resolveArgs<A extends Args>(
 
   const rest = [] as string[]
 
-  const longOptionTokens: ArgToken[] = []
-  const shortOptionTokens: ArgToken[] = []
+  const optionTokens: ArgToken[] = []
   const positionalTokens: ArgToken[] = []
 
   let currentLongOption: ArgToken | undefined
@@ -177,7 +181,7 @@ export function resolveArgs<A extends Args>(
   function applyLongOptionValue(value: string | undefined = undefined): void {
     if (currentLongOption) {
       currentLongOption.value = value
-      longOptionTokens.push({ ...currentLongOption })
+      optionTokens.push({ ...currentLongOption })
       currentLongOption = undefined
     }
   }
@@ -185,7 +189,7 @@ export function resolveArgs<A extends Args>(
   function applyShortOptionValue(value: string | undefined = undefined): void {
     if (currentShortOption) {
       currentShortOption.value = value || toShortValue()
-      shortOptionTokens.push({ ...currentShortOption })
+      optionTokens.push({ ...currentShortOption })
       currentShortOption = undefined
     }
   }
@@ -231,7 +235,7 @@ export function resolveArgs<A extends Args>(
           // check if previous long option is not resolved
           applyLongOptionValue()
           if (token.inlineValue) {
-            longOptionTokens.push({ ...token })
+            optionTokens.push({ ...token })
           } else {
             currentLongOption = { ...token }
           }
@@ -242,14 +246,14 @@ export function resolveArgs<A extends Args>(
             if (currentShortOption.index === token.index) {
               if (optionGrouping) {
                 currentShortOption.value = token.value
-                shortOptionTokens.push({ ...currentShortOption })
+                optionTokens.push({ ...currentShortOption })
                 currentShortOption = { ...token }
               } else {
                 expandableShortOptions.push({ ...token })
               }
             } else {
               currentShortOption.value = toShortValue()
-              shortOptionTokens.push({ ...currentShortOption })
+              optionTokens.push({ ...currentShortOption })
               currentShortOption = { ...token }
             }
             // check if previous long option is not resolved
@@ -264,7 +268,7 @@ export function resolveArgs<A extends Args>(
         // short option value
         if (currentShortOption && currentShortOption.index == token.index && token.inlineValue) {
           currentShortOption.value = token.value
-          shortOptionTokens.push({ ...currentShortOption })
+          optionTokens.push({ ...currentShortOption })
           currentShortOption = undefined
         }
         // check if previous long option is not resolved
@@ -313,9 +317,12 @@ export function resolveArgs<A extends Args>(
   let positionalsCount = 0
   for (const [option, schema] of Object.entries(args)) {
     if (schema.required) {
-      const found =
-        longOptionTokens.find(token => token.name === option) ||
-        (schema.short && shortOptionTokens.find(token => token.name === schema.short))
+      const found = optionTokens.find(token => {
+        return (
+          (schema.short && token.name === schema.short) ||
+          (token.rawName && hasLongOptionPrefix(token.rawName) && token.name === option)
+        )
+      })
       if (!found) {
         errors.push(createRequireError(option, schema))
         continue
@@ -341,13 +348,14 @@ export function resolveArgs<A extends Args>(
     }
 
     // eslint-disable-next-line unicorn/no-for-loop
-    for (let i = 0; i < longOptionTokens.length; i++) {
-      const token = longOptionTokens[i]
+    for (let i = 0; i < optionTokens.length; i++) {
+      const token = optionTokens[i]
 
       if (
-        checkTokenName(option, schema, token) &&
-        token.rawName != undefined &&
-        hasLongOptionPrefix(token.rawName)
+        (checkTokenName(option, schema, token) &&
+          token.rawName != undefined &&
+          hasLongOptionPrefix(token.rawName)) ||
+        (schema.short === token.name && token.rawName != undefined && isShortOption(token.rawName))
       ) {
         const invalid = validateRequire(token, option, schema)
         if (invalid) {
@@ -366,37 +374,15 @@ export function resolveArgs<A extends Args>(
           }
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ;(values as any)[option] = resolveArgumentValue(token, schema)
-        continue
-      }
-    }
-
-    // eslint-disable-next-line unicorn/no-for-loop
-    for (let i = 0; i < shortOptionTokens.length; i++) {
-      const token = shortOptionTokens[i]
-
-      // eslint-disable-next-line unicorn/no-null
-      if (schema.short === token.name && token.rawName != null && isShortOption(token.rawName)) {
-        const invalid = validateRequire(token, option, schema)
-        if (invalid) {
-          errors.push(invalid)
-          continue
-        }
-
-        if (schema.type === 'boolean') {
-          // NOTE: re-set value to undefined, because short boolean type option is set on analyze phase
-          token.value = undefined
+        if (schema.multiple) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ;(values as any)[option] ||= []
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ;(values as any)[option].push(resolveArgumentValue(token, schema))
         } else {
-          const invalid = validateValue(token, option, schema)
-          if (invalid) {
-            errors.push(invalid)
-            continue
-          }
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ;(values as any)[option] = resolveArgumentValue(token, schema)
         }
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ;(values as any)[option] = resolveArgumentValue(token, schema)
         continue
       }
     }
