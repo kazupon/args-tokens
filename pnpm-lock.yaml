@@ -20,6 +20,9 @@ importers:
       '@types/node':
         specifier: ^22.15.21
         version: 22.15.21
+      '@typescript/native-preview':
+        specifier: 7.0.0-dev.20250522.2
+        version: 7.0.0-dev.20250522.2
       '@vitest/eslint-plugin':
         specifier: ^1.2.0
         version: 1.2.0(eslint@9.27.0(jiti@2.4.2))(typescript@5.8.3)(vitest@3.1.4(@types/debug@4.1.12)(@types/node@22.15.21)(jiti@2.4.2)(lightningcss@1.29.3)(yaml@2.8.0))
@@ -1225,6 +1228,53 @@ packages:
   '@typescript-eslint/visitor-keys@8.32.1':
     resolution: {integrity: sha512-ar0tjQfObzhSaW3C3QNmTc5ofj0hDoNQ5XWrCy6zDyabdr0TWhCkClp+rywGNj/odAFBVzzJrK4tEq5M4Hmu4w==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+
+  '@typescript/native-preview-darwin-arm64@7.0.0-dev.20250522.2':
+    resolution: {integrity: sha512-QPDsnokqCgIU3wkcFe9HLsuyHd1lw1042qQhpfO4cSr1nudADLoybmy5TM05TARLSQS/1ahVm3DkpLKMeV+4yA==}
+    engines: {node: '>=20.6.0'}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@typescript/native-preview-darwin-x64@7.0.0-dev.20250522.2':
+    resolution: {integrity: sha512-Bm+0Da1zHoVCQZgGUWc0avzF6h6CWIKQRLzqnimJ0hbhvix5PnxDKGVJ/ZeLkCGN4eqgS10ynhYqQbv6XkZX9w==}
+    engines: {node: '>=20.6.0'}
+    cpu: [x64]
+    os: [darwin]
+
+  '@typescript/native-preview-linux-arm64@7.0.0-dev.20250522.2':
+    resolution: {integrity: sha512-6QjpFV0ltpAYVDz74TlfUKQh55RfIl6Ksrzo5o2tIcgZbuR3iIIU8Jv4r/Lbevk9Fq6jPKnZafLINI+Qna9PSg==}
+    engines: {node: '>=20.6.0'}
+    cpu: [arm64]
+    os: [linux]
+
+  '@typescript/native-preview-linux-arm@7.0.0-dev.20250522.2':
+    resolution: {integrity: sha512-BKyXRnYh+O9zqOu6Sa1/76deqM7zKO2P+IVU2Cyxt1TinJonNiB6Vj5oRcEgSmdOEGBUMbNWrPZFvcXT3INy1g==}
+    engines: {node: '>=20.6.0'}
+    cpu: [arm]
+    os: [linux]
+
+  '@typescript/native-preview-linux-x64@7.0.0-dev.20250522.2':
+    resolution: {integrity: sha512-JZGWbc4aFwiI22C7/oI2PDu2lPEiPSI3L8cOSJ+4FuAebBN7hoY1XW3QBvjIVmRgQPhw7SkQvTiWIE3+kqly5Q==}
+    engines: {node: '>=20.6.0'}
+    cpu: [x64]
+    os: [linux]
+
+  '@typescript/native-preview-win32-arm64@7.0.0-dev.20250522.2':
+    resolution: {integrity: sha512-Yh7dd1a56Gg/4gTePCFjZEHmB05rJxC48pRrSaiao6b5pSoqPacJZ0tUemSFVuOV/snVj0IiDHoUo/ufOrZ7gA==}
+    engines: {node: '>=20.6.0'}
+    cpu: [arm64]
+    os: [win32]
+
+  '@typescript/native-preview-win32-x64@7.0.0-dev.20250522.2':
+    resolution: {integrity: sha512-GtSKBpSvKZCQVDZ3qvuiqvRGy9OX39FQmlwe+gLIZuNZLn9KQQxaCmBJf6CXt5ICdViSKUIbV0SJuKrNL0hyNA==}
+    engines: {node: '>=20.6.0'}
+    cpu: [x64]
+    os: [win32]
+
+  '@typescript/native-preview@7.0.0-dev.20250522.2':
+    resolution: {integrity: sha512-OgKwE3W+Xn53pgfCnY0kk+yVoecTm9yeExDAphzzwi+yT3pxSc9ne2tcVZJrHzoaw6X7Q/r90aDfbYr9P9fyrQ==}
+    engines: {node: '>=20.6.0'}
+    hasBin: true
 
   '@valibot/to-json-schema@1.0.0':
     resolution: {integrity: sha512-/9crJgPptVsGCL6X+JPDQyaJwkalSZ/52WuF8DiRUxJgcmpNdzYRfZ+gqMEP8W3CTVfuMWPqqvIgfwJ97f9Etw==}
@@ -3810,6 +3860,37 @@ snapshots:
     dependencies:
       '@typescript-eslint/types': 8.32.1
       eslint-visitor-keys: 4.2.0
+
+  '@typescript/native-preview-darwin-arm64@7.0.0-dev.20250522.2':
+    optional: true
+
+  '@typescript/native-preview-darwin-x64@7.0.0-dev.20250522.2':
+    optional: true
+
+  '@typescript/native-preview-linux-arm64@7.0.0-dev.20250522.2':
+    optional: true
+
+  '@typescript/native-preview-linux-arm@7.0.0-dev.20250522.2':
+    optional: true
+
+  '@typescript/native-preview-linux-x64@7.0.0-dev.20250522.2':
+    optional: true
+
+  '@typescript/native-preview-win32-arm64@7.0.0-dev.20250522.2':
+    optional: true
+
+  '@typescript/native-preview-win32-x64@7.0.0-dev.20250522.2':
+    optional: true
+
+  '@typescript/native-preview@7.0.0-dev.20250522.2':
+    optionalDependencies:
+      '@typescript/native-preview-darwin-arm64': 7.0.0-dev.20250522.2
+      '@typescript/native-preview-darwin-x64': 7.0.0-dev.20250522.2
+      '@typescript/native-preview-linux-arm': 7.0.0-dev.20250522.2
+      '@typescript/native-preview-linux-arm64': 7.0.0-dev.20250522.2
+      '@typescript/native-preview-linux-x64': 7.0.0-dev.20250522.2
+      '@typescript/native-preview-win32-arm64': 7.0.0-dev.20250522.2
+      '@typescript/native-preview-win32-x64': 7.0.0-dev.20250522.2
 
   '@valibot/to-json-schema@1.0.0(valibot@1.0.0(typescript@5.8.3))':
     dependencies:

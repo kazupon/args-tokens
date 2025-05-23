@@ -11,6 +11,13 @@ test('ExtractOptionValue', () => {
       short: 's'
     }>
   >().toEqualTypeOf<string>()
+  expectTypeOf<
+    ExtractOptionValue<{
+      type: 'string'
+      short: 's'
+      multiple: true
+    }>
+  >().toEqualTypeOf<string[]>()
 
   // boolean type
   expectTypeOf<
@@ -19,6 +26,13 @@ test('ExtractOptionValue', () => {
       short: 's'
     }>
   >().toEqualTypeOf<boolean>()
+  expectTypeOf<
+    ExtractOptionValue<{
+      type: 'boolean'
+      short: 's'
+      multiple: true
+    }>
+  >().toEqualTypeOf<boolean[]>()
 
   // number type
   expectTypeOf<
@@ -27,6 +41,13 @@ test('ExtractOptionValue', () => {
       short: 's'
     }>
   >().toEqualTypeOf<number>()
+  expectTypeOf<
+    ExtractOptionValue<{
+      type: 'number'
+      short: 's'
+      multiple: true
+    }>
+  >().toEqualTypeOf<number[]>()
 
   // enum type
   expectTypeOf<
@@ -49,6 +70,14 @@ test('ExtractOptionValue', () => {
       short: 's'
     }>
   >().toEqualTypeOf<never>()
+  expectTypeOf<
+    ExtractOptionValue<{
+      type: 'enum'
+      short: 's'
+      choices: ['a', 'b', 'c']
+      multiple: true
+    }>
+  >().toEqualTypeOf<('a' | 'b' | 'c')[]>()
 })
 
 test('FilterArgs', () => {
@@ -168,6 +197,11 @@ test('ArgValues', () => {
       short: 'o'
       required: true
     }
+    define: {
+      type: 'string'
+      short: 'd'
+      multiple: true
+    }
     log: {
       type: 'enum'
       short: 'l'
@@ -180,6 +214,7 @@ test('ArgValues', () => {
     version?: boolean
     port: number
     host: string
+    define?: string[]
     log?: 'debug' | 'info' | 'warn' | 'error'
   }>()
 })

@@ -7,11 +7,13 @@
     "source.organizeImports": "always",
     "source.fixAll.eslint": "explicit"
   },
+  "prettier.configPath": "./node_modules/@kazupon/prettier-config/index.json",
   "eslint.useFlatConfig": true,
   "eslint.validate": ["javascript", "typescript"],
   "files.associations": {
     "*.json": "jsonc"
   },
   "typescript.referencesCodeLens.enabled": true,
+  "typescript.experimental.useTsgo": false,
   "typescript.tsdk": "node_modules/typescript/lib"
 }
