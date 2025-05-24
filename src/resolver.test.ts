@@ -827,3 +827,64 @@ describe('multiple values', () => {
     expect(rest).toEqual([])
   })
 })
+
+describe(`'toKebab' option`, () => {
+  test('per argument', () => {
+    const argv = ['test', '--to-kebab=foo', '--no-kebab-case', '--noKebab']
+    const tokens = parseArgs(argv)
+    const { values } = resolveArgs(
+      {
+        toKebab: {
+          type: 'boolean',
+          short: 'k',
+          toKebab: true
+        },
+        kebabCase: {
+          type: 'boolean',
+          short: 'n',
+          negatable: true,
+          toKebab: true
+        },
+        noKebab: {
+          type: 'boolean',
+          short: 'N'
+        }
+      },
+      tokens
+    )
+    expect(values).toEqual({
+      toKebab: true,
+      kebabCase: false,
+      noKebab: true
+    })
+  })
+
+  test('all arguments', () => {
+    const argv = ['test', '--to-kebab=foo', '--no-kebab-case', '--foo-bar']
+    const tokens = parseArgs(argv)
+    const { values } = resolveArgs(
+      {
+        toKebab: {
+          type: 'boolean',
+          short: 'k'
+        },
+        kebabCase: {
+          type: 'boolean',
+          short: 'n',
+          negatable: true
+        },
+        'foo-bar': {
+          type: 'boolean',
+          short: 'K'
+        }
+      },
+      tokens,
+      { toKebab: true }
+    )
+    expect(values).toEqual({
+      'foo-bar': true,
+      toKebab: true,
+      kebabCase: false
+    })
+  })
+})
