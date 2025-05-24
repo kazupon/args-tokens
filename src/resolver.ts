@@ -54,6 +54,10 @@ export interface ArgSchema {
    * if the type is 'enum', the default value must be one of the allowed values.
    */
   default?: string | boolean | number
+  /**
+   * Whether to convert the argument name to kebab-case.
+   */
+  toKebab?: true
 }
 
 /**
@@ -133,9 +137,34 @@ export interface ResolveArgs {
    * @default -1
    */
   skipPositional?: number
+  /**
+   * Whether to convert the argument name to kebab-case. This option is applied to all arguments as `toKebab: true`, if set to `true`.
+   * @default false
+   */
+  toKebab?: boolean
 }
 
 const SKIP_POSITIONAL_DEFAULT = -1
+
+function kebabnize(str: string): string {
+  const len = str.length
+  let out = ''
+  for (let i = 0; i < len; ++i) {
+    // eslint-disable-next-line unicorn/prefer-code-point
+    const code = str.charCodeAt(i)
+    // 'A'(65) - 'Z'(90)
+    if (code >= 65 && code <= 90) {
+      if (i !== 0) {
+        out += '-'
+      }
+      // eslint-disable-next-line unicorn/prefer-code-point
+      out += String.fromCharCode(code + 32)
+    } else {
+      out += str[i]
+    }
+  }
+  return out
+}
 
 /**
  * Resolve command line arguments.
@@ -147,7 +176,11 @@ const SKIP_POSITIONAL_DEFAULT = -1
 export function resolveArgs<A extends Args>(
   args: A,
   tokens: ArgToken[],
-  { shortGrouping = false, skipPositional = SKIP_POSITIONAL_DEFAULT }: ResolveArgs = {}
+  {
+    shortGrouping = false,
+    skipPositional = SKIP_POSITIONAL_DEFAULT,
+    toKebab = false
+  }: ResolveArgs = {}
 ): {
   values: ArgValues<A>
   positionals: string[]
@@ -315,7 +348,9 @@ export function resolveArgs<A extends Args>(
   }
 
   let positionalsCount = 0
-  for (const [option, schema] of Object.entries(args)) {
+  for (const [rawOption, schema] of Object.entries(args)) {
+    const option = toKebab || schema.toKebab ? kebabnize(rawOption) : rawOption
+
     if (schema.required) {
       const found = optionTokens.find(token => {
         return (
@@ -339,7 +374,7 @@ export function resolveArgs<A extends Args>(
       // eslint-disable-next-line unicorn/no-null, unicorn/no-negated-condition
       if (positional != null) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ;(values as any)[option] = positional.value!
+        ;(values as any)[rawOption] = positional.value!
       } else {
         errors.push(createRequireError(option, schema))
       }
@@ -376,22 +411,22 @@ export function resolveArgs<A extends Args>(
 
         if (schema.multiple) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ;(values as any)[option] ||= []
+          ;(values as any)[rawOption] ||= []
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ;(values as any)[option].push(resolveArgumentValue(token, schema))
+          ;(values as any)[rawOption].push(resolveArgumentValue(token, schema))
         } else {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ;(values as any)[option] = resolveArgumentValue(token, schema)
+          ;(values as any)[rawOption] = resolveArgumentValue(token, schema)
         }
         continue
       }
     }
 
     // eslint-disable-next-line unicorn/no-null
-    if (values[option] == null && schema.default != null) {
+    if (values[rawOption] == null && schema.default != null) {
       // check if the default value is in values
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ;(values as any)[option] = schema.default
+      ;(values as any)[rawOption] = schema.default
     }
   }
 
