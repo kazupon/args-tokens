@@ -264,7 +264,7 @@ describe('option group', () => {
         }
       },
       tokens,
-      { optionGrouping: true }
+      { shortGrouping: true }
     )
     expect(positionals).toEqual(['dev'])
     expect(rest).toEqual([])
@@ -302,7 +302,7 @@ describe('option group', () => {
         }
       },
       tokens,
-      { optionGrouping: true }
+      { shortGrouping: true }
     )
     expect(positionals).toEqual(['dev', 'foo', 'bar'])
     expect(rest).toEqual([])

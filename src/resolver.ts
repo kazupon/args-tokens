@@ -26,7 +26,7 @@ export interface ArgSchema {
    */
   type: 'string' | 'boolean' | 'number' | 'enum' | 'positional'
   /**
-   * A single character alias for the option.
+   * A single character alias for the argument.
    */
   short?: string
   /**
@@ -123,11 +123,11 @@ export type FilterArgs<
  */
 export interface ResolveArgs {
   /**
-   * Whether to group short options.
+   * Whether to group short arguments.
    * @default false
    * @see guideline 5 in https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/V1_chap12.html
    */
-  optionGrouping?: boolean
+  shortGrouping?: boolean
   /**
    * Skip positional arguments index.
    * @default -1
@@ -147,7 +147,7 @@ const SKIP_POSITIONAL_DEFAULT = -1
 export function resolveArgs<A extends Args>(
   args: A,
   tokens: ArgToken[],
-  { optionGrouping = false, skipPositional = SKIP_POSITIONAL_DEFAULT }: ResolveArgs = {}
+  { shortGrouping = false, skipPositional = SKIP_POSITIONAL_DEFAULT }: ResolveArgs = {}
 ): {
   values: ArgValues<A>
   positionals: string[]
@@ -244,7 +244,7 @@ export function resolveArgs<A extends Args>(
         } else if (isShortOption(token.rawName)) {
           if (currentShortOption) {
             if (currentShortOption.index === token.index) {
-              if (optionGrouping) {
+              if (shortGrouping) {
                 currentShortOption.value = token.value
                 optionTokens.push({ ...currentShortOption })
                 currentShortOption = { ...token }
