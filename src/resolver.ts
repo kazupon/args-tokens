@@ -348,18 +348,18 @@ export function resolveArgs<A extends Args>(
   }
 
   let positionalsCount = 0
-  for (const [rawOption, schema] of Object.entries(args)) {
-    const option = toKebab || schema.toKebab ? kebabnize(rawOption) : rawOption
+  for (const [rawArg, schema] of Object.entries(args)) {
+    const arg = toKebab || schema.toKebab ? kebabnize(rawArg) : rawArg
 
     if (schema.required) {
       const found = optionTokens.find(token => {
         return (
           (schema.short && token.name === schema.short) ||
-          (token.rawName && hasLongOptionPrefix(token.rawName) && token.name === option)
+          (token.rawName && hasLongOptionPrefix(token.rawName) && token.name === arg)
         )
       })
       if (!found) {
-        errors.push(createRequireError(option, schema))
+        errors.push(createRequireError(arg, schema))
         continue
       }
     }
@@ -374,9 +374,9 @@ export function resolveArgs<A extends Args>(
       // eslint-disable-next-line unicorn/no-null, unicorn/no-negated-condition
       if (positional != null) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ;(values as any)[rawOption] = positional.value!
+        ;(values as any)[rawArg] = positional.value!
       } else {
-        errors.push(createRequireError(option, schema))
+        errors.push(createRequireError(arg, schema))
       }
       positionalsCount++
       continue
@@ -387,12 +387,12 @@ export function resolveArgs<A extends Args>(
       const token = optionTokens[i]
 
       if (
-        (checkTokenName(option, schema, token) &&
+        (checkTokenName(arg, schema, token) &&
           token.rawName != undefined &&
           hasLongOptionPrefix(token.rawName)) ||
         (schema.short === token.name && token.rawName != undefined && isShortOption(token.rawName))
       ) {
-        const invalid = validateRequire(token, option, schema)
+        const invalid = validateRequire(token, arg, schema)
         if (invalid) {
           errors.push(invalid)
           continue
@@ -402,7 +402,7 @@ export function resolveArgs<A extends Args>(
           // NOTE: re-set value to undefined, because long boolean type option is set on analyze phase
           token.value = undefined
         } else {
-          const invalid = validateValue(token, option, schema)
+          const invalid = validateValue(token, arg, schema)
           if (invalid) {
             errors.push(invalid)
             continue
@@ -411,22 +411,22 @@ export function resolveArgs<A extends Args>(
 
         if (schema.multiple) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ;(values as any)[rawOption] ||= []
+          ;(values as any)[rawArg] ||= []
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ;(values as any)[rawOption].push(resolveArgumentValue(token, schema))
+          ;(values as any)[rawArg].push(resolveArgumentValue(token, schema))
         } else {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ;(values as any)[rawOption] = resolveArgumentValue(token, schema)
+          ;(values as any)[rawArg] = resolveArgumentValue(token, schema)
         }
         continue
       }
     }
 
     // eslint-disable-next-line unicorn/no-null
-    if (values[rawOption] == null && schema.default != null) {
+    if (values[rawArg] == null && schema.default != null) {
       // check if the default value is in values
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ;(values as any)[rawOption] = schema.default
+      ;(values as any)[rawArg] = schema.default
     }
   }
 
