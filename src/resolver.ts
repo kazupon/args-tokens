@@ -54,6 +54,10 @@ export interface ArgSchema {
    * if the type is 'enum', the default value must be one of the allowed values.
    */
   default?: string | boolean | number
+  /**
+   * Whether to convert the argument name to kebab-case.
+   */
+  toKebab?: true
 }
 
 /**
@@ -133,9 +137,19 @@ export interface ResolveArgs {
    * @default -1
    */
   skipPositional?: number
+  /**
+   * Whether to convert the argument name to kebab-case. This option is applied to all arguments as `toKebab: true`, if set to `true`.
+   * @default false
+   */
+  toKebab?: boolean
 }
 
 const SKIP_POSITIONAL_DEFAULT = -1
+
+function kebabnize(str: string): string {
+  // eslint-disable-next-line unicorn/prefer-string-replace-all
+  return str.replace(/[A-Z]/g, (match, offset) => (offset > 0 ? '-' : '') + match.toLowerCase())
+}
 
 /**
  * Resolve command line arguments.
@@ -147,7 +161,11 @@ const SKIP_POSITIONAL_DEFAULT = -1
 export function resolveArgs<A extends Args>(
   args: A,
   tokens: ArgToken[],
-  { shortGrouping = false, skipPositional = SKIP_POSITIONAL_DEFAULT }: ResolveArgs = {}
+  {
+    shortGrouping = false,
+    skipPositional = SKIP_POSITIONAL_DEFAULT,
+    toKebab = false
+  }: ResolveArgs = {}
 ): {
   values: ArgValues<A>
   positionals: string[]
@@ -315,16 +333,18 @@ export function resolveArgs<A extends Args>(
   }
 
   let positionalsCount = 0
-  for (const [option, schema] of Object.entries(args)) {
+  for (const [rawArg, schema] of Object.entries(args)) {
+    const arg = toKebab || schema.toKebab ? kebabnize(rawArg) : rawArg
+
     if (schema.required) {
       const found = optionTokens.find(token => {
         return (
           (schema.short && token.name === schema.short) ||
-          (token.rawName && hasLongOptionPrefix(token.rawName) && token.name === option)
+          (token.rawName && hasLongOptionPrefix(token.rawName) && token.name === arg)
         )
       })
       if (!found) {
-        errors.push(createRequireError(option, schema))
+        errors.push(createRequireError(arg, schema))
         continue
       }
     }
@@ -339,9 +359,9 @@ export function resolveArgs<A extends Args>(
       // eslint-disable-next-line unicorn/no-null, unicorn/no-negated-condition
       if (positional != null) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ;(values as any)[option] = positional.value!
+        ;(values as any)[rawArg] = positional.value!
       } else {
-        errors.push(createRequireError(option, schema))
+        errors.push(createRequireError(arg, schema))
       }
       positionalsCount++
       continue
@@ -352,12 +372,12 @@ export function resolveArgs<A extends Args>(
       const token = optionTokens[i]
 
       if (
-        (checkTokenName(option, schema, token) &&
+        (checkTokenName(arg, schema, token) &&
           token.rawName != undefined &&
           hasLongOptionPrefix(token.rawName)) ||
         (schema.short === token.name && token.rawName != undefined && isShortOption(token.rawName))
       ) {
-        const invalid = validateRequire(token, option, schema)
+        const invalid = validateRequire(token, arg, schema)
         if (invalid) {
           errors.push(invalid)
           continue
@@ -367,7 +387,7 @@ export function resolveArgs<A extends Args>(
           // NOTE: re-set value to undefined, because long boolean type option is set on analyze phase
           token.value = undefined
         } else {
-          const invalid = validateValue(token, option, schema)
+          const invalid = validateValue(token, arg, schema)
           if (invalid) {
             errors.push(invalid)
             continue
@@ -376,22 +396,21 @@ export function resolveArgs<A extends Args>(
 
         if (schema.multiple) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ;(values as any)[option] ||= []
+          ;(values as any)[rawArg] ||= []
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ;(values as any)[option].push(resolveArgumentValue(token, schema))
+          ;(values as any)[rawArg].push(resolveArgumentValue(token, schema))
         } else {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ;(values as any)[option] = resolveArgumentValue(token, schema)
+          ;(values as any)[rawArg] = resolveArgumentValue(token, schema)
         }
-        continue
       }
     }
 
     // eslint-disable-next-line unicorn/no-null
-    if (values[option] == null && schema.default != null) {
+    if (values[rawArg] == null && schema.default != null) {
       // check if the default value is in values
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ;(values as any)[option] = schema.default
+      ;(values as any)[rawArg] = schema.default
     }
   }
 
