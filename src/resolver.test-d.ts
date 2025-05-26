@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
 import { expectTypeOf, test } from 'vitest'
+import { z } from 'zod/v4-mini'
 
 import type { ArgValues, ExtractOptionValue, FilterArgs, ResolveArgValues } from './resolver.ts'
 
@@ -78,6 +79,34 @@ test('ExtractOptionValue', () => {
       multiple: true
     }>
   >().toEqualTypeOf<('a' | 'b' | 'c')[]>()
+
+  // custom type
+  expectTypeOf<
+    ExtractOptionValue<{
+      type: 'custom'
+      parse: (value: string) => string[]
+    }>
+  >().toEqualTypeOf<string[]>()
+  const _customDictionary = z.object({
+    foo: z.string(),
+    nest: z.object({
+      bar: z.number()
+    })
+  })
+  expectTypeOf<
+    ExtractOptionValue<{
+      type: 'custom'
+      multiple: true
+      parse: (value: string) => z.infer<typeof _customDictionary>
+    }>
+  >().toEqualTypeOf<
+    {
+      foo: string
+      nest: {
+        bar: number
+      }
+    }[]
+  >()
 })
 
 test('FilterArgs', () => {
@@ -207,6 +236,10 @@ test('ArgValues', () => {
       short: 'l'
       choices: ['debug', 'info', 'warn', 'error']
     }
+    csv: {
+      type: 'custom'
+      parse: (value: string) => string[]
+    }
   }
 
   expectTypeOf<ArgValues<Args>>().toEqualTypeOf<{
@@ -216,6 +249,7 @@ test('ArgValues', () => {
     host: string
     define?: string[]
     log?: 'debug' | 'info' | 'warn' | 'error'
+    csv?: string[]
   }>()
 })
 

@@ -84,7 +84,7 @@
     "prepack": "pnpm build",
     "prepare": "git config --local core.hooksPath .githooks",
     "release": "bumpp --commit \"release: v%s\" --all --push --tag",
-    "test": "vitest run",
+    "test": "vitest run --typecheck",
     "typecheck": "pnpm run --parallel --color \"/^typecheck:/\"",
     "typecheck:deno": "deno check src",
     "typecheck:tsc": "tsgo --noEmit"
@@ -116,7 +116,8 @@
     "tsdown": "^0.12.1",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.32.1",
-    "vitest": "^3.1.4"
+    "vitest": "^3.1.4",
+    "zod": "^3.25.28"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
