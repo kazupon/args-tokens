@@ -17,14 +17,14 @@ import type { ArgToken } from './parser.ts'
  * This schema is similar to the schema of the `node:utils`.
  * difference is that:
  * - `required` property and `description` property are added
- * - `type` is not only 'string' and 'boolean', but also 'number', 'enum' and 'positional' too.
+ * - `type` is not only 'string' and 'boolean', but also 'number', 'enum', 'positional', 'custom' too.
  * - `default` property type, not support multiple types
  */
 export interface ArgSchema {
   /**
    * Type of argument.
    */
-  type: 'string' | 'boolean' | 'number' | 'enum' | 'positional'
+  type: 'string' | 'boolean' | 'number' | 'enum' | 'positional' | 'custom'
   /**
    * A single character alias for the argument.
    */
@@ -58,6 +58,15 @@ export interface ArgSchema {
    * Whether to convert the argument name to kebab-case.
    */
   toKebab?: true
+  /**
+   * A function to parse the value of the argument. if the type is 'custom', this function is required.
+   * If argument value will be invalid, this function have to throw an error.
+   * @param value
+   * @returns Parsed value
+   * @throws An Error, If the value is invalid. Error type should be `Error` or extends it
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  parse?: (value: string) => any
 }
 
 /**
@@ -81,6 +90,9 @@ export type ArgValues<T> = T extends Args
       [option: string]: string | boolean | number | (string | boolean | number)[] | undefined
     }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type IsFunction<T> = T extends (...args: any[]) => any ? true : false
+
 /**
  * @internal
  */
@@ -96,7 +108,11 @@ export type ExtractOptionValue<A extends ArgSchema> = A['type'] extends 'string'
           ? A['choices'] extends string[] | readonly string[]
             ? ResolveOptionValue<A, A['choices'][number]>
             : never
-          : ResolveOptionValue<A, string | boolean | number>
+          : A['type'] extends 'custom'
+            ? IsFunction<A['parse']> extends true
+              ? ResolveOptionValue<A, ReturnType<NonNullable<A['parse']>>>
+              : never
+            : ResolveOptionValue<A, string | boolean | number>
 
 type ResolveOptionValue<A extends ArgSchema, T> = A['multiple'] extends true ? T[] : T
 
@@ -386,22 +402,21 @@ export function resolveArgs<A extends Args>(
         if (schema.type === 'boolean') {
           // NOTE: re-set value to undefined, because long boolean type option is set on analyze phase
           token.value = undefined
-        } else {
-          const invalid = validateValue(token, arg, schema)
-          if (invalid) {
-            errors.push(invalid)
-            continue
-          }
         }
 
-        if (schema.multiple) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ;(values as any)[rawArg] ||= []
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ;(values as any)[rawArg].push(resolveArgumentValue(token, schema))
+        const [parsedValue, error] = parse(token, arg, schema)
+        if (error) {
+          errors.push(error)
         } else {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ;(values as any)[rawArg] = resolveArgumentValue(token, schema)
+          if (schema.multiple) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            ;(values as any)[rawArg] ||= []
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            ;(values as any)[rawArg].push(parsedValue)
+          } else {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            ;(values as any)[rawArg] = parsedValue
+          }
         }
       }
     }
@@ -420,6 +435,60 @@ export function resolveArgs<A extends Args>(
     rest,
     // eslint-disable-next-line unicorn/error-message
     error: errors.length > 0 ? new AggregateError(errors) : undefined
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function parse(token: ArgToken, option: string, schema: ArgSchema): [any, Error | undefined] {
+  switch (schema.type) {
+    case 'string': {
+      // prettier-ignore
+      return typeof token.value === 'string'
+        ? [token.value || schema.default, undefined]
+        : [undefined, createTypeError(option, schema)];
+    }
+    case 'boolean': {
+      // prettier-ignore
+      return token.value
+        ? [token.value || schema.default, undefined]
+        : [schema.negatable && token.name!.startsWith('no-') ? false : true, undefined];
+    }
+    case 'number': {
+      if (!isNumeric(token.value!)) {
+        return [undefined, createTypeError(option, schema)]
+      }
+      return token.value ? [+token.value, undefined] : [+(schema.default || ''), undefined]
+    }
+    case 'enum': {
+      if (schema.choices && !schema.choices.includes(token.value!)) {
+        return [
+          undefined,
+          new ArgResolveError(
+            // prettier-ignore
+            `Optional argument '--${option}' ${schema.short
+              ? `or '-${schema.short}' `
+              : ''}should be chosen from '${schema.type}' [${schema.choices.map(c => JSON.stringify(c)).join(', ')}] values`,
+            option,
+            'type',
+            schema
+          )
+        ]
+      }
+      return [token.value || schema.default, undefined]
+    }
+    case 'custom': {
+      if (schema.parse == undefined) {
+        throw new Error(`argument '${option}' should have 'parse' function`)
+      }
+      try {
+        return [schema.parse(token.value || (schema.default as string) || ''), undefined]
+      } catch (error) {
+        return [undefined, error as Error]
+      }
+    }
+    default: {
+      throw new Error(`Unsupported argument type '${schema.type}' for option '${option}'`)
+    }
   }
 }
 
@@ -458,34 +527,6 @@ function validateRequire(token: ArgToken, option: string, schema: ArgSchema): Er
   }
 }
 
-function validateValue(token: ArgToken, option: string, schema: ArgSchema): Error | undefined {
-  switch (schema.type) {
-    case 'number': {
-      if (!isNumeric(token.value!)) {
-        return createTypeError(option, schema)
-      }
-      break
-    }
-    case 'string': {
-      if (typeof token.value !== 'string') {
-        return createTypeError(option, schema)
-      }
-      break
-    }
-    case 'enum': {
-      if (schema.choices && !schema.choices.includes(token.value!)) {
-        return new ArgResolveError(
-          `Optional argument '--${option}' ${schema.short ? `or '-${schema.short}' ` : ''}should be chosen from '${schema.type}' [${schema.choices.map(c => JSON.stringify(c)).join(', ')}] values`,
-          option,
-          'type',
-          schema
-        )
-      }
-      break
-    }
-  }
-}
-
 function isNumeric(str: string): boolean {
   // @ts-ignore
   // eslint-disable-next-line unicorn/prefer-number-properties
@@ -499,19 +540,4 @@ function createTypeError(option: string, schema: ArgSchema): TypeError {
     'type',
     schema
   )
-}
-
-function resolveArgumentValue(
-  token: ArgToken,
-  schema: ArgSchema
-): string | boolean | number | undefined {
-  if (token.value) {
-    return schema.type === 'number' ? +token.value : token.value
-  }
-
-  if (schema.type === 'boolean') {
-    return schema.negatable && token.name!.startsWith('no-') ? false : true
-  }
-
-  return schema.type === 'number' ? +(schema.default || '') : schema.default
 }

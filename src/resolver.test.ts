@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import { z } from 'zod/v4-mini'
 import { parseArgs } from './parser.ts'
 import { ArgResolveError, resolveArgs } from './resolver.ts'
 
@@ -886,5 +887,50 @@ describe(`'toKebab' option`, () => {
       toKebab: true,
       kebabCase: false
     })
+  })
+})
+
+test('custom type argument', () => {
+  const argv = [
+    'import',
+    '--json={"key":"value"}',
+    '--csv',
+    'foo,bar,baz',
+    '-c=1,2,3',
+    '--zod={"key":1}'
+  ]
+  const tokens = parseArgs(argv)
+  const dict = z.object({
+    key: z.number()
+  })
+  const { values } = resolveArgs(
+    {
+      csv: {
+        type: 'custom',
+        short: 'c',
+        multiple: true,
+        parse: value => value.split(',')
+      },
+      json: {
+        type: 'custom',
+        parse: value => JSON.parse(value) as Record<string, unknown>
+      },
+      zod: {
+        type: 'custom',
+        required: true,
+        parse: (value: string) => {
+          return dict.parse(JSON.parse(value))
+        }
+      }
+    },
+    tokens
+  )
+  expect(values).toEqual({
+    csv: [
+      ['foo', 'bar', 'baz'],
+      ['1', '2', '3']
+    ],
+    json: { key: 'value' },
+    zod: { key: 1 }
   })
 })
