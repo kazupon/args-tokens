@@ -477,11 +477,11 @@ function parse(token: ArgToken, option: string, schema: ArgSchema): [any, Error 
       return [token.value || schema.default, undefined]
     }
     case 'custom': {
-      if (schema.parse == undefined) {
-        throw new Error(`argument '${option}' should have 'parse' function`)
+      if (typeof schema.parse !== 'function') {
+        throw new TypeError(`argument '${option}' should have a 'parse' function`)
       }
       try {
-        return [schema.parse(token.value || (schema.default as string) || ''), undefined]
+        return [schema.parse(token.value || String(schema.default || '')), undefined]
       } catch (error) {
         return [undefined, error as Error]
       }
