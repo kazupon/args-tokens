@@ -84,7 +84,7 @@
     "prepack": "pnpm build",
     "prepare": "git config --local core.hooksPath .githooks",
     "release": "bumpp --commit \"release: v%s\" --all --push --tag",
-    "test": "vitest run",
+    "test": "vitest run --typecheck",
     "typecheck": "pnpm run --parallel --color \"/^typecheck:/\"",
     "typecheck:deno": "deno check src",
     "typecheck:tsc": "tsgo --noEmit"
