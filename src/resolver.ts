@@ -451,7 +451,7 @@ function parse(token: ArgToken, option: string, schema: ArgSchema): [any, Error 
       // prettier-ignore
       return token.value
         ? [token.value || schema.default, undefined]
-        : [schema.negatable && token.name!.startsWith('no-') ? false : true, undefined];
+        : [!(schema.negatable && token.name!.startsWith('no-')), undefined]
     }
     case 'number': {
       if (!isNumeric(token.value!)) {
