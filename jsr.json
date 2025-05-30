@@ -10,6 +10,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./parser": "./src/parser.ts",
-    "./resolver": "./src/resolver.ts"
+    "./resolver": "./src/resolver.ts",
+    "./utils": "./src/utils.ts"
   }
 }
