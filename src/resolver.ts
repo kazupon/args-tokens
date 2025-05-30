@@ -9,6 +9,7 @@
  */
 
 import { hasLongOptionPrefix, isShortOption } from './parser.ts'
+import { kebabnize } from './utils.ts'
 
 import type { ArgToken } from './parser.ts'
 
@@ -161,11 +162,6 @@ export interface ResolveArgs {
 }
 
 const SKIP_POSITIONAL_DEFAULT = -1
-
-function kebabnize(str: string): string {
-  // eslint-disable-next-line unicorn/prefer-string-replace-all
-  return str.replace(/[A-Z]/g, (match, offset) => (offset > 0 ? '-' : '') + match.toLowerCase())
-}
 
 /**
  * Resolve command line arguments.
