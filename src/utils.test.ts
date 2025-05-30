@@ -6,7 +6,7 @@ describe('kebabnize', () => {
     expect(kebabnize('camelCase')).toBe('camel-case')
   })
 
-  test('complext camelCase to kebab-case', () => {
-    expect(kebabnize('camelCaseComplextCase')).toBe('camel-case-complext-case')
+  test('complex camelCase to kebab-case', () => {
+    expect(kebabnize('camelCaseComplexCase')).toBe('camel-case-complex-case')
   })
 })
