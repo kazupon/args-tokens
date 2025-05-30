@@ -123,7 +123,8 @@ type ResolveOptionValue<A extends ArgSchema, T> = A['multiple'] extends true ? T
 export type ResolveArgValues<A extends Args, V extends Record<keyof A, unknown>> = {
   -readonly [Arg in keyof A]?: V[Arg]
 } & FilterArgs<A, V, 'default'> &
-  FilterArgs<A, V, 'required'> extends infer P
+  FilterArgs<A, V, 'required'> &
+  FilterPositionalArgs<A, V> extends infer P
   ? { [K in keyof P]: P[K] }
   : never
 
@@ -137,6 +138,13 @@ export type FilterArgs<
 > = {
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type
   [Arg in keyof A as A[Arg][K] extends {} ? Arg : never]: V[Arg]
+}
+
+/**
+ * @internal
+ */
+export type FilterPositionalArgs<A extends Args, V extends Record<keyof A, unknown>> = {
+  [Arg in keyof A as A[Arg]['type'] extends 'positional' ? Arg : never]: V[Arg]
 }
 
 /**
