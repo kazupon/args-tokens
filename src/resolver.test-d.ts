@@ -80,6 +80,14 @@ test('ExtractOptionValue', () => {
     }>
   >().toEqualTypeOf<('a' | 'b' | 'c')[]>()
 
+  // positional type
+  expectTypeOf<
+    ExtractOptionValue<{
+      type: 'positional'
+      short: 's'
+    }>
+  >().toEqualTypeOf<string>()
+
   // custom type
   expectTypeOf<
     ExtractOptionValue<{
@@ -122,6 +130,7 @@ test('FilterArgs', () => {
       'type'
     >
   >().toEqualTypeOf<{ help: true }>()
+
   expectTypeOf<
     FilterArgs<
       {
@@ -134,6 +143,18 @@ test('FilterArgs', () => {
       'short'
     >
   >().toEqualTypeOf<{ help: true }>()
+
+  expectTypeOf<
+    FilterArgs<
+      {
+        order: {
+          type: 'positional'
+        }
+      },
+      { order: string },
+      'type'
+    >
+  >().toEqualTypeOf<{ order: string }>()
 
   expectTypeOf<
     FilterArgs<
@@ -204,6 +225,19 @@ test('ResolveArgValues', () => {
       { log: 'debug' }
     >
   >().toEqualTypeOf<{ log?: 'debug' | undefined }>()
+
+  // positional
+  expectTypeOf<
+    ResolveArgValues<
+      {
+        order: {
+          type: 'positional'
+          short: 'o'
+        }
+      },
+      { order: string }
+    >
+  >().toEqualTypeOf<{ order: string }>()
 })
 
 test('ArgValues', () => {
@@ -236,6 +270,10 @@ test('ArgValues', () => {
       short: 'l'
       choices: ['debug', 'info', 'warn', 'error']
     }
+    order: {
+      type: 'positional'
+      short: 'o'
+    }
     csv: {
       type: 'custom'
       parse: (value: string) => string[]
@@ -249,6 +287,7 @@ test('ArgValues', () => {
     host: string
     define?: string[]
     log?: 'debug' | 'info' | 'warn' | 'error'
+    order: string
     csv?: string[]
   }>()
 })
