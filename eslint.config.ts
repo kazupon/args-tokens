@@ -58,6 +58,7 @@ const config: ReturnType<typeof defineConfig> = defineConfig(
     '.vscode',
     'lib',
     'tsconfig.json',
+    'CHANGELOG.md',
     'playground/deno/**',
     'playground/bun/**',
     'pnpm-lock.yaml'
