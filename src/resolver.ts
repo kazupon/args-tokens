@@ -172,11 +172,31 @@ export interface ResolveArgs {
 const SKIP_POSITIONAL_DEFAULT = -1
 
 /**
+ * Tracks which arguments were explicitly provided by the user.
+ *
+ * Each property indicates whether the corresponding argument was explicitly
+ * provided (true) or is using a default value or not provided (false).
+ *
+ * @template A - The arguments schema type
+ * @example
+ * ```typescript
+ * // Command: myapp --port 3000
+ * // Schema has default port: 8080, host: 'localhost'
+ * const result = resolveArgs(schema, tokens)
+ * result.explicit.port // true (explicitly provided)
+ * result.explicit.host // false (not provided, using default if any)
+ * ```
+ */
+export type ExplicitlyProvided<A extends Args> = {
+  readonly [K in keyof A]: boolean
+}
+
+/**
  * Resolve command line arguments.
  * @param args - An arguments that contains {@link ArgSchema | arguments schema}.
  * @param tokens - An array of {@link ArgToken | tokens}.
  * @param resolveArgs - An arguments that contains {@link ResolveArgs | resolve arguments}.
- * @returns An object that contains the values of the arguments, positional arguments, rest arguments, and {@link AggregateError | validation errors}.
+ * @returns An object that contains the values of the arguments, positional arguments, rest arguments, {@link AggregateError | validation errors}, and explicit provision status.
  */
 export function resolveArgs<A extends Args>(
   args: A,
@@ -191,6 +211,7 @@ export function resolveArgs<A extends Args>(
   positionals: string[]
   rest: string[]
   error: AggregateError | undefined
+  explicit: ExplicitlyProvided<A>
 } {
   const skipPositionalIndex =
     typeof skipPositional === 'number'
@@ -335,6 +356,7 @@ export function resolveArgs<A extends Args>(
 
   const values = Object.create(null) as ArgValues<A>
   const errors: Error[] = []
+  const explicit = Object.create(null) as ExplicitlyProvided<A>
 
   function checkTokenName(option: string, schema: ArgSchema, token: ArgToken): boolean {
     return (
@@ -355,6 +377,10 @@ export function resolveArgs<A extends Args>(
   let positionalsCount = 0
   for (const [rawArg, schema] of Object.entries(args)) {
     const arg = toKebab || schema.toKebab ? kebabnize(rawArg) : rawArg
+
+    // Initialize explicit state for all options
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(explicit as any)[rawArg] = false
 
     if (schema.required) {
       const found = optionTokens.find(token => {
@@ -403,6 +429,10 @@ export function resolveArgs<A extends Args>(
           continue
         }
 
+        // Mark as explicitly set when we find a matching token
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ;(explicit as any)[rawArg] = true
+
         if (schema.type === 'boolean') {
           // NOTE: re-set value to undefined, because long boolean type option is set on analyze phase
           token.value = undefined
@@ -438,7 +468,8 @@ export function resolveArgs<A extends Args>(
     positionals: positionalTokens.map(token => token.value!),
     rest,
     // eslint-disable-next-line unicorn/error-message
-    error: errors.length > 0 ? new AggregateError(errors) : undefined
+    error: errors.length > 0 ? new AggregateError(errors) : undefined,
+    explicit
   }
 }
 

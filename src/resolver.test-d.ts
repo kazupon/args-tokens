@@ -2,7 +2,13 @@
 import { expectTypeOf, test } from 'vitest'
 import { z } from 'zod/v4-mini'
 
-import type { ArgValues, ExtractOptionValue, FilterArgs, ResolveArgValues } from './resolver.ts'
+import type {
+  ArgValues,
+  ExtractOptionValue,
+  FilterArgs,
+  ResolveArgValues,
+  ExplicitlyProvided
+} from './resolver.ts'
 
 test('ExtractOptionValue', () => {
   // string type
@@ -290,6 +296,44 @@ test('ArgValues', () => {
     order: string
     csv?: string[]
   }>()
+})
+
+test('ExplicitlyProvided', () => {
+  type Args = {
+    name: {
+      type: 'string'
+      short: 'n'
+      default: 'John'
+    }
+    age: {
+      type: 'number'
+      short: 'a'
+      default: 30
+    }
+    verbose: {
+      type: 'boolean'
+      short: 'v'
+      default: false
+    }
+    regularOption: {
+      type: 'string'
+      short: 'r'
+    }
+    custom: {
+      type: 'custom'
+      parse: (value: string) => string[]
+    }
+  }
+
+  expectTypeOf<ExplicitlyProvided<Args>>().toEqualTypeOf<
+    Readonly<{
+      name: boolean
+      age: boolean
+      verbose: boolean
+      regularOption: boolean
+      custom: boolean
+    }>
+  >()
 })
 
 /* eslint-enable @typescript-eslint/no-empty-object-type */
