@@ -176,16 +176,6 @@ const SKIP_POSITIONAL_DEFAULT = -1
  *
  * Each property indicates whether the corresponding argument was explicitly
  * provided (true) or is using a default value or not provided (false).
- *
- * @template A - The arguments schema type
- * @example
- * ```typescript
- * // Command: myapp --port 3000
- * // Schema has default port: 8080, host: 'localhost'
- * const result = resolveArgs(schema, tokens)
- * result.explicit.port // true (explicitly provided)
- * result.explicit.host // false (not provided, using default if any)
- * ```
  */
 export type ExplicitlyProvided<A extends Args> = {
   readonly [K in keyof A]: boolean
@@ -197,6 +187,28 @@ export type ExplicitlyProvided<A extends Args> = {
  * @param tokens - An array of {@link ArgToken | tokens}.
  * @param resolveArgs - An arguments that contains {@link ResolveArgs | resolve arguments}.
  * @returns An object that contains the values of the arguments, positional arguments, rest arguments, {@link AggregateError | validation errors}, and explicit provision status.
+ *
+ * @example
+ * ```typescript
+ * // passed tokens: --port 3000
+ *
+ * const { values, explicit } = resolveArgs({
+ *   port: {
+ *     type: 'number',
+ *     default: 8080
+ *   },
+ *   host: {
+ *     type: 'string',
+ *     default: 'localhost'
+ *   }
+ * }, tokens)
+ *
+ * values.port // 3000
+ * values.host // 'localhost'
+ *
+ * explicit.port // true (explicitly provided)
+ * explicit.host // false (not provided, fallback to default)
+ * ```
  */
 export function resolveArgs<A extends Args>(
   args: A,
