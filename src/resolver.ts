@@ -446,7 +446,7 @@ export function resolveArgs<A extends Args>(
         ;(explicit as any)[rawArg] = true
 
         if (schema.type === 'boolean') {
-          // NOTE: re-set value to undefined, because long boolean type option is set on analyze phase
+          // NOTE(kazupon): re-set value to undefined, because long boolean type option is set on analyze phase
           token.value = undefined
         }
 
