@@ -201,7 +201,7 @@ export type ExplicitlyProvided<A extends Args> = {
  *     type: 'string',
  *     default: 'localhost'
  *   }
- * }, tokens)
+ * }, parsedTokens)
  *
  * values.port // 3000
  * values.host // 'localhost'
