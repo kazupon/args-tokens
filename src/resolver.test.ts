@@ -934,3 +934,155 @@ test('custom type argument', () => {
     zod: { key: 1 }
   })
 })
+
+describe('explicit provision detection', () => {
+  test('should detect explicitly set options', () => {
+    const argv = ['dev', '--host', 'example.com', '--help']
+    const tokens = parseArgs(argv)
+    const { values, explicit } = resolveArgs(args, tokens)
+
+    expect(values).toEqual({
+      port: 8080,
+      host: 'example.com',
+      help: true
+    })
+
+    expect(explicit).toEqual({
+      help: true,
+      host: true,
+
+      // applied default values
+      port: false,
+
+      // not specified
+      version: false,
+      silent: false,
+      mode: false
+    })
+  })
+
+  test('should detect short options', () => {
+    const argv = ['dev', '-p', '9131', '-h']
+    const tokens = parseArgs(argv)
+    const { values, explicit } = resolveArgs(args, tokens)
+
+    expect(values).toEqual({
+      port: 9131,
+      help: true
+    })
+
+    expect(explicit).toEqual({
+      help: true,
+      port: true,
+
+      // not specified
+      version: false,
+      silent: false,
+      mode: false,
+      host: false
+    })
+  })
+
+  test('should handle inline values', () => {
+    const argv = ['dev', '--port=9000', '--host=localhost']
+    const tokens = parseArgs(argv)
+    const { values, explicit } = resolveArgs(args, tokens)
+
+    expect(values).toEqual({
+      port: 9000,
+      host: 'localhost'
+    })
+
+    expect(explicit).toEqual({
+      port: true,
+      host: true,
+
+      // not specified
+      help: false,
+      version: false,
+      silent: false,
+      mode: false
+    })
+  })
+
+  test('should handle boolean with default values', () => {
+    const argsContainsBooleanWithDefault = {
+      help: {
+        type: 'boolean',
+        short: 'h',
+        default: true
+      },
+      port: {
+        type: 'number',
+        short: 'p',
+        default: 8080
+      },
+      mode: {
+        type: 'string',
+        short: 'm'
+      }
+    } as const satisfies Args
+
+    const argv = ['dev', '--port', '9131', '--help']
+    const tokens = parseArgs(argv)
+    const { values, explicit } = resolveArgs(argsContainsBooleanWithDefault, tokens)
+
+    expect(values).toEqual({
+      port: 9131,
+      help: true
+    })
+
+    expect(explicit).toEqual({
+      help: true,
+      port: true,
+
+      // not specified
+      mode: false
+    })
+  })
+
+  test('should handle boolean negation', () => {
+    const argsWithNegatable = {
+      enabled: {
+        type: 'boolean',
+        short: 'e',
+        default: true,
+        negatable: true
+      }
+    } as const satisfies Args
+
+    const argv = ['--no-enabled']
+    const tokens = parseArgs(argv)
+    const { values, explicit } = resolveArgs(argsWithNegatable, tokens)
+
+    expect(values).toEqual({
+      enabled: false
+    })
+
+    expect(explicit).toEqual({
+      enabled: true
+    })
+  })
+
+  test('should handle multiple values', () => {
+    const argsWithMultiple = {
+      tags: {
+        type: 'string',
+        short: 't',
+        multiple: true
+      }
+    } as const satisfies Args
+
+    const argv = ['--tags', 'tag1', '-t', 'tag2']
+    const tokens = parseArgs(argv)
+    const { values, explicit } = resolveArgs(argsWithMultiple, tokens)
+
+    expect(values).toEqual({
+      tags: ['tag1', 'tag2']
+    })
+
+    expect(explicit).toEqual({
+      tags: true
+    })
+  })
+})
