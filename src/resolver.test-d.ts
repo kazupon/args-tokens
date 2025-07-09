@@ -3,11 +3,11 @@ import { expectTypeOf, test } from 'vitest'
 import { z } from 'zod/v4-mini'
 
 import type {
+  ArgExplicitlyProvided,
   ArgValues,
   ExtractOptionValue,
   FilterArgs,
-  ResolveArgValues,
-  ExplicitlyProvided
+  ResolveArgValues
 } from './resolver.ts'
 
 test('ExtractOptionValue', () => {
@@ -325,7 +325,7 @@ test('ExplicitlyProvided', () => {
     }
   }
 
-  expectTypeOf<ExplicitlyProvided<Args>>().toEqualTypeOf<
+  expectTypeOf<ArgExplicitlyProvided<Args>>().toEqualTypeOf<
     Readonly<{
       name: boolean
       age: boolean

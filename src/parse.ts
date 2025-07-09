@@ -7,7 +7,7 @@ import { parseArgs } from './parser.ts'
 import { resolveArgs } from './resolver.ts'
 
 import type { ArgToken, ParserOptions } from './parser.ts'
-import type { Args, ArgValues, ResolveArgs, ExplicitlyProvided } from './resolver.ts'
+import type { ArgExplicitlyProvided, Args, ArgValues, ResolveArgs } from './resolver.ts'
 
 /**
  * Parse options for {@link parse} function.
@@ -47,7 +47,7 @@ export type ParsedArgs<A extends Args> = {
    * Explicit provision status, same as `explicit` in {@link resolveArgs}.
    * Indicates which arguments were explicitly provided vs using default values.
    */
-  explicit: ExplicitlyProvided<A>
+  explicit: ArgExplicitlyProvided<A>
 }
 
 const DEFAULT_OPTIONS = {

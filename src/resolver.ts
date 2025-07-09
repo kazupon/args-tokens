@@ -177,7 +177,7 @@ const SKIP_POSITIONAL_DEFAULT = -1
  * Each property indicates whether the corresponding argument was explicitly
  * provided (true) or is using a default value or not provided (false).
  */
-export type ExplicitlyProvided<A extends Args> = {
+export type ArgExplicitlyProvided<A extends Args> = {
   readonly [K in keyof A]: boolean
 }
 
@@ -223,7 +223,7 @@ export function resolveArgs<A extends Args>(
   positionals: string[]
   rest: string[]
   error: AggregateError | undefined
-  explicit: ExplicitlyProvided<A>
+  explicit: ArgExplicitlyProvided<A>
 } {
   const skipPositionalIndex =
     typeof skipPositional === 'number'
@@ -368,7 +368,7 @@ export function resolveArgs<A extends Args>(
 
   const values = Object.create(null) as ArgValues<A>
   const errors: Error[] = []
-  const explicit = Object.create(null) as ExplicitlyProvided<A>
+  const explicit = Object.create(null) as ArgExplicitlyProvided<A>
 
   function checkTokenName(option: string, schema: ArgSchema, token: ArgToken): boolean {
     return (
