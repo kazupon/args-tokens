@@ -298,7 +298,7 @@ test('ArgValues', () => {
   }>()
 })
 
-test('ExplicitlyProvided', () => {
+test('ArgExplicitlyProvided', () => {
   type Args = {
     name: {
       type: 'string'
