@@ -325,15 +325,13 @@ test('ExplicitlyProvided', () => {
     }
   }
 
-  expectTypeOf<ArgExplicitlyProvided<Args>>().toEqualTypeOf<
-    Readonly<{
-      name: boolean
-      age: boolean
-      verbose: boolean
-      regularOption: boolean
-      custom: boolean
-    }>
-  >()
+  expectTypeOf<ArgExplicitlyProvided<Args>>().toEqualTypeOf<{
+    name: boolean
+    age: boolean
+    verbose: boolean
+    regularOption: boolean
+    custom: boolean
+  }>()
 })
 
 /* eslint-enable @typescript-eslint/no-empty-object-type */

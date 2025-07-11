@@ -178,7 +178,7 @@ const SKIP_POSITIONAL_DEFAULT = -1
  * provided (true) or is using a default value or not provided (false).
  */
 export type ArgExplicitlyProvided<A extends Args> = {
-  readonly [K in keyof A]: boolean
+  [K in keyof A]: boolean
 }
 
 /**
