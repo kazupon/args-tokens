@@ -391,6 +391,7 @@ export function resolveArgs<A extends Args>(
     const arg = toKebab || schema.toKebab ? kebabnize(rawArg) : rawArg
 
     // Initialize explicit state for all options
+    // keyof explicit is generic and cannot be indexed for settings value.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(explicit as any)[rawArg] = false
 
@@ -442,6 +443,7 @@ export function resolveArgs<A extends Args>(
         }
 
         // Mark as explicitly set when we find a matching token
+        // keyof explicit is generic and cannot be indexed for settings value.
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ;(explicit as any)[rawArg] = true
 
