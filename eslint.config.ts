@@ -3,6 +3,7 @@ import {
   defineConfig,
   javascript,
   jsonc,
+  jsdoc,
   markdown,
   prettier,
   promise,
@@ -30,6 +31,9 @@ const config: ReturnType<typeof defineConfig> = defineConfig(
         'bench/**.js'
       ]
     }
+  }),
+  jsdoc({
+    typescript: 'syntax'
   }),
   promise(),
   regexp(),

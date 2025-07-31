@@ -1,5 +1,6 @@
 /**
  * Entry point of argument options resolver.
+ *
  * @module
  */
 
@@ -62,6 +63,7 @@ export interface ArgSchema {
   /**
    * A function to parse the value of the argument. if the type is 'custom', this function is required.
    * If argument value will be invalid, this function have to throw an error.
+   *
    * @param value
    * @returns Parsed value
    * @throws An Error, If the value is invalid. Error type should be `Error` or extends it
@@ -95,6 +97,8 @@ export type ArgValues<T> = T extends Args
 type IsFunction<T> = T extends (...args: any[]) => any ? true : false
 
 /**
+ * Extracts the value type from the argument schema.
+ *
  * @internal
  */
 export type ExtractOptionValue<A extends ArgSchema> = A['type'] extends 'string'
@@ -118,6 +122,8 @@ export type ExtractOptionValue<A extends ArgSchema> = A['type'] extends 'string'
 type ResolveOptionValue<A extends ArgSchema, T> = A['multiple'] extends true ? T[] : T
 
 /**
+ * Resolved argument values.
+ *
  * @internal
  */
 export type ResolveArgValues<A extends Args, V extends Record<keyof A, unknown>> = {
@@ -129,6 +135,8 @@ export type ResolveArgValues<A extends Args, V extends Record<keyof A, unknown>>
   : never
 
 /**
+ * Filters the arguments based on their default values.
+ *
  * @internal
  */
 export type FilterArgs<
@@ -141,6 +149,8 @@ export type FilterArgs<
 }
 
 /**
+ * Filters positional arguments from the argument schema.
+ *
  * @internal
  */
 export type FilterPositionalArgs<A extends Args, V extends Record<keyof A, unknown>> = {
@@ -153,17 +163,20 @@ export type FilterPositionalArgs<A extends Args, V extends Record<keyof A, unkno
 export interface ResolveArgs {
   /**
    * Whether to group short arguments.
+   *
    * @default false
    * @see guideline 5 in https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/V1_chap12.html
    */
   shortGrouping?: boolean
   /**
    * Skip positional arguments index.
+   *
    * @default -1
    */
   skipPositional?: number
   /**
    * Whether to convert the argument name to kebab-case. This option is applied to all arguments as `toKebab: true`, if set to `true`.
+   *
    * @default false
    */
   toKebab?: boolean
@@ -183,9 +196,13 @@ export type ArgExplicitlyProvided<A extends Args> = {
 
 /**
  * Resolve command line arguments.
+ *
  * @param args - An arguments that contains {@link ArgSchema | arguments schema}.
  * @param tokens - An array of {@link ArgToken | tokens}.
  * @param resolveArgs - An arguments that contains {@link ResolveArgs | resolve arguments}.
+ * @param resolveArgs.shortGrouping - Whether to group short arguments, default is `false`.
+ * @param resolveArgs.skipPositional - Skip positional arguments index, default is `-1`.
+ * @param resolveArgs.toKebab - Whether to convert the argument name to kebab-case, default is `false`.
  * @returns An object that contains the values of the arguments, positional arguments, rest arguments, {@link AggregateError | validation errors}, and explicit provision status.
  *
  * @example
@@ -574,6 +591,14 @@ export class ArgResolveError extends Error {
   override name: string
   schema: ArgSchema
   type: ArgResolveErrorType
+  /**
+   * Create an instance of ArgResolveError.
+   *
+   * @param message the error message
+   * @param name the name of the argument
+   * @param type the type of the error, either 'type' or 'required'
+   * @param schema the argument schema that caused the error
+   */
   constructor(message: string, name: string, type: ArgResolveErrorType, schema: ArgSchema) {
     super(message)
     this.name = name

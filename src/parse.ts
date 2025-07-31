@@ -64,6 +64,7 @@ const DEFAULT_OPTIONS = {
 /**
  * Parse command line arguments.
  * This function is a convenient API, that is used {@link parseArgs} and {@link resolveArgs} in internal.
+ *
  * @example
  * ```js
  * import { parse } from 'args-tokens'

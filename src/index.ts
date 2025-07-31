@@ -1,5 +1,6 @@
 /**
  * Main entry point of `args-tokens`.
+ *
  * @module default
  */
 
