@@ -827,6 +827,92 @@ describe('multiple values', () => {
     expect(positionals).toEqual(['eat'])
     expect(rest).toEqual([])
   })
+
+  test('positional + multiple', () => {
+    const argv = ['foo', 'bar']
+    const tokens = parseArgs(argv)
+    const { values } = resolveArgs(
+      {
+        files: {
+          type: 'positional',
+          multiple: true
+        }
+      },
+      tokens
+    )
+    expect(values.files).toEqual(['foo', 'bar'])
+  })
+
+  test('positional + multiple + skipPositional', () => {
+    const argv = ['foo', 'bar']
+    const tokens = parseArgs(argv)
+    const { values } = resolveArgs(
+      {
+        files: {
+          type: 'positional',
+          multiple: true
+        }
+      },
+      tokens,
+      {
+        skipPositional: 0
+      }
+    )
+    expect(values.files).toEqual(['bar'])
+  })
+
+  test('positional + multiple + required', () => {
+    const argv = ['foo', 'bar']
+    const tokens = parseArgs(argv)
+    const { values } = resolveArgs(
+      {
+        files: {
+          type: 'positional',
+          multiple: true,
+          required: true
+        }
+      },
+      tokens
+    )
+    expect(values.files).toEqual(['foo', 'bar'])
+  })
+
+  test('positional + multiple + required 2', () => {
+    const argv: string[] = []
+    const tokens = parseArgs(argv)
+    const { error } = resolveArgs(
+      {
+        files: {
+          type: 'positional',
+          multiple: true,
+          required: true
+        }
+      },
+      tokens
+    )
+    expect(error?.errors.length).toBe(1)
+    expect((error?.errors[0] as Error).message).toEqual("Positional argument 'files' is required")
+  })
+
+  test('positional + named', () => {
+    const argv = ['foo', 'bar', '--help']
+    const tokens = parseArgs(argv)
+    const { values } = resolveArgs(
+      {
+        files: {
+          type: 'positional',
+          multiple: true,
+          required: true
+        },
+        help: {
+          type: 'boolean'
+        }
+      },
+      tokens
+    )
+    expect(values.files).toEqual(['foo', 'bar'])
+    expect(values.help).toBeTruthy()
+  })
 })
 
 describe(`'toKebab' option`, () => {

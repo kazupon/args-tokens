@@ -395,6 +395,36 @@ export function resolveArgs<A extends Args>(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(explicit as any)[rawArg] = false
 
+    if (schema.type === 'positional') {
+      if (skipPositionalIndex > SKIP_POSITIONAL_DEFAULT) {
+        while (positionalsCount <= getPositionalSkipIndex()) {
+          positionalsCount++
+        }
+      }
+
+      if (schema.multiple) {
+        const remainingPositionals = positionalTokens.slice(positionalsCount)
+        if (remainingPositionals.length > 0) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ;(values as any)[rawArg] = remainingPositionals.map(p => p.value!)
+          positionalsCount += remainingPositionals.length
+        } else if (schema.required) {
+          errors.push(createRequireError(arg, schema))
+        }
+      } else {
+        const positional = positionalTokens[positionalsCount]
+        // eslint-disable-next-line unicorn/no-null, unicorn/no-negated-condition
+        if (positional != null) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ;(values as any)[rawArg] = positional.value!
+        } else {
+          errors.push(createRequireError(arg, schema))
+        }
+        positionalsCount++
+      }
+      continue
+    }
+
     if (schema.required) {
       const found = optionTokens.find(token => {
         return (
@@ -406,24 +436,6 @@ export function resolveArgs<A extends Args>(
         errors.push(createRequireError(arg, schema))
         continue
       }
-    }
-
-    if (schema.type === 'positional') {
-      if (skipPositionalIndex > SKIP_POSITIONAL_DEFAULT) {
-        while (positionalsCount <= getPositionalSkipIndex()) {
-          positionalsCount++
-        }
-      }
-      const positional = positionalTokens[positionalsCount]
-      // eslint-disable-next-line unicorn/no-null, unicorn/no-negated-condition
-      if (positional != null) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ;(values as any)[rawArg] = positional.value!
-      } else {
-        errors.push(createRequireError(arg, schema))
-      }
-      positionalsCount++
-      continue
     }
 
     // eslint-disable-next-line unicorn/no-for-loop
