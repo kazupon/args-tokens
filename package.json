@@ -97,7 +97,7 @@
   },
   "devDependencies": {
     "@eslint/markdown": "^6.6.0",
-    "@kazupon/eslint-config": "^0.32.0",
+    "@kazupon/eslint-config": "^0.33.0",
     "@kazupon/prettier-config": "^0.1.1",
     "@types/node": "^22.16.0",
     "@typescript/native-preview": "7.0.0-dev.20250731.1",
