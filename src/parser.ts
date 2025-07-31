@@ -162,7 +162,7 @@ export function parseArgs(args: string[], options: ParserOptions = {}): ArgToken
         })
       }
 
-      // eslint-disable-next-line unicorn/no-null
+      // eslint-disable-next-line unicorn/no-null -- NOTE(kazupon): `null` is used to check if the value is defined.
       if (value != null) {
         ++index
       }
@@ -290,7 +290,7 @@ function isLongOptionAndValue(arg: string) {
  * @returns whether `arg` is a long option prefix.
  */
 export function hasLongOptionPrefix(arg: string): boolean {
-  // @ts-ignore -- NOTE: `~` is a bitwise NOT operator
+  // @ts-ignore -- NOTE(kazupon): `~` is a bitwise NOT operator
   return arg.length > 2 && ~arg.indexOf(LONG_OPTION_PREFIX)
 }
 
@@ -300,6 +300,6 @@ export function hasLongOptionPrefix(arg: string): boolean {
  * @returns whether a `value` is an option value.
  */
 function hasOptionValue(value: string | undefined): boolean {
-  // eslint-disable-next-line unicorn/no-null
+  // eslint-disable-next-line unicorn/no-null -- NOTE(kazupon): `null` is used to check if the value is defined.
   return !(value == null) && value.codePointAt(0) !== HYPHEN_CODE
 }

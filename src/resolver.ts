@@ -66,7 +66,7 @@ export interface ArgSchema {
    * @returns Parsed value
    * @throws An Error, If the value is invalid. Error type should be `Error` or extends it
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- NOTE(kazupon): Allow any type for custom parse function
   parse?: (value: string) => any
 }
 
@@ -91,7 +91,7 @@ export type ArgValues<T> = T extends Args
       [option: string]: string | boolean | number | (string | boolean | number)[] | undefined
     }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- NOTE(kazupon): Allow any type for function check
 type IsFunction<T> = T extends (...args: any[]) => any ? true : false
 
 /**
@@ -136,7 +136,7 @@ export type FilterArgs<
   V extends Record<keyof A, unknown>,
   K extends keyof ArgSchema
 > = {
-  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type -- NOTE(kazupon): Allow empty object type for filter
   [Arg in keyof A as A[Arg][K] extends {} ? Arg : never]: V[Arg]
 }
 
@@ -273,7 +273,7 @@ export function resolveArgs<A extends Args>(
   const schemas = Object.values(args)
   let terminated = false
 
-  // eslint-disable-next-line unicorn/no-for-loop
+  // eslint-disable-next-line unicorn/no-for-loop -- NOTE(kazupon): Use for loop to iterate tokens, and performance optimization
   for (let i = 0; i < tokens.length; i++) {
     const token = tokens[i]
     if (token.kind === 'positional') {
@@ -392,7 +392,7 @@ export function resolveArgs<A extends Args>(
 
     // Initialize explicit state for all options
     // keyof explicit is generic and cannot be indexed for settings value.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- NOTE(kazupon): Allow any type for resolving
     ;(explicit as any)[rawArg] = false
 
     if (schema.type === 'positional') {
@@ -405,7 +405,7 @@ export function resolveArgs<A extends Args>(
       if (schema.multiple) {
         const remainingPositionals = positionalTokens.slice(positionalsCount)
         if (remainingPositionals.length > 0) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- NOTE(kazupon): Allow any type for resolving
           ;(values as any)[rawArg] = remainingPositionals.map(p => p.value!)
           positionalsCount += remainingPositionals.length
         } else if (schema.required) {
@@ -413,9 +413,9 @@ export function resolveArgs<A extends Args>(
         }
       } else {
         const positional = positionalTokens[positionalsCount]
-        // eslint-disable-next-line unicorn/no-null, unicorn/no-negated-condition
+        // eslint-disable-next-line unicorn/no-null, unicorn/no-negated-condition -- NOTE(kazupon): Allow null check for positional value
         if (positional != null) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- NOTE(kazupon): Allow any type for resolving
           ;(values as any)[rawArg] = positional.value!
         } else {
           errors.push(createRequireError(arg, schema))
@@ -438,7 +438,7 @@ export function resolveArgs<A extends Args>(
       }
     }
 
-    // eslint-disable-next-line unicorn/no-for-loop
+    // eslint-disable-next-line unicorn/no-for-loop -- NOTE(kazupon): Use for loop to iterate option tokens, and performance optimization
     for (let i = 0; i < optionTokens.length; i++) {
       const token = optionTokens[i]
 
@@ -456,7 +456,7 @@ export function resolveArgs<A extends Args>(
 
         // Mark as explicitly set when we find a matching token
         // keyof explicit is generic and cannot be indexed for settings value.
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- NOTE(kazupon): Allow any type for resolving
         ;(explicit as any)[rawArg] = true
 
         if (schema.type === 'boolean') {
@@ -469,22 +469,22 @@ export function resolveArgs<A extends Args>(
           errors.push(error)
         } else {
           if (schema.multiple) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- NOTE(kazupon): Allow any type for resolving
             ;(values as any)[rawArg] ||= []
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- NOTE(kazupon): Allow any type for resolving
             ;(values as any)[rawArg].push(parsedValue)
           } else {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- NOTE(kazupon): Allow any type for resolving
             ;(values as any)[rawArg] = parsedValue
           }
         }
       }
     }
 
-    // eslint-disable-next-line unicorn/no-null
+    // eslint-disable-next-line unicorn/no-null -- NOTE(kazupon): Allow null check for values
     if (values[rawArg] == null && schema.default != null) {
       // check if the default value is in values
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- NOTE(kazupon): Allow any type for resolving
       ;(values as any)[rawArg] = schema.default
     }
   }
@@ -493,13 +493,13 @@ export function resolveArgs<A extends Args>(
     values,
     positionals: positionalTokens.map(token => token.value!),
     rest,
-    // eslint-disable-next-line unicorn/error-message
+    // eslint-disable-next-line unicorn/error-message -- NOTE(kazupon): Use AggregateError to aggregate error messages
     error: errors.length > 0 ? new AggregateError(errors) : undefined,
     explicit
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- NOTE(kazupon): Allow any type for parsing
 function parse(token: ArgToken, option: string, schema: ArgSchema): [any, Error | undefined] {
   switch (schema.type) {
     case 'string': {
@@ -590,7 +590,7 @@ function validateRequire(token: ArgToken, option: string, schema: ArgSchema): Er
 
 function isNumeric(str: string): boolean {
   // @ts-ignore
-  // eslint-disable-next-line unicorn/prefer-number-properties
+  // eslint-disable-next-line unicorn/prefer-number-properties -- NOTE(kazupon): Allow string check for numeric
   return str.trim() !== '' && !isNaN(str)
 }
 

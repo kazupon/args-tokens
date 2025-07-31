@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-empty-object-type */
+/* eslint-disable @typescript-eslint/no-empty-object-type -- NOTE(kazupon): This is to allow empty object types in tests */
 import { expectTypeOf, test } from 'vitest'
 import { z } from 'zod/v4-mini'
 
