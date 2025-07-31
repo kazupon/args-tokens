@@ -828,7 +828,7 @@ describe('multiple values', () => {
     expect(rest).toEqual([])
   })
 
-  test('positional + multiple', () => {
+  test('positional', () => {
     const argv = ['foo', 'bar']
     const tokens = parseArgs(argv)
     const { values } = resolveArgs(
@@ -843,7 +843,7 @@ describe('multiple values', () => {
     expect(values.files).toEqual(['foo', 'bar'])
   })
 
-  test('positional + multiple + skipPositional', () => {
+  test('positional + skipPositional', () => {
     const argv = ['foo', 'bar']
     const tokens = parseArgs(argv)
     const { values } = resolveArgs(
@@ -861,10 +861,10 @@ describe('multiple values', () => {
     expect(values.files).toEqual(['bar'])
   })
 
-  test('positional + multiple + required', () => {
+  test('positional + required', () => {
     const argv = ['foo', 'bar']
     const tokens = parseArgs(argv)
-    const { values } = resolveArgs(
+    const { values, error } = resolveArgs(
       {
         files: {
           type: 'positional',
@@ -874,10 +874,11 @@ describe('multiple values', () => {
       },
       tokens
     )
+    expect(error?.errors).toBeUndefined()
     expect(values.files).toEqual(['foo', 'bar'])
   })
 
-  test('positional + multiple + required 2', () => {
+  test('positional + required error', () => {
     const argv: string[] = []
     const tokens = parseArgs(argv)
     const { error } = resolveArgs(
