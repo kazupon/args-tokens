@@ -15,58 +15,317 @@ import { kebabnize } from './utils.ts'
 import type { ArgToken } from './parser.ts'
 
 /**
- * An argument schema
- * This schema is similar to the schema of the `node:utils`.
- * difference is that:
- * - `required` property and `description` property are added
- * - `type` is not only 'string' and 'boolean', but also 'number', 'enum', 'positional', 'custom' too.
- * - `default` property type, not support multiple types
+ * An argument schema definition for command-line argument parsing.
+ *
+ * This schema is similar to the schema of Node.js `util.parseArgs` but with extended features:
+ * - Additional `required` and `description` properties
+ * - Extended `type` support: 'string', 'boolean', 'number', 'enum', 'positional', 'custom'
+ * - Simplified `default` property (single type, not union types)
+ *
+ * @example
+ * Basic string argument:
+ * ```ts
+ * const schema: ArgSchema = {
+ *   type: 'string',
+ *   description: 'Server hostname',
+ *   default: 'localhost'
+ * }
+ * ```
+ *
+ * @example
+ * Required number argument with alias:
+ * ```ts
+ * const schema: ArgSchema = {
+ *   type: 'number',
+ *   short: 'p',
+ *   description: 'Port number to listen on',
+ *   required: true
+ * }
+ * ```
+ *
+ * @example
+ * Enum argument with choices:
+ * ```ts
+ * const schema: ArgSchema = {
+ *   type: 'enum',
+ *   choices: ['info', 'warn', 'error'],
+ *   description: 'Logging level',
+ *   default: 'info'
+ * }
+ * ```
  */
 export interface ArgSchema {
   /**
-   * Type of argument.
+   * Type of the argument value.
+   *
+   * - `'string'`: Text value (default if not specified)
+   * - `'boolean'`: `true`/`false` flag (can be negatable with `--no-` prefix)
+   * - `'number'`: Numeric value (parsed as integer or float)
+   * - `'enum'`: One of predefined string values (requires `choices` property)
+   * - `'positional'`: Non-option argument by position
+   * - `'custom'`: Custom parsing with user-defined `parse` function
+   *
+   * @example
+   * Different argument types:
+   * ```ts
+   * {
+   *   name: { type: 'string' },        // --name value
+   *   verbose: { type: 'boolean' },     // --verbose or --no-verbose
+   *   port: { type: 'number' },         // --port 3000
+   *   level: { type: 'enum', choices: ['debug', 'info'] },
+   *   file: { type: 'positional' },     // first positional arg
+   *   config: { type: 'custom', parse: JSON.parse }
+   * }
+   * ```
    */
   type: 'string' | 'boolean' | 'number' | 'enum' | 'positional' | 'custom'
   /**
-   * A single character alias for the argument.
+   * Single character alias for the long option name.
+   *
+   * As example, allows users to use `-x` instead of `--extended-option`.
+   * Only valid for non-positional argument types.
+   *
+   * @example
+   * Short alias usage:
+   * ```ts
+   * {
+   *   verbose: {
+   *     type: 'boolean',
+   *     short: 'v'  // Enables both --verbose and -v
+   *   },
+   *   port: {
+   *     type: 'number',
+   *     short: 'p'  // Enables both --port 3000 and -p 3000
+   *   }
+   * }
+   * ```
    */
   short?: string
   /**
-   * A description of the argument.
+   * Human-readable description of the argument's purpose.
+   *
+   * Used for help text generation and documentation.
+   * Should be concise but descriptive enough to understand the argument's role.
+   *
+   * @example
+   * Descriptive help text:
+   * ```ts
+   * {
+   *   config: {
+   *     type: 'string',
+   *     description: 'Path to configuration file'
+   *   },
+   *   timeout: {
+   *     type: 'number',
+   *     description: 'Request timeout in milliseconds'
+   *   }
+   * }
+   * ```
    */
   description?: string
   /**
-   * Whether the argument is required or not.
+   * Marks the argument as required.
+   *
+   * When `true`, the argument must be provided by the user.
+   * If missing, an `ArgResolveError` with type 'required' will be thrown.
+   *
+   * Note: Only `true` is allowed (not `false`) to make intent explicit.
+   *
+   * @example
+   * Required arguments:
+   * ```ts
+   * {
+   *   input: {
+   *     type: 'string',
+   *     required: true,  // Must be provided: --input file.txt
+   *     description: 'Input file path'
+   *   },
+   *   source: {
+   *     type: 'positional',
+   *     required: true   // First positional argument must exist
+   *   }
+   * }
+   * ```
    */
   required?: true
   /**
-   * Whether the argument allow multiple values or not.
+   * Allows the argument to accept multiple values.
+   *
+   * When `true`, the resolved value becomes an array.
+   * For options: can be specified multiple times (--tag foo --tag bar)
+   * For positional: collects remaining positional arguments
+   *
+   * Note: Only `true` is allowed (not `false`) to make intent explicit.
+   *
+   * @example
+   * Multiple values:
+   * ```ts
+   * {
+   *   tags: {
+   *     type: 'string',
+   *     multiple: true,  // --tags foo --tags bar → ['foo', 'bar']
+   *     description: 'Tags to apply'
+   *   },
+   *   files: {
+   *     type: 'positional',
+   *     multiple: true   // Collects all remaining positional args
+   *   }
+   * }
+   * ```
    */
   multiple?: true
   /**
-   * Whether the negatable option for `boolean` type
+   * Enables negation for boolean arguments using `--no-` prefix.
+   *
+   * When `true`, allows users to explicitly set the boolean to `false`
+   * using `--no-option-name`. When `false` or omitted, only positive
+   * form is available.
+   *
+   * Only applicable to `type: 'boolean'` arguments.
+   *
+   * @example
+   * Negatable boolean:
+   * ```ts
+   * {
+   *   color: {
+   *     type: 'boolean',
+   *     negatable: true,
+   *     default: true,
+   *     description: 'Enable colorized output'
+   *   }
+   *   // Usage: --color (true), --no-color (false)
+   * }
+   * ```
    */
   negatable?: boolean
   /**
-   * The allowed values of the argument, and string only. This property is only used when the type is 'enum'.
+   * Array of allowed string values for enum-type arguments.
+   *
+   * Required when `type: 'enum'`. The argument value must be one of these choices,
+   * otherwise an `ArgResolveError` with type 'type' will be thrown.
+   *
+   * Supports both mutable arrays and readonly arrays for type safety.
+   *
+   * @example
+   * Enum choices:
+   * ```ts
+   * {
+   *   logLevel: {
+   *     type: 'enum',
+   *     choices: ['debug', 'info', 'warn', 'error'] as const,
+   *     default: 'info',
+   *     description: 'Logging verbosity level'
+   *   },
+   *   format: {
+   *     type: 'enum',
+   *     choices: ['json', 'yaml', 'toml'],
+   *     description: 'Output format'
+   *   }
+   * }
+   * ```
    */
   choices?: string[] | readonly string[]
   /**
-   * The default value of the argument.
-   * if the type is 'enum', the default value must be one of the allowed values.
+   * Default value used when the argument is not provided.
+   *
+   * The type must match the argument's `type` property:
+   * - `string` type: string default
+   * - `boolean` type: boolean default
+   * - `number` type: number default
+   * - `enum` type: must be one of the `choices` values
+   * - `positional`/`custom` type: any appropriate default
+   *
+   * @example
+   * Default values by type:
+   * ```ts
+   * {
+   *   host: {
+   *     type: 'string',
+   *     default: 'localhost'  // string default
+   *   },
+   *   verbose: {
+   *     type: 'boolean',
+   *     default: false        // boolean default
+   *   },
+   *   port: {
+   *     type: 'number',
+   *     default: 8080         // number default
+   *   },
+   *   level: {
+   *     type: 'enum',
+   *     choices: ['low', 'high'],
+   *     default: 'low'        // must be in choices
+   *   }
+   * }
+   * ```
    */
   default?: string | boolean | number
   /**
-   * Whether to convert the argument name to kebab-case.
+   * Converts the argument name from camelCase to kebab-case for CLI usage.
+   *
+   * When `true`, a property like `maxCount` becomes available as `--max-count`.
+   * This allows [CAC](https://github.com/cacjs/cac) user-friendly property names while maintaining CLI conventions.
+   *
+   * Can be overridden globally with `resolveArgs({ toKebab: true })`.
+   *
+   * Note: Only `true` is allowed (not `false`) to make intent explicit.
+   *
+   * @example
+   * Kebab-case conversion:
+   * ```ts
+   * {
+   *   maxRetries: {
+   *     type: 'number',
+   *     toKebab: true,        // Accessible as --max-retries
+   *     description: 'Maximum retry attempts'
+   *   },
+   *   enableLogging: {
+   *     type: 'boolean',
+   *     toKebab: true         // Accessible as --enable-logging
+   *   }
+   * }
+   * ```
    */
   toKebab?: true
   /**
-   * A function to parse the value of the argument. if the type is 'custom', this function is required.
-   * If argument value will be invalid, this function have to throw an error.
+   * Custom parsing function for `type: 'custom'` arguments.
    *
-   * @param value
-   * @returns Parsed value
-   * @throws An Error, If the value is invalid. Error type should be `Error` or extends it
+   * Required when `type: 'custom'`. Receives the raw string value and must
+   * return the parsed result. Should throw an Error (or subclass) if parsing fails.
+   *
+   * The function's return type becomes the resolved argument type.
+   *
+   * @param value - Raw string value from command line
+   * @returns Parsed value of any type
+   * @throws Error or subclass when value is invalid
+   *
+   * @example
+   * Custom parsing functions:
+   * ```ts
+   * {
+   *   config: {
+   *     type: 'custom',
+   *     parse: (value: string) => {
+   *       try {
+   *         return JSON.parse(value)  // Parse JSON config
+   *       } catch {
+   *         throw new Error('Invalid JSON configuration')
+   *       }
+   *     },
+   *     description: 'JSON configuration object'
+   *   },
+   *   date: {
+   *     type: 'custom',
+   *     parse: (value: string) => {
+   *       const date = new Date(value)
+   *       if (isNaN(date.getTime())) {
+   *         throw new Error('Invalid date format')
+   *       }
+   *       return date
+   *     }
+   *   }
+   * }
+   * ```
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- NOTE(kazupon): Allow any type for custom parse function
   parse?: (value: string) => any
