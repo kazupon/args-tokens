@@ -302,6 +302,237 @@ const tokens = parseArgs(['-a=1'], { allowCompatible: true }) // add `allowCompa
 deepStrictEqual(tokensNode, tokens)
 ```
 
+## ArgSchema Reference
+
+The `ArgSchema` interface defines the configuration for command-line arguments. This schema is similar to Node.js `util.parseArgs` but with extended features.
+
+### Schema Properties
+
+#### `type` (required)
+
+Type of the argument value:
+
+- `'string'`: Text value (default if not specified)
+- `'boolean'`: True/false flag (can be negatable with `--no-` prefix)
+- `'number'`: Numeric value (parsed as integer or float)
+- `'enum'`: One of predefined string values (requires `choices` property)
+- `'positional'`: Non-option argument by position
+- `'custom'`: Custom parsing with user-defined `parse` function
+
+<!-- eslint-skip -->
+
+```js
+{
+  name: { type: 'string' },        // --name value
+  verbose: { type: 'boolean' },     // --verbose or --no-verbose
+  port: { type: 'number' },         // --port 3000
+  level: { type: 'enum', choices: ['debug', 'info'] },
+  file: { type: 'positional' },     // first positional arg
+  config: { type: 'custom', parse: JSON.parse }
+}
+```
+
+#### `short` (optional)
+
+Single character alias for the long option name. Allows users to use `-x` instead of `--extended-option`.
+
+<!-- eslint-skip -->
+
+```js
+{
+  verbose: {
+    type: 'boolean',
+    short: 'v'  // Enables both --verbose and -v
+  },
+  port: {
+    type: 'number',
+    short: 'p'  // Enables both --port 3000 and -p 3000
+  }
+}
+```
+
+#### `description` (optional)
+
+Human-readable description used for help text generation and documentation.
+
+<!-- eslint-skip -->
+
+```js
+{
+  config: {
+    type: 'string',
+    description: 'Path to configuration file'
+  },
+  timeout: {
+    type: 'number',
+    description: 'Request timeout in milliseconds'
+  }
+}
+```
+
+#### `required` (optional)
+
+Marks the argument as required. When `true`, the argument must be provided or an `ArgResolveError` will be thrown.
+
+<!-- eslint-skip -->
+
+```js
+{
+  input: {
+    type: 'string',
+    required: true,  // Must be provided: --input file.txt
+    description: 'Input file path'
+  },
+  source: {
+    type: 'positional',
+    required: true   // First positional argument must exist
+  }
+}
+```
+
+#### `multiple` (optional)
+
+Allows the argument to accept multiple values. The resolved value becomes an array.
+
+- For options: can be specified multiple times (`--tag foo --tag bar`)
+- For positional: collects remaining positional arguments
+
+<!-- eslint-skip -->
+
+```js
+{
+  tags: {
+    type: 'string',
+    multiple: true,  // --tags foo --tags bar → ['foo', 'bar']
+    description: 'Tags to apply'
+  },
+  files: {
+    type: 'positional',
+    multiple: true   // Collects all remaining positional args
+  }
+}
+```
+
+#### `negatable` (optional)
+
+Enables negation for boolean arguments using `--no-` prefix. Only applicable to `type: 'boolean'`.
+
+<!-- eslint-skip -->
+
+```js
+{
+  color: {
+    type: 'boolean',
+    negatable: true,
+    default: true,
+    description: 'Enable colorized output'
+  }
+  // Usage: --color (true), --no-color (false)
+}
+```
+
+#### `choices` (optional)
+
+Array of allowed string values for enum-type arguments. Required when `type: 'enum'`.
+
+<!-- eslint-skip -->
+
+```js
+{
+  logLevel: {
+    type: 'enum',
+    choices: ['debug', 'info', 'warn', 'error'],
+    default: 'info',
+    description: 'Logging verbosity level'
+  },
+  format: {
+    type: 'enum',
+    choices: ['json', 'yaml', 'toml'],
+    description: 'Output format'
+  }
+}
+```
+
+#### `default` (optional)
+
+Default value used when the argument is not provided. The type must match the argument's `type` property.
+
+<!-- eslint-skip -->
+
+```js
+{
+  host: {
+    type: 'string',
+    default: 'localhost'  // string default
+  },
+  verbose: {
+    type: 'boolean',
+    default: false        // boolean default
+  },
+  port: {
+    type: 'number',
+    default: 8080         // number default
+  },
+  level: {
+    type: 'enum',
+    choices: ['low', 'high'],
+    default: 'low'        // must be in choices
+  }
+}
+```
+
+#### `toKebab` (optional)
+
+Converts the argument name from camelCase to kebab-case for CLI usage. A property like `maxCount` becomes available as `--max-count`.
+
+<!-- eslint-skip -->
+
+```js
+{
+  maxRetries: {
+    type: 'number',
+    toKebab: true,        // Accessible as --max-retries
+    description: 'Maximum retry attempts'
+  },
+  enableLogging: {
+    type: 'boolean',
+    toKebab: true         // Accessible as --enable-logging
+  }
+}
+```
+
+#### `parse` (optional)
+
+Custom parsing function for `type: 'custom'` arguments. Required when `type: 'custom'`. Should throw an Error if parsing fails.
+
+<!-- eslint-skip -->
+
+```js
+{
+  config: {
+    type: 'custom',
+    parse: (value) => {
+      try {
+        return JSON.parse(value)  // Parse JSON config
+      } catch {
+        throw new Error('Invalid JSON configuration')
+      }
+    },
+    description: 'JSON configuration object'
+  },
+  date: {
+    type: 'custom',
+    parse: (value) => {
+      const date = new Date(value)
+      if (isNaN(date.getTime())) {
+        throw new Error('Invalid date format')
+      }
+      return date
+    }
+  }
+}
+```
+
 ## 🙌 Contributing guidelines
 
 If you are interested in contributing to `args-tokens`, I highly recommend checking out [the contributing guidelines](/CONTRIBUTING.md) here. You'll find all the relevant information such as [how to make a PR](/CONTRIBUTING.md#pull-request-guidelines), [how to setup development](/CONTRIBUTING.md#development-setup)) etc., there.
