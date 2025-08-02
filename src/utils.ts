@@ -14,8 +14,8 @@
 /**
  * Convert a string to kebab-case.
  *
- * @param str the string to convert
- * @returns converted string into kebab-case
+ * @param str - A string to convert
+ * @returns Converted string into kebab-case.
  */
 export function kebabnize(str: string): string {
   // eslint-disable-next-line unicorn/prefer-string-replace-all -- NOTE(kazupon): performance https://ozantunca.org/stringreplaceall-has-landed-on-all-major-browsers-should-we-refactor-yet

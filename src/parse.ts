@@ -11,16 +11,20 @@ import type { ArgExplicitlyProvided, Args, ArgValues, ResolveArgs } from './reso
 
 /**
  * Parse options for {@link parse} function.
+ *
+ * @typeParam A - {@link Args | Arguments schema}, which is an object that defines the command line arguments.
  */
 export interface ParseOptions<A extends Args> extends ParserOptions, ResolveArgs {
   /**
-   * Command line arguments, about details see {@link Args}.
+   * Command line arguments.
    */
   args?: A
 }
 
 /**
  * Parsed command line arguments.
+ *
+ * @typeParam A - {@link Args | Arguments schema}, which is an object that defines the command line arguments.
  */
 export type ParsedArgs<A extends Args> = {
   /**
@@ -45,6 +49,7 @@ export type ParsedArgs<A extends Args> = {
   tokens: ArgToken[]
   /**
    * Explicit provision status, same as `explicit` in {@link resolveArgs}.
+   *
    * Indicates which arguments were explicitly provided vs using default values.
    */
   explicit: ArgExplicitlyProvided<A>
@@ -63,7 +68,14 @@ const DEFAULT_OPTIONS = {
 
 /**
  * Parse command line arguments.
+ *
  * This function is a convenient API, that is used {@link parseArgs} and {@link resolveArgs} in internal.
+ *
+ * @typeParam A - {@link Args | Arguments schema}, which is an object that defines the command line arguments.
+ *
+ * @param args - command line arguments
+ * @param options - parse options, about details see {@link ParseOptions}
+ * @returns An object that contains the values of the arguments, positional arguments, {@link AggregateError | validation errors}, and {@link ArgToken | argument tokens}.
  *
  * @example
  * ```js
@@ -73,9 +85,6 @@ const DEFAULT_OPTIONS = {
  * console.log('values', values)
  * console.log('positionals', positionals)
  * ```
- * @param args - command line arguments
- * @param options - parse options, about details see {@link ParseOptions}
- * @returns An object that contains the values of the arguments, positional arguments, {@link AggregateError | validation errors}, and {@link ArgToken | argument tokens}.
  */
 export function parse<A extends Args>(
   args: string[],

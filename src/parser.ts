@@ -15,6 +15,7 @@
 
 /**
  * Argument token Kind.
+ *
  * - `option`: option token, support short option (e.g. `-x`) and long option (e.g. `--foo`)
  * - `option-terminator`: option terminator (`--`) token, see guideline 10 in https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap12.html
  * - `positional`: positional token
@@ -75,6 +76,10 @@ export interface ParserOptions {
 /**
  * Parse command line arguments.
  *
+ * @param args - command line arguments
+ * @param options - parse options, about details see {@link ParserOptions}
+ * @returns Argument tokens.
+ *
  * @example
  * ```js
  * import { parseArgs } from 'args-tokens' // for Node.js and Bun
@@ -85,9 +90,6 @@ export interface ParserOptions {
  * // ...
  * console.log('tokens:', tokens)
  * ```
- * @param args command line arguments
- * @param options parse options
- * @returns Argument tokens.
  */
 export function parseArgs(args: string[], options: ParserOptions = {}): ArgToken[] {
   const { allowCompatible = false } = options
@@ -240,8 +242,8 @@ export function parseArgs(args: string[], options: ParserOptions = {}): ArgToken
 /**
  * Check if `arg` is a short option (e.g. `-f`).
  *
- * @param arg the argument to check
- * @returns whether `arg` is a short option.
+ * @param arg - An argument to check
+ * @returns Whether `arg` is a short option.
  */
 export function isShortOption(arg: string): boolean {
   return (
@@ -252,8 +254,8 @@ export function isShortOption(arg: string): boolean {
 /**
  * Check if `arg` is a short option group (e.g. `-abc`).
  *
- * @param arg the argument to check
- * @returns whether `arg` is a short option group.
+ * @param arg - An argument to check
+ * @returns Whether `arg` is a short option group.
  */
 function isShortOptionGroup(arg: string): boolean {
   if (arg.length <= 2) {
@@ -274,8 +276,8 @@ function isShortOptionGroup(arg: string): boolean {
 /**
  * Check if `arg` is a long option (e.g. `--foo`).
  *
- * @param arg the argument to check
- * @returns whether `arg` is a long option.
+ * @param arg - An argument to check
+ * @returns Whether `arg` is a long option.
  */
 function isLongOption(arg: string) {
   return hasLongOptionPrefix(arg) && !arg.includes(EQUAL_CHAR, 3)
@@ -284,8 +286,8 @@ function isLongOption(arg: string) {
 /**
  * Check if `arg` is a long option with value (e.g. `--foo=bar`).
  *
- * @param arg the argument to check
- * @returns whether `arg` is a long option.
+ * @param arg - An argument to check
+ * @returns Whether `arg` is a long option.
  */
 function isLongOptionAndValue(arg: string) {
   return hasLongOptionPrefix(arg) && arg.includes(EQUAL_CHAR, 3)
@@ -294,8 +296,8 @@ function isLongOptionAndValue(arg: string) {
 /**
  * Check if `arg` is a long option prefix (e.g. `--`).
  *
- * @param arg the argument to check
- * @returns whether `arg` is a long option prefix.
+ * @param arg - An argument to check
+ * @returns Whether `arg` is a long option prefix.
  */
 export function hasLongOptionPrefix(arg: string): boolean {
   // @ts-ignore -- NOTE(kazupon): `~` is a bitwise NOT operator
@@ -305,8 +307,8 @@ export function hasLongOptionPrefix(arg: string): boolean {
 /**
  * Check if a `value` is an option value.
  *
- * @param value a value to check
- * @returns whether a `value` is an option value.
+ * @param value - A value to check
+ * @returns Whether a `value` is an option value.
  */
 function hasOptionValue(value: string | undefined): boolean {
   // eslint-disable-next-line unicorn/no-null -- NOTE(kazupon): `null` is used to check if the value is defined.

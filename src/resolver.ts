@@ -333,6 +333,8 @@ export interface ArgSchema {
 
 /**
  * An object that contains {@link ArgSchema | argument schema}.
+ *
+ * This type is used to define the structure and validation rules for command line arguments.
  */
 export interface Args {
   [option: string]: ArgSchema
@@ -340,6 +342,8 @@ export interface Args {
 
 /**
  * An object that contains the values of the arguments.
+ *
+ * @typeParam T - Arguments which is an object that defines the command line arguments.
  */
 export type ArgValues<T> = T extends Args
   ? ResolveArgValues<
@@ -357,6 +361,8 @@ type IsFunction<T> = T extends (...args: any[]) => any ? true : false
 
 /**
  * Extracts the value type from the argument schema.
+ *
+ * @typeParam A - Argument schema which is an object that defines command line arguments.
  *
  * @internal
  */
@@ -383,6 +389,9 @@ type ResolveOptionValue<A extends ArgSchema, T> = A['multiple'] extends true ? T
 /**
  * Resolved argument values.
  *
+ * @typeParam A - {@link Arguments | Args} which is an object that defines the command line arguments.
+ * @typeParam V - Resolvable argument values.
+ *
  * @internal
  */
 export type ResolveArgValues<A extends Args, V extends Record<keyof A, unknown>> = {
@@ -395,6 +404,10 @@ export type ResolveArgValues<A extends Args, V extends Record<keyof A, unknown>>
 
 /**
  * Filters the arguments based on their default values.
+ *
+ * @typeParam A - {@link Args | Arguments}, which is an object that defines the command line arguments.
+ * @typeParam V - Resolvable argument values.
+ * @typeParam K - Key of the {@link ArgSchema | argument schema} to filter by.
  *
  * @internal
  */
@@ -410,6 +423,9 @@ export type FilterArgs<
 /**
  * Filters positional arguments from the argument schema.
  *
+ * @typeParam A - {@link Args | Arguments}, which is an object that defines the command line arguments.
+ * @typeParam V - Resolvable argument values.
+ *
  * @internal
  */
 export type FilterPositionalArgs<A extends Args, V extends Record<keyof A, unknown>> = {
@@ -423,8 +439,9 @@ export interface ResolveArgs {
   /**
    * Whether to group short arguments.
    *
-   * @default false
    * @see guideline 5 in https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/V1_chap12.html
+   *
+   * @default false
    */
   shortGrouping?: boolean
   /**
@@ -448,6 +465,8 @@ const SKIP_POSITIONAL_DEFAULT = -1
  *
  * Each property indicates whether the corresponding argument was explicitly
  * provided (true) or is using a default value or not provided (false).
+ *
+ * @typeParam A - {@link Args | Arguments}, which is an object that defines the command line arguments.
  */
 export type ArgExplicitlyProvided<A extends Args> = {
   [K in keyof A]: boolean
@@ -456,12 +475,11 @@ export type ArgExplicitlyProvided<A extends Args> = {
 /**
  * Resolve command line arguments.
  *
+ * @typeParam A - {@link Args | Arguments}, which is an object that defines the command line arguments.
+ *
  * @param args - An arguments that contains {@link ArgSchema | arguments schema}.
  * @param tokens - An array of {@link ArgToken | tokens}.
  * @param resolveArgs - An arguments that contains {@link ResolveArgs | resolve arguments}.
- * @param resolveArgs.shortGrouping - Whether to group short arguments, default is `false`.
- * @param resolveArgs.skipPositional - Skip positional arguments index, default is `-1`.
- * @param resolveArgs.toKebab - Whether to convert the argument name to kebab-case, default is `false`.
  * @returns An object that contains the values of the arguments, positional arguments, rest arguments, {@link AggregateError | validation errors}, and explicit provision status.
  *
  * @example
@@ -853,10 +871,10 @@ export class ArgResolveError extends Error {
   /**
    * Create an instance of ArgResolveError.
    *
-   * @param message the error message
-   * @param name the name of the argument
-   * @param type the type of the error, either 'type' or 'required'
-   * @param schema the argument schema that caused the error
+   * @param message - the error message
+   * @param name - the name of the argument
+   * @param type - the type of the error, either 'type' or 'required'
+   * @param schema - the argument schema that caused the error
    */
   constructor(message: string, name: string, type: ArgResolveErrorType, schema: ArgSchema) {
     super(message)
