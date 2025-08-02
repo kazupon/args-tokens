@@ -61,5 +61,3 @@ jobs:
 
       - name: Publish package
         run: ./scripts/release.sh
-        env:
-          NPM_TOKEN: ${{secrets.NPM_TOKEN}}
