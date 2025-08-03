@@ -1272,6 +1272,9 @@ describe('conflicts', () => {
 
     expect(error).toBeDefined()
     expect(error?.errors.length).toBe(1)
+    expect((error?.errors[0] as ArgResolveError).message).toBe(
+      "Optional argument '--transport' conflicts with '--socket'"
+    )
   })
 
   test('detects conflict with asymmetric conflict definitions', () => {
