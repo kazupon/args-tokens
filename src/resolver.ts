@@ -343,7 +343,7 @@ export interface Args {
 /**
  * An object that contains the values of the arguments.
  *
- * @typeParam T - Arguments which is an object that defines the command line arguments.
+ * @typeParam T - {@link Args | Arguments} which is an object that defines the command line arguments.
  */
 export type ArgValues<T> = T extends Args
   ? ResolveArgValues<
@@ -362,7 +362,7 @@ type IsFunction<T> = T extends (...args: any[]) => any ? true : false
 /**
  * Extracts the value type from the argument schema.
  *
- * @typeParam A - Argument schema which is an object that defines command line arguments.
+ * @typeParam A - {@link ArgSchema | Argument schema} which is an object that defines command line arguments.
  *
  * @internal
  */
@@ -869,7 +869,7 @@ export class ArgResolveError extends Error {
   schema: ArgSchema
   type: ArgResolveErrorType
   /**
-   * Create an instance of ArgResolveError.
+   * Create an `ArgResolveError` instance.
    *
    * @param message - the error message
    * @param name - the name of the argument
