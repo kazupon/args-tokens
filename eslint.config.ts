@@ -2,8 +2,8 @@ import {
   comments,
   defineConfig,
   javascript,
-  jsonc,
   jsdoc,
+  jsonc,
   markdown,
   prettier,
   promise,
@@ -48,7 +48,16 @@ const config: ReturnType<typeof defineConfig> = defineConfig(
       'yml/quotes': 'off'
     }
   }),
-  markdown(),
+  markdown({
+    inlineCodeWords: [
+      'args-tokens',
+      'util.parseArgs',
+      'pkgjs/parseargs',
+      'parseArgs',
+      'resolveArgs',
+      'ArgSchema'
+    ]
+  }),
   vitest(),
   prettier(),
   {

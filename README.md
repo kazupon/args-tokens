@@ -1,4 +1,4 @@
-# args-tokens
+# args-tokens <!-- eslint-disable-line markdown-preferences/prefer-inline-code-words -->
 
 [![Version][npm-version-src]][npm-version-href]
 [![JSR][jsr-src]][jsr-href]
@@ -95,7 +95,7 @@ Breaking changes might not follow SemVer, please pin Vitest's version when using
 
 ```
 
-## ❓ What's different about parseArgs tokens?
+## ❓ What's different about `parseArgs` tokens?
 
 The token output for the short option `-x=v` is different:
 
@@ -184,7 +184,7 @@ bun add args-tokens
 
 ### Parse args to tokens
 
-`parseArgs` will transform arguments into tokens. This function is useful if you want to analyze arguments yourself based on the tokens. It's faster than `node:util` parseArgs because it only focuses on token transformation.
+`parseArgs` will transform arguments into tokens. This function is useful if you want to analyze arguments yourself based on the tokens. It's faster than `parseArgs` of `node:util` because it only focuses on token transformation.
 
 ```js
 import { parseArgs } from 'args-tokens' // for Node.js and Bun
@@ -239,7 +239,7 @@ console.log('positionals:', positionals)
 
 ## Convenient argument parsing
 
-Using the `parse,` you can transform the arguments into tokens and resolve the argument values once:
+Using the `parse` you can transform the arguments into tokens and resolve the argument values once:
 
 ```js
 import { parse } from 'args-tokens' // for Node.js and Bun
@@ -302,7 +302,7 @@ const tokens = parseArgs(['-a=1'], { allowCompatible: true }) // add `allowCompa
 deepStrictEqual(tokensNode, tokens)
 ```
 
-## ArgSchema Reference
+## `ArgSchema` Reference
 
 The `ArgSchema` interface defines the configuration for command-line arguments. This schema is similar to Node.js `util.parseArgs` but with extended features.
 
