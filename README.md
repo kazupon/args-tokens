@@ -533,6 +533,44 @@ Custom parsing function for `type: 'custom'` arguments. Required when `type: 'cu
 }
 ```
 
+#### `conflicts` (optional)
+
+Specifies other options that cannot be used together with this option. When conflicting options are provided together, an `ArgResolveError` will be thrown.
+
+Conflicts only need to be defined on one side - if option A defines a conflict with option B, the conflict is automatically detected when both are used.
+
+<!-- eslint-skip -->
+
+```js
+{
+  // Single conflict
+  port: {
+    type: 'number',
+    conflicts: 'socket'  // Cannot use --port with --socket
+  },
+  socket: {
+    type: 'string'
+    // No need to define conflicts: 'port' here
+  }
+}
+
+// Multiple conflicts (mutually exclusive options)
+{
+  tcp: {
+    type: 'number',
+    conflicts: ['udp', 'unix']  // Cannot use with --udp or --unix
+  },
+  udp: {
+    type: 'number',
+    conflicts: ['tcp', 'unix']
+  },
+  unix: {
+    type: 'string',
+    conflicts: ['tcp', 'udp']
+  }
+}
+```
+
 ## 🙌 Contributing guidelines
 
 If you are interested in contributing to `args-tokens`, I highly recommend checking out [the contributing guidelines](/CONTRIBUTING.md) here. You'll find all the relevant information such as [how to make a PR](/CONTRIBUTING.md#pull-request-guidelines), [how to setup development](/CONTRIBUTING.md#development-setup)) etc., there.
