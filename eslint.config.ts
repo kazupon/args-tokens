@@ -56,6 +56,12 @@ const config: ReturnType<typeof defineConfig> = defineConfig(
       'parseArgs',
       'resolveArgs',
       'ArgSchema'
+    ],
+    inlineCodeWordsIgnores: [
+      {
+        words: ['args-tokens'],
+        node: { type: 'heading', depth: 1 }
+      }
     ]
   }),
   vitest(),

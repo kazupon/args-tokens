@@ -1,4 +1,4 @@
-# args-tokens <!-- eslint-disable-line markdown-preferences/prefer-inline-code-words -->
+# args-tokens
 
 [![Version][npm-version-src]][npm-version-href]
 [![JSR][jsr-src]][jsr-href]
