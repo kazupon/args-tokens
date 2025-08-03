@@ -1173,3 +1173,269 @@ describe('explicit provision detection', () => {
     })
   })
 })
+
+describe('conflicts', () => {
+  test('detects conflict when both options are provided', () => {
+    const args = {
+      summer: {
+        type: 'boolean',
+        conflicts: 'autumn'
+      },
+      autumn: {
+        type: 'boolean',
+        conflicts: 'summer'
+      }
+    } as const satisfies Args
+
+    const argv = ['--summer', '--autumn']
+    const tokens = parseArgs(argv)
+    const { error } = resolveArgs(args, tokens)
+
+    expect(error).toBeDefined()
+    expect(error?.errors.length).toBe(1)
+    expect(error?.errors[0]).toBeInstanceOf(ArgResolveError)
+    expect((error?.errors[0] as ArgResolveError).type).toBe('conflict')
+    expect((error?.errors[0] as ArgResolveError).message).toBe(
+      "Optional argument '--summer' conflicts with '--autumn'"
+    )
+  })
+
+  test('detects conflict with one-way conflict definition', () => {
+    const args = {
+      summer: {
+        type: 'boolean',
+        conflicts: 'autumn'
+      },
+      autumn: {
+        type: 'boolean'
+      }
+    } as const satisfies Args
+
+    const argv = ['--summer', '--autumn']
+    const tokens = parseArgs(argv)
+    const { error } = resolveArgs(args, tokens)
+
+    expect(error).toBeDefined()
+    expect(error?.errors.length).toBe(1)
+    expect((error?.errors[0] as ArgResolveError).message).toBe(
+      "Optional argument '--summer' conflicts with '--autumn'"
+    )
+  })
+
+  test('detects conflict with multiple conflicting options', () => {
+    const args = {
+      summer: {
+        type: 'boolean',
+        conflicts: ['autumn', 'winter']
+      },
+      autumn: {
+        type: 'boolean',
+        conflicts: ['summer', 'winter']
+      },
+      winter: {
+        type: 'boolean',
+        conflicts: ['summer', 'autumn']
+      },
+      spring: {
+        type: 'boolean'
+      }
+    } as const satisfies Args
+
+    const argv = ['--summer', '--winter', '--spring']
+    const tokens = parseArgs(argv)
+    const { values, error } = resolveArgs(args, tokens)
+
+    expect(values.spring).toBe(true)
+    expect(error).toBeDefined()
+    expect(error?.errors.length).toBe(1)
+    expect((error?.errors[0] as ArgResolveError).message).toBe(
+      "Optional argument '--summer' conflicts with '--winter'"
+    )
+  })
+
+  test('detects conflict between enum and string options', () => {
+    const args = {
+      transport: {
+        type: 'enum',
+        choices: ['tcp', 'udp'],
+        conflicts: 'socket'
+      },
+      socket: {
+        type: 'string',
+        conflicts: 'transport'
+      }
+    } as const satisfies Args
+
+    const argv = ['--transport', 'tcp', '--socket', '/tmp/app.sock']
+    const tokens = parseArgs(argv)
+    const { error } = resolveArgs(args, tokens)
+
+    expect(error).toBeDefined()
+    expect(error?.errors.length).toBe(1)
+  })
+
+  test('detects conflict with asymmetric conflict definitions', () => {
+    const args = {
+      summer: {
+        type: 'boolean',
+        conflicts: 'autumn'
+      },
+      autumn: {
+        type: 'boolean',
+        conflicts: 'winter'
+      },
+      winter: {
+        type: 'boolean'
+      }
+    } as const satisfies Args
+
+    const argv = ['--summer', '--autumn', '--winter']
+    const tokens = parseArgs(argv)
+    const { error } = resolveArgs(args, tokens)
+
+    expect(error).toBeDefined()
+    expect(error?.errors.length).toBe(1)
+    expect((error?.errors[0] as ArgResolveError).message).toBe(
+      "Optional argument '--summer' conflicts with '--autumn'"
+    )
+  })
+
+  test('returns only first conflict error (fail-fast behavior)', () => {
+    const args = {
+      a: {
+        type: 'boolean',
+        conflicts: ['b', 'c']
+      },
+      b: {
+        type: 'boolean',
+        conflicts: ['a', 'c']
+      },
+      c: {
+        type: 'boolean',
+        conflicts: ['a', 'b']
+      }
+    } as const satisfies Args
+
+    const argv = ['--a', '--b', '--c']
+    const tokens = parseArgs(argv)
+    const { error } = resolveArgs(args, tokens)
+
+    expect(error).toBeDefined()
+    expect(error?.errors.length).toBe(1)
+    expect((error?.errors[0] as ArgResolveError).message).toBe(
+      "Optional argument '--a' conflicts with '--b'"
+    )
+  })
+
+  test('detects conflict with short option aliases', () => {
+    const args = {
+      summer: {
+        type: 'boolean',
+        short: 's',
+        conflicts: 'autumn'
+      },
+      autumn: {
+        type: 'boolean',
+        short: 'a',
+        conflicts: 'summer'
+      }
+    } as const satisfies Args
+
+    const argv = ['-s', '-a']
+    const tokens = parseArgs(argv)
+    const { error } = resolveArgs(args, tokens)
+
+    expect(error).toBeDefined()
+    expect(error?.errors.length).toBe(1)
+    expect((error?.errors[0] as ArgResolveError).message).toBe(
+      "Optional argument '--summer' or '-s' conflicts with '--autumn'"
+    )
+  })
+
+  test('detects conflict and shows kebab-case names in error message', () => {
+    const args = {
+      summerSeason: {
+        type: 'boolean',
+        conflicts: 'autumnSeason',
+        toKebab: true
+      },
+      autumnSeason: {
+        type: 'boolean',
+        conflicts: 'summerSeason',
+        toKebab: true
+      }
+    } as const satisfies Args
+
+    const argv = ['--summer-season', '--autumn-season']
+    const tokens = parseArgs(argv)
+    const { error } = resolveArgs(args, tokens)
+
+    expect(error).toBeDefined()
+    expect((error?.errors[0] as ArgResolveError).message).toBe(
+      "Optional argument '--summer-season' conflicts with '--autumn-season'"
+    )
+  })
+
+  test('conflicts array must reference existing schema keys (not kebab-case strings)', () => {
+    const args = {
+      summerSeason: {
+        type: 'boolean',
+        conflicts: 'autumn-season',
+        toKebab: true
+      },
+      autumnSeason: {
+        type: 'boolean',
+        conflicts: 'summer-season',
+        toKebab: true
+      }
+    } as const satisfies Args
+
+    const argv = ['--summer-season', '--autumn-season']
+    const tokens = parseArgs(argv)
+    const { error } = resolveArgs(args, tokens)
+
+    expect(error).toBeUndefined()
+  })
+
+  test('no conflict when only one option is provided', () => {
+    const args = {
+      summer: {
+        type: 'boolean',
+        conflicts: 'autumn'
+      },
+      autumn: {
+        type: 'boolean',
+        conflicts: 'summer'
+      }
+    } as const satisfies Args
+
+    const argv = ['--summer']
+    const tokens = parseArgs(argv)
+    const { values, error } = resolveArgs(args, tokens)
+
+    expect(error).toBeUndefined()
+    expect(values.summer).toBe(true)
+  })
+
+  test('no conflict when one option uses default value', () => {
+    const args = {
+      port: {
+        type: 'number',
+        default: 8080,
+        conflicts: 'socket'
+      },
+      socket: {
+        type: 'string',
+        conflicts: 'port'
+      }
+    } as const satisfies Args
+
+    const argv = ['--socket', '/tmp/app.sock']
+    const tokens = parseArgs(argv)
+    const { values, error } = resolveArgs(args, tokens)
+
+    expect(error).toBeUndefined()
+    expect(values.socket).toBe('/tmp/app.sock')
+    expect(values.port).toBe(8080)
+  })
+})
