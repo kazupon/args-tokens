@@ -2,7 +2,7 @@
 
 [![Version][npm-version-src]][npm-version-href]
 [![JSR][jsr-src]][jsr-href]
-[![InstallSize][install-size-src]][install-size-src]
+[![InstallSize][install-size-src]][install-size-href]
 [![CI][ci-src]][ci-href]
 
 > [`parseArgs` tokens](https://nodejs.org/api/util.html#parseargs-tokens) compatibility and more high-performance parser
