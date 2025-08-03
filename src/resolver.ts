@@ -753,6 +753,7 @@ export function resolveArgs<A extends Args>(
   const values = Object.create(null) as ArgValues<A>
   const errors: Error[] = []
   const explicit = Object.create(null) as ArgExplicitlyProvided<A>
+  const actualInputNames = new Map<string, string>()
 
   function checkTokenName(option: string, schema: ArgSchema, token: ArgToken): boolean {
     return (
@@ -843,6 +844,10 @@ export function resolveArgs<A extends Args>(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- NOTE(kazupon): Allow any type for resolving
         ;(explicit as any)[rawArg] = true
 
+        // Record the actual input name used (e.g., '-v' or '--verbose')
+        const actualInputName = isShortOption(token.rawName) ? `-${token.name}` : `--${arg}`
+        actualInputNames.set(rawArg, actualInputName)
+
         if (schema.type === 'boolean') {
           // NOTE(kazupon): re-set value to undefined, because long boolean type option is set on analyze phase
           token.value = undefined
@@ -874,7 +879,7 @@ export function resolveArgs<A extends Args>(
   }
 
   // Check for conflicts
-  const conflictErrors = checkConflicts(args, explicit, toKebab)
+  const conflictErrors = checkConflicts(args, explicit, toKebab, actualInputNames)
   errors.push(...conflictErrors)
 
   return {
@@ -999,19 +1004,11 @@ function createTypeError(option: string, schema: ArgSchema): TypeError {
   )
 }
 
-function createConflictError(
-  option: string,
-  conflictingOption: string,
-  schema: ArgSchema
-): ArgResolveError {
-  const message = `Optional argument '--${option}' ${schema.short ? `or '-${schema.short}' ` : ''}conflicts with '--${conflictingOption}'`
-  return new ArgResolveError(message, option, 'conflict', schema)
-}
-
 function checkConflicts<A extends Args>(
   args: A,
   explicit: ArgExplicitlyProvided<A>,
-  toKebab: boolean
+  toKebab: boolean,
+  actualInputNames: Map<string, string>
 ): ArgResolveError[] {
   for (const rawArg in args) {
     const schema = args[rawArg]
@@ -1019,15 +1016,22 @@ function checkConflicts<A extends Args>(
     if (!explicit[rawArg]) continue
     if (!schema.conflicts) continue
 
-    const arg = toKebab || schema.toKebab ? kebabnize(rawArg) : rawArg
     const conflicts = Array.isArray(schema.conflicts) ? schema.conflicts : [schema.conflicts]
 
     for (const conflictingArg of conflicts) {
       if (!explicit[conflictingArg]) continue
 
+      // Use the actual input name that was used, fallback to long form
+      const arg = toKebab || schema.toKebab ? kebabnize(rawArg) : rawArg
       const conflictingArgKebab =
         toKebab || args[conflictingArg]?.toKebab ? kebabnize(conflictingArg) : conflictingArg
-      return [createConflictError(arg, conflictingArgKebab, schema)]
+
+      const optionActualName = actualInputNames.get(rawArg) || `--${arg}`
+      const conflictingActualName =
+        actualInputNames.get(conflictingArg) || `--${conflictingArgKebab}`
+
+      const message = `Optional argument '${optionActualName}' conflicts with '${conflictingActualName}'`
+      return [new ArgResolveError(message, rawArg, 'conflict', schema)]
     }
   }
 

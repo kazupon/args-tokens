@@ -1348,7 +1348,32 @@ describe('conflicts', () => {
     expect(error).toBeDefined()
     expect(error?.errors.length).toBe(1)
     expect((error?.errors[0] as ArgResolveError).message).toBe(
-      "Optional argument '--summer' or '-s' conflicts with '--autumn'"
+      "Optional argument '-s' conflicts with '-a'"
+    )
+  })
+
+  test('error message reflects actual input forms (long vs short)', () => {
+    const args = {
+      summer: {
+        type: 'boolean',
+        short: 's',
+        conflicts: 'autumn'
+      },
+      autumn: {
+        type: 'boolean',
+        short: 'a',
+        conflicts: 'summer'
+      }
+    } as const satisfies Args
+
+    const argv = ['--summer', '-a']
+    const tokens = parseArgs(argv)
+    const { error } = resolveArgs(args, tokens)
+
+    expect(error).toBeDefined()
+    expect(error?.errors.length).toBe(1)
+    expect((error?.errors[0] as ArgResolveError).message).toBe(
+      "Optional argument '--summer' conflicts with '-a'"
     )
   })
 
