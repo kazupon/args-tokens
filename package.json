@@ -108,7 +108,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-jsdoc": "^52.0.2",
     "eslint-plugin-jsonc": "^2.20.1",
-    "eslint-plugin-markdown-preferences": "^0.9.0",
+    "eslint-plugin-markdown-preferences": "^0.10.0",
     "eslint-plugin-promise": "^7.2.1",
     "eslint-plugin-regexp": "^2.9.1",
     "eslint-plugin-unicorn": "^60.0.0",
