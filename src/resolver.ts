@@ -288,6 +288,93 @@ export interface ArgSchema {
    */
   toKebab?: true
   /**
+   * Names of other options that conflict with this option.
+   *
+   * When this option is used together with any of the conflicting options,
+   * an `ArgResolveError` with type 'conflict' will be thrown.
+   *
+   * Conflicts only need to be defined on one side - if option A defines a conflict
+   * with option B, the conflict is automatically detected when both are used,
+   * regardless of whether B also defines a conflict with A.
+   *
+   * Supports both single option name or array of option names.
+   * Option names must match the property keys in the schema object exactly
+   * (no automatic conversion between camelCase and kebab-case).
+   *
+   * @example
+   * Single conflict (bidirectional definition):
+   * ```ts
+   * {
+   *   summer: {
+   *     type: 'boolean',
+   *     conflicts: 'autumn'  // Cannot use --summer with --autumn
+   *   },
+   *   autumn: {
+   *     type: 'boolean',
+   *     conflicts: 'summer'  // Can define on both sides for clarity
+   *   }
+   * }
+   * ```
+   *
+   * @example
+   * Single conflict (one-way definition):
+   * ```ts
+   * {
+   *   summer: {
+   *     type: 'boolean',
+   *     conflicts: 'autumn'  // Only defined on summer side
+   *   },
+   *   autumn: {
+   *     type: 'boolean'
+   *     // No conflicts defined, but still cannot use with --summer
+   *   }
+   * }
+   * // Usage: --summer --autumn will throw error
+   * // Error: "Optional argument '--summer' conflicts with '--autumn'"
+   * ```
+   *
+   * @example
+   * Multiple conflicts:
+   * ```ts
+   * {
+   *   port: {
+   *     type: 'number',
+   *     conflicts: ['socket', 'pipe'],  // Cannot use with --socket or --pipe
+   *     description: 'TCP port number'
+   *   },
+   *   socket: {
+   *     type: 'string',
+   *     conflicts: ['port', 'pipe'],    // Cannot use with --port or --pipe
+   *     description: 'Unix socket path'
+   *   },
+   *   pipe: {
+   *     type: 'string',
+   *     conflicts: ['port', 'socket'],  // Cannot use with --port or --socket
+   *     description: 'Named pipe path'
+   *   }
+   * }
+   * // These three options are mutually exclusive
+   * ```
+   *
+   * @example
+   * With kebab-case conversion:
+   * ```ts
+   * {
+   *   summerSeason: {
+   *     type: 'boolean',
+   *     toKebab: true,  // Accessible as --summer-season
+   *     conflicts: 'autumnSeason'  // Must use property key, not CLI name
+   *   },
+   *   autumnSeason: {
+   *     type: 'boolean',
+   *     toKebab: true  // Accessible as --autumn-season
+   *   }
+   * }
+   * // Error: "Optional argument '--summer-season' conflicts with '--autumn-season'"
+   * ```
+   */
+  conflicts?: string | string[]
+  /**
    * Custom parsing function for `type: 'custom'` arguments.
    *
    * Required when `type: 'custom'`. Receives the raw string value and must
@@ -478,6 +565,9 @@ export type ArgExplicitlyProvided<A extends Args> = {
  * @typeParam A - {@link Args | Arguments}, which is an object that defines the command line arguments.
  *
  * @param args - An arguments that contains {@link ArgSchema | arguments schema}.
+ * @param resolveArgs.shortGrouping
+ * @param resolveArgs.skipPositional
+ * @param resolveArgs.toKebab
  * @param tokens - An array of {@link ArgToken | tokens}.
  * @param resolveArgs - An arguments that contains {@link ResolveArgs | resolve arguments}.
  * @returns An object that contains the values of the arguments, positional arguments, rest arguments, {@link AggregateError | validation errors}, and explicit provision status.
@@ -663,6 +753,7 @@ export function resolveArgs<A extends Args>(
   const values = Object.create(null) as ArgValues<A>
   const errors: Error[] = []
   const explicit = Object.create(null) as ArgExplicitlyProvided<A>
+  const actualInputNames = new Map<string, string>()
 
   function checkTokenName(option: string, schema: ArgSchema, token: ArgToken): boolean {
     return (
@@ -753,6 +844,10 @@ export function resolveArgs<A extends Args>(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- NOTE(kazupon): Allow any type for resolving
         ;(explicit as any)[rawArg] = true
 
+        // Record the actual input name used (e.g., '-v' or '--verbose')
+        const actualInputName = isShortOption(token.rawName) ? `-${token.name}` : `--${arg}`
+        actualInputNames.set(rawArg, actualInputName)
+
         if (schema.type === 'boolean') {
           // NOTE(kazupon): re-set value to undefined, because long boolean type option is set on analyze phase
           token.value = undefined
@@ -782,6 +877,10 @@ export function resolveArgs<A extends Args>(
       ;(values as any)[rawArg] = schema.default
     }
   }
+
+  // Check for conflicts
+  const conflictErrors = checkConflicts(args, explicit, toKebab, actualInputNames)
+  errors.push(...conflictErrors)
 
   return {
     values,
@@ -858,7 +957,7 @@ function createRequireError(option: string, schema: ArgSchema): ArgResolveError 
 /**
  * An error type for {@link ArgResolveError}.
  */
-export type ArgResolveErrorType = 'type' | 'required'
+export type ArgResolveErrorType = 'type' | 'required' | 'conflict'
 
 /**
  * An error that occurs when resolving arguments.
@@ -903,4 +1002,38 @@ function createTypeError(option: string, schema: ArgSchema): TypeError {
     'type',
     schema
   )
+}
+
+function checkConflicts<A extends Args>(
+  args: A,
+  explicit: ArgExplicitlyProvided<A>,
+  toKebab: boolean,
+  actualInputNames: Map<string, string>
+): ArgResolveError[] {
+  for (const rawArg in args) {
+    const schema = args[rawArg]
+
+    if (!explicit[rawArg]) continue
+    if (!schema.conflicts) continue
+
+    const conflicts = Array.isArray(schema.conflicts) ? schema.conflicts : [schema.conflicts]
+
+    for (const conflictingArg of conflicts) {
+      if (!explicit[conflictingArg]) continue
+
+      // Use the actual input name that was used, fallback to long form
+      const arg = toKebab || schema.toKebab ? kebabnize(rawArg) : rawArg
+      const conflictingArgKebab =
+        toKebab || args[conflictingArg]?.toKebab ? kebabnize(conflictingArg) : conflictingArg
+
+      const optionActualName = actualInputNames.get(rawArg) || `--${arg}`
+      const conflictingActualName =
+        actualInputNames.get(conflictingArg) || `--${conflictingArgKebab}`
+
+      const message = `Optional argument '${optionActualName}' conflicts with '${conflictingActualName}'`
+      return [new ArgResolveError(message, rawArg, 'conflict', schema)]
+    }
+  }
+
+  return []
 }
