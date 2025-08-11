@@ -565,9 +565,6 @@ export type ArgExplicitlyProvided<A extends Args> = {
  * @typeParam A - {@link Args | Arguments}, which is an object that defines the command line arguments.
  *
  * @param args - An arguments that contains {@link ArgSchema | arguments schema}.
- * @param resolveArgs.shortGrouping
- * @param resolveArgs.skipPositional
- * @param resolveArgs.toKebab
  * @param tokens - An array of {@link ArgToken | tokens}.
  * @param resolveArgs - An arguments that contains {@link ResolveArgs | resolve arguments}.
  * @returns An object that contains the values of the arguments, positional arguments, rest arguments, {@link AggregateError | validation errors}, and explicit provision status.
@@ -775,7 +772,7 @@ export function resolveArgs<A extends Args>(
   for (const [rawArg, schema] of Object.entries(args)) {
     const arg = toKebab || schema.toKebab ? kebabnize(rawArg) : rawArg
 
-    // Initialize explicit state for all options
+    // initialize explicit state for all options.
     // keyof explicit is generic and cannot be indexed for settings value.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- NOTE(kazupon): Allow any type for resolving
     ;(explicit as any)[rawArg] = false
@@ -839,7 +836,7 @@ export function resolveArgs<A extends Args>(
           continue
         }
 
-        // Mark as explicitly set when we find a matching token
+        // mark as explicitly set when we find a matching token.
         // keyof explicit is generic and cannot be indexed for settings value.
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- NOTE(kazupon): Allow any type for resolving
         ;(explicit as any)[rawArg] = true
@@ -878,7 +875,7 @@ export function resolveArgs<A extends Args>(
     }
   }
 
-  // Check for conflicts
+  // check for conflicts
   const conflictErrors = checkConflicts(args, explicit, toKebab, actualInputNames)
   errors.push(...conflictErrors)
 
@@ -1013,15 +1010,23 @@ function checkConflicts<A extends Args>(
   for (const rawArg in args) {
     const schema = args[rawArg]
 
-    if (!explicit[rawArg]) continue
-    if (!schema.conflicts) continue
+    if (!explicit[rawArg]) {
+      continue
+    }
+    if (!schema.conflicts) {
+      continue
+    }
 
     const conflicts = Array.isArray(schema.conflicts) ? schema.conflicts : [schema.conflicts]
 
-    for (const conflictingArg of conflicts) {
-      if (!explicit[conflictingArg]) continue
+    // eslint-disable-next-line unicorn/no-for-loop -- NOTE(kazupon): Use for loop to iterate conflicts, and performance optimization
+    for (let i = 0; i < conflicts.length; i++) {
+      const conflictingArg = conflicts[i]
+      if (!explicit[conflictingArg]) {
+        continue
+      }
 
-      // Use the actual input name that was used, fallback to long form
+      // use the actual input name that was used, fallback to long form
       const arg = toKebab || schema.toKebab ? kebabnize(rawArg) : rawArg
       const conflictingArgKebab =
         toKebab || args[conflictingArg]?.toKebab ? kebabnize(conflictingArg) : conflictingArg
