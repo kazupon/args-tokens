@@ -121,7 +121,7 @@
     "mitata": "^1.0.34",
     "pkg-pr-new": "^0.0.59",
     "prettier": "^3.6.2",
-    "tsdown": "^0.14.0",
+    "tsdown": "^0.15.0",
     "typescript": "^5.9.2",
     "typescript-eslint": "^8.38.0",
     "vitest": "^3.2.4",
