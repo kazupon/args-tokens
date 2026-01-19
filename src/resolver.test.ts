@@ -1118,6 +1118,171 @@ describe('explicit provision detection', () => {
       expect(explicit.port).toBe(false)
     })
   })
+
+  describe('one positional argument', () => {
+    test('value provided', () => {
+      const schema = {
+        command: {
+          type: 'positional'
+        },
+        verbose: {
+          type: 'boolean'
+        }
+      } as const satisfies Args
+
+      const argv = ['--verbose', 'dev']
+      const tokens = parseArgs(argv)
+      const { explicit } = resolveArgs(schema, tokens)
+
+      expect(explicit.command).toBe(true)
+    })
+
+    test('value provided and same as default', () => {
+      const schema = {
+        out: {
+          type: 'positional',
+          default: 'dist'
+        },
+        verbose: {
+          type: 'boolean'
+        }
+      } as const satisfies Args
+
+      const argv = ['--verbose', 'dist']
+      const tokens = parseArgs(argv)
+      const { explicit } = resolveArgs(schema, tokens)
+
+      expect(explicit.out).toBe(true)
+    })
+
+    test('value not provided', () => {
+      const schema = {
+        out: {
+          type: 'positional',
+          default: 'dist'
+        },
+        verbose: {
+          type: 'boolean'
+        }
+      } as const satisfies Args
+
+      const argv = ['--verbose']
+      const tokens = parseArgs(argv)
+      const { explicit } = resolveArgs(schema, tokens)
+
+      expect(explicit.out).toBe(false)
+    })
+
+    test('value provided for multiple: true', () => {
+      const schema = {
+        files: {
+          type: 'positional',
+          multiple: true
+        },
+        verbose: {
+          type: 'boolean'
+        }
+      } as const satisfies Args
+
+      const argv = ['--verbose', 'file1.ts']
+      const tokens = parseArgs(argv)
+      const { explicit } = resolveArgs(schema, tokens)
+
+      expect(explicit.files).toBe(true)
+    })
+
+    test('value not provided for multiple: true', () => {
+      const schema = {
+        files: {
+          type: 'positional',
+          multiple: true
+        },
+        verbose: {
+          type: 'boolean'
+        }
+      } as const satisfies Args
+
+      const argv = ['--verbose']
+      const tokens = parseArgs(argv)
+      const { explicit } = resolveArgs(schema, tokens)
+
+      expect(explicit.files).toBe(false)
+    })
+  })
+
+  describe('many positional arguments', () => {
+    const schema = {
+      from: {
+        type: 'positional'
+      },
+      to: {
+        type: 'positional'
+      },
+      verbose: {
+        type: 'boolean'
+      }
+    } as const satisfies Args
+
+    test('value provided', () => {
+      const argv = ['--verbose', 'source.txt', 'dest.txt']
+
+      const tokens = parseArgs(argv)
+      const { explicit } = resolveArgs(schema, tokens)
+
+      expect(explicit).toMatchObject({
+        from: true,
+        to: true
+      })
+    })
+
+    test('value partially provided', () => {
+      const argv = ['--verbose', 'source.txt']
+
+      const tokens = parseArgs(argv)
+      const { explicit } = resolveArgs(schema, tokens)
+
+      expect(explicit).toMatchObject({
+        from: true,
+        to: false
+      })
+    })
+
+    test('value not provided', () => {
+      const argv = ['--verbose']
+
+      const tokens = parseArgs(argv)
+      const { explicit } = resolveArgs(schema, tokens)
+
+      expect(explicit).toMatchObject({
+        from: false,
+        to: false
+      })
+    })
+
+    test('value provided for multiple: true', () => {
+      const schema = {
+        command: {
+          type: 'positional'
+        },
+        files: {
+          type: 'positional',
+          multiple: true
+        },
+        verbose: {
+          type: 'boolean'
+        }
+      } as const satisfies Args
+
+      const argv = ['--verbose', 'compile', 'file1.ts']
+      const tokens = parseArgs(argv)
+      const { explicit } = resolveArgs(schema, tokens)
+
+      expect(explicit).toMatchObject({
+        command: true,
+        files: true
+      })
+    })
+  })
 })
 
 describe('conflicts', () => {
