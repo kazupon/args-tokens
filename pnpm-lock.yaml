@@ -63,8 +63,8 @@ importers:
         specifier: ^0.2.8
         version: 0.2.8
       jsr:
-        specifier: ^0.13.5
-        version: 0.13.5
+        specifier: ^0.14.0
+        version: 0.14.1
       jsr-exports-lint:
         specifier: ^0.4.1
         version: 0.4.1(tsdown@0.20.1(@typescript/native-preview@7.0.0-dev.20260123.3)(oxc-resolver@11.2.0)(typescript@5.9.2))
@@ -1853,8 +1853,8 @@ packages:
       unbuild:
         optional: true
 
-  jsr@0.13.5:
-    resolution: {integrity: sha512-qQP20ZcG28pYes7bCq3uuvixl1TL1EpJzwLPfoQadSyWk9j2AID66qhW8+aXpRDRFDvDkXFnONsSRhpnnQAupg==}
+  jsr@0.14.1:
+    resolution: {integrity: sha512-2RvO0XbhrE1RwRXSwsT61MCmD7RrUkR9YVi16rsFR/FR6t6ZUQwcUgkB7tl9UNNEVfn/tXKIxZb48Zr1f0PgrQ==}
     hasBin: true
 
   keyv@4.5.4:
@@ -4400,7 +4400,7 @@ snapshots:
     optionalDependencies:
       tsdown: 0.20.1(@typescript/native-preview@7.0.0-dev.20260123.3)(oxc-resolver@11.2.0)(typescript@5.9.2)
 
-  jsr@0.13.5:
+  jsr@0.14.1:
     dependencies:
       node-stream-zip: 1.15.0
       semiver: 1.1.0
