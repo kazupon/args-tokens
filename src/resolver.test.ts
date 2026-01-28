@@ -1023,153 +1023,264 @@ test('custom type argument', () => {
 })
 
 describe('explicit provision detection', () => {
-  test('should detect explicitly set options', () => {
-    const argv = ['dev', '--host', 'example.com', '--help']
-    const tokens = parseArgs(argv)
-    const { values, explicit } = resolveArgs(args, tokens)
-
-    expect(values).toEqual({
-      port: 8080,
-      host: 'example.com',
-      help: true
-    })
-
-    expect(explicit).toEqual({
-      help: true,
-      host: true,
-
-      // applied default values
-      port: false,
-
-      // not specified
-      version: false,
-      silent: false,
-      mode: false
-    })
-  })
-
-  test('should detect short options', () => {
-    const argv = ['dev', '-p', '9131', '-h']
-    const tokens = parseArgs(argv)
-    const { values, explicit } = resolveArgs(args, tokens)
-
-    expect(values).toEqual({
-      port: 9131,
-      help: true
-    })
-
-    expect(explicit).toEqual({
-      help: true,
-      port: true,
-
-      // not specified
-      version: false,
-      silent: false,
-      mode: false,
-      host: false
-    })
-  })
-
-  test('should handle inline values', () => {
-    const argv = ['dev', '--port=9000', '--host=localhost']
-    const tokens = parseArgs(argv)
-    const { values, explicit } = resolveArgs(args, tokens)
-
-    expect(values).toEqual({
-      port: 9000,
-      host: 'localhost'
-    })
-
-    expect(explicit).toEqual({
-      port: true,
-      host: true,
-
-      // not specified
-      help: false,
-      version: false,
-      silent: false,
-      mode: false
-    })
-  })
-
-  test('should handle boolean with default values', () => {
-    const argsContainsBooleanWithDefault = {
-      help: {
-        type: 'boolean',
-        short: 'h',
-        default: true
+  describe('options', () => {
+    const schema = {
+      command: {
+        type: 'positional'
+      },
+      host: {
+        type: 'string'
       },
       port: {
         type: 'number',
-        short: 'p',
         default: 8080
       },
-      mode: {
-        type: 'string',
-        short: 'm'
-      }
-    } as const satisfies Args
-
-    const argv = ['dev', '--port', '9131', '--help']
-    const tokens = parseArgs(argv)
-    const { values, explicit } = resolveArgs(argsContainsBooleanWithDefault, tokens)
-
-    expect(values).toEqual({
-      port: 9131,
-      help: true
-    })
-
-    expect(explicit).toEqual({
-      help: true,
-      port: true,
-
-      // not specified
-      mode: false
-    })
-  })
-
-  test('should handle boolean negation', () => {
-    const argsWithNegatable = {
-      enabled: {
-        type: 'boolean',
-        short: 'e',
-        default: true,
-        negatable: true
-      }
-    } as const satisfies Args
-
-    const argv = ['--no-enabled']
-    const tokens = parseArgs(argv)
-    const { values, explicit } = resolveArgs(argsWithNegatable, tokens)
-
-    expect(values).toEqual({
-      enabled: false
-    })
-
-    expect(explicit).toEqual({
-      enabled: true
-    })
-  })
-
-  test('should handle multiple values', () => {
-    const argsWithMultiple = {
       tags: {
         type: 'string',
         short: 't',
         multiple: true
+      },
+      help: {
+        type: 'boolean',
+        short: 'h'
+      },
+      verbose: {
+        type: 'boolean',
+        negatable: true
       }
     } as const satisfies Args
 
-    const argv = ['--tags', 'tag1', '-t', 'tag2']
-    const tokens = parseArgs(argv)
-    const { values, explicit } = resolveArgs(argsWithMultiple, tokens)
+    test('value provided', () => {
+      const argv = ['dev', '--host', 'example.com', '--help']
 
-    expect(values).toEqual({
-      tags: ['tag1', 'tag2']
+      const tokens = parseArgs(argv)
+      const { explicit } = resolveArgs(schema, tokens)
+
+      expect(explicit).toMatchObject({
+        help: true,
+        host: true,
+        port: false
+      })
     })
 
-    expect(explicit).toEqual({
-      tags: true
+    test('value provided and same as default', () => {
+      const argv = ['dev', '--port', '8080']
+
+      const tokens = parseArgs(argv)
+      const { explicit } = resolveArgs(schema, tokens)
+
+      expect(explicit.port).toBe(true)
+    })
+
+    test('value provided using short option', () => {
+      const argv = ['dev', '-h']
+
+      const tokens = parseArgs(argv)
+      const { explicit } = resolveArgs(schema, tokens)
+
+      expect(explicit.help).toBe(true)
+    })
+
+    test('value provided using inline syntax', () => {
+      const argv = ['dev', '--port=9131']
+
+      const tokens = parseArgs(argv)
+      const { explicit } = resolveArgs(schema, tokens)
+
+      expect(explicit.port).toBe(true)
+    })
+
+    test('value provided using negation for boolean option', () => {
+      const argv = ['dev', '--no-verbose']
+
+      const tokens = parseArgs(argv)
+      const { explicit } = resolveArgs(schema, tokens)
+
+      expect(explicit.verbose).toBe(true)
+    })
+
+    test('multiple values provided', () => {
+      const argv = ['dev', '--tags', 'foo', '-t', 'bar']
+
+      const tokens = parseArgs(argv)
+      const { explicit } = resolveArgs(schema, tokens)
+
+      expect(explicit.tags).toBe(true)
+    })
+
+    test('value not provided and falls back to default', () => {
+      const argv = ['dev']
+
+      const tokens = parseArgs(argv)
+      const { values, explicit } = resolveArgs(schema, tokens)
+
+      expect(values.port).toBe(8080)
+      expect(explicit.port).toBe(false)
+    })
+  })
+
+  describe('one positional argument', () => {
+    test('value provided', () => {
+      const schema = {
+        command: {
+          type: 'positional'
+        },
+        verbose: {
+          type: 'boolean'
+        }
+      } as const satisfies Args
+
+      const argv = ['--verbose', 'dev']
+      const tokens = parseArgs(argv)
+      const { explicit } = resolveArgs(schema, tokens)
+
+      expect(explicit.command).toBe(true)
+    })
+
+    test('value provided and same as default', () => {
+      const schema = {
+        out: {
+          type: 'positional',
+          default: 'dist'
+        },
+        verbose: {
+          type: 'boolean'
+        }
+      } as const satisfies Args
+
+      const argv = ['--verbose', 'dist']
+      const tokens = parseArgs(argv)
+      const { explicit } = resolveArgs(schema, tokens)
+
+      expect(explicit.out).toBe(true)
+    })
+
+    test('value not provided', () => {
+      const schema = {
+        out: {
+          type: 'positional',
+          default: 'dist'
+        },
+        verbose: {
+          type: 'boolean'
+        }
+      } as const satisfies Args
+
+      const argv = ['--verbose']
+      const tokens = parseArgs(argv)
+      const { explicit } = resolveArgs(schema, tokens)
+
+      expect(explicit.out).toBe(false)
+    })
+
+    test('value provided for multiple: true', () => {
+      const schema = {
+        files: {
+          type: 'positional',
+          multiple: true
+        },
+        verbose: {
+          type: 'boolean'
+        }
+      } as const satisfies Args
+
+      const argv = ['--verbose', 'file1.ts']
+      const tokens = parseArgs(argv)
+      const { explicit } = resolveArgs(schema, tokens)
+
+      expect(explicit.files).toBe(true)
+    })
+
+    test('value not provided for multiple: true', () => {
+      const schema = {
+        files: {
+          type: 'positional',
+          multiple: true
+        },
+        verbose: {
+          type: 'boolean'
+        }
+      } as const satisfies Args
+
+      const argv = ['--verbose']
+      const tokens = parseArgs(argv)
+      const { explicit } = resolveArgs(schema, tokens)
+
+      expect(explicit.files).toBe(false)
+    })
+  })
+
+  describe('many positional arguments', () => {
+    const schema = {
+      from: {
+        type: 'positional'
+      },
+      to: {
+        type: 'positional'
+      },
+      verbose: {
+        type: 'boolean'
+      }
+    } as const satisfies Args
+
+    test('value provided', () => {
+      const argv = ['--verbose', 'source.txt', 'dest.txt']
+
+      const tokens = parseArgs(argv)
+      const { explicit } = resolveArgs(schema, tokens)
+
+      expect(explicit).toMatchObject({
+        from: true,
+        to: true
+      })
+    })
+
+    test('value partially provided', () => {
+      const argv = ['--verbose', 'source.txt']
+
+      const tokens = parseArgs(argv)
+      const { explicit } = resolveArgs(schema, tokens)
+
+      expect(explicit).toMatchObject({
+        from: true,
+        to: false
+      })
+    })
+
+    test('value not provided', () => {
+      const argv = ['--verbose']
+
+      const tokens = parseArgs(argv)
+      const { explicit } = resolveArgs(schema, tokens)
+
+      expect(explicit).toMatchObject({
+        from: false,
+        to: false
+      })
+    })
+
+    test('value provided for multiple: true', () => {
+      const schema = {
+        command: {
+          type: 'positional'
+        },
+        files: {
+          type: 'positional',
+          multiple: true
+        },
+        verbose: {
+          type: 'boolean'
+        }
+      } as const satisfies Args
+
+      const argv = ['--verbose', 'compile', 'file1.ts']
+      const tokens = parseArgs(argv)
+      const { explicit } = resolveArgs(schema, tokens)
+
+      expect(explicit).toMatchObject({
+        command: true,
+        files: true
+      })
     })
   })
 })
