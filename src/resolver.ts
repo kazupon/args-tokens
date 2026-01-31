@@ -790,6 +790,9 @@ export function resolveArgs<A extends Args>(
           // eslint-disable-next-line @typescript-eslint/no-explicit-any -- NOTE(kazupon): Allow any type for resolving
           ;(values as any)[rawArg] = remainingPositionals.map(p => p.value!)
           positionalsCount += remainingPositionals.length
+          // mark as explicitly set when positional arguments are provided.
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- NOTE(sushichan044): Allow any type for resolving
+          ;(explicit as any)[rawArg] = true
         } else if (schema.required) {
           errors.push(createRequireError(arg, schema))
         }
@@ -799,6 +802,9 @@ export function resolveArgs<A extends Args>(
         if (positional != null) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any -- NOTE(kazupon): Allow any type for resolving
           ;(values as any)[rawArg] = positional.value!
+          // mark as explicitly set when positional argument is provided.
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- NOTE(sushichan044): Allow any type for resolving
+          ;(explicit as any)[rawArg] = true
         } else {
           errors.push(createRequireError(arg, schema))
         }
