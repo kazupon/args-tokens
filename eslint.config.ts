@@ -49,20 +49,7 @@ const config: ReturnType<typeof defineConfig> = defineConfig(
     }
   }),
   markdown({
-    inlineCodeWords: [
-      'args-tokens',
-      'util.parseArgs',
-      'pkgjs/parseargs',
-      'parseArgs',
-      'resolveArgs',
-      'ArgSchema'
-    ],
-    inlineCodeWordsIgnores: [
-      {
-        words: ['args-tokens'],
-        node: { type: 'heading', depth: 1 }
-      }
-    ]
+    preferences: true
   }),
   vitest(),
   prettier(),

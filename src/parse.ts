@@ -96,5 +96,5 @@ export function parse<A extends Args>(
     Object.create(null),
     resolveArgs<A>((_args as A) || DEFAULT_OPTIONS, tokens),
     { tokens }
-  )
+  ) as ParsedArgs<A>
 }

@@ -774,7 +774,7 @@ export function resolveArgs<A extends Args>(
 
     // initialize explicit state for all options.
     // keyof explicit is generic and cannot be indexed for settings value.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- NOTE(kazupon): Allow any type for resolving
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- NOTE(kazupon): Allow any type for resolving
     ;(explicit as any)[rawArg] = false
 
     if (schema.type === 'positional') {
@@ -787,11 +787,11 @@ export function resolveArgs<A extends Args>(
       if (schema.multiple) {
         const remainingPositionals = positionalTokens.slice(positionalsCount)
         if (remainingPositionals.length > 0) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- NOTE(kazupon): Allow any type for resolving
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- NOTE(kazupon): Allow any type for resolving
           ;(values as any)[rawArg] = remainingPositionals.map(p => p.value!)
           positionalsCount += remainingPositionals.length
           // mark as explicitly set when positional arguments are provided.
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- NOTE(sushichan044): Allow any type for resolving
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- NOTE(sushichan044): Allow any type for resolving
           ;(explicit as any)[rawArg] = true
         } else if (schema.required) {
           errors.push(createRequireError(arg, schema))
@@ -800,10 +800,10 @@ export function resolveArgs<A extends Args>(
         const positional = positionalTokens[positionalsCount]
         // eslint-disable-next-line unicorn/no-null, unicorn/no-negated-condition -- NOTE(kazupon): Allow null check for positional value
         if (positional != null) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- NOTE(kazupon): Allow any type for resolving
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- NOTE(kazupon): Allow any type for resolving
           ;(values as any)[rawArg] = positional.value!
           // mark as explicitly set when positional argument is provided.
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- NOTE(sushichan044): Allow any type for resolving
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- NOTE(sushichan044): Allow any type for resolving
           ;(explicit as any)[rawArg] = true
         } else {
           errors.push(createRequireError(arg, schema))
@@ -844,7 +844,7 @@ export function resolveArgs<A extends Args>(
 
         // mark as explicitly set when we find a matching token.
         // keyof explicit is generic and cannot be indexed for settings value.
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- NOTE(kazupon): Allow any type for resolving
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- NOTE(kazupon): Allow any type for resolving
         ;(explicit as any)[rawArg] = true
 
         // Record the actual input name used (e.g., '-v' or '--verbose')
@@ -856,17 +856,18 @@ export function resolveArgs<A extends Args>(
           token.value = undefined
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- NOTE(kazupon): Allow any type for parsing
         const [parsedValue, error] = parse(token, arg, schema)
         if (error) {
           errors.push(error)
         } else {
           if (schema.multiple) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- NOTE(kazupon): Allow any type for resolving
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- NOTE(kazupon): Allow any type for resolving
             ;(values as any)[rawArg] ||= []
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- NOTE(kazupon): Allow any type for resolving
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call -- NOTE(kazupon): Allow any type for resolving
             ;(values as any)[rawArg].push(parsedValue)
           } else {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- NOTE(kazupon): Allow any type for resolving
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment -- NOTE(kazupon): Allow any type for resolving
             ;(values as any)[rawArg] = parsedValue
           }
         }
@@ -876,7 +877,7 @@ export function resolveArgs<A extends Args>(
     // eslint-disable-next-line unicorn/no-null -- NOTE(kazupon): Allow null check for values
     if (values[rawArg] == null && schema.default != null) {
       // check if the default value is in values
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- NOTE(kazupon): Allow any type for resolving
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- NOTE(kazupon): Allow any type for resolving
       ;(values as any)[rawArg] = schema.default
     }
   }

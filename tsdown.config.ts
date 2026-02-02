@@ -8,6 +8,7 @@ const config: UserConfig = defineConfig({
   outDir: 'lib',
   clean: true,
   dts: true,
+  fixedExtension: false,
   hooks: {
     'build:done': lintJsrExports()
   }
