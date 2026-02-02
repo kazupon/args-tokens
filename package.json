@@ -120,7 +120,7 @@
     "oxfmt": "^0.28.0",
     "oxlint": "^1.42.0",
     "oxlint-tsgolint": "^0.11.4",
-    "pkg-pr-new": "^0.0.62",
+    "pkg-pr-new": "^0.0.63",
     "tsdown": "^0.20.1",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.54.0",
