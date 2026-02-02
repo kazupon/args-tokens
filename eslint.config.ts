@@ -1,43 +1,25 @@
 import {
   comments,
   defineConfig,
-  javascript,
   jsdoc,
   jsonc,
   markdown,
-  prettier,
-  promise,
-  regexp,
+  oxlint,
   typescript,
-  unicorn,
-  vitest,
   yaml
 } from '@kazupon/eslint-config'
-import { globalIgnores } from 'eslint/config'
-
-import type { Linter } from 'eslint'
 
 const config: ReturnType<typeof defineConfig> = defineConfig(
-  javascript(),
-  typescript(),
-  comments({
-    kazupon: {
-      ignores: [
-        '**/*.test.ts',
-        '**/*.test.js',
-        '**/*.test-d.ts',
-        '**/*.spec.ts',
-        '**/*.spec.js',
-        'bench/**.js'
-      ]
+  typescript({
+    parserOptions: {
+      tsconfigRootDir: import.meta.dirname,
+      project: true
     }
   }),
+  comments({ kazupon: false }),
   jsdoc({
     typescript: 'syntax'
   }),
-  promise(),
-  regexp(),
-  unicorn(),
   jsonc({
     json: true,
     json5: true,
@@ -51,24 +33,10 @@ const config: ReturnType<typeof defineConfig> = defineConfig(
   markdown({
     preferences: true
   }),
-  vitest(),
-  prettier(),
-  {
-    rules: {
-      '@typescript-eslint/ban-ts-comment': 'off',
-      'unicorn/prevent-abbreviations': 'off',
-      'unicorn/filename-case': 'off'
-    }
-  },
-  globalIgnores([
-    '.vscode',
-    'lib',
-    'tsconfig.json',
-    'CHANGELOG.md',
-    'playground/deno/**',
-    'playground/bun/**',
-    'pnpm-lock.yaml'
-  ]) as Linter.Config
+  oxlint({
+    presets: ['typescript'],
+    configFile: './.oxlintrc.json'
+  })
 )
 
 export default config

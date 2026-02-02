@@ -1,20 +1,19 @@
 {
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "editor.formatOnSave": true,
-  "editor.formatOnPaste": true,
-  "editor.formatOnType": true,
+  "oxc.requireConfig": true,
+  "oxc.trace.server": "messages",
+  "oxc.typeAware": true,
+  "editor.defaultFormatter": "oxc.oxc-vscode",
   "editor.codeActionsOnSave": {
     "source.organizeImports": "always",
+    "source.fixAll.oxc": "always",
     "source.fixAll.eslint": "explicit"
   },
-  "prettier.configPath": "./node_modules/@kazupon/prettier-config/index.json",
-  "eslint.useFlatConfig": true,
-  "eslint.validate": ["javascript", "typescript"],
+  "eslint.validate": ["javascript", "typescript", "json", "jsonc", "json5", "yaml", "toml"],
   "files.associations": {
     "*.json": "jsonc"
   },
   "typescript.referencesCodeLens.enabled": true,
-  "typescript.experimental.useTsgo": false,
+  "typescript.experimental.useTsgo": true,
   "typescript.tsdk": "node_modules/typescript/lib",
   "deno.enable": false
 }

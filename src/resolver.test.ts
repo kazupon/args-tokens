@@ -1,3 +1,5 @@
+/* oxlint-disable no-unsafe-optional-chaining */
+
 import { describe, expect, test } from 'vitest'
 import { z } from 'zod/v4-mini'
 import { parseArgs } from './parser.ts'
@@ -1578,3 +1580,5 @@ describe('conflicts', () => {
     expect(values.port).toBe(8080)
   })
 })
+
+/* oxlint-enable no-unsafe-optional-chaining */

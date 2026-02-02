@@ -16,11 +16,11 @@
     "url": "git+https://github.com/kazupon/args-tokens.git"
   },
   "keywords": [
-    "cli",
     "args",
-    "tokens",
+    "args-parser",
+    "cli",
     "parseargs",
-    "args-parser"
+    "tokens"
   ],
   "publishConfig": {
     "access": "public"
@@ -78,40 +78,38 @@
     "changelog": "gh-changelogen --repo=kazupon/eslint-config",
     "dev": "pnpx @eslint/config-inspector --config eslint.config.ts",
     "dev:eslint": "pnpx @eslint/config-inspector --config eslint.config.ts",
-    "fix": "pnpm run --parallel --color \"/^fix:/\"",
-    "fix:eslint": "eslint . --fix",
+    "fix": "pnpm run --color \"/^fix:/\"",
+    "fix:eslint": "eslint . --cache --fix",
     "fix:knip": "knip --fix --no-exit-code",
-    "fix:prettier": "prettier . --write --experimental-cli",
-    "lint": "pnpm run --parallel --color \"/^lint:/\"",
-    "lint:eslint": "eslint .",
+    "fix:oxfmt": "oxfmt . --config ./node_modules/@kazupon/prettier-config/index.json --no-error-on-unmatched-pattern",
+    "fix:oxlint": "oxlint --type-aware --type-check --fix",
+    "lint": "pnpm run --color \"/^lint:/\"",
+    "lint:deno": "deno check src",
+    "lint:eslint": "eslint . --cache",
     "lint:jsr": "jsr publish --config jsr.json --dry-run --allow-dirty",
     "lint:knip": "knip",
-    "lint:prettier": "prettier . --check --experimental-cli",
+    "lint:oxfmt": "oxfmt . --check --config ./node_modules/@kazupon/prettier-config/index.json",
+    "lint:oxlint": "oxlint --type-aware --type-check",
     "prepack": "pnpm build",
     "prepare": "git config --local core.hooksPath .githooks",
     "release": "bumpp --commit \"release: v%s\" --all --push --tag",
-    "test": "vitest run --typecheck",
-    "typecheck": "pnpm run --parallel --color \"/^typecheck:/\"",
-    "typecheck:deno": "deno check src",
-    "typecheck:tsc": "tsgo --noEmit"
+    "test": "vitest run --typecheck"
   },
   "devDependencies": {
     "@eslint/markdown": "^7.5.1",
     "@kazupon/eslint-config": "^0.44.0",
+    "@kazupon/eslint-plugin": "^0.7.1",
     "@kazupon/prettier-config": "^0.2.0",
-    "@types/node": "^24.10.9",
+    "@types/node": "^25.1.0",
     "@typescript/native-preview": "7.0.0-dev.20260131.1",
-    "@vitest/eslint-plugin": "^1.6.6",
     "bumpp": "^10.4.0",
     "deno": "^2.6.7",
     "eslint": "^9.39.2",
-    "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-jsdoc": "^52.0.4",
     "eslint-plugin-jsonc": "^2.21.0",
-    "eslint-plugin-markdown-preferences": "^0.10.0",
-    "eslint-plugin-promise": "^7.2.1",
-    "eslint-plugin-regexp": "^2.10.0",
-    "eslint-plugin-unicorn": "^60.0.0",
+    "eslint-plugin-markdown-preferences": "^0.40.2",
+    "eslint-plugin-oxlint": "^1.42.0",
+    "eslint-plugin-regexp": "^3.0.0",
     "eslint-plugin-yml": "^1.19.1",
     "gh-changelogen": "^0.2.8",
     "jsr": "^0.14.2",
@@ -119,8 +117,10 @@
     "knip": "^5.82.1",
     "lint-staged": "^16.2.7",
     "mitata": "^1.0.34",
+    "oxfmt": "^0.27.0",
+    "oxlint": "^1.42.0",
+    "oxlint-tsgolint": "^0.11.4",
     "pkg-pr-new": "^0.0.62",
-    "prettier": "^3.8.1",
     "tsdown": "^0.20.1",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.54.0",
@@ -130,21 +130,23 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "deno",
+      "esbuild",
       "rolldown"
     ]
   },
   "prettier": "@kazupon/prettier-config",
   "lint-staged": {
     "*.ts?(x)": [
-      "prettier --parser=typescript --write",
-      "eslint --fix"
+      "oxfmt --config ./node_modules/@kazupon/prettier-config/index.json --no-error-on-unmatched-pattern",
+      "oxlint --config .oxlintrc.json --type-aware --type-check --fix"
     ],
     "*.{js,mjs,cjs}": [
-      "prettier --write",
-      "eslint --fix"
+      "oxfmt --config ./node_modules/@kazupon/prettier-config/index.json --no-error-on-unmatched-pattern",
+      "oxlint --config .oxlintrc.json --fix"
     ],
     "*.{json,jsonc,json5,md,yml,yaml}": [
-      "prettier --write"
+      "oxfmt --config ./node_modules/@kazupon/prettier-config/index.json --no-error-on-unmatched-pattern",
+      "eslint --fix"
     ]
   }
 }

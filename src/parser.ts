@@ -167,7 +167,6 @@ export function parseArgs(args: string[], options: ParserOptions = {}): ArgToken
         })
       }
 
-      // eslint-disable-next-line unicorn/no-null -- NOTE(kazupon): `null` is used to check if the value is defined.
       if (value != null) {
         ++index
       }
@@ -311,6 +310,5 @@ export function hasLongOptionPrefix(arg: string): boolean {
  * @returns Whether a `value` is an option value.
  */
 function hasOptionValue(value: string | undefined): boolean {
-  // eslint-disable-next-line unicorn/no-null -- NOTE(kazupon): `null` is used to check if the value is defined.
   return !(value == null) && value.codePointAt(0) !== HYPHEN_CODE
 }
