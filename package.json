@@ -101,7 +101,7 @@
     "@kazupon/eslint-plugin": "^0.7.1",
     "@kazupon/prettier-config": "^0.2.0",
     "@types/node": "^25.1.0",
-    "@typescript/native-preview": "7.0.0-dev.20260202.1",
+    "@typescript/native-preview": "7.0.0-dev.20260203.1",
     "bumpp": "^10.4.0",
     "deno": "^2.6.7",
     "eslint": "^9.39.2",
