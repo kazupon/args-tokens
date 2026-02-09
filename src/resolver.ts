@@ -375,6 +375,28 @@ export interface ArgSchema {
    */
   conflicts?: string | string[]
   /**
+   * Display name hint for help text generation.
+   *
+   * Provides a meaningful type hint for the argument value in help output.
+   * Particularly useful for `type: 'custom'` arguments where the type
+   * name would otherwise be unhelpful.
+   *
+   * @example
+   * Metavar usage:
+   * ```ts
+   * {
+   *   port: {
+   *     type: 'custom',
+   *     parse: (v: string) => parseInt(v, 10),
+   *     metavar: 'integer',
+   *     description: 'Port number (1-65535)'
+   *   }
+   * }
+   * // Help output: --port <integer>  Port number (1-65535)
+   * ```
+   */
+  metavar?: string
+  /**
    * Custom parsing function for `type: 'custom'` arguments.
    *
    * Required when `type: 'custom'`. Receives the raw string value and must
@@ -442,8 +464,6 @@ export type ArgValues<T> = T extends Args
       [option: string]: string | boolean | number | (string | boolean | number)[] | undefined
     }
 
-type IsFunction<T> = T extends (...args: any[]) => any ? true : false
-
 /**
  * Extracts the value type from the argument schema.
  *
@@ -451,23 +471,25 @@ type IsFunction<T> = T extends (...args: any[]) => any ? true : false
  *
  * @internal
  */
-export type ExtractOptionValue<A extends ArgSchema> = A['type'] extends 'string'
-  ? ResolveOptionValue<A, string>
-  : A['type'] extends 'boolean'
-    ? ResolveOptionValue<A, boolean>
-    : A['type'] extends 'number'
-      ? ResolveOptionValue<A, number>
-      : A['type'] extends 'positional'
-        ? ResolveOptionValue<A, string>
-        : A['type'] extends 'enum'
-          ? A['choices'] extends string[] | readonly string[]
-            ? ResolveOptionValue<A, A['choices'][number]>
-            : never
-          : A['type'] extends 'custom'
-            ? IsFunction<A['parse']> extends true
-              ? ResolveOptionValue<A, ReturnType<NonNullable<A['parse']>>>
+export type ExtractOptionValue<A extends ArgSchema> = undefined extends A['parse']
+  ? A['type'] extends 'string'
+    ? ResolveOptionValue<A, string>
+    : A['type'] extends 'boolean'
+      ? ResolveOptionValue<A, boolean>
+      : A['type'] extends 'number'
+        ? ResolveOptionValue<A, number>
+        : A['type'] extends 'positional'
+          ? ResolveOptionValue<A, string>
+          : A['type'] extends 'enum'
+            ? A['choices'] extends string[] | readonly string[]
+              ? ResolveOptionValue<A, A['choices'][number]>
               : never
-            : ResolveOptionValue<A, string | boolean | number>
+            : A['type'] extends 'custom'
+              ? never
+              : ResolveOptionValue<A, string | boolean | number>
+  : A['parse'] extends (value: string) => infer R
+    ? ResolveOptionValue<A, R>
+    : never
 
 type ResolveOptionValue<A extends ArgSchema, T> = A['multiple'] extends true ? T[] : T
 
@@ -660,23 +682,26 @@ export function resolveArgs<A extends Args>(
         continue
       }
       if (currentShortOption) {
-        const found = schemas.find(
+        const isBoolean = schemas.find(
           schema => schema.short === currentShortOption!.name && schema.type === 'boolean'
         )
-        if (found) {
+        if (isBoolean) {
           positionalTokens.push({ ...token })
+          applyShortOptionValue() // finalize boolean without value
+        } else {
+          applyShortOptionValue(token.value)
         }
       } else if (currentLongOption) {
-        const found = args[currentLongOption.name!]?.type === 'boolean'
-        if (found) {
+        const isBoolean = args[currentLongOption.name!]?.type === 'boolean'
+        if (isBoolean) {
           positionalTokens.push({ ...token })
+          applyLongOptionValue() // finalize boolean without value
+        } else {
+          applyLongOptionValue(token.value)
         }
       } else {
         positionalTokens.push({ ...token })
       }
-      // check if previous option is not resolved
-      applyLongOptionValue(token.value)
-      applyShortOptionValue(token.value)
     } else if (token.kind === 'option') {
       if (token.rawName) {
         if (hasLongOptionPrefix(token.rawName)) {
@@ -783,8 +808,21 @@ export function resolveArgs<A extends Args>(
       if (schema.multiple) {
         const remainingPositionals = positionalTokens.slice(positionalsCount)
         if (remainingPositionals.length > 0) {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(kazupon): Allow any type for resolving
-          ;(values as any)[rawArg] = remainingPositionals.map(p => p.value!)
+          if (typeof schema.parse === 'function') {
+            const parsed: unknown[] = []
+            for (const p of remainingPositionals) {
+              try {
+                parsed.push(schema.parse(p.value!))
+              } catch (error) {
+                errors.push(error as Error)
+              }
+            }
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(kazupon): Allow any type for resolving
+            ;(values as any)[rawArg] = parsed
+          } else {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(kazupon): Allow any type for resolving
+            ;(values as any)[rawArg] = remainingPositionals.map(p => p.value!)
+          }
           positionalsCount += remainingPositionals.length
           // mark as explicitly set when positional arguments are provided.
           // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(sushichan044): Allow any type for resolving
@@ -795,8 +833,17 @@ export function resolveArgs<A extends Args>(
       } else {
         const positional = positionalTokens[positionalsCount]
         if (positional != null) {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(kazupon): Allow any type for resolving
-          ;(values as any)[rawArg] = positional.value!
+          if (typeof schema.parse === 'function') {
+            try {
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment -- NOTE(kazupon): Allow any type for resolving
+              ;(values as any)[rawArg] = schema.parse(positional.value!)
+            } catch (error) {
+              errors.push(error as Error)
+            }
+          } else {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(kazupon): Allow any type for resolving
+            ;(values as any)[rawArg] = positional.value!
+          }
           // mark as explicitly set when positional argument is provided.
           // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(sushichan044): Allow any type for resolving
           ;(explicit as any)[rawArg] = true
@@ -845,11 +892,6 @@ export function resolveArgs<A extends Args>(
         const actualInputName = isShortOption(token.rawName) ? `-${token.name}` : `--${arg}`
         actualInputNames.set(rawArg, actualInputName)
 
-        if (schema.type === 'boolean') {
-          // NOTE(kazupon): re-set value to undefined, because long boolean type option is set on analyze phase
-          token.value = undefined
-        }
-
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- NOTE(kazupon): Allow any type for parsing
         const [parsedValue, error] = parse(token, arg, schema)
         if (error) {
@@ -889,6 +931,19 @@ export function resolveArgs<A extends Args>(
 }
 
 function parse(token: ArgToken, option: string, schema: ArgSchema): [any, Error | undefined] {
+  // When schema.parse is defined, use it directly (all types including boolean).
+  if (typeof schema.parse === 'function') {
+    try {
+      if (schema.type === 'boolean') {
+        // boolean is existence-based: pass negation result as string to parse
+        const boolValue = !(schema.negatable && token.name!.startsWith('no-'))
+        return [schema.parse(String(boolValue)), undefined]
+      }
+      return [schema.parse(token.value ?? String(schema.default ?? '')), undefined]
+    } catch (error) {
+      return [undefined, error as Error]
+    }
+  }
   switch (schema.type) {
     case 'string': {
       // prettier-ignore
@@ -897,10 +952,7 @@ function parse(token: ArgToken, option: string, schema: ArgSchema): [any, Error 
         : [undefined, createTypeError(option, schema)];
     }
     case 'boolean': {
-      // prettier-ignore
-      return token.value
-        ? [token.value || schema.default, undefined]
-        : [!(schema.negatable && token.name!.startsWith('no-')), undefined]
+      return [!(schema.negatable && token.name!.startsWith('no-')), undefined]
     }
     case 'number': {
       if (!isNumeric(token.value!)) {
@@ -926,14 +978,9 @@ function parse(token: ArgToken, option: string, schema: ArgSchema): [any, Error 
       return [token.value || schema.default, undefined]
     }
     case 'custom': {
-      if (typeof schema.parse !== 'function') {
-        throw new TypeError(`argument '${option}' should have a 'parse' function`)
-      }
-      try {
-        return [schema.parse(token.value || String(schema.default || '')), undefined]
-      } catch (error) {
-        return [undefined, error as Error]
-      }
+      // When schema.parse is defined, it's handled by the priority check above.
+      // This branch is only reached if schema.parse is missing.
+      throw new TypeError(`argument '${option}' should have a 'parse' function`)
     }
     default: {
       throw new Error(`Unsupported argument type '${schema.type}' for option '${option}'`)

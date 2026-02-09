@@ -59,6 +59,12 @@
       "require": "./lib/utils.js",
       "default": "./lib/utils.js"
     },
+    "./combinators": {
+      "types": "./lib/combinators.d.ts",
+      "import": "./lib/combinators.js",
+      "require": "./lib/combinators.js",
+      "default": "./lib/combinators.js"
+    },
     "./package.json": "./package.json",
     "./*": "./*"
   },
@@ -97,11 +103,11 @@
   },
   "devDependencies": {
     "@eslint/markdown": "^7.5.1",
-    "@kazupon/eslint-config": "^0.44.0",
+    "@kazupon/eslint-config": "^0.45.0",
     "@kazupon/eslint-plugin": "^0.7.1",
     "@kazupon/prettier-config": "^0.2.0",
     "@types/node": "^25.1.0",
-    "@typescript/native-preview": "7.0.0-dev.20260208.1",
+    "@typescript/native-preview": "7.0.0-dev.20260207.1",
     "bumpp": "^10.4.0",
     "deno": "^2.6.7",
     "eslint": "^9.39.2",

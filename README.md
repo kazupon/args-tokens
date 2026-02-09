@@ -571,6 +571,140 @@ Conflicts only need to be defined on one side - if option A defines a conflict w
 }
 ```
 
+## 🧪 Parser Combinators (Experimental)
+
+<!-- eslint-disable markdown/no-missing-label-refs -->
+
+> [!NOTE]
+> Parser combinators are experimental and may change in future versions.
+
+<!-- eslint-enable markdown/no-missing-label-refs -->
+
+Parser combinators provide composable factory functions that generate `ArgSchema` objects. Instead of writing schema objects manually, you can use combinators for type-safe, composable argument definitions.
+
+### Basic Usage
+
+<!-- eslint-skip -->
+
+```js
+import { parseArgs, resolveArgs } from 'args-tokens'
+import {
+  args,
+  string,
+  integer,
+  boolean,
+  positional,
+  choice,
+  withDefault,
+  multiple,
+  required,
+  short,
+  map,
+  merge,
+  extend
+} from 'args-tokens/combinators'
+
+// Define reusable schema groups with args()
+const common = args({
+  help: short(boolean(), 'h'),
+  verbose: boolean()
+})
+
+const network = args({
+  port: short(withDefault(integer({ min: 1, max: 65535 }), 8080), 'p'),
+  host: required(short(string({ minLength: 1 }), 'o'))
+})
+
+// Compose schemas with merge()
+const schema = merge(
+  common,
+  network,
+  args({
+    command: positional()
+  })
+)
+
+const argv = ['dev', '--port', '9131', '--host', 'example.com', '--verbose']
+const tokens = parseArgs(argv)
+const { values } = resolveArgs(schema, tokens)
+```
+
+### Available Combinators
+
+#### Base Combinators
+
+- `string(opts?)` — String with optional validation (`minLength`, `maxLength`, `pattern`)
+- `number(opts?)` — Number with optional range (`min`, `max`)
+- `integer(opts?)` — Integer only, with optional range
+- `float(opts?)` — Float with optional range, rejects `NaN`/`Infinity`
+- `boolean(opts?)` — Boolean flag, supports `negatable`
+- `positional()` — Positional argument (resolves to string)
+- `positional(parser)` — Typed positional (e.g., `positional(integer())`)
+- `choice(values)` — Enum-like with literal type inference
+
+#### Modifier Combinators
+
+- `map(schema, transform)` — Transform the parsed value
+- `withDefault(schema, defaultValue)` — Set a default value
+- `multiple(schema)` — Accept multiple values (resolves to array)
+- `required(schema)` — Mark as required (error if not provided)
+- `short(schema, alias)` — Set a single-character short alias (e.g., `-v` for `--verbose`)
+
+#### Schema Combinators
+
+- `args(fields)` — Type-safe schema factory (no `satisfies Args` needed)
+- `merge(...schemas)` — Compose multiple schemas into one
+- `extend(base, overrides)` — Override or add fields to a schema
+
+#### Custom Combinators
+
+- `combinator(config)` — Custom argument with user-defined `parse` function (uses `type: 'custom'`)
+
+<!-- eslint-skip -->
+
+```js
+import { parseArgs, resolveArgs } from 'args-tokens'
+import { combinator, required, withDefault, multiple, short, map } from 'args-tokens/combinators'
+
+// Date parser
+const date = combinator({
+  parse: value => {
+    const d = new Date(value)
+    if (isNaN(d.getTime())) {
+      throw new Error('Invalid date format')
+    }
+    return d
+  },
+  metavar: 'date'
+})
+
+// JSON parser
+const json = combinator({
+  parse: value => {
+    try {
+      return JSON.parse(value)
+    } catch {
+      throw new Error('Invalid JSON')
+    }
+  },
+  metavar: 'json'
+})
+
+// Compose with modifier combinators
+const schema = {
+  since: required(date), // --since 2024-01-15 (required)
+  until: withDefault(date, new Date()), // --until 2024-12-31 (optional with default)
+  config: short(json, 'c'), // -c '{"key":"value"}' or --config '...'
+  timestamps: multiple(date), // --timestamps 2024-01-01 --timestamps 2024-06-01
+  days: map(date, d => d.getDay()) // --days 2024-01-15 → 1 (Monday)
+}
+
+const tokens = parseArgs(['--since', '2024-01-15', '--days', '2024-01-15'])
+const { values } = resolveArgs(schema, tokens)
+// values.since → Date object
+// values.days → 1
+```
+
 ## 🙌 Contributing guidelines
 
 If you are interested in contributing to `args-tokens`, I highly recommend checking out [the contributing guidelines](/CONTRIBUTING.md) here. You'll find all the relevant information such as [how to make a PR](/CONTRIBUTING.md#pull-request-guidelines), [how to setup development](/CONTRIBUTING.md#development-setup)) etc., there.
