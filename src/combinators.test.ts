@@ -4,6 +4,7 @@ import {
   boolean,
   choice,
   combinator,
+  describe as describeCombinator,
   extend,
   float,
   integer,
@@ -15,6 +16,7 @@ import {
   required,
   short,
   string,
+  unrequired,
   withDefault
 } from './combinators.ts'
 import { parseArgs } from './parser.ts'
@@ -55,6 +57,25 @@ describe('string combinator', () => {
     )
     expect(error).toBeDefined()
     expect((error?.errors[0] as Error).message).toContain('pattern')
+  })
+
+  test('description option', () => {
+    const schema = string({ description: 'Your name' })
+    expect(schema.description).toBe('Your name')
+  })
+
+  test('short option', () => {
+    const argv = ['-n', 'hello']
+    const tokens = parseArgs(argv)
+    const { values } = resolveArgs({ name: string({ short: 'n' }) }, tokens)
+    expect(values.name).toBe('hello')
+  })
+
+  test('required option', () => {
+    const argv: string[] = []
+    const tokens = parseArgs(argv)
+    const { error } = resolveArgs({ name: string({ required: true }) }, tokens)
+    expect(error).toBeDefined()
   })
 
   test('pattern validation with email', () => {
@@ -113,6 +134,25 @@ describe('number combinator', () => {
     expect(error).toBeDefined()
     expect((error?.errors[0] as Error).message).toContain('<= 65535')
   })
+
+  test('description option', () => {
+    const schema = number({ description: 'Port number' })
+    expect(schema.description).toBe('Port number')
+  })
+
+  test('short option', () => {
+    const argv = ['-p', '8080']
+    const tokens = parseArgs(argv)
+    const { values } = resolveArgs({ port: number({ short: 'p' }) }, tokens)
+    expect(values.port).toBe(8080)
+  })
+
+  test('required option', () => {
+    const argv: string[] = []
+    const tokens = parseArgs(argv)
+    const { error } = resolveArgs({ port: number({ required: true }) }, tokens)
+    expect(error).toBeDefined()
+  })
 })
 
 describe('integer combinator', () => {
@@ -147,6 +187,25 @@ describe('integer combinator', () => {
     )
     expect(error).toBeDefined()
     expect((error?.errors[0] as Error).message).toContain('<= 10')
+  })
+
+  test('description option', () => {
+    const schema = integer({ description: 'Retry count' })
+    expect(schema.description).toBe('Retry count')
+  })
+
+  test('short option', () => {
+    const argv = ['-c', '3']
+    const tokens = parseArgs(argv)
+    const { values } = resolveArgs({ count: integer({ short: 'c' }) }, tokens)
+    expect(values.count).toBe(3)
+  })
+
+  test('required option', () => {
+    const argv: string[] = []
+    const tokens = parseArgs(argv)
+    const { error } = resolveArgs({ count: integer({ required: true }) }, tokens)
+    expect(error).toBeDefined()
   })
 })
 
@@ -184,6 +243,25 @@ describe('float combinator', () => {
     expect(error).toBeDefined()
     expect((error?.errors[0] as Error).message).toContain('<= 1')
   })
+
+  test('description option', () => {
+    const schema = float({ description: 'Ratio value' })
+    expect(schema.description).toBe('Ratio value')
+  })
+
+  test('short option', () => {
+    const argv = ['-r', '0.5']
+    const tokens = parseArgs(argv)
+    const { values } = resolveArgs({ ratio: float({ short: 'r' }) }, tokens)
+    expect(values.ratio).toBe(0.5)
+  })
+
+  test('required option', () => {
+    const argv: string[] = []
+    const tokens = parseArgs(argv)
+    const { error } = resolveArgs({ ratio: float({ required: true }) }, tokens)
+    expect(error).toBeDefined()
+  })
 })
 
 describe('boolean combinator', () => {
@@ -199,6 +277,25 @@ describe('boolean combinator', () => {
     const tokens = parseArgs(argv)
     const { values } = resolveArgs({ color: boolean({ negatable: true }) }, tokens)
     expect(values.color).toBe(false)
+  })
+
+  test('description option', () => {
+    const schema = boolean({ description: 'Enable verbose output' })
+    expect(schema.description).toBe('Enable verbose output')
+  })
+
+  test('short option', () => {
+    const argv = ['-v']
+    const tokens = parseArgs(argv)
+    const { values } = resolveArgs({ verbose: boolean({ short: 'v' }) }, tokens)
+    expect(values.verbose).toBe(true)
+  })
+
+  test('required option', () => {
+    const argv: string[] = []
+    const tokens = parseArgs(argv)
+    const { error } = resolveArgs({ verbose: boolean({ required: true }) }, tokens)
+    expect(error).toBeDefined()
   })
 
   test('with modifiers: map', () => {
@@ -511,6 +608,68 @@ describe('short combinator', () => {
     const withShort = short(base, 'v')
     expect((base as ArgSchema).short).toBeUndefined()
     expect(withShort.short).toBe('v')
+  })
+})
+
+describe('describe combinator', () => {
+  test('sets description', () => {
+    const schema = describeCombinator(string(), 'Your name')
+    expect(schema.description).toBe('Your name')
+  })
+
+  test('immutability', () => {
+    const base = string()
+    const described = describeCombinator(base, 'Your name')
+    expect((base as ArgSchema).description).toBeUndefined()
+    expect(described.description).toBe('Your name')
+  })
+
+  test('overrides base combinator description', () => {
+    const base = string({ description: 'Original' })
+    const overridden = describeCombinator(base, 'Overridden')
+    expect(overridden.description).toBe('Overridden')
+    expect(base.description).toBe('Original')
+  })
+
+  test('works with resolveArgs', () => {
+    const argv = ['--name', 'hello']
+    const tokens = parseArgs(argv)
+    const { values } = resolveArgs({ name: describeCombinator(string(), 'Your name') }, tokens)
+    expect(values.name).toBe('hello')
+  })
+})
+
+describe('unrequired combinator', () => {
+  test('sets required to false', () => {
+    const schema = unrequired(string())
+    expect(schema.required).toBe(false)
+  })
+
+  test('overrides base combinator required', () => {
+    const base = string({ required: true })
+    const overridden = unrequired(base)
+    expect(overridden.required).toBe(false)
+    expect(base.required).toBe(true)
+  })
+
+  test('overrides required modifier', () => {
+    const base = required(string())
+    const overridden = unrequired(base)
+    expect(overridden.required).toBe(false)
+  })
+
+  test('immutability', () => {
+    const base = required(string())
+    const notReq = unrequired(base)
+    expect(base.required).toBe(true)
+    expect(notReq.required).toBe(false)
+  })
+
+  test('works with resolveArgs', () => {
+    const argv: string[] = []
+    const tokens = parseArgs(argv)
+    const { error } = resolveArgs({ name: unrequired(string({ required: true })) }, tokens)
+    expect(error).toBeUndefined()
   })
 })
 

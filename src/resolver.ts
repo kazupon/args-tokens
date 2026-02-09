@@ -147,7 +147,7 @@ export interface ArgSchema {
    * }
    * ```
    */
-  required?: true
+  required?: boolean
   /**
    * Allows the argument to accept multiple values.
    *
@@ -523,7 +523,13 @@ export type FilterArgs<
   V extends Record<keyof A, unknown>,
   K extends keyof ArgSchema
 > = {
-  [Arg in keyof A as A[Arg][K] extends {} ? Arg : never]: V[Arg]
+  [Arg in keyof A as K extends 'required'
+    ? A[Arg][K] extends true
+      ? Arg
+      : never
+    : A[Arg][K] extends {}
+      ? Arg
+      : never]: V[Arg]
 }
 
 /**
