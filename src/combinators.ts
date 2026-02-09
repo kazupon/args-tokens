@@ -1,6 +1,50 @@
 /**
  * Parser combinator factory functions for composable argument schema construction.
  *
+ * @example
+ * ```ts
+ * import { parseArgs, resolveArgs } from 'args-tokens'
+ * import {
+ *   args,
+ *   string,
+ *   integer,
+ *   boolean,
+ *   positional,
+ *   choice,
+ *   withDefault,
+ *   multiple,
+ *   required,
+ *   short,
+ *   map,
+ *   merge,
+ *   extend
+ * } from 'args-tokens/combinators'
+ *
+ * // Define reusable schema groups with args()
+ * const common = args({
+ *   help: short(boolean(), 'h'),
+ *   verbose: boolean()
+ * })
+ *
+ * const network = args({
+ *   port: short(withDefault(integer({ min: 1, max: 65535 }), 8080), 'p'),
+ *   host: required(short(string({ minLength: 1 }), 'o'))
+ * })
+ *
+ * // Compose schemas with merge()
+ * const schema = merge(
+ *   common,
+ *   network,
+ *   args({
+ *     command: positional()
+ *   })
+ * )
+ *
+ * const argv = ['dev', '--port', '9131', '--host', 'example.com', '--verbose']
+ * const tokens = parseArgs(argv)
+ * const { values } = resolveArgs(schema, tokens)
+ * ```
+ *
  * @experimental This module is experimental and may change in future versions.
  *
  * @module
