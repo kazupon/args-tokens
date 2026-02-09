@@ -89,11 +89,31 @@ export type CombinatorSchema<T> = ArgSchema & Combinator<T>
 // ------------------------------------------------------------------------------------------------
 
 /**
+ * Common options shared by all base combinators.
+ *
+ * @experimental
+ */
+export interface BaseOptions {
+  /**
+   * Human-readable description for help text generation.
+   */
+  description?: string
+  /**
+   * Single character short alias.
+   */
+  short?: string
+  /**
+   * Mark as required.
+   */
+  required?: boolean
+}
+
+/**
  * Options for the {@link string} combinator.
  *
  * @experimental
  */
-export interface StringOptions {
+export interface StringOptions extends BaseOptions {
   /**
    * Minimum string length.
    */
@@ -127,6 +147,9 @@ export function string(opts?: StringOptions): CombinatorSchema<string> {
   return {
     type: 'string',
     metavar: 'string',
+    ...(opts?.description != null ? { description: opts.description } : {}),
+    ...(opts?.short != null ? { short: opts.short } : {}),
+    ...(opts?.required != null ? { required: opts.required } : {}),
     parse(value: string): string {
       if (opts?.minLength != null && value.length < opts.minLength) {
         throw new RangeError(`String must be at least ${opts.minLength} characters`)
@@ -147,7 +170,7 @@ export function string(opts?: StringOptions): CombinatorSchema<string> {
  *
  * @experimental
  */
-export interface NumberOptions {
+export interface NumberOptions extends BaseOptions {
   /**
    * Minimum value (inclusive).
    */
@@ -179,6 +202,9 @@ export function number(opts?: NumberOptions): CombinatorSchema<number> {
   return {
     type: 'number',
     metavar: 'number',
+    ...(opts?.description != null ? { description: opts.description } : {}),
+    ...(opts?.short != null ? { short: opts.short } : {}),
+    ...(opts?.required != null ? { required: opts.required } : {}),
     parse(value: string): number {
       const n = Number(value)
       if (value.trim() === '' || isNaN(n)) {
@@ -200,7 +226,7 @@ export function number(opts?: NumberOptions): CombinatorSchema<number> {
  *
  * @experimental
  */
-export interface IntegerOptions {
+export interface IntegerOptions extends BaseOptions {
   /**
    * Minimum value (inclusive).
    */
@@ -232,6 +258,9 @@ export function integer(opts?: IntegerOptions): CombinatorSchema<number> {
   return {
     type: 'custom',
     metavar: 'integer',
+    ...(opts?.description != null ? { description: opts.description } : {}),
+    ...(opts?.short != null ? { short: opts.short } : {}),
+    ...(opts?.required != null ? { required: opts.required } : {}),
     parse(value: string): number {
       if (!/^-?\d+$/.test(value)) {
         throw new TypeError(`Expected an integer, got '${value}'`)
@@ -256,7 +285,7 @@ export function integer(opts?: IntegerOptions): CombinatorSchema<number> {
  *
  * @experimental
  */
-export interface FloatOptions {
+export interface FloatOptions extends BaseOptions {
   /**
    * Minimum value (inclusive).
    */
@@ -288,6 +317,9 @@ export function float(opts?: FloatOptions): CombinatorSchema<number> {
   return {
     type: 'custom',
     metavar: 'float',
+    ...(opts?.description != null ? { description: opts.description } : {}),
+    ...(opts?.short != null ? { short: opts.short } : {}),
+    ...(opts?.required != null ? { required: opts.required } : {}),
     parse(value: string): number {
       const trimmed = value.trim()
       if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i.test(trimmed)) {
@@ -313,7 +345,7 @@ export function float(opts?: FloatOptions): CombinatorSchema<number> {
  *
  * @experimental
  */
-export interface BooleanOptions {
+export interface BooleanOptions extends BaseOptions {
   /**
    * Enable negation with `--no-` prefix.
    */
@@ -344,6 +376,9 @@ export function boolean(opts?: BooleanOptions): CombinatorSchema<boolean> {
     type: 'boolean',
     ...(opts?.negatable != null ? { negatable: opts.negatable } : {}),
     metavar: 'boolean',
+    ...(opts?.description != null ? { description: opts.description } : {}),
+    ...(opts?.short != null ? { short: opts.short } : {}),
+    ...(opts?.required != null ? { required: opts.required } : {}),
     parse(value: string): boolean {
       return value === 'true'
     }
@@ -361,30 +396,10 @@ type ArgSchemaPositionalType = { type: 'positional' }
  * Without a parser, resolves to string.
  * With a parser (e.g., `positional(integer())`), resolves to the parser's return type.
  *
- * @returns A positional argument schema resolving to string.
- *
- * @example
- * ```ts
- * const args = {
- *   command: positional(),           // resolves to string
- *   port: positional(integer()),     // resolves to number
- * }
- * ```
- *
- * @experimental
- */
-export function positional(): ArgSchema & ArgSchemaPositionalType
-
-/**
- * Create a positional argument schema.
- *
- * Without a parser, resolves to string.
- * With a parser (e.g., `positional(integer())`), resolves to the parser's return type.
- *
  * @typeParam T - The parser's resolved type.
  *
  * @param parser - The parser combinator schema.
- * @returns A positional argument schema resolving to string.
+ * @returns A positional argument schema resolving to the parser's type.
  *
  * @example
  * ```ts
@@ -399,15 +414,44 @@ export function positional(): ArgSchema & ArgSchemaPositionalType
 export function positional<T>(
   parser: CombinatorSchema<T>
 ): CombinatorSchema<T> & ArgSchemaPositionalType
-export function positional<T>(parser?: CombinatorSchema<T>): ArgSchema & ArgSchemaPositionalType {
-  if (parser) {
+
+/**
+ * Create a positional argument schema.
+ *
+ * Without a parser, resolves to string.
+ * With a parser (e.g., `positional(integer())`), resolves to the parser's return type.
+ *
+ * @param parser - Optional base options (description, short, required).
+ * @returns A positional argument schema resolving to string.
+ *
+ * @example
+ * ```ts
+ * const args = {
+ *   command: positional(),           // resolves to string
+ *   port: positional(integer()),     // resolves to number
+ * }
+ * ```
+ *
+ * @experimental
+ */
+export function positional(parser?: BaseOptions): ArgSchema & ArgSchemaPositionalType
+export function positional<T>(
+  parser?: CombinatorSchema<T> | BaseOptions
+): ArgSchema & ArgSchemaPositionalType {
+  if (parser && 'parse' in parser) {
     return {
       type: 'positional',
       parse: parser.parse,
       metavar: parser.metavar
     }
   }
-  return { type: 'positional' }
+  const opts = parser
+  return {
+    type: 'positional',
+    ...(opts?.description != null ? { description: opts.description } : {}),
+    ...(opts?.short != null ? { short: opts.short } : {}),
+    ...(opts?.required != null ? { required: opts.required } : {})
+  }
 }
 
 /**
@@ -418,6 +462,7 @@ export function positional<T>(parser?: CombinatorSchema<T>): ArgSchema & ArgSche
  * @typeParam T - The readonly array of allowed string values.
  *
  * @param values - Allowed values.
+ * @param opts - Common options (description, short, required).
  * @returns A combinator schema that resolves to a union of the allowed values.
  *
  * @example
@@ -430,10 +475,16 @@ export function positional<T>(parser?: CombinatorSchema<T>): ArgSchema & ArgSche
  *
  * @experimental
  */
-export function choice<const T extends readonly string[]>(values: T): CombinatorSchema<T[number]> {
+export function choice<const T extends readonly string[]>(
+  values: T,
+  opts?: BaseOptions
+): CombinatorSchema<T[number]> {
   return {
     type: 'custom',
     metavar: values.join('|'),
+    ...(opts?.description != null ? { description: opts.description } : {}),
+    ...(opts?.short != null ? { short: opts.short } : {}),
+    ...(opts?.required != null ? { required: opts.required } : {}),
     parse(value: string): T[number] {
       if (!(values as readonly string[]).includes(value)) {
         throw new Error(`Value must be one of: ${values.join(', ')}`)
@@ -454,7 +505,7 @@ export function choice<const T extends readonly string[]>(values: T): Combinator
  *
  * @experimental
  */
-export interface CombinatorOptions<T> {
+export interface CombinatorOptions<T> extends BaseOptions {
   /**
    * The parse function that converts a string to the desired type.
    *
@@ -504,6 +555,9 @@ export function combinator<T>(config: CombinatorOptions<T>): CombinatorSchema<T>
   return {
     type: 'custom',
     metavar: config.metavar ?? 'custom',
+    ...(config.description != null ? { description: config.description } : {}),
+    ...(config.short != null ? { short: config.short } : {}),
+    ...(config.required != null ? { required: config.required } : {}),
     parse: config.parse
   }
 }
@@ -678,6 +732,76 @@ export function short<T, S extends string>(
   return {
     ...schema,
     short: alias
+  }
+}
+
+/**
+ * Options for the {@link describe} combinator.
+ */
+type CombinatorDescribe<D extends string> = { description: D }
+
+/**
+ * Set a description on a combinator schema for help text generation.
+ *
+ * The original schema is not modified.
+ *
+ * @typeParam T - The schema's parsed type.
+ * @typeParam D - The description string literal type.
+ *
+ * @param schema - The base combinator schema.
+ * @param text - Human-readable description.
+ * @returns A new schema with the description set.
+ *
+ * @example
+ * ```ts
+ * const args = {
+ *   port: describe(integer(), 'Port number to listen on')
+ * }
+ * ```
+ *
+ * @experimental
+ */
+export function describe<T, D extends string>(
+  schema: CombinatorSchema<T>,
+  text: D
+): CombinatorSchema<T> & CombinatorDescribe<D> {
+  return {
+    ...schema,
+    description: text
+  }
+}
+
+/**
+ * Options for the {@link unrequired} combinator.
+ */
+type CombinatorUnrequired = { required: false }
+
+/**
+ * Mark a combinator schema as not required.
+ *
+ * Useful for overriding a base combinator that was created with `required: true`.
+ * The original schema is not modified.
+ *
+ * @typeParam T - The schema's parsed type.
+ *
+ * @param schema - The base combinator schema.
+ * @returns A new schema with `required: false`.
+ *
+ * @example
+ * ```ts
+ * const args = {
+ *   name: unrequired(string({ required: true }))
+ * }
+ * ```
+ *
+ * @experimental
+ */
+export function unrequired<T>(
+  schema: CombinatorSchema<T>
+): CombinatorSchema<T> & CombinatorUnrequired {
+  return {
+    ...schema,
+    required: false
   }
 }
 

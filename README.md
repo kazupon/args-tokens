@@ -599,6 +599,8 @@ import {
   multiple,
   required,
   short,
+  describe,
+  unrequired,
   map,
   merge,
   extend
@@ -644,11 +646,13 @@ const { values } = resolveArgs(schema, tokens)
 
 #### Modifier Combinators
 
-- `map(schema, transform)` — Transform the parsed value
+- `describe(schema, text)` — Set a human-readable description for help text generation
+- `short(schema, alias)` — Set a single-character short alias (e.g., `-v` for `--verbose`)
+- `required(schema)` — Mark as required (error if not provided)
+- `unrequired(schema)` — Mark as not required (override `required: true`)
 - `withDefault(schema, defaultValue)` — Set a default value
 - `multiple(schema)` — Accept multiple values (resolves to array)
-- `required(schema)` — Mark as required (error if not provided)
-- `short(schema, alias)` — Set a single-character short alias (e.g., `-v` for `--verbose`)
+- `map(schema, transform)` — Transform the parsed value
 
 #### Schema Combinators
 

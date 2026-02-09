@@ -4,6 +4,7 @@ import {
   boolean,
   choice,
   combinator,
+  describe,
   extend,
   float,
   integer,
@@ -15,6 +16,7 @@ import {
   required,
   short,
   string,
+  unrequired,
   withDefault
 } from './combinators.ts'
 
@@ -195,4 +197,27 @@ test('ArgValues with merge() infers required / default / optional correctly', ()
   type Values = ArgValues<typeof schema>
   expectTypeOf<Values['name']>().toEqualTypeOf<string>() // required
   expectTypeOf<Values['port']>().toEqualTypeOf<number>() // non-optional (has default)
+})
+
+test('describe type inference', () => {
+  const described = describe(string(), 'Your name')
+  expectTypeOf<ExtractOptionValue<typeof described>>().toEqualTypeOf<string>()
+  expectTypeOf(described.description).toEqualTypeOf<'Your name'>()
+})
+
+test('unrequired type inference', () => {
+  const unreq = unrequired(string())
+  expectTypeOf<ExtractOptionValue<typeof unreq>>().toEqualTypeOf<string>()
+  expectTypeOf(unreq.required).toEqualTypeOf<false>()
+})
+
+test('describe + modifier composition type inference', () => {
+  const composed = required(describe(short(integer(), 'p'), 'Port number'))
+  expectTypeOf<ExtractOptionValue<typeof composed>>().toEqualTypeOf<number>()
+})
+
+test('unrequired overrides required type', () => {
+  const composed = unrequired(required(string()))
+  expectTypeOf(composed.required).toEqualTypeOf<false>()
+  expectTypeOf<ExtractOptionValue<typeof composed>>().toEqualTypeOf<string>()
 })
