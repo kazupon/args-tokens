@@ -98,6 +98,7 @@
   "ignorePatterns": [
     ".vscode",
     "lib",
+    "docs",
     "tsconfig.json",
     "CHANGELOG.md",
     "playground/deno/**",
