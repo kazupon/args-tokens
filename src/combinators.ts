@@ -442,7 +442,9 @@ export function positional<T>(
     return {
       type: 'positional',
       parse: parser.parse,
-      metavar: parser.metavar
+      metavar: parser.metavar,
+      ...(parser.description != null ? { description: parser.description } : {}),
+      ...(parser.required != null ? { required: parser.required } : {})
     }
   }
   const opts = parser
@@ -480,8 +482,9 @@ export function choice<const T extends readonly string[]>(
   opts?: BaseOptions
 ): CombinatorSchema<T[number]> {
   return {
-    type: 'custom',
+    type: 'enum',
     metavar: values.join('|'),
+    choices: values as unknown as string[],
     ...(opts?.description != null ? { description: opts.description } : {}),
     ...(opts?.short != null ? { short: opts.short } : {}),
     ...(opts?.required != null ? { required: opts.required } : {}),
