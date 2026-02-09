@@ -7,7 +7,7 @@
 # Function: choice()
 
 ```ts
-function choice<T>(values): CombinatorSchema<T[number]>
+function choice<T>(values, opts?): CombinatorSchema<T[number]>
 ```
 
 **`Experimental`**
@@ -24,9 +24,10 @@ Uses `const T` generic to infer literal union types from the values array.
 
 ## Parameters
 
-| Parameter | Type | Description     |
-| --------- | ---- | --------------- |
-| `values`  | `T`  | Allowed values. |
+| Parameter | Type                                          | Description                                    |
+| --------- | --------------------------------------------- | ---------------------------------------------- |
+| `values`  | `T`                                           | Allowed values.                                |
+| `opts?`   | [`BaseOptions`](../interfaces/BaseOptions.md) | Common options (description, short, required). |
 
 ## Returns
 

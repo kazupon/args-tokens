@@ -65,6 +65,7 @@ This module is experimental and may change in future versions.
 | [boolean](functions/boolean.md)         | -           |
 | [choice](functions/choice.md)           | -           |
 | [combinator](functions/combinator.md)   | -           |
+| [describe](functions/describe.md)       | -           |
 | [extend](functions/extend.md)           | -           |
 | [float](functions/float.md)             | -           |
 | [integer](functions/integer.md)         | -           |
@@ -76,12 +77,14 @@ This module is experimental and may change in future versions.
 | [required](functions/required.md)       | -           |
 | [short](functions/short.md)             | -           |
 | [string](functions/string.md)           | -           |
+| [unrequired](functions/unrequired.md)   | -           |
 | [withDefault](functions/withDefault.md) | -           |
 
 ## Interfaces
 
 | Interface                                            | Description                                                             |
 | ---------------------------------------------------- | ----------------------------------------------------------------------- |
+| [BaseOptions](interfaces/BaseOptions.md)             | Common options shared by all base combinators.                          |
 | [BooleanOptions](interfaces/BooleanOptions.md)       | Options for the [boolean](functions/boolean.md) combinator.             |
 | [CombinatorOptions](interfaces/CombinatorOptions.md) | Options for the [combinator](functions/combinator.md) factory function. |
 | [FloatOptions](interfaces/FloatOptions.md)           | Options for the [float](functions/float.md) combinator.                 |
