@@ -11,6 +11,7 @@
     ".": "./src/index.ts",
     "./parser": "./src/parser.ts",
     "./resolver": "./src/resolver.ts",
-    "./utils": "./src/utils.ts"
+    "./utils": "./src/utils.ts",
+    "./combinators": "./src/combinators.ts"
   }
 }

@@ -4,7 +4,7 @@ import { defineConfig } from 'tsdown'
 import type { UserConfig } from 'tsdown'
 
 const config: UserConfig = defineConfig({
-  entry: ['src/index.ts', 'src/parser.ts', 'src/resolver.ts', 'src/utils.ts'],
+  entry: ['src/index.ts', 'src/parser.ts', 'src/resolver.ts', 'src/utils.ts', 'src/combinators.ts'],
   outDir: 'lib',
   clean: true,
   dts: true,

@@ -1581,4 +1581,123 @@ describe('conflicts', () => {
   })
 })
 
+describe('schema.parse priority', () => {
+  test('string type with parse function', () => {
+    const argv = ['--port', '8080']
+    const tokens = parseArgs(argv)
+    const { values } = resolveArgs(
+      {
+        port: {
+          type: 'string',
+          parse: (v: string) => parseInt(v, 10)
+        }
+      },
+      tokens
+    )
+    expect(values.port).toBe(8080)
+  })
+
+  test('boolean type with parse function', () => {
+    const argv = ['--verbose']
+    const tokens = parseArgs(argv)
+    const { values } = resolveArgs(
+      {
+        verbose: {
+          type: 'boolean',
+          parse: (v: string) => v === 'true'
+        }
+      },
+      tokens
+    )
+    expect(values.verbose).toBe(true)
+  })
+
+  test('boolean type with parse function and negation', () => {
+    const argv = ['--no-verbose']
+    const tokens = parseArgs(argv)
+    const { values } = resolveArgs(
+      {
+        verbose: {
+          type: 'boolean',
+          negatable: true,
+          parse: (v: string) => v === 'true'
+        }
+      },
+      tokens
+    )
+    expect(values.verbose).toBe(false)
+  })
+
+  test('positional with parse function', () => {
+    const argv = ['42']
+    const tokens = parseArgs(argv)
+    const { values } = resolveArgs(
+      {
+        count: {
+          type: 'positional',
+          parse: (v: string) => parseInt(v, 10)
+        }
+      },
+      tokens
+    )
+    expect(values.count).toBe(42)
+  })
+
+  test('multiple positional with parse function', () => {
+    const argv = ['1', '2', '3']
+    const tokens = parseArgs(argv)
+    const { values } = resolveArgs(
+      {
+        numbers: {
+          type: 'positional',
+          multiple: true,
+          parse: (v: string) => parseInt(v, 10)
+        }
+      },
+      tokens
+    )
+    expect(values.numbers).toEqual([1, 2, 3])
+  })
+
+  test('positional parse error handling', () => {
+    const argv = ['not-a-number']
+    const tokens = parseArgs(argv)
+    const { error } = resolveArgs(
+      {
+        count: {
+          type: 'positional',
+          parse: (v: string) => {
+            const n = parseInt(v, 10)
+            if (isNaN(n)) throw new Error('Expected integer')
+            return n
+          }
+        }
+      },
+      tokens
+    )
+    expect(error?.errors.length).toBe(1)
+    expect((error?.errors[0] as Error).message).toBe('Expected integer')
+  })
+
+  test('analyze phase: boolean followed by positional', () => {
+    const argv = ['--verbose', 'foo', '--port', '8080']
+    const tokens = parseArgs(argv)
+    const { values, positionals } = resolveArgs(
+      {
+        verbose: {
+          type: 'boolean'
+        },
+        port: {
+          type: 'number',
+          short: 'p'
+        }
+      },
+      tokens
+    )
+    expect(values.verbose).toBe(true)
+    expect(values.port).toBe(8080)
+    expect(positionals).toEqual(['foo'])
+  })
+})
+
 /* oxlint-enable no-unsafe-optional-chaining */

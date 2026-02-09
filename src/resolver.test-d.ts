@@ -122,6 +122,54 @@ test('ExtractOptionValue', () => {
   >()
 })
 
+test('ExtractOptionValue with parse priority', () => {
+  // string with parse → infer from parse return type
+  expectTypeOf<
+    ExtractOptionValue<{
+      type: 'string'
+      parse: (value: string) => number
+    }>
+  >().toEqualTypeOf<number>()
+
+  // number with parse → infer from parse return type
+  expectTypeOf<
+    ExtractOptionValue<{
+      type: 'number'
+      parse: (value: string) => string
+    }>
+  >().toEqualTypeOf<string>()
+
+  // boolean with parse → infer from parse return type
+  expectTypeOf<
+    ExtractOptionValue<{
+      type: 'boolean'
+      parse: (value: string) => boolean
+    }>
+  >().toEqualTypeOf<boolean>()
+
+  // boolean without parse → boolean (unchanged)
+  expectTypeOf<
+    ExtractOptionValue<{
+      type: 'boolean'
+    }>
+  >().toEqualTypeOf<boolean>()
+
+  // positional with parse → infer from parse return type
+  expectTypeOf<
+    ExtractOptionValue<{
+      type: 'positional'
+      parse: (value: string) => number
+    }>
+  >().toEqualTypeOf<number>()
+
+  // positional without parse → string (unchanged)
+  expectTypeOf<
+    ExtractOptionValue<{
+      type: 'positional'
+    }>
+  >().toEqualTypeOf<string>()
+})
+
 test('FilterArgs', () => {
   expectTypeOf<
     FilterArgs<
