@@ -575,7 +575,7 @@ Conflicts only need to be defined on one side - if option A defines a conflict w
 
 <!-- eslint-disable markdown/no-missing-label-refs -->
 
-> [!NOTICE]
+> [!NOTE]
 > Parser combinators are experimental and may change in future versions.
 
 <!-- eslint-enable markdown/no-missing-label-refs -->

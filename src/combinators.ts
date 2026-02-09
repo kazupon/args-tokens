@@ -245,7 +245,11 @@ export function float(opts?: FloatOptions): CombinatorSchema<number> {
     type: 'custom',
     metavar: 'float',
     parse(value: string): number {
-      const n = Number.parseFloat(value)
+      const trimmed = value.trim()
+      if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i.test(trimmed)) {
+        throw new TypeError(`Expected a finite float, got '${value}'`)
+      }
+      const n = Number.parseFloat(trimmed)
       if (isNaN(n) || !isFinite(n)) {
         throw new TypeError(`Expected a finite float, got '${value}'`)
       }

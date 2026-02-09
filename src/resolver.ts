@@ -939,7 +939,7 @@ function parse(token: ArgToken, option: string, schema: ArgSchema): [any, Error 
         const boolValue = !(schema.negatable && token.name!.startsWith('no-'))
         return [schema.parse(String(boolValue)), undefined]
       }
-      return [schema.parse(token.value || String(schema.default || '')), undefined]
+      return [schema.parse(token.value ?? String(schema.default ?? '')), undefined]
     } catch (error) {
       return [undefined, error as Error]
     }
