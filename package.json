@@ -112,7 +112,7 @@
     "bumpp": "^10.4.0",
     "deno": "^2.6.7",
     "eslint": "^9.39.2",
-    "eslint-plugin-jsdoc": "^52.0.4",
+    "eslint-plugin-jsdoc": "^62.0.0",
     "eslint-plugin-jsonc": "^2.21.0",
     "eslint-plugin-markdown-preferences": "^0.40.2",
     "eslint-plugin-oxlint": "^1.42.0",
