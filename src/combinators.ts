@@ -143,6 +143,7 @@ export interface StringOptions extends BaseOptions {
  *
  * @experimental
  */
+// @__NO_SIDE_EFFECTS__
 export function string(opts?: StringOptions): CombinatorSchema<string> {
   return {
     type: 'string',
@@ -198,6 +199,7 @@ export interface NumberOptions extends BaseOptions {
  *
  * @experimental
  */
+// @__NO_SIDE_EFFECTS__
 export function number(opts?: NumberOptions): CombinatorSchema<number> {
   return {
     type: 'number',
@@ -254,6 +256,7 @@ export interface IntegerOptions extends BaseOptions {
  *
  * @experimental
  */
+// @__NO_SIDE_EFFECTS__
 export function integer(opts?: IntegerOptions): CombinatorSchema<number> {
   return {
     type: 'custom',
@@ -313,6 +316,7 @@ export interface FloatOptions extends BaseOptions {
  *
  * @experimental
  */
+// @__NO_SIDE_EFFECTS__
 export function float(opts?: FloatOptions): CombinatorSchema<number> {
   return {
     type: 'custom',
@@ -371,6 +375,7 @@ export interface BooleanOptions extends BaseOptions {
  *
  * @experimental
  */
+// @__NO_SIDE_EFFECTS__
 export function boolean(opts?: BooleanOptions): CombinatorSchema<boolean> {
   return {
     type: 'boolean',
@@ -435,6 +440,7 @@ export function positional<T>(
  * @experimental
  */
 export function positional(parser?: BaseOptions): ArgSchema & ArgSchemaPositionalType
+// @__NO_SIDE_EFFECTS__
 export function positional<T>(
   parser?: CombinatorSchema<T> | BaseOptions
 ): ArgSchema & ArgSchemaPositionalType {
@@ -477,6 +483,7 @@ export function positional<T>(
  *
  * @experimental
  */
+// @__NO_SIDE_EFFECTS__
 export function choice<const T extends readonly string[]>(
   values: T,
   opts?: BaseOptions
@@ -554,6 +561,7 @@ export interface CombinatorOptions<T> extends BaseOptions {
  *
  * @experimental
  */
+// @__NO_SIDE_EFFECTS__
 export function combinator<T>(config: CombinatorOptions<T>): CombinatorSchema<T> {
   return {
     type: 'custom',
@@ -591,6 +599,7 @@ export function combinator<T>(config: CombinatorOptions<T>): CombinatorSchema<T>
  *
  * @experimental
  */
+// @__NO_SIDE_EFFECTS__
 export function map<T, U>(
   schema: CombinatorSchema<T>,
   transform: (value: T) => U
@@ -629,6 +638,7 @@ type CombinatorWithDefault<T> = { default: T }
  *
  * @experimental
  */
+// @__NO_SIDE_EFFECTS__
 export function withDefault<T extends string | boolean | number>(
   schema: CombinatorSchema<T>,
   defaultValue: T
@@ -663,6 +673,7 @@ type CombinatorMultiple = { multiple: true }
  *
  * @experimental
  */
+// @__NO_SIDE_EFFECTS__
 export function multiple<T>(schema: CombinatorSchema<T>): CombinatorSchema<T> & CombinatorMultiple {
   return {
     ...schema,
@@ -694,6 +705,7 @@ type CombinatorRequired = { required: true }
  *
  * @experimental
  */
+// @__NO_SIDE_EFFECTS__
 export function required<T>(schema: CombinatorSchema<T>): CombinatorSchema<T> & CombinatorRequired {
   return {
     ...schema,
@@ -728,6 +740,7 @@ type CombinatorShort<S extends string> = { short: S }
  *
  * @experimental
  */
+// @__NO_SIDE_EFFECTS__
 export function short<T, S extends string>(
   schema: CombinatorSchema<T>,
   alias: S
@@ -764,6 +777,7 @@ type CombinatorDescribe<D extends string> = { description: D }
  *
  * @experimental
  */
+// @__NO_SIDE_EFFECTS__
 export function describe<T, D extends string>(
   schema: CombinatorSchema<T>,
   text: D
@@ -799,6 +813,7 @@ type CombinatorUnrequired = { required: false }
  *
  * @experimental
  */
+// @__NO_SIDE_EFFECTS__
 export function unrequired<T>(
   schema: CombinatorSchema<T>
 ): CombinatorSchema<T> & CombinatorUnrequired {
@@ -845,6 +860,7 @@ type MergeArgs<T extends Args[]> = T extends [infer Only extends Args]
  *
  * @experimental
  */
+// @__NO_SIDE_EFFECTS__
 export function args<T extends Args>(fields: T): T {
   return fields
 }
@@ -912,6 +928,7 @@ export function merge<A extends Args, B extends Args, C extends Args, D extends 
  * @experimental
  */
 export function merge<T extends Args[]>(...schemas: T): MergeArgs<T>
+// @__NO_SIDE_EFFECTS__
 export function merge(...schemas: Args[]): Args {
   const result = Object.create(null) as Record<string, ArgSchema>
   for (const schema of schemas) {
@@ -943,6 +960,7 @@ export function merge(...schemas: Args[]): Args {
  *
  * @experimental
  */
+// @__NO_SIDE_EFFECTS__
 export function extend<T extends Args, U extends Args>(
   base: T,
   overrides: U
