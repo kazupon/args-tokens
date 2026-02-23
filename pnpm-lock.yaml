@@ -108,8 +108,8 @@ importers:
   playground/bun:
     dependencies:
       args-tokens:
-        specifier: ^0.23.0
-        version: 0.23.1
+        specifier: ^0.24.0
+        version: 0.24.1
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
@@ -1408,8 +1408,8 @@ packages:
   args-tokenizer@0.3.0:
     resolution: {integrity: sha512-xXAd7G2Mll5W8uo37GETpQ2VrE84M181Z7ugHFGQnJZ50M2mbOv0osSZ9VsSgPfJQ+LVG0prSi0th+ELMsno7Q==}
 
-  args-tokens@0.23.1:
-    resolution: {integrity: sha512-EtzklOaBsCe+WB/AUC7cQte7ssSm3GFOJ8xxPHLeVidC4N8HCBRbKabs4yrzuMZyszQLZf+QWHKi8qnrHHo1Ag==}
+  args-tokens@0.24.1:
+    resolution: {integrity: sha512-kTjO9isrxFbX4wBFPvYyVktL4/cM43GTQoFQ7rMXTkTT9um2JTLAn4/4uEf5/RrXx20BsD2CXJfo8BmR7dBbyQ==}
     engines: {node: '>= 20'}
 
   assertion-error@2.0.1:
@@ -3763,7 +3763,7 @@ snapshots:
 
   args-tokenizer@0.3.0: {}
 
-  args-tokens@0.23.1: {}
+  args-tokens@0.24.1: {}
 
   assertion-error@2.0.1: {}
 
