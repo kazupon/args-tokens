@@ -4,7 +4,7 @@
   "type": "module",
   "module": "index.ts",
   "dependencies": {
-    "args-tokens": "^0.23.0"
+    "args-tokens": "^0.24.0"
   },
   "devDependencies": {
     "@types/bun": "latest"
