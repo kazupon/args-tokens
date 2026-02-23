@@ -37,7 +37,7 @@ describe('string combinator', () => {
     const tokens = parseArgs(argv)
     const { error } = resolveArgs({ name: { ...string({ minLength: 3 }), required: true } }, tokens)
     expect(error).toBeDefined()
-    expect((error?.errors[0] as Error).message).toContain('at least 3 characters')
+    expect((error!.errors[0] as Error).message).toContain('at least 3 characters')
   })
 
   test('maxLength validation', () => {
@@ -45,7 +45,7 @@ describe('string combinator', () => {
     const tokens = parseArgs(argv)
     const { error } = resolveArgs({ name: { ...string({ maxLength: 3 }), required: true } }, tokens)
     expect(error).toBeDefined()
-    expect((error?.errors[0] as Error).message).toContain('at most 3 characters')
+    expect((error!.errors[0] as Error).message).toContain('at most 3 characters')
   })
 
   test('pattern validation', () => {
@@ -56,7 +56,7 @@ describe('string combinator', () => {
       tokens
     )
     expect(error).toBeDefined()
-    expect((error?.errors[0] as Error).message).toContain('pattern')
+    expect((error!.errors[0] as Error).message).toContain('pattern')
   })
 
   test('description option', () => {
@@ -92,7 +92,7 @@ describe('string combinator', () => {
     const invalidTokens = parseArgs(['--email', 'not-an-email'])
     const { error: invalidError } = resolveArgs(schema, invalidTokens)
     expect(invalidError).toBeDefined()
-    expect((invalidError?.errors[0] as Error).message).toContain('pattern')
+    expect((invalidError!.errors[0] as Error).message).toContain('pattern')
   })
 })
 
@@ -116,7 +116,7 @@ describe('number combinator', () => {
     const tokens = parseArgs(argv)
     const { error } = resolveArgs({ port: { ...number(), required: true } }, tokens)
     expect(error).toBeDefined()
-    expect((error?.errors[0] as Error).message).toContain('Expected a number')
+    expect((error!.errors[0] as Error).message).toContain('Expected a number')
   })
 
   test('min validation', () => {
@@ -124,7 +124,7 @@ describe('number combinator', () => {
     const tokens = parseArgs(argv)
     const { error } = resolveArgs({ port: { ...number({ min: 1 }), required: true } }, tokens)
     expect(error).toBeDefined()
-    expect((error?.errors[0] as Error).message).toContain('>= 1')
+    expect((error!.errors[0] as Error).message).toContain('>= 1')
   })
 
   test('max validation', () => {
@@ -132,7 +132,7 @@ describe('number combinator', () => {
     const tokens = parseArgs(argv)
     const { error } = resolveArgs({ port: { ...number({ max: 65535 }), required: true } }, tokens)
     expect(error).toBeDefined()
-    expect((error?.errors[0] as Error).message).toContain('<= 65535')
+    expect((error!.errors[0] as Error).message).toContain('<= 65535')
   })
 
   test('description option', () => {
@@ -175,7 +175,7 @@ describe('integer combinator', () => {
     const tokens = parseArgs(argv)
     const { error } = resolveArgs({ count: { ...integer(), required: true } }, tokens)
     expect(error).toBeDefined()
-    expect((error?.errors[0] as Error).message).toContain('Expected an integer')
+    expect((error!.errors[0] as Error).message).toContain('Expected an integer')
   })
 
   test('range validation', () => {
@@ -186,7 +186,7 @@ describe('integer combinator', () => {
       tokens
     )
     expect(error).toBeDefined()
-    expect((error?.errors[0] as Error).message).toContain('<= 10')
+    expect((error!.errors[0] as Error).message).toContain('<= 10')
   })
 
   test('description option', () => {
@@ -222,7 +222,7 @@ describe('float combinator', () => {
     const tokens = parseArgs(argv)
     const { error } = resolveArgs({ ratio: { ...float(), required: true } }, tokens)
     expect(error).toBeDefined()
-    expect((error?.errors[0] as Error).message).toContain('finite float')
+    expect((error!.errors[0] as Error).message).toContain('finite float')
   })
 
   test('rejects Infinity', () => {
@@ -230,7 +230,7 @@ describe('float combinator', () => {
     const tokens = parseArgs(argv)
     const { error } = resolveArgs({ ratio: { ...float(), required: true } }, tokens)
     expect(error).toBeDefined()
-    expect((error?.errors[0] as Error).message).toContain('finite float')
+    expect((error!.errors[0] as Error).message).toContain('finite float')
   })
 
   test('range validation', () => {
@@ -241,7 +241,7 @@ describe('float combinator', () => {
       tokens
     )
     expect(error).toBeDefined()
-    expect((error?.errors[0] as Error).message).toContain('<= 1')
+    expect((error!.errors[0] as Error).message).toContain('<= 1')
   })
 
   test('description option', () => {
@@ -371,8 +371,8 @@ describe('positional combinator', () => {
       } as const satisfies Args,
       tokens
     )
-    expect(error?.errors.length).toBe(1)
-    expect((error?.errors[0] as Error).message).toContain('Expected an integer')
+    expect(error!.errors.length).toBe(1)
+    expect((error!.errors[0] as Error).message).toContain('Expected an integer')
   })
 
   test('multiple with parser', () => {
@@ -407,7 +407,7 @@ describe('choice combinator', () => {
       tokens
     )
     expect(error).toBeDefined()
-    expect((error?.errors[0] as Error).message).toContain('one of')
+    expect((error!.errors[0] as Error).message).toContain('one of')
   })
 })
 
@@ -443,7 +443,7 @@ describe('custom combinator', () => {
     const tokens = parseArgs(argv)
     const { error } = resolveArgs({ since: { ...date, required: true } }, tokens)
     expect(error).toBeDefined()
-    expect((error?.errors[0] as Error).message).toContain('Invalid date format')
+    expect((error!.errors[0] as Error).message).toContain('Invalid date format')
   })
 
   test('default metavar is custom', () => {
@@ -528,7 +528,7 @@ describe('map combinator', () => {
       tokens
     )
     expect(error).toBeDefined()
-    expect((error?.errors[0] as Error).message).toContain('Expected an integer')
+    expect((error!.errors[0] as Error).message).toContain('Expected an integer')
   })
 
   test('immutability', () => {
