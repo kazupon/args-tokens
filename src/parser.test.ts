@@ -84,6 +84,19 @@ describe('long options', () => {
   )
 })
 
+test('long option followed by value containing "--" (e.g. --custom-property)', () => {
+  const args = ['--foo', 'include double hyphen e.g. --custom-property']
+  const { tokens: expectTokens } = parseArgsNode({
+    allowPositionals: true,
+    strict: false,
+    args,
+    tokens: true
+  })
+
+  const actualTokens = parseArgs(args)
+  expect(actualTokens).toEqual(expectTokens)
+})
+
 test('positional arguments', () => {
   const args = ['1', '2', '3']
   const { tokens: expectTokens } = parseArgsNode({
