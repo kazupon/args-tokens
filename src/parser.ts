@@ -299,8 +299,7 @@ function isLongOptionAndValue(arg: string) {
  * @returns Whether `arg` is a long option prefix.
  */
 export function hasLongOptionPrefix(arg: string): boolean {
-  // @ts-ignore -- NOTE(kazupon): `~` is a bitwise NOT operator
-  return arg.length > 2 && ~arg.indexOf(LONG_OPTION_PREFIX)
+  return arg.startsWith(LONG_OPTION_PREFIX) && arg.length > 2
 }
 
 /**
