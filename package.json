@@ -126,7 +126,7 @@
     "mitata": "^1.0.34",
     "oxfmt": "^0.42.0",
     "oxlint": "^1.52.0",
-    "oxlint-tsgolint": "^0.16.0",
+    "oxlint-tsgolint": "^0.22.0",
     "pkg-pr-new": "^0.0.66",
     "tsdown": "^0.21.1",
     "typedoc": "^0.28.17",
