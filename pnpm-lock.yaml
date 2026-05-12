@@ -13,7 +13,7 @@ importers:
         version: 8.0.1
       '@kazupon/eslint-config':
         specifier: ^0.45.0
-        version: 0.45.0(@eslint/markdown@8.0.1)(eslint-plugin-jsdoc@62.9.0(eslint@10.3.0(jiti@2.7.0)))(eslint-plugin-jsonc@3.1.2(eslint@10.3.0(jiti@2.7.0)))(eslint-plugin-markdown-preferences@0.40.3(@eslint/markdown@8.0.1)(eslint@10.3.0(jiti@2.7.0)))(eslint-plugin-oxlint@1.64.0(oxlint@1.64.0(oxlint-tsgolint@0.22.1)))(eslint-plugin-regexp@3.1.0(eslint@10.3.0(jiti@2.7.0)))(eslint-plugin-yml@3.3.2(eslint@10.3.0(jiti@2.7.0)))(eslint@10.3.0(jiti@2.7.0))(typescript-eslint@8.59.3(eslint@10.3.0(jiti@2.7.0))(typescript@6.0.3))
+        version: 0.45.0(@eslint/markdown@8.0.1)(eslint-plugin-jsdoc@62.9.0(eslint@10.3.0(jiti@2.7.0)))(eslint-plugin-jsonc@3.1.2(eslint@10.3.0(jiti@2.7.0)))(eslint-plugin-markdown-preferences@0.41.1(@eslint/markdown@8.0.1)(eslint@10.3.0(jiti@2.7.0)))(eslint-plugin-oxlint@1.64.0(oxlint@1.64.0(oxlint-tsgolint@0.22.1)))(eslint-plugin-regexp@3.1.0(eslint@10.3.0(jiti@2.7.0)))(eslint-plugin-yml@3.3.2(eslint@10.3.0(jiti@2.7.0)))(eslint@10.3.0(jiti@2.7.0))(typescript-eslint@8.59.3(eslint@10.3.0(jiti@2.7.0))(typescript@6.0.3))
       '@kazupon/eslint-plugin':
         specifier: ^0.7.1
         version: 0.7.1(eslint@10.3.0(jiti@2.7.0))
@@ -42,8 +42,8 @@ importers:
         specifier: ^3.1.2
         version: 3.1.2(eslint@10.3.0(jiti@2.7.0))
       eslint-plugin-markdown-preferences:
-        specifier: ^0.40.3
-        version: 0.40.3(@eslint/markdown@8.0.1)(eslint@10.3.0(jiti@2.7.0))
+        specifier: ^0.41.0
+        version: 0.41.1(@eslint/markdown@8.0.1)(eslint@10.3.0(jiti@2.7.0))
       eslint-plugin-oxlint:
         specifier: ^1.64.0
         version: 1.64.0(oxlint@1.64.0(oxlint-tsgolint@0.22.1))
@@ -61,7 +61,7 @@ importers:
         version: 0.14.3
       jsr-exports-lint:
         specifier: ^0.4.2
-        version: 0.4.2(tsdown@0.22.0(@typescript/native-preview@7.0.0-dev.20260512.1)(oxc-resolver@11.19.1(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0))(typescript@6.0.3)(unrun@0.2.38(synckit@0.11.12)))
+        version: 0.4.2(tsdown@0.22.0(@typescript/native-preview@7.0.0-dev.20260512.1)(oxc-resolver@11.19.1(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0))(typescript@6.0.3))
       knip:
         specifier: ^6.13.0
         version: 6.13.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)
@@ -85,7 +85,7 @@ importers:
         version: 0.0.71
       tsdown:
         specifier: ^0.22.0
-        version: 0.22.0(@typescript/native-preview@7.0.0-dev.20260512.1)(oxc-resolver@11.19.1(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0))(typescript@6.0.3)(unrun@0.2.38(synckit@0.11.12))
+        version: 0.22.0(@typescript/native-preview@7.0.0-dev.20260512.1)(oxc-resolver@11.19.1(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0))(typescript@6.0.3)
       typedoc:
         specifier: ^0.28.19
         version: 0.28.19(typescript@6.0.3)
@@ -1752,11 +1752,11 @@ packages:
     peerDependencies:
       eslint: '>=9.38.0'
 
-  eslint-plugin-markdown-preferences@0.40.3:
-    resolution: {integrity: sha512-R3CCAEFwnnYXukTdtvdsamGjbTgVs9UZKqMKhNeWNXzFtOP1Frc89bgbd56lJUN7ASaxgvzc5fUpKvDCOTtDpg==}
+  eslint-plugin-markdown-preferences@0.41.1:
+    resolution: {integrity: sha512-Xi4rlT7oBZ8PMGDl7J9khgO2vF9X0F/6ag05/25Vyq7r3llaK95x9D6DpzXidxC2Gagl/e8bp2Hw47r4I3wWSA==}
     engines: {node: ^20.19.0 || ^22.12.0 || >=24.0.0}
     peerDependencies:
-      '@eslint/markdown': ^7.4.0
+      '@eslint/markdown': ^7.4.0 || ^8.0.0
       eslint: '>=9.0.0'
 
   eslint-plugin-oxlint@1.64.0:
@@ -2617,16 +2617,6 @@ packages:
   unist-util-visit@5.1.0:
     resolution: {integrity: sha512-m+vIdyeCOpdr/QeQCu2EzxX/ohgS8KbnPDgFni4dQsfSCtpz8UqDyY5GjRru8PDKuYn7Fq19j1CQ+nJSsGKOzg==}
 
-  unrun@0.2.38:
-    resolution: {integrity: sha512-vYFWSyX5Be408RX+CAd2Heh8egQRnGBWOQmZKwYPvMtTQNmRYoKdSyFIczYNxZEMqz0dJzSxp7xkcZGzvtkHyQ==}
-    engines: {node: ^22.13.0 || >=24.0.0}
-    hasBin: true
-    peerDependencies:
-      synckit: ^0.11.11
-    peerDependenciesMeta:
-      synckit:
-        optional: true
-
   uri-js@4.4.1:
     resolution: {integrity: sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg==}
 
@@ -3017,7 +3007,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@kazupon/eslint-config@0.45.0(@eslint/markdown@8.0.1)(eslint-plugin-jsdoc@62.9.0(eslint@10.3.0(jiti@2.7.0)))(eslint-plugin-jsonc@3.1.2(eslint@10.3.0(jiti@2.7.0)))(eslint-plugin-markdown-preferences@0.40.3(@eslint/markdown@8.0.1)(eslint@10.3.0(jiti@2.7.0)))(eslint-plugin-oxlint@1.64.0(oxlint@1.64.0(oxlint-tsgolint@0.22.1)))(eslint-plugin-regexp@3.1.0(eslint@10.3.0(jiti@2.7.0)))(eslint-plugin-yml@3.3.2(eslint@10.3.0(jiti@2.7.0)))(eslint@10.3.0(jiti@2.7.0))(typescript-eslint@8.59.3(eslint@10.3.0(jiti@2.7.0))(typescript@6.0.3))':
+  '@kazupon/eslint-config@0.45.0(@eslint/markdown@8.0.1)(eslint-plugin-jsdoc@62.9.0(eslint@10.3.0(jiti@2.7.0)))(eslint-plugin-jsonc@3.1.2(eslint@10.3.0(jiti@2.7.0)))(eslint-plugin-markdown-preferences@0.41.1(@eslint/markdown@8.0.1)(eslint@10.3.0(jiti@2.7.0)))(eslint-plugin-oxlint@1.64.0(oxlint@1.64.0(oxlint-tsgolint@0.22.1)))(eslint-plugin-regexp@3.1.0(eslint@10.3.0(jiti@2.7.0)))(eslint-plugin-yml@3.3.2(eslint@10.3.0(jiti@2.7.0)))(eslint@10.3.0(jiti@2.7.0))(typescript-eslint@8.59.3(eslint@10.3.0(jiti@2.7.0))(typescript@6.0.3))':
     dependencies:
       '@eslint-community/eslint-plugin-eslint-comments': 4.6.0(eslint@10.3.0(jiti@2.7.0))
       '@eslint/js': 9.39.2
@@ -3032,7 +3022,7 @@ snapshots:
       '@eslint/markdown': 8.0.1
       eslint-plugin-jsdoc: 62.9.0(eslint@10.3.0(jiti@2.7.0))
       eslint-plugin-jsonc: 3.1.2(eslint@10.3.0(jiti@2.7.0))
-      eslint-plugin-markdown-preferences: 0.40.3(@eslint/markdown@8.0.1)(eslint@10.3.0(jiti@2.7.0))
+      eslint-plugin-markdown-preferences: 0.41.1(@eslint/markdown@8.0.1)(eslint@10.3.0(jiti@2.7.0))
       eslint-plugin-oxlint: 1.64.0(oxlint@1.64.0(oxlint-tsgolint@0.22.1))
       eslint-plugin-regexp: 3.1.0(eslint@10.3.0(jiti@2.7.0))
       eslint-plugin-yml: 3.3.2(eslint@10.3.0(jiti@2.7.0))
@@ -3926,7 +3916,7 @@ snapshots:
     transitivePeerDependencies:
       - '@eslint/json'
 
-  eslint-plugin-markdown-preferences@0.40.3(@eslint/markdown@8.0.1)(eslint@10.3.0(jiti@2.7.0)):
+  eslint-plugin-markdown-preferences@0.41.1(@eslint/markdown@8.0.1)(eslint@10.3.0(jiti@2.7.0)):
     dependencies:
       '@eslint/markdown': 8.0.1
       diff-sequences: 29.6.3
@@ -4173,11 +4163,11 @@ snapshots:
 
   jsonc-parser@3.3.1: {}
 
-  jsr-exports-lint@0.4.2(tsdown@0.22.0(@typescript/native-preview@7.0.0-dev.20260512.1)(oxc-resolver@11.19.1(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0))(typescript@6.0.3)(unrun@0.2.38(synckit@0.11.12))):
+  jsr-exports-lint@0.4.2(tsdown@0.22.0(@typescript/native-preview@7.0.0-dev.20260512.1)(oxc-resolver@11.19.1(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0))(typescript@6.0.3)):
     dependencies:
       picocolors: 1.1.1
     optionalDependencies:
-      tsdown: 0.22.0(@typescript/native-preview@7.0.0-dev.20260512.1)(oxc-resolver@11.19.1(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0))(typescript@6.0.3)(unrun@0.2.38(synckit@0.11.12))
+      tsdown: 0.22.0(@typescript/native-preview@7.0.0-dev.20260512.1)(oxc-resolver@11.19.1(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0))(typescript@6.0.3)
 
   jsr@0.14.3:
     dependencies:
@@ -4987,7 +4977,7 @@ snapshots:
     dependencies:
       typescript: 6.0.3
 
-  tsdown@0.22.0(@typescript/native-preview@7.0.0-dev.20260512.1)(oxc-resolver@11.19.1(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0))(typescript@6.0.3)(unrun@0.2.38(synckit@0.11.12)):
+  tsdown@0.22.0(@typescript/native-preview@7.0.0-dev.20260512.1)(oxc-resolver@11.19.1(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0))(typescript@6.0.3):
     dependencies:
       ansis: 4.2.0
       cac: 7.0.0
@@ -5006,7 +4996,6 @@ snapshots:
       unconfig-core: 7.5.0
     optionalDependencies:
       typescript: 6.0.3
-      unrun: 0.2.38(synckit@0.11.12)
     transitivePeerDependencies:
       - '@ts-macro/tsc'
       - '@typescript/native-preview'
@@ -5094,13 +5083,6 @@ snapshots:
       '@types/unist': 3.0.3
       unist-util-is: 6.0.1
       unist-util-visit-parents: 6.0.2
-
-  unrun@0.2.38(synckit@0.11.12):
-    dependencies:
-      rolldown: 1.0.0
-    optionalDependencies:
-      synckit: 0.11.12
-    optional: true
 
   uri-js@4.4.1:
     dependencies:
