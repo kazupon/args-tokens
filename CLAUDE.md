@@ -100,7 +100,7 @@ The library uses a two-phase approach:
 - The project uses ES modules exclusively
 - TypeScript is configured with strict mode and isolated declarations
 - The build output goes to the `lib/` directory
-- Minimum Node.js version is 20
+- Minimum Node.js version is 22
 - The project is published to both npm and JSR (Deno registry)
 - Package manager is pnpm (version 10.12.4)
 
