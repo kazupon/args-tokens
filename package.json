@@ -27,7 +27,7 @@
   },
   "packageManager": "pnpm@10.33.0",
   "engines": {
-    "node": ">= 20"
+    "node": ">= 22"
   },
   "type": "module",
   "files": [
