@@ -611,7 +611,7 @@ describe('short combinator', () => {
   })
 })
 
-describe('describe combinator', () => {
+describe('combinator', () => {
   test('sets description', () => {
     const schema = describeCombinator(string(), 'Your name')
     expect(schema.description).toBe('Your name')

@@ -1,3 +1,24 @@
 minimumReleaseAge: 1440
 minimumReleaseAgeExclude:
   - '@kazupon/eslint-config'
+  - oxfmt
+  - '@oxfmt/*'
+  - oxlint
+  - '@oxlint/*'
+  - eslint-plugin-oxlint
+  - vitest
+  - knip
+  - oxc-parser
+  - '@oxc-project/types'
+  - '@oxc-parser/*'
+  - '@vitest/*'
+  - typescript-eslint
+  - '@typescript-eslint/*'
+  - '@types/node'
+  - '@typescript/native-preview'
+  - '@typescript/*'
+shellEmulator: true
+allowBuilds:
+  deno: true
+  esbuild: true
+  rolldown: true

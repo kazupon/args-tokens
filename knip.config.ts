@@ -8,8 +8,7 @@ const config: KnipConfig = {
     'mitata',
     'deno',
     '@kazupon/eslint-plugin',
-    '@typescript/native-preview',
-    '@kazupon/prettier-config'
+    '@typescript/native-preview'
   ]
 }
 
