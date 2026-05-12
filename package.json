@@ -25,7 +25,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "packageManager": "pnpm@10.33.4",
+  "packageManager": "pnpm@11.0.9",
   "engines": {
     "node": ">= 22"
   },
@@ -85,12 +85,12 @@
     "changelog": "gh-changelogen --repo=kazupon/eslint-config",
     "dev": "pnpx @eslint/config-inspector --config eslint.config.ts",
     "dev:eslint": "pnpx @eslint/config-inspector --config eslint.config.ts",
-    "fix": "pnpm run --color \"/^fix:/\"",
+    "fix": "pnpm --color run \"/^fix:/\"",
     "fix:eslint": "eslint . --cache --fix",
     "fix:knip": "knip --fix --no-exit-code",
     "fix:oxfmt": "oxfmt . --config ./node_modules/@kazupon/prettier-config/index.json --no-error-on-unmatched-pattern",
     "fix:oxlint": "oxlint --type-aware --type-check --fix",
-    "lint": "pnpm run --color \"/^lint:/\"",
+    "lint": "pnpm --color run \"/^lint:/\"",
     "lint:deno": "deno check src",
     "lint:eslint": "eslint . --cache",
     "lint:jsr": "jsr publish --config jsr.json --dry-run --allow-dirty",
@@ -135,13 +135,6 @@
     "typescript-eslint": "^8.59.3",
     "vitest": "^4.1.6",
     "zod": "^4.4.3"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "deno",
-      "esbuild",
-      "rolldown"
-    ]
   },
   "prettier": "@kazupon/prettier-config",
   "lint-staged": {

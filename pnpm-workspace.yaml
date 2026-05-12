@@ -17,3 +17,8 @@ minimumReleaseAgeExclude:
   - '@types/node'
   - '@typescript/native-preview'
   - '@typescript/*'
+shellEmulator: true
+allowBuilds:
+  deno: true
+  esbuild: true
+  rolldown: true
