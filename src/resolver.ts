@@ -655,7 +655,7 @@ export function resolveArgs<A extends Args>(
     }
   }
 
-  function applyLongOptionValue(value?: string  ): void {
+  function applyLongOptionValue(value?: string): void {
     if (currentLongOption) {
       currentLongOption.value = value
       optionTokens.push({ ...currentLongOption })
@@ -663,7 +663,7 @@ export function resolveArgs<A extends Args>(
     }
   }
 
-  function applyShortOptionValue(value?: string  ): void {
+  function applyShortOptionValue(value?: string): void {
     if (currentShortOption) {
       currentShortOption.value = value || toShortValue()
       optionTokens.push({ ...currentShortOption })
