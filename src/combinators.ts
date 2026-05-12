@@ -491,7 +491,7 @@ export function choice<const T extends readonly string[]>(
   return {
     type: 'enum',
     metavar: values.join('|'),
-    choices: values as unknown as string[],
+    choices: values,
     ...(opts?.description != null ? { description: opts.description } : {}),
     ...(opts?.short != null ? { short: opts.short } : {}),
     ...(opts?.required != null ? { required: opts.required } : {}),
@@ -499,7 +499,7 @@ export function choice<const T extends readonly string[]>(
       if (!(values as readonly string[]).includes(value)) {
         throw new Error(`Value must be one of: ${values.join(', ')}`)
       }
-      return value as T[number]
+      return value
     }
   }
 }
