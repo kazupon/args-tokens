@@ -18,8 +18,8 @@
 
 ## 🐱 Motivation
 
-- Although Node.js [`parseArgs`](https://nodejs.org/api/util.html#utilparseargsconfig) can return tokens, that the short options are not in the format I expect. Of course, I recoginize the background of [this issue](https://github.com/pkgjs/parseargs/issues/78).
-- `parseArgs` gives the command line args parser a useful util, so the resolution of the options values and the parsing of the tokens are tightly coupled. As a result, Performance is sacrificed. Of course, I recoginize that's the trade-off.
+- Although Node.js [`parseArgs`](https://nodejs.org/api/util.html#utilparseargsconfig) can return tokens, that the short options are not in the format I expect. Of course, I recognize the background of [this issue](https://github.com/pkgjs/parseargs/issues/78).
+- `parseArgs` gives the command line args parser a useful util, so the resolution of the options values and the parsing of the tokens are tightly coupled. As a result, Performance is sacrificed. Of course, I recognize that's the trade-off.
 
 ## ⏱️ Benchmark
 
