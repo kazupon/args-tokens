@@ -127,7 +127,7 @@
     "oxfmt": "^0.50.0",
     "oxlint": "^1.64.0",
     "oxlint-tsgolint": "^0.22.1",
-    "pkg-pr-new": "^0.0.72",
+    "pkg-pr-new": "^0.0.73",
     "tsdown": "^0.22.0",
     "typedoc": "^0.28.19",
     "typedoc-plugin-markdown": "^4.11.0",
