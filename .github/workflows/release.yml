@@ -18,15 +18,15 @@ jobs:
 
     steps:
       - name: Checkout codes
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v6
+        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
 
       - name: Setup node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24
           cache: pnpm
@@ -39,7 +39,7 @@ jobs:
 
       - name: Extract version tag
         if: startsWith( github.ref, 'refs/tags/v' )
-        uses: jungwinter/split@v2
+        uses: jungwinter/split@a211a1c46e35fcdc4097d59dd6282d4a9859651b # v2
         id: split
         with:
           msg: ${{ github.ref }}
@@ -56,7 +56,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Commit changelog
-        uses: stefanzweifel/git-auto-commit-action@v6
+        uses: stefanzweifel/git-auto-commit-action@778341af668090896ca464160c2def5d1d1a3eb0 # v6.0.1
         with:
           branch: main
           file_pattern: CHANGELOG.md
