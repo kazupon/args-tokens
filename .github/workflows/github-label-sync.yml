@@ -9,6 +9,9 @@ on:
       - .github/workflows/github-label-sync.yml
   workflow_dispatch: # eslint-disable-line yml/no-empty-mapping-value -- NOTE(kazupon): to run the workflow manually
 
+permissions:
+  issues: write
+
 jobs:
   sync:
     runs-on: ubuntu-latest
