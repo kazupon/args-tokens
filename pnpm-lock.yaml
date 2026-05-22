@@ -13,7 +13,7 @@ importers:
         version: 8.0.1
       '@kazupon/eslint-config':
         specifier: ^0.45.0
-        version: 0.45.0(@eslint/markdown@8.0.1)(eslint-plugin-jsdoc@62.9.0(eslint@10.3.0(jiti@2.7.0)))(eslint-plugin-jsonc@3.1.2(eslint@10.3.0(jiti@2.7.0)))(eslint-plugin-markdown-preferences@0.41.1(@eslint/markdown@8.0.1)(eslint@10.3.0(jiti@2.7.0)))(eslint-plugin-oxlint@1.64.0(oxlint@1.64.0(oxlint-tsgolint@0.23.0)))(eslint-plugin-regexp@3.1.0(eslint@10.3.0(jiti@2.7.0)))(eslint-plugin-yml@3.3.2(eslint@10.3.0(jiti@2.7.0)))(eslint@10.3.0(jiti@2.7.0))(typescript-eslint@8.59.3(eslint@10.3.0(jiti@2.7.0))(typescript@6.0.3))
+        version: 0.45.0(@eslint/markdown@8.0.1)(eslint-plugin-jsdoc@63.0.0(eslint@10.3.0(jiti@2.7.0)))(eslint-plugin-jsonc@3.1.2(eslint@10.3.0(jiti@2.7.0)))(eslint-plugin-markdown-preferences@0.41.1(@eslint/markdown@8.0.1)(eslint@10.3.0(jiti@2.7.0)))(eslint-plugin-oxlint@1.64.0(oxlint@1.64.0(oxlint-tsgolint@0.23.0)))(eslint-plugin-regexp@3.1.0(eslint@10.3.0(jiti@2.7.0)))(eslint-plugin-yml@3.3.2(eslint@10.3.0(jiti@2.7.0)))(eslint@10.3.0(jiti@2.7.0))(typescript-eslint@8.59.3(eslint@10.3.0(jiti@2.7.0))(typescript@6.0.3))
       '@kazupon/eslint-plugin':
         specifier: ^0.7.1
         version: 0.7.1(eslint@10.3.0(jiti@2.7.0))
@@ -36,8 +36,8 @@ importers:
         specifier: ^10.3.0
         version: 10.3.0(jiti@2.7.0)
       eslint-plugin-jsdoc:
-        specifier: ^62.9.0
-        version: 62.9.0(eslint@10.3.0(jiti@2.7.0))
+        specifier: ^63.0.0
+        version: 63.0.0(eslint@10.3.0(jiti@2.7.0))
       eslint-plugin-jsonc:
         specifier: ^3.1.2
         version: 3.1.2(eslint@10.3.0(jiti@2.7.0))
@@ -1733,9 +1733,9 @@ packages:
     peerDependencies:
       eslint: '*'
 
-  eslint-plugin-jsdoc@62.9.0:
-    resolution: {integrity: sha512-PY7/X4jrVgoIDncUmITlUqK546Ltmx/Pd4Hdsu4CvSjryQZJI2mEV4vrdMufyTetMiZ5taNSqvK//BTgVUlNkA==}
-    engines: {node: ^20.19.0 || ^22.13.0 || >=24}
+  eslint-plugin-jsdoc@63.0.0:
+    resolution: {integrity: sha512-eDHuVGyZydr4BKgjXouU7bsn5qaqUlObXBSWRJk3vXcQgXVFnrwWIqpP7uBhRX9NQpk6NIIFyRc6F6omZNi/8g==}
+    engines: {node: ^22.13.0 || >=24}
     peerDependencies:
       eslint: ^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0
 
@@ -2403,6 +2403,11 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
 
+  semver@7.8.0:
+    resolution: {integrity: sha512-AcM7dV/5ul4EekoQ29Agm5vri8JNqRyj39o0qpX6vDF2GZrtutZl5RwgD1XnZjiTAfncsJhMI48QQH3sN87YNA==}
+    engines: {node: '>=10'}
+    hasBin: true
+
   shebang-command@2.0.0:
     resolution: {integrity: sha512-kHxr2zZpYtdmrN1qDjrrX/Z1rR1kG8Dx+gkpK1G4eXmvXswmcE1hTWBWYUzlraYw1/yZp6YuDY77YtvbN0dmDA==}
     engines: {node: '>=8'}
@@ -3011,7 +3016,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@kazupon/eslint-config@0.45.0(@eslint/markdown@8.0.1)(eslint-plugin-jsdoc@62.9.0(eslint@10.3.0(jiti@2.7.0)))(eslint-plugin-jsonc@3.1.2(eslint@10.3.0(jiti@2.7.0)))(eslint-plugin-markdown-preferences@0.41.1(@eslint/markdown@8.0.1)(eslint@10.3.0(jiti@2.7.0)))(eslint-plugin-oxlint@1.64.0(oxlint@1.64.0(oxlint-tsgolint@0.23.0)))(eslint-plugin-regexp@3.1.0(eslint@10.3.0(jiti@2.7.0)))(eslint-plugin-yml@3.3.2(eslint@10.3.0(jiti@2.7.0)))(eslint@10.3.0(jiti@2.7.0))(typescript-eslint@8.59.3(eslint@10.3.0(jiti@2.7.0))(typescript@6.0.3))':
+  '@kazupon/eslint-config@0.45.0(@eslint/markdown@8.0.1)(eslint-plugin-jsdoc@63.0.0(eslint@10.3.0(jiti@2.7.0)))(eslint-plugin-jsonc@3.1.2(eslint@10.3.0(jiti@2.7.0)))(eslint-plugin-markdown-preferences@0.41.1(@eslint/markdown@8.0.1)(eslint@10.3.0(jiti@2.7.0)))(eslint-plugin-oxlint@1.64.0(oxlint@1.64.0(oxlint-tsgolint@0.23.0)))(eslint-plugin-regexp@3.1.0(eslint@10.3.0(jiti@2.7.0)))(eslint-plugin-yml@3.3.2(eslint@10.3.0(jiti@2.7.0)))(eslint@10.3.0(jiti@2.7.0))(typescript-eslint@8.59.3(eslint@10.3.0(jiti@2.7.0))(typescript@6.0.3))':
     dependencies:
       '@eslint-community/eslint-plugin-eslint-comments': 4.6.0(eslint@10.3.0(jiti@2.7.0))
       '@eslint/js': 9.39.2
@@ -3024,7 +3029,7 @@ snapshots:
       globals: 16.5.0
     optionalDependencies:
       '@eslint/markdown': 8.0.1
-      eslint-plugin-jsdoc: 62.9.0(eslint@10.3.0(jiti@2.7.0))
+      eslint-plugin-jsdoc: 63.0.0(eslint@10.3.0(jiti@2.7.0))
       eslint-plugin-jsonc: 3.1.2(eslint@10.3.0(jiti@2.7.0))
       eslint-plugin-markdown-preferences: 0.41.1(@eslint/markdown@8.0.1)(eslint@10.3.0(jiti@2.7.0))
       eslint-plugin-oxlint: 1.64.0(oxlint@1.64.0(oxlint-tsgolint@0.23.0))
@@ -3881,7 +3886,7 @@ snapshots:
     dependencies:
       eslint: 10.3.0(jiti@2.7.0)
 
-  eslint-plugin-jsdoc@62.9.0(eslint@10.3.0(jiti@2.7.0)):
+  eslint-plugin-jsdoc@63.0.0(eslint@10.3.0(jiti@2.7.0)):
     dependencies:
       '@es-joy/jsdoccomment': 0.86.0
       '@es-joy/resolve.exports': 1.2.0
@@ -3895,7 +3900,7 @@ snapshots:
       html-entities: 2.6.0
       object-deep-merge: 2.0.0
       parse-imports-exports: 0.2.4
-      semver: 7.7.4
+      semver: 7.8.0
       spdx-expression-parse: 4.0.0
       to-valid-identifier: 1.0.0
     transitivePeerDependencies:
@@ -4891,6 +4896,8 @@ snapshots:
   semver@7.7.3: {}
 
   semver@7.7.4: {}
+
+  semver@7.8.0: {}
 
   shebang-command@2.0.0:
     dependencies:
