@@ -291,6 +291,45 @@ test('ResolveArgValues', () => {
       { order: string }
     >
   >().toEqualTypeOf<{ order: string }>()
+
+  // optional positional
+  expectTypeOf<
+    ResolveArgValues<
+      {
+        query: {
+          type: 'positional'
+          required: false
+        }
+      },
+      { query: string }
+    >
+  >().toEqualTypeOf<{ query?: string | undefined }>()
+
+  // positional with default
+  expectTypeOf<
+    ResolveArgValues<
+      {
+        query: {
+          type: 'positional'
+          default: 'select 1'
+        }
+      },
+      { query: string }
+    >
+  >().toEqualTypeOf<{ query: string }>()
+
+  // optional multiple positional
+  expectTypeOf<
+    ResolveArgValues<
+      {
+        files: {
+          type: 'positional'
+          multiple: true
+        }
+      },
+      { files: string[] }
+    >
+  >().toEqualTypeOf<{ files?: string[] | undefined }>()
 })
 
 test('ArgValues', () => {
@@ -331,6 +370,19 @@ test('ArgValues', () => {
       type: 'custom'
       parse: (value: string) => string[]
     }
+    query: {
+      type: 'positional'
+      required: false
+    }
+    files: {
+      type: 'positional'
+      multiple: true
+    }
+    count: {
+      type: 'positional'
+      required: false
+      parse: (value: string) => number
+    }
   }
 
   expectTypeOf<ArgValues<Args>>().toEqualTypeOf<{
@@ -342,6 +394,9 @@ test('ArgValues', () => {
     log?: 'debug' | 'info' | 'warn' | 'error'
     order: string
     csv?: string[]
+    query?: string
+    files?: string[]
+    count?: number
   }>()
 })
 

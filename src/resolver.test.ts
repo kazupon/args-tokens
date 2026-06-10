@@ -493,6 +493,157 @@ describe('positional arguments', () => {
     )
   })
 
+  test('missing optional single positional', () => {
+    const argv = ['--help']
+    const tokens = parseArgs(argv)
+    const { error, values, explicit } = resolveArgs(
+      {
+        command: {
+          type: 'positional',
+          required: false
+        },
+        help: {
+          type: 'boolean',
+          short: 'h'
+        }
+      },
+      tokens
+    )
+    expect(error).toBeUndefined()
+    expect(values).toEqual({
+      help: true
+    })
+    expect(explicit.command).toBe(false)
+  })
+
+  test('provided optional single positional', () => {
+    const argv = ['--help', 'dev']
+    const tokens = parseArgs(argv)
+    const { error, values, explicit } = resolveArgs(
+      {
+        command: {
+          type: 'positional',
+          required: false
+        },
+        help: {
+          type: 'boolean',
+          short: 'h'
+        }
+      },
+      tokens
+    )
+    expect(error).toBeUndefined()
+    expect(values).toEqual({
+      command: 'dev',
+      help: true
+    })
+    expect(explicit.command).toBe(true)
+  })
+
+  test('missing single positional with default', () => {
+    const argv = ['--help']
+    const tokens = parseArgs(argv)
+    const { error, values, explicit } = resolveArgs(
+      {
+        command: {
+          type: 'positional',
+          default: 'dev'
+        },
+        help: {
+          type: 'boolean',
+          short: 'h'
+        }
+      },
+      tokens
+    )
+    expect(error).toBeUndefined()
+    expect(values).toEqual({
+      command: 'dev',
+      help: true
+    })
+    expect(explicit.command).toBe(false)
+  })
+
+  test('required single positional with default still errors when missing', () => {
+    const argv = ['--help']
+    const tokens = parseArgs(argv)
+    const { error, values, explicit } = resolveArgs(
+      {
+        command: {
+          type: 'positional',
+          required: true,
+          default: 'dev'
+        },
+        help: {
+          type: 'boolean',
+          short: 'h'
+        }
+      },
+      tokens
+    )
+    expect(error?.errors.length).toBe(1)
+    expect((error?.errors[0] as ArgResolveError).message).toEqual(
+      `Positional argument 'command' is required`
+    )
+    expect(values).toEqual({
+      help: true
+    })
+    expect(explicit.command).toBe(false)
+  })
+
+  test('missing optional single positional does not call parse', () => {
+    const argv = ['--help']
+    const tokens = parseArgs(argv)
+    let called = 0
+    const { error, values } = resolveArgs(
+      {
+        count: {
+          type: 'positional',
+          required: false,
+          parse(value: string) {
+            called++
+            return Number(value)
+          }
+        },
+        help: {
+          type: 'boolean',
+          short: 'h'
+        }
+      },
+      tokens
+    )
+    expect(error).toBeUndefined()
+    expect(values).toEqual({
+      help: true
+    })
+    expect(called).toBe(0)
+  })
+
+  test('provided optional single positional calls parse', () => {
+    const argv = ['--help', '42']
+    const tokens = parseArgs(argv)
+    const { error, values, explicit } = resolveArgs(
+      {
+        count: {
+          type: 'positional',
+          required: false,
+          parse: (value: string) => Number(value)
+        },
+        help: {
+          type: 'boolean',
+          short: 'h'
+        }
+      },
+      tokens
+    )
+    expect(error).toBeUndefined()
+    expect(values).toEqual({
+      count: 42,
+      help: true
+    })
+    expect(explicit.count).toBe(true)
+  })
+
   test('argument order', () => {
     const argv = ['--help', 'dev']
     const tokens = parseArgs(argv)
@@ -677,6 +828,33 @@ describe('positional arguments', () => {
       expect((error?.errors[0] as ArgResolveError).message).toEqual(
         `Positional argument 'log' is required`
       )
+    })
+
+    test('skipPositional over arguments length with optional positional', () => {
+      const argv = ['dev', '--help', 'info', 'foo']
+      const tokens = parseArgs(argv)
+      const { error, values, positionals, rest } = resolveArgs(
+        {
+          log: {
+            type: 'positional',
+            required: false
+          },
+          help: {
+            type: 'boolean',
+            short: 'h'
+          }
+        },
+        tokens,
+        {
+          skipPositional: 10
+        }
+      )
+      expect(error).toBeUndefined()
+      expect(values).toEqual({
+        help: true
+      })
+      expect(positionals).toEqual(['dev', 'info', 'foo'])
+      expect(rest).toEqual([])
     })
 
     test('skipPositional over arguments length on termination', () => {

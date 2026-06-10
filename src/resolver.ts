@@ -129,7 +129,8 @@ export interface ArgSchema {
    * When `true`, the argument must be provided by the user.
    * If missing, an `ArgResolveError` with type 'required' will be thrown.
    *
-   * Note: Only `true` is allowed (not `false`) to make intent explicit.
+   * For single positional arguments, omitting `required` keeps the argument required for
+   * compatibility. Set `required: false` to make a single positional argument optional.
    *
    * @example
    * Required arguments:
@@ -234,6 +235,9 @@ export interface ArgSchema {
    * - `number` type: number default
    * - `enum` type: must be one of the `choices` values
    * - `positional`/`custom` type: any appropriate default
+   *
+   * For single positional arguments, the default is used when the positional
+   * value is missing unless `required: true` is set.
    *
    * @example
    * Default values by type:
@@ -541,8 +545,20 @@ export type FilterArgs<
  * @internal
  */
 export type FilterPositionalArgs<A extends Args, V extends Record<keyof A, unknown>> = {
-  [Arg in keyof A as A[Arg]['type'] extends 'positional' ? Arg : never]: V[Arg]
+  [Arg in keyof A as IsRequiredPositionalArg<A[Arg]> extends true ? Arg : never]: V[Arg]
 }
+
+type IsRequiredPositionalArg<A extends ArgSchema> = A['type'] extends 'positional'
+  ? A['multiple'] extends true
+    ? A['required'] extends true
+      ? true
+      : false
+    : A['required'] extends false
+      ? A['default'] extends {}
+        ? true
+        : false
+      : true
+  : false
 
 /**
  * An arguments for {@link resolveArgs | resolve arguments}.
@@ -854,7 +870,12 @@ export function resolveArgs<A extends Args>(
           // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(sushichan044): Allow any type for resolving
           ;(explicit as any)[rawArg] = true
         } else {
-          errors.push(createRequireError(arg, schema))
+          if (shouldRequireMissingSinglePositional(schema)) {
+            errors.push(createRequireError(arg, schema))
+          } else if (hasDefault(schema)) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(kazupon): Allow any type for resolving
+            ;(values as any)[rawArg] = schema.default
+          }
         }
         positionalsCount++
       }
@@ -1000,6 +1021,20 @@ function createRequireError(option: string, schema: ArgSchema): ArgResolveError 
       ? `Positional argument '${option}' is required`
       : `Optional argument '--${option}' ${schema.short ? `or '-${schema.short}' ` : ''}is required`
   return new ArgResolveError(message, option, 'required', schema)
+}
+
+function hasDefault(schema: ArgSchema): boolean {
+  return schema.default != null
+}
+
+function shouldRequireMissingSinglePositional(schema: ArgSchema): boolean {
+  if (schema.required === true) {
+    return true
+  }
+  if (schema.required === false) {
+    return false
+  }
+  return !hasDefault(schema)
 }
 
 /**

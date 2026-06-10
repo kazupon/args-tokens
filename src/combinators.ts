@@ -411,6 +411,7 @@ type ArgSchemaPositionalType = { type: 'positional' }
  * const args = {
  *   command: positional(),           // resolves to string
  *   port: positional(integer()),     // resolves to number
+ *   query: unrequired(positional())  // optional positional
  * }
  * ```
  *
@@ -434,6 +435,7 @@ export function positional<T>(
  * const args = {
  *   command: positional(),           // resolves to string
  *   port: positional(integer()),     // resolves to number
+ *   query: unrequired(positional())  // optional positional
  * }
  * ```
  *
@@ -450,7 +452,8 @@ export function positional<T>(
       parse: parser.parse,
       metavar: parser.metavar,
       ...(parser.description != null ? { description: parser.description } : {}),
-      ...(parser.required != null ? { required: parser.required } : {})
+      ...(parser.required != null ? { required: parser.required } : {}),
+      ...(parser.default != null ? { default: parser.default } : {})
     }
   }
   const opts = parser
@@ -796,10 +799,11 @@ type CombinatorUnrequired = { required: false }
 /**
  * Mark a combinator schema as not required.
  *
- * Useful for overriding a base combinator that was created with `required: true`.
+ * Useful for overriding a base combinator that was created with `required: true`,
+ * or for making a positional argument explicitly optional.
  * The original schema is not modified.
  *
- * @typeParam T - The schema's parsed type.
+ * @typeParam T - The schema type.
  *
  * @param schema - The base combinator schema.
  * @returns A new schema with `required: false`.
@@ -807,16 +811,17 @@ type CombinatorUnrequired = { required: false }
  * @example
  * ```ts
  * const args = {
- *   name: unrequired(string({ required: true }))
+ *   name: unrequired(string({ required: true })),
+ *   query: unrequired(positional())
  * }
  * ```
  *
  * @experimental
  */
 // @__NO_SIDE_EFFECTS__
-export function unrequired<T>(
-  schema: CombinatorSchema<T>
-): CombinatorSchema<T> & CombinatorUnrequired {
+export function unrequired<T extends ArgSchema>(
+  schema: T
+): Omit<T, 'required'> & CombinatorUnrequired {
   return {
     ...schema,
     required: false

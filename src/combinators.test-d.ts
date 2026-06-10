@@ -47,6 +47,14 @@ test('positional type inference', () => {
   // positional(integer()) → number
   const posInt = positional(integer())
   expectTypeOf<ExtractOptionValue<typeof posInt>>().toEqualTypeOf<number>()
+
+  // unrequired(positional()) → string value, optional in ArgValues
+  const optionalPos = unrequired(positional())
+  expectTypeOf<ExtractOptionValue<typeof optionalPos>>().toEqualTypeOf<string>()
+
+  // unrequired(positional(integer())) → number value, optional in ArgValues
+  const optionalPosInt = unrequired(positional(integer()))
+  expectTypeOf<ExtractOptionValue<typeof optionalPosInt>>().toEqualTypeOf<number>()
 })
 
 test('custom combinator type inference', () => {
@@ -143,6 +151,8 @@ test('ArgValues with combinators', () => {
     verbose: boolean({ negatable: true }),
     command: positional(),
     count: positional(integer()),
+    query: unrequired(positional()),
+    maybeCount: unrequired(positional(integer())),
     level: choice(['debug', 'info'] as const),
     tags: multiple(string())
   }
@@ -151,6 +161,8 @@ test('ArgValues with combinators', () => {
   expectTypeOf<Values['port']>().toEqualTypeOf<number>() // non-optional (has default)
   expectTypeOf<Values['command']>().toEqualTypeOf<string>() // positional is always required
   expectTypeOf<Values['count']>().toEqualTypeOf<number>() // positional is always required
+  expectTypeOf<Values['query']>().toEqualTypeOf<string | undefined>() // explicitly optional positional
+  expectTypeOf<Values['maybeCount']>().toEqualTypeOf<number | undefined>() // explicitly optional parsed positional
 })
 
 test('args() infers exact literal type', () => {

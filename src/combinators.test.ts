@@ -671,6 +671,30 @@ describe('unrequired combinator', () => {
     const { error } = resolveArgs({ name: unrequired(string({ required: true })) }, tokens)
     expect(error).toBeUndefined()
   })
+
+  test('works with optional positional', () => {
+    const argv: string[] = []
+    const tokens = parseArgs(argv)
+    const { error, values } = resolveArgs({ query: unrequired(positional()) }, tokens)
+    expect(error).toBeUndefined()
+    expect(values).toEqual({})
+  })
+
+  test('works with optional parsed positional', () => {
+    const argv = ['42']
+    const tokens = parseArgs(argv)
+    const { error, values } = resolveArgs({ count: unrequired(positional(integer())) }, tokens)
+    expect(error).toBeUndefined()
+    expect(values.count).toBe(42)
+  })
+
+  test('works with missing optional parsed positional', () => {
+    const argv: string[] = []
+    const tokens = parseArgs(argv)
+    const { error, values } = resolveArgs({ count: unrequired(positional(integer())) }, tokens)
+    expect(error).toBeUndefined()
+    expect(values).toEqual({})
+  })
 })
 
 describe('integration', () => {
