@@ -237,7 +237,7 @@ export interface ArgSchema {
    * - `boolean` type: boolean default
    * - `number` type: number default
    * - `enum` type: must be one of the `choices` values
-   * - `positional`/`custom` type: any appropriate default
+   * - `positional`/`custom` type: string, boolean, or number default
    *
    * For single-value positional arguments, the default is used when the positional
    * value is missing or when the value is preserved for later required positional
