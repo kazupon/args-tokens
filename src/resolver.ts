@@ -798,17 +798,8 @@ export function resolveArgs<A extends Args>(
   const errors: Error[] = []
   const explicit = Object.create(null) as ArgExplicitlyProvided<A>
   const actualInputNames = new Map<string, string>()
-  const positionalEntries = Object.entries(args).filter(
-    ([, schema]) => schema.type === 'positional'
-  )
-  const requiredPositionalsAfter = new Map<string, number>()
-  let minimumRequiredPositionals = 0
-
-  for (let i = positionalEntries.length - 1; i >= 0; i--) {
-    const [rawArg, schema] = positionalEntries[i]
-    requiredPositionalsAfter.set(rawArg, minimumRequiredPositionals)
-    minimumRequiredPositionals += getRequiredPositionalInputCount(schema)
-  }
+  const argEntries = Object.entries(args)
+  let requiredPositionalsAfter: Record<string, number> | undefined
 
   function checkTokenName(option: string, schema: ArgSchema, token: ArgToken): boolean {
     return (
@@ -826,8 +817,13 @@ export function resolveArgs<A extends Args>(
     return Math.min(skipPositionalIndex, positionalItemCount)
   }
 
+  function getRequiredPositionalsAfter(rawArg: string): number {
+    requiredPositionalsAfter ??= createRequiredPositionalsAfter(argEntries)
+    return requiredPositionalsAfter[rawArg] ?? 0
+  }
+
   let positionalsCount = 0
-  for (const [rawArg, schema] of Object.entries(args)) {
+  for (const [rawArg, schema] of argEntries) {
     const arg = toKebab || schema.toKebab ? kebabnize(rawArg) : rawArg
 
     // initialize explicit state for all options.
@@ -842,7 +838,7 @@ export function resolveArgs<A extends Args>(
         }
       }
 
-      const requiredPositionals = requiredPositionalsAfter.get(rawArg) ?? 0
+      const requiredPositionals = getRequiredPositionalsAfter(rawArg)
       const availablePositionals = Math.max(positionalTokens.length - positionalsCount, 0)
 
       if (schema.multiple) {
@@ -1071,6 +1067,22 @@ function getRequiredPositionalInputCount(schema: ArgSchema): number {
     return schema.required === true ? 1 : 0
   }
   return shouldRequireMissingSinglePositional(schema) ? 1 : 0
+}
+
+function createRequiredPositionalsAfter(argEntries: [string, ArgSchema][]): Record<string, number> {
+  const requiredPositionalsAfter = Object.create(null) as Record<string, number>
+  let minimumRequiredPositionals = 0
+
+  for (let i = argEntries.length - 1; i >= 0; i--) {
+    const [rawArg, schema] = argEntries[i]
+    if (schema.type !== 'positional') {
+      continue
+    }
+    requiredPositionalsAfter[rawArg] = minimumRequiredPositionals
+    minimumRequiredPositionals += getRequiredPositionalInputCount(schema)
+  }
+
+  return requiredPositionalsAfter
 }
 
 /**
