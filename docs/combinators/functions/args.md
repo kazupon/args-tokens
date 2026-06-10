@@ -1,41 +1,30 @@
-[**args-tokens**](../../index.md)
-
----
-
-[args-tokens](../../index.md) / [combinators](../index.md) / args
-
 # Function: args()
 
-```ts
-function args<T>(fields): T
-```
-
-**`Experimental`**
+> [!WARNING]
+> This API is experimental and may change in future versions.
 
 Type-safe schema factory.
 
 Returns the input unchanged at runtime, but provides type inference
 so that `satisfies Args` is not needed.
 
-## Type Parameters
+## Signature
 
-| Type Parameter                                           | Description            |
-| -------------------------------------------------------- | ---------------------- |
-| `T` _extends_ [`Args`](../../default/interfaces/Args.md) | The exact schema type. |
+```ts
+export function args<T extends Args>(fields: T): T
+```
 
 ## Parameters
 
-| Parameter | Type | Description                 |
-| --------- | ---- | --------------------------- |
-| `fields`  | `T`  | The argument schema object. |
+| Name     | Type | Description                 |
+| -------- | ---- | --------------------------- |
+| `fields` | `T`  | The argument schema object. |
 
 ## Returns
 
-`T`
+`T` — The same schema object with its type inferred.
 
-The same schema object with its type inferred.
-
-## Example
+## Examples
 
 ```ts
 const common = args({
@@ -43,3 +32,7 @@ const common = args({
   help: short(boolean(), 'h')
 })
 ```
+
+## Tags
+
+- `@typeParam` — T - The exact schema type.

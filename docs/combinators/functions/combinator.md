@@ -1,44 +1,33 @@
-[**args-tokens**](../../index.md)
-
----
-
-[args-tokens](../../index.md) / [combinators](../index.md) / combinator
-
 # Function: combinator()
 
-```ts
-function combinator<T>(config): CombinatorSchema<T>
-```
-
-**`Experimental`**
+> [!WARNING]
+> This API is experimental and may change in future versions.
 
 Create a custom argument schema with a user-defined parse function.
 
 This is the most general custom combinator. Use it when none of the built-in
-base combinators ([string](string.md), [number](number.md), [integer](integer.md),
-[float](float.md), [boolean](boolean.md), [choice](choice.md)) fit your needs.
+base combinators ([string](/docs/combinators/functions/string.md), [number](/docs/combinators/functions/number.md), [integer](/docs/combinators/functions/integer.md),
+[float](/docs/combinators/functions/float.md), [boolean](/docs/combinators/functions/boolean.md), [choice](/docs/combinators/functions/choice.md)) fit your needs.
 
 The returned schema has `type: 'custom'`.
 
-## Type Parameters
+## Signature
 
-| Type Parameter | Description            |
-| -------------- | ---------------------- |
-| `T`            | The parsed value type. |
+```ts
+export function combinator<T>(config: CombinatorOptions<T>): CombinatorSchema<T>
+```
 
 ## Parameters
 
-| Parameter | Type                                                             | Description                                               |
-| --------- | ---------------------------------------------------------------- | --------------------------------------------------------- |
-| `config`  | [`CombinatorOptions`](../interfaces/CombinatorOptions.md)\<`T`\> | Configuration with a parse function and optional metavar. |
+| Name     | Type                                                                            | Description                                               |
+| -------- | ------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| `config` | [`CombinatorOptions`](/docs/combinators/interfaces/CombinatorOptions.md)\<`T`\> | Configuration with a parse function and optional metavar. |
 
 ## Returns
 
-[`CombinatorSchema`](../type-aliases/CombinatorSchema.md)\<`T`\>
+[`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\> — A combinator schema that resolves to the parse function's return type.
 
-A combinator schema that resolves to the parse function's return type.
-
-## Example
+## Examples
 
 ```ts
 const date = combinator({
@@ -52,3 +41,7 @@ const date = combinator({
   metavar: 'date'
 })
 ```
+
+## Tags
+
+- `@typeParam` — T - The parsed value type.

@@ -1,14 +1,14 @@
-[**args-tokens**](../../index.md)
-
----
-
-[args-tokens](../../index.md) / [default](../index.md) / Args
-
 # Interface: Args
 
-An object that contains [argument schema](ArgSchema.md).
+An object that contains [argument schema](/docs/default/interfaces/ArgSchema.md).
 
 This type is used to define the structure and validation rules for command line arguments.
+
+## Signature
+
+```ts
+export interface Args
+```
 
 ## Indexable
 

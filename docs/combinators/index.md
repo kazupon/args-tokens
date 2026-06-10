@@ -1,12 +1,7 @@
-[**args-tokens**](../index.md)
-
----
-
-[args-tokens](../index.md) / combinators
-
 # combinators
 
-**`Experimental`**
+> [!WARNING]
+> This module is experimental and may change in future versions.
 
 Parser combinator factory functions for composable argument schema construction.
 
@@ -55,46 +50,44 @@ const tokens = parseArgs(argv)
 const { values } = resolveArgs(schema, tokens)
 ```
 
-This module is experimental and may change in future versions.
-
 ## Functions
 
-| Function                                | Description |
-| --------------------------------------- | ----------- |
-| [args](functions/args.md)               | -           |
-| [boolean](functions/boolean.md)         | -           |
-| [choice](functions/choice.md)           | -           |
-| [combinator](functions/combinator.md)   | -           |
-| [describe](functions/describe.md)       | -           |
-| [extend](functions/extend.md)           | -           |
-| [float](functions/float.md)             | -           |
-| [integer](functions/integer.md)         | -           |
-| [map](functions/map.md)                 | -           |
-| [merge](functions/merge.md)             | -           |
-| [multiple](functions/multiple.md)       | -           |
-| [number](functions/number.md)           | -           |
-| [positional](functions/positional.md)   | -           |
-| [required](functions/required.md)       | -           |
-| [short](functions/short.md)             | -           |
-| [string](functions/string.md)           | -           |
-| [unrequired](functions/unrequired.md)   | -           |
-| [withDefault](functions/withDefault.md) | -           |
+| Function                                                  | Description                                                                 |
+| --------------------------------------------------------- | --------------------------------------------------------------------------- |
+| [args](/docs/combinators/functions/args.md)               | Type-safe schema factory.                                                   |
+| [boolean](/docs/combinators/functions/boolean.md)         | Create a boolean argument schema.                                           |
+| [choice](/docs/combinators/functions/choice.md)           | Create an enum-like argument schema with literal type inference.            |
+| [combinator](/docs/combinators/functions/combinator.md)   | Create a custom argument schema with a user-defined parse function.         |
+| [describe](/docs/combinators/functions/describe.md)       | Set a description on a combinator schema for help text generation.          |
+| [extend](/docs/combinators/functions/extend.md)           | Extend a schema by overriding or adding fields.                             |
+| [float](/docs/combinators/functions/float.md)             | Create a floating-point argument schema with optional range validation.     |
+| [integer](/docs/combinators/functions/integer.md)         | Create an integer argument schema with optional range validation.           |
+| [map](/docs/combinators/functions/map.md)                 | Transform the output of a combinator schema.                                |
+| [merge](/docs/combinators/functions/merge.md)             | Compose multiple [Args](/docs/default/interfaces/Args.md) schemas into one. |
+| [multiple](/docs/combinators/functions/multiple.md)       | Mark a combinator schema as accepting multiple values.                      |
+| [number](/docs/combinators/functions/number.md)           | Create a number argument schema with optional range validation.             |
+| [positional](/docs/combinators/functions/positional.md)   | Create a positional argument schema.                                        |
+| [required](/docs/combinators/functions/required.md)       | Mark a combinator schema as required.                                       |
+| [short](/docs/combinators/functions/short.md)             | Set a short alias on a combinator schema.                                   |
+| [string](/docs/combinators/functions/string.md)           | Create a string argument schema with optional validation.                   |
+| [unrequired](/docs/combinators/functions/unrequired.md)   | Mark a combinator schema as not required.                                   |
+| [withDefault](/docs/combinators/functions/withDefault.md) | Set a default value on a combinator schema.                                 |
 
 ## Interfaces
 
-| Interface                                            | Description                                                             |
-| ---------------------------------------------------- | ----------------------------------------------------------------------- |
-| [BaseOptions](interfaces/BaseOptions.md)             | Common options shared by all base combinators.                          |
-| [BooleanOptions](interfaces/BooleanOptions.md)       | Options for the [boolean](functions/boolean.md) combinator.             |
-| [CombinatorOptions](interfaces/CombinatorOptions.md) | Options for the [combinator](functions/combinator.md) factory function. |
-| [FloatOptions](interfaces/FloatOptions.md)           | Options for the [float](functions/float.md) combinator.                 |
-| [IntegerOptions](interfaces/IntegerOptions.md)       | Options for the [integer](functions/integer.md) combinator.             |
-| [NumberOptions](interfaces/NumberOptions.md)         | Options for the [number](functions/number.md) combinator.               |
-| [StringOptions](interfaces/StringOptions.md)         | Options for the [string](functions/string.md) combinator.               |
+| Interface                                                              | Description                                                                               |
+| ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| [BaseOptions](/docs/combinators/interfaces/BaseOptions.md)             | Common options shared by all base combinators.                                            |
+| [BooleanOptions](/docs/combinators/interfaces/BooleanOptions.md)       | Options for the [boolean](/docs/combinators/functions/boolean.md) combinator.             |
+| [CombinatorOptions](/docs/combinators/interfaces/CombinatorOptions.md) | Options for the [combinator](/docs/combinators/functions/combinator.md) factory function. |
+| [FloatOptions](/docs/combinators/interfaces/FloatOptions.md)           | Options for the [float](/docs/combinators/functions/float.md) combinator.                 |
+| [IntegerOptions](/docs/combinators/interfaces/IntegerOptions.md)       | Options for the [integer](/docs/combinators/functions/integer.md) combinator.             |
+| [NumberOptions](/docs/combinators/interfaces/NumberOptions.md)         | Options for the [number](/docs/combinators/functions/number.md) combinator.               |
+| [StringOptions](/docs/combinators/interfaces/StringOptions.md)         | Options for the [string](/docs/combinators/functions/string.md) combinator.               |
 
 ## Type Aliases
 
-| Type Alias                                           | Description                                                                                                                             |
-| ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| [Combinator](type-aliases/Combinator.md)             | A combinator produced by combinator factory functions.                                                                                  |
-| [CombinatorSchema](type-aliases/CombinatorSchema.md) | A schema produced by combinator factory functions. Any [ArgSchema](../default/interfaces/ArgSchema.md) with a parse function qualifies. |
+| Type Alias                                                             | Description                                                                                                                                |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| [Combinator](/docs/combinators/type-aliases/Combinator.md)             | A combinator produced by combinator factory functions.                                                                                     |
+| [CombinatorSchema](/docs/combinators/type-aliases/CombinatorSchema.md) | A schema produced by combinator factory functions. Any [ArgSchema](/docs/default/interfaces/ArgSchema.md) with a parse function qualifies. |

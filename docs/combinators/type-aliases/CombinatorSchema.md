@@ -1,22 +1,17 @@
-[**args-tokens**](../../index.md)
+# Type Alias: CombinatorSchema
 
----
-
-[args-tokens](../../index.md) / [combinators](../index.md) / CombinatorSchema
-
-# Type Alias: CombinatorSchema\<T\>
-
-```ts
-type CombinatorSchema<T> = ArgSchema & Combinator<T>
-```
-
-**`Experimental`**
+> [!WARNING]
+> This API is experimental and may change in future versions.
 
 A schema produced by combinator factory functions.
-Any [ArgSchema](../../default/interfaces/ArgSchema.md) with a parse function qualifies.
+Any [ArgSchema](/docs/default/interfaces/ArgSchema.md) with a parse function qualifies.
 
-## Type Parameters
+## Signature
 
-| Type Parameter | Description            |
-| -------------- | ---------------------- |
-| `T`            | The parsed value type. |
+```ts
+export type CombinatorSchema<T> = ArgSchema & Combinator<T>
+```
+
+## Tags
+
+- `@typeParam` — T - The parsed value type.

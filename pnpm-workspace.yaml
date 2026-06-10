@@ -17,6 +17,8 @@ minimumReleaseAgeExclude:
   - '@types/node'
   - '@typescript/native-preview'
   - '@typescript/*'
+  - '@ox-content/*'
+  - vitepress-api-references
 shellEmulator: true
 allowBuilds:
   deno: true

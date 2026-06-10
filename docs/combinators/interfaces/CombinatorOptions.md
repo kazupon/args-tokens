@@ -1,31 +1,37 @@
-[**args-tokens**](../../index.md)
+# Interface: CombinatorOptions
 
----
+> [!WARNING]
+> This API is experimental and may change in future versions.
 
-[args-tokens](../../index.md) / [combinators](../index.md) / CombinatorOptions
-
-# Interface: CombinatorOptions\<T\>
-
-**`Experimental`**
-
-Options for the [combinator](../functions/combinator.md) factory function.
+Options for the [combinator](/docs/combinators/functions/combinator.md) factory function.
 
 ## Extends
 
-- [`BaseOptions`](BaseOptions.md)
+- [`BaseOptions`](/docs/combinators/interfaces/BaseOptions.md)
 
-## Type Parameters
+## Signature
 
-| Type Parameter | Description            |
-| -------------- | ---------------------- |
-| `T`            | The parsed value type. |
+```ts
+export interface CombinatorOptions<T> extends BaseOptions
+```
 
 ## Properties
 
-| Property                                         | Type             | Description                                                                           | Inherited from                                                                       |
-| ------------------------------------------------ | ---------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| <a id="property-description"></a> `description?` | `string`         | **`Experimental`** Human-readable description for help text generation.               | [`BaseOptions`](BaseOptions.md).[`description`](BaseOptions.md#property-description) |
-| <a id="property-metavar"></a> `metavar?`         | `string`         | **`Experimental`** Display name hint for help text generation. **Default** `'custom'` | -                                                                                    |
-| <a id="property-parse"></a> `parse`              | (`value`) => `T` | **`Experimental`** The parse function that converts a string to the desired type.     | -                                                                                    |
-| <a id="property-required"></a> `required?`       | `boolean`        | **`Experimental`** Mark as required.                                                  | [`BaseOptions`](BaseOptions.md).[`required`](BaseOptions.md#property-required)       |
-| <a id="property-short"></a> `short?`             | `string`         | **`Experimental`** Single character short alias.                                      | [`BaseOptions`](BaseOptions.md).[`short`](BaseOptions.md#property-short)             |
+| Name                   | Type                   | Description                                                         |
+| ---------------------- | ---------------------- | ------------------------------------------------------------------- |
+| `metavar` _(optional)_ | `string`               | Display name hint for help text generation. **Default:** `'custom'` |
+| `parse`                | `(value: string) => T` | The parse function that converts a string to the desired type.      |
+
+### parse Parameters
+
+| Name    | Type     | Description             |
+| ------- | -------- | ----------------------- |
+| `value` | `string` | The input string value. |
+
+### parse Returns
+
+`T` — The parsed value of type T.
+
+## Tags
+
+- `@typeParam` — T - The parsed value type.

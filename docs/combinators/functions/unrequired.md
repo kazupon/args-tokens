@@ -1,44 +1,39 @@
-[**args-tokens**](../../index.md)
-
----
-
-[args-tokens](../../index.md) / [combinators](../index.md) / unrequired
-
 # Function: unrequired()
 
-```ts
-function unrequired<T>(schema): ArgSchema & Combinator<T> & CombinatorUnrequired
-```
-
-**`Experimental`**
+> [!WARNING]
+> This API is experimental and may change in future versions.
 
 Mark a combinator schema as not required.
 
 Useful for overriding a base combinator that was created with `required: true`.
 The original schema is not modified.
 
-## Type Parameters
+## Signature
 
-| Type Parameter | Description               |
-| -------------- | ------------------------- |
-| `T`            | The schema's parsed type. |
+```ts
+export function unrequired<T>(
+  schema: CombinatorSchema<T>
+): CombinatorSchema<T> & CombinatorUnrequired
+```
 
 ## Parameters
 
-| Parameter | Type                                                             | Description                 |
-| --------- | ---------------------------------------------------------------- | --------------------------- |
-| `schema`  | [`CombinatorSchema`](../type-aliases/CombinatorSchema.md)\<`T`\> | The base combinator schema. |
+| Name     | Type                                                                            | Description                 |
+| -------- | ------------------------------------------------------------------------------- | --------------------------- |
+| `schema` | [`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\> | The base combinator schema. |
 
 ## Returns
 
-[`ArgSchema`](../../default/interfaces/ArgSchema.md) & [`Combinator`](../type-aliases/Combinator.md)\<`T`\> & `CombinatorUnrequired`
+[`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\> & `CombinatorUnrequired` — A new schema with `required: false`.
 
-A new schema with `required: false`.
-
-## Example
+## Examples
 
 ```ts
 const args = {
   name: unrequired(string({ required: true }))
 }
 ```
+
+## Tags
+
+- `@typeParam` — T - The schema's parsed type.

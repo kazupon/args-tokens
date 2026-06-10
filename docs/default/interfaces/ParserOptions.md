@@ -1,19 +1,15 @@
-[**args-tokens**](../../index.md)
-
----
-
-[args-tokens](../../index.md) / [default](../index.md) / ParserOptions
-
 # Interface: ParserOptions
 
 Parser Options.
 
-## Extended by
+## Signature
 
-- [`ParseOptions`](ParseOptions.md)
+```ts
+export interface ParserOptions
+```
 
 ## Properties
 
-| Property                                                 | Type      | Description                                                                                                        |
-| -------------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------ |
-| <a id="property-allowcompatible"></a> `allowCompatible?` | `boolean` | [Node.js parseArgs](https://nodejs.org/api/util.html#parseargs-tokens) tokens compatible mode. **Default** `false` |
+| Name                           | Type      | Description                                                                                                         |
+| ------------------------------ | --------- | ------------------------------------------------------------------------------------------------------------------- |
+| `allowCompatible` _(optional)_ | `boolean` | [Node.js parseArgs](https://nodejs.org/api/util.html#parseargs-tokens) tokens compatible mode. **Default:** `false` |

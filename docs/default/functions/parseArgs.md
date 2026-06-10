@@ -1,31 +1,25 @@
-[**args-tokens**](../../index.md)
-
----
-
-[args-tokens](../../index.md) / [default](../index.md) / parseArgs
-
 # Function: parseArgs()
-
-```ts
-function parseArgs(args, options?): ArgToken[]
-```
 
 Parse command line arguments.
 
+## Signature
+
+```ts
+export function parseArgs(args: string[], options: ParserOptions = {}): ArgToken[]
+```
+
 ## Parameters
 
-| Parameter | Type                                              | Description                                                                      |
-| --------- | ------------------------------------------------- | -------------------------------------------------------------------------------- |
-| `args`    | `string`[]                                        | command line arguments                                                           |
-| `options` | [`ParserOptions`](../interfaces/ParserOptions.md) | parse options, about details see [ParserOptions](../interfaces/ParserOptions.md) |
+| Name      | Type                                                         | Description                                                                                                           |
+| --------- | ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| `args`    | `string[]`                                                   | command line arguments                                                                                                |
+| `options` | [`ParserOptions`](/docs/default/interfaces/ParserOptions.md) | parse options, about details see [ParserOptions](/docs/default/interfaces/ParserOptions.md) _(optional, default: {})_ |
 
 ## Returns
 
-[`ArgToken`](../interfaces/ArgToken.md)[]
+[`ArgToken`](/docs/default/interfaces/ArgToken.md)\[\] — Argument tokens.
 
-Argument tokens.
-
-## Example
+## Examples
 
 ```js
 import { parseArgs } from 'args-tokens' // for Node.js and Bun

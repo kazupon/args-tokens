@@ -1,44 +1,40 @@
-[**args-tokens**](../../index.md)
-
----
-
-[args-tokens](../../index.md) / [combinators](../index.md) / withDefault
-
 # Function: withDefault()
 
-```ts
-function withDefault<T>(schema, defaultValue): ArgSchema & Combinator<T> & CombinatorWithDefault<T>
-```
-
-**`Experimental`**
+> [!WARNING]
+> This API is experimental and may change in future versions.
 
 Set a default value on a combinator schema.
 
 The original schema is not modified.
 
-## Type Parameters
+## Signature
 
-| Type Parameter                                  | Description               |
-| ----------------------------------------------- | ------------------------- |
-| `T` _extends_ `string` \| `number` \| `boolean` | The schema's parsed type. |
+```ts
+export function withDefault<T extends string | boolean | number>(
+  schema: CombinatorSchema<T>,
+  defaultValue: T
+): CombinatorSchema<T> & CombinatorWithDefault<T>
+```
 
 ## Parameters
 
-| Parameter      | Type                                                             | Description                 |
-| -------------- | ---------------------------------------------------------------- | --------------------------- |
-| `schema`       | [`CombinatorSchema`](../type-aliases/CombinatorSchema.md)\<`T`\> | The base combinator schema. |
-| `defaultValue` | `T`                                                              | The default value.          |
+| Name           | Type                                                                            | Description                 |
+| -------------- | ------------------------------------------------------------------------------- | --------------------------- |
+| `schema`       | [`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\> | The base combinator schema. |
+| `defaultValue` | `T`                                                                             | The default value.          |
 
 ## Returns
 
-[`ArgSchema`](../../default/interfaces/ArgSchema.md) & [`Combinator`](../type-aliases/Combinator.md)\<`T`\> & `CombinatorWithDefault`\<`T`\>
+[`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\> & `CombinatorWithDefault`\<`T`\> — A new schema with the default value set.
 
-A new schema with the default value set.
-
-## Example
+## Examples
 
 ```ts
 const args = {
   port: withDefault(integer({ min: 1, max: 65535 }), 8080)
 }
 ```
+
+## Tags
+
+- `@typeParam` — T - The schema's parsed type.
