@@ -374,6 +374,8 @@ Human-readable description used for help text generation and documentation.
 
 Marks the argument as required. When `true`, the argument must be provided or an `ArgResolveError` will be thrown.
 
+Single-value positional arguments are required by default for compatibility. Set `required: false` to make a positional argument explicitly optional. When an optional positional argument appears before later required positional arguments, it consumes a value only when enough values remain for those required positional arguments.
+
 <!-- eslint-skip -->
 
 ```js
@@ -386,6 +388,10 @@ Marks the argument as required. When `true`, the argument must be provided or an
   source: {
     type: 'positional',
     required: true   // First positional argument must exist
+  },
+  query: {
+    type: 'positional',
+    required: false  // May be omitted, for example when the command reads stdin
   }
 }
 ```
@@ -395,7 +401,7 @@ Marks the argument as required. When `true`, the argument must be provided or an
 Allows the argument to accept multiple values. The resolved value becomes an array.
 
 - For options: can be specified multiple times (`--tag foo --tag bar`)
-- For positional: collects remaining positional arguments
+- For positional: collects remaining positional arguments after preserving values for later required positional arguments
 
 <!-- eslint-skip -->
 
@@ -409,6 +415,9 @@ Allows the argument to accept multiple values. The resolved value becomes an arr
   files: {
     type: 'positional',
     multiple: true   // Collects all remaining positional args
+  },
+  output: {
+    type: 'positional' // Keeps the last positional value when declared after files
   }
 }
 ```
@@ -457,6 +466,8 @@ Array of allowed string values for enum-type arguments. Required when `type: 'en
 
 Default value used when the argument is not provided. The type must match the argument's `type` property.
 
+For single-value positional arguments, the default is used when the positional value is missing or when the value is preserved for later required positional arguments, unless `required: true` is set.
+
 <!-- eslint-skip -->
 
 ```js
@@ -477,6 +488,10 @@ Default value used when the argument is not provided. The type must match the ar
     type: 'enum',
     choices: ['low', 'high'],
     default: 'low'        // must be in choices
+  },
+  command: {
+    type: 'positional',
+    default: 'help'       // positional default
   }
 }
 ```
@@ -642,6 +657,7 @@ const { values } = resolveArgs(schema, tokens)
 - `boolean(opts?)` — Boolean flag, supports `negatable`
 - `positional()` — Positional argument (resolves to string)
 - `positional(parser)` — Typed positional (e.g., `positional(integer())`)
+- `unrequired(positional())` — Explicitly optional positional argument
 - `choice(values)` — Enum-like with literal type inference
 
 #### Modifier Combinators
@@ -649,7 +665,7 @@ const { values } = resolveArgs(schema, tokens)
 - `describe(schema, text)` — Set a human-readable description for help text generation
 - `short(schema, alias)` — Set a single-character short alias (e.g., `-v` for `--verbose`)
 - `required(schema)` — Mark as required (error if not provided)
-- `unrequired(schema)` — Mark as not required (override `required: true`)
+- `unrequired(schema)` — Mark as not required (override `required: true`, or make a positional optional)
 - `withDefault(schema, defaultValue)` — Set a default value
 - `multiple(schema)` — Accept multiple values (resolves to array)
 - `map(schema, transform)` — Transform the parsed value

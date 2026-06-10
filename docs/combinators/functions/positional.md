@@ -31,7 +31,8 @@ With a parser (e.g., `positional(integer())`), resolves to the parser's return t
 ```ts
 const args = {
   command: positional(), // resolves to string
-  port: positional(integer()) // resolves to number
+  port: positional(integer()), // resolves to number
+  query: unrequired(positional()) // optional positional
 }
 ```
 
@@ -68,6 +69,7 @@ With a parser (e.g., `positional(integer())`), resolves to the parser's return t
 ```ts
 const args = {
   command: positional(), // resolves to string
-  port: positional(integer()) // resolves to number
+  port: positional(integer()), // resolves to number
+  query: unrequired(positional()) // optional positional
 }
 ```

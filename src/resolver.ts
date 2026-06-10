@@ -129,7 +129,10 @@ export interface ArgSchema {
    * When `true`, the argument must be provided by the user.
    * If missing, an `ArgResolveError` with type 'required' will be thrown.
    *
-   * Note: Only `true` is allowed (not `false`) to make intent explicit.
+   * For single-value positional arguments, omitting `required` keeps the argument
+   * required for compatibility. Set `required: false` to make a positional argument
+   * optional. Optional positional arguments leave enough input values for later
+   * required positional arguments before consuming a value.
    *
    * @example
    * Required arguments:
@@ -153,7 +156,8 @@ export interface ArgSchema {
    *
    * When `true`, the resolved value becomes an array.
    * For options: can be specified multiple times (--tag foo --tag bar)
-   * For positional: collects remaining positional arguments
+   * For positional: collects remaining positional arguments after preserving values for
+   * later required positional arguments.
    *
    * Note: Only `true` is allowed (not `false`) to make intent explicit.
    *
@@ -234,6 +238,10 @@ export interface ArgSchema {
    * - `number` type: number default
    * - `enum` type: must be one of the `choices` values
    * - `positional`/`custom` type: any appropriate default
+   *
+   * For single-value positional arguments, the default is used when the positional
+   * value is missing or when the value is preserved for later required positional
+   * arguments, unless `required: true` is set.
    *
    * @example
    * Default values by type:
@@ -541,8 +549,20 @@ export type FilterArgs<
  * @internal
  */
 export type FilterPositionalArgs<A extends Args, V extends Record<keyof A, unknown>> = {
-  [Arg in keyof A as A[Arg]['type'] extends 'positional' ? Arg : never]: V[Arg]
+  [Arg in keyof A as IsRequiredPositionalArg<A[Arg]> extends true ? Arg : never]: V[Arg]
 }
+
+type IsRequiredPositionalArg<A extends ArgSchema> = A['type'] extends 'positional'
+  ? A['multiple'] extends true
+    ? A['required'] extends true
+      ? true
+      : false
+    : A['required'] extends false
+      ? A['default'] extends {}
+        ? true
+        : false
+      : true
+  : false
 
 /**
  * An arguments for {@link resolveArgs | resolve arguments}.
@@ -778,6 +798,8 @@ export function resolveArgs<A extends Args>(
   const errors: Error[] = []
   const explicit = Object.create(null) as ArgExplicitlyProvided<A>
   const actualInputNames = new Map<string, string>()
+  const argEntries = Object.entries(args)
+  let requiredPositionalsAfter: Record<string, number> | undefined
 
   function checkTokenName(option: string, schema: ArgSchema, token: ArgToken): boolean {
     return (
@@ -795,8 +817,13 @@ export function resolveArgs<A extends Args>(
     return Math.min(skipPositionalIndex, positionalItemCount)
   }
 
+  function getRequiredPositionalsAfter(rawArg: string): number {
+    requiredPositionalsAfter ??= createRequiredPositionalsAfter(argEntries)
+    return requiredPositionalsAfter[rawArg] ?? 0
+  }
+
   let positionalsCount = 0
-  for (const [rawArg, schema] of Object.entries(args)) {
+  for (const [rawArg, schema] of argEntries) {
     const arg = toKebab || schema.toKebab ? kebabnize(rawArg) : rawArg
 
     // initialize explicit state for all options.
@@ -811,8 +838,15 @@ export function resolveArgs<A extends Args>(
         }
       }
 
+      const requiredPositionals = getRequiredPositionalsAfter(rawArg)
+      const availablePositionals = Math.max(positionalTokens.length - positionalsCount, 0)
+
       if (schema.multiple) {
-        const remainingPositionals = positionalTokens.slice(positionalsCount)
+        const positionalsToConsume = Math.max(availablePositionals - requiredPositionals, 0)
+        const remainingPositionals = positionalTokens.slice(
+          positionalsCount,
+          positionalsCount + positionalsToConsume
+        )
         if (remainingPositionals.length > 0) {
           if (typeof schema.parse === 'function') {
             const parsed: unknown[] = []
@@ -838,7 +872,11 @@ export function resolveArgs<A extends Args>(
         }
       } else {
         const positional = positionalTokens[positionalsCount]
-        if (positional != null) {
+        const shouldConsumePositional =
+          positional != null &&
+          (shouldRequireMissingSinglePositional(schema) ||
+            availablePositionals > requiredPositionals)
+        if (shouldConsumePositional) {
           if (typeof schema.parse === 'function') {
             try {
               // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment -- NOTE(kazupon): Allow any type for resolving
@@ -853,10 +891,15 @@ export function resolveArgs<A extends Args>(
           // mark as explicitly set when positional argument is provided.
           // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(sushichan044): Allow any type for resolving
           ;(explicit as any)[rawArg] = true
+          positionalsCount++
         } else {
-          errors.push(createRequireError(arg, schema))
+          if (shouldRequireMissingSinglePositional(schema)) {
+            errors.push(createRequireError(arg, schema))
+          } else if (hasDefault(schema)) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(kazupon): Allow any type for resolving
+            ;(values as any)[rawArg] = schema.default
+          }
         }
-        positionalsCount++
       }
       continue
     }
@@ -1000,6 +1043,46 @@ function createRequireError(option: string, schema: ArgSchema): ArgResolveError 
       ? `Positional argument '${option}' is required`
       : `Optional argument '--${option}' ${schema.short ? `or '-${schema.short}' ` : ''}is required`
   return new ArgResolveError(message, option, 'required', schema)
+}
+
+function hasDefault(schema: ArgSchema): boolean {
+  return schema.default != null
+}
+
+function shouldRequireMissingSinglePositional(schema: ArgSchema): boolean {
+  if (schema.required === true) {
+    return true
+  }
+  if (schema.required === false) {
+    return false
+  }
+  return !hasDefault(schema)
+}
+
+function getRequiredPositionalInputCount(schema: ArgSchema): number {
+  if (schema.type !== 'positional') {
+    return 0
+  }
+  if (schema.multiple) {
+    return schema.required === true ? 1 : 0
+  }
+  return shouldRequireMissingSinglePositional(schema) ? 1 : 0
+}
+
+function createRequiredPositionalsAfter(argEntries: [string, ArgSchema][]): Record<string, number> {
+  const requiredPositionalsAfter = Object.create(null) as Record<string, number>
+  let minimumRequiredPositionals = 0
+
+  for (let i = argEntries.length - 1; i >= 0; i--) {
+    const [rawArg, schema] = argEntries[i]
+    if (schema.type !== 'positional') {
+      continue
+    }
+    requiredPositionalsAfter[rawArg] = minimumRequiredPositionals
+    minimumRequiredPositionals += getRequiredPositionalInputCount(schema)
+  }
+
+  return requiredPositionalsAfter
 }
 
 /**

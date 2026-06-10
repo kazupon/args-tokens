@@ -5,35 +5,37 @@
 
 Mark a combinator schema as not required.
 
-Useful for overriding a base combinator that was created with `required: true`.
+Useful for overriding a base combinator that was created with `required: true`,
+or for making a positional argument explicitly optional.
 The original schema is not modified.
 
 ## Signature
 
 ```ts
-export function unrequired<T>(
-  schema: CombinatorSchema<T>
-): CombinatorSchema<T> & CombinatorUnrequired
+export function unrequired<T extends ArgSchema>(
+  schema: T
+): Omit<T, 'required'> & CombinatorUnrequired
 ```
 
 ## Parameters
 
-| Name     | Type                                                                            | Description                 |
-| -------- | ------------------------------------------------------------------------------- | --------------------------- |
-| `schema` | [`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\> | The base combinator schema. |
+| Name     | Type | Description                 |
+| -------- | ---- | --------------------------- |
+| `schema` | `T`  | The base combinator schema. |
 
 ## Returns
 
-[`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\> & `CombinatorUnrequired` — A new schema with `required: false`.
+`Omit<T, 'required'> & CombinatorUnrequired` — A new schema with `required: false`.
 
 ## Examples
 
 ```ts
 const args = {
-  name: unrequired(string({ required: true }))
+  name: unrequired(string({ required: true })),
+  query: unrequired(positional())
 }
 ```
 
 ## Tags
 
-- `@typeParam` — T - The schema's parsed type.
+- `@typeParam` — T - The schema type.
