@@ -1,27 +1,32 @@
-[**args-tokens**](../../index.md)
+# Type Alias: Combinator
 
----
-
-[args-tokens](../../index.md) / [combinators](../index.md) / Combinator
-
-# Type Alias: Combinator\<T\>
-
-```ts
-type Combinator<T> = object
-```
-
-**`Experimental`**
+> [!WARNING]
+> This API is experimental and may change in future versions.
 
 A combinator produced by combinator factory functions.
 
-## Type Parameters
+## Signature
 
-| Type Parameter | Description            |
-| -------------- | ---------------------- |
-| `T`            | The parsed value type. |
+```ts
+export type Combinator<T> = { parse: (value: string) => T }
+```
 
 ## Properties
 
-| Property                            | Type             | Description                                                    |
-| ----------------------------------- | ---------------- | -------------------------------------------------------------- |
-| <a id="property-parse"></a> `parse` | (`value`) => `T` | The parse function that converts a string to the desired type. |
+| Name    | Type                   | Description                                                    |
+| ------- | ---------------------- | -------------------------------------------------------------- |
+| `parse` | `(value: string) => T` | The parse function that converts a string to the desired type. |
+
+### parse Parameters
+
+| Name    | Type     | Description             |
+| ------- | -------- | ----------------------- |
+| `value` | `string` | The input string value. |
+
+### parse Returns
+
+`T` — The parsed value of type T.
+
+## Tags
+
+- `@typeParam` — T - The parsed value type.

@@ -1,12 +1,8 @@
-**args-tokens**
-
----
-
-# args-tokens
+# API Documentation
 
 ## Modules
 
-| Module                              | Description                                                                      |
-| ----------------------------------- | -------------------------------------------------------------------------------- |
-| [combinators](combinators/index.md) | Parser combinator factory functions for composable argument schema construction. |
-| [default](default/index.md)         | Main entry point of `args-tokens`.                                               |
+| Module                                    | Description                                                                      |
+| ----------------------------------------- | -------------------------------------------------------------------------------- |
+| [combinators](/docs/combinators/index.md) | Parser combinator factory functions for composable argument schema construction. |
+| [default](/docs/default/index.md)         | Main entry point of `args-tokens`.                                               |

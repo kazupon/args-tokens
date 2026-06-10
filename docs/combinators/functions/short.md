@@ -1,42 +1,33 @@
-[**args-tokens**](../../index.md)
-
----
-
-[args-tokens](../../index.md) / [combinators](../index.md) / short
-
 # Function: short()
 
-```ts
-function short<T, S>(schema, alias): ArgSchema & Combinator<T> & CombinatorShort<S>
-```
-
-**`Experimental`**
+> [!WARNING]
+> This API is experimental and may change in future versions.
 
 Set a short alias on a combinator schema.
 
 The original schema is not modified.
 
-## Type Parameters
+## Signature
 
-| Type Parameter         | Description                          |
-| ---------------------- | ------------------------------------ |
-| `T`                    | The schema's parsed type.            |
-| `S` _extends_ `string` | The short alias string literal type. |
+```ts
+export function short<T, S extends string>(
+  schema: CombinatorSchema<T>,
+  alias: S
+): CombinatorSchema<T> & CombinatorShort<S>
+```
 
 ## Parameters
 
-| Parameter | Type                                                             | Description                   |
-| --------- | ---------------------------------------------------------------- | ----------------------------- |
-| `schema`  | [`CombinatorSchema`](../type-aliases/CombinatorSchema.md)\<`T`\> | The base combinator schema.   |
-| `alias`   | `S`                                                              | Single character short alias. |
+| Name     | Type                                                                            | Description                   |
+| -------- | ------------------------------------------------------------------------------- | ----------------------------- |
+| `schema` | [`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\> | The base combinator schema.   |
+| `alias`  | `S`                                                                             | Single character short alias. |
 
 ## Returns
 
-[`ArgSchema`](../../default/interfaces/ArgSchema.md) & [`Combinator`](../type-aliases/Combinator.md)\<`T`\> & `CombinatorShort`\<`S`\>
+[`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\> & `CombinatorShort`\<`S`\> — A new schema with the short alias set.
 
-A new schema with the short alias set.
-
-## Example
+## Examples
 
 ```ts
 const args = {
@@ -44,3 +35,7 @@ const args = {
 }
 // Usage: -v or --verbose
 ```
+
+## Tags
+
+- `@typeParam` — T - The schema's parsed type.

@@ -1,39 +1,27 @@
-[**args-tokens**](../../index.md)
-
----
-
-[args-tokens](../../index.md) / [default](../index.md) / parse
-
 # Function: parse()
-
-```ts
-function parse<A>(args, options?): ParsedArgs<A>
-```
 
 Parse command line arguments.
 
-This function is a convenient API, that is used [parseArgs](parseArgs.md) and [resolveArgs](resolveArgs.md) in internal.
+This function is a convenient API, that is used [parseArgs](/docs/default/functions/parseArgs.md) and [resolveArgs](/docs/default/functions/resolveArgs.md) in internal.
 
-## Type Parameters
+## Signature
 
-| Type Parameter                                | Description                                                                                            |
-| --------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `A` _extends_ [`Args`](../interfaces/Args.md) | [Arguments schema](../interfaces/Args.md), which is an object that defines the command line arguments. |
+```ts
+export function parse<A extends Args>(args: string[], options: ParseOptions<A> = {}): ParsedArgs<A>
+```
 
 ## Parameters
 
-| Parameter | Type                                                   | Description                                                                    |
-| --------- | ------------------------------------------------------ | ------------------------------------------------------------------------------ |
-| `args`    | `string`[]                                             | command line arguments                                                         |
-| `options` | [`ParseOptions`](../interfaces/ParseOptions.md)\<`A`\> | parse options, about details see [ParseOptions](../interfaces/ParseOptions.md) |
+| Name      | Type                                                              | Description                                                                                                         |
+| --------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `args`    | `string[]`                                                        | command line arguments                                                                                              |
+| `options` | [`ParseOptions`](/docs/default/interfaces/ParseOptions.md)\<`A`\> | parse options, about details see [ParseOptions](/docs/default/interfaces/ParseOptions.md) _(optional, default: {})_ |
 
 ## Returns
 
-[`ParsedArgs`](../type-aliases/ParsedArgs.md)\<`A`\>
+[`ParsedArgs`](/docs/default/type-aliases/ParsedArgs.md)\<`A`\> — An object that contains the values of the arguments, positional arguments, validation errors, and [argument tokens](/docs/default/interfaces/ArgToken.md).
 
-An object that contains the values of the arguments, positional arguments, AggregateError \| validation errors, and [argument tokens](../interfaces/ArgToken.md).
-
-## Example
+## Examples
 
 ```js
 import { parse } from 'args-tokens'
@@ -42,3 +30,7 @@ const { values, positionals } = parse(process.argv.slice(2))
 console.log('values', values)
 console.log('positionals', positionals)
 ```
+
+## Tags
+
+- `@typeParam` — A - [Arguments schema](/docs/default/interfaces/Args.md), which is an object that defines the command line arguments.

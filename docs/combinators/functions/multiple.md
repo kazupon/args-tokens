@@ -1,40 +1,29 @@
-[**args-tokens**](../../index.md)
-
----
-
-[args-tokens](../../index.md) / [combinators](../index.md) / multiple
-
 # Function: multiple()
 
-```ts
-function multiple<T>(schema): ArgSchema & Combinator<T> & CombinatorMultiple
-```
-
-**`Experimental`**
+> [!WARNING]
+> This API is experimental and may change in future versions.
 
 Mark a combinator schema as accepting multiple values.
 
 The resolved value becomes an array. The original schema is not modified.
 
-## Type Parameters
+## Signature
 
-| Type Parameter | Description               |
-| -------------- | ------------------------- |
-| `T`            | The schema's parsed type. |
+```ts
+export function multiple<T>(schema: CombinatorSchema<T>): CombinatorSchema<T> & CombinatorMultiple
+```
 
 ## Parameters
 
-| Parameter | Type                                                             | Description                 |
-| --------- | ---------------------------------------------------------------- | --------------------------- |
-| `schema`  | [`CombinatorSchema`](../type-aliases/CombinatorSchema.md)\<`T`\> | The base combinator schema. |
+| Name     | Type                                                                            | Description                 |
+| -------- | ------------------------------------------------------------------------------- | --------------------------- |
+| `schema` | [`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\> | The base combinator schema. |
 
 ## Returns
 
-[`ArgSchema`](../../default/interfaces/ArgSchema.md) & [`Combinator`](../type-aliases/Combinator.md)\<`T`\> & `CombinatorMultiple`
+[`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\> & `CombinatorMultiple` — A new schema with `multiple: true`.
 
-A new schema with `multiple: true`.
-
-## Example
+## Examples
 
 ```ts
 const args = {
@@ -42,3 +31,7 @@ const args = {
 }
 // typeof values.tags === string[]
 ```
+
+## Tags
+
+- `@typeParam` — T - The schema's parsed type.

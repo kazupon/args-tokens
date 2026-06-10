@@ -1,44 +1,30 @@
-[**args-tokens**](../../index.md)
-
----
-
-[args-tokens](../../index.md) / [combinators](../index.md) / merge
-
 # Function: merge()
 
 ## Call Signature
 
 ```ts
-function merge<A, B>(a, b): Omit<A, keyof B> & B
+export function merge<A extends Args, B extends Args>(a: A, b: B): Omit<A, keyof B> & B
 ```
 
-**`Experimental`**
+> [!WARNING]
+> This API is experimental and may change in future versions.
 
-Compose multiple [Args](../../default/interfaces/Args.md) schemas into one.
+Compose multiple [Args](/docs/default/interfaces/Args.md) schemas into one.
 
 On key conflicts the later schema wins (last-write-wins).
 
-### Type Parameters
-
-| Type Parameter                                           | Description         |
-| -------------------------------------------------------- | ------------------- |
-| `A` _extends_ [`Args`](../../default/interfaces/Args.md) | First schema type.  |
-| `B` _extends_ [`Args`](../../default/interfaces/Args.md) | Second schema type. |
-
 ### Parameters
 
-| Parameter | Type | Description    |
-| --------- | ---- | -------------- |
-| `a`       | `A`  | First schema.  |
-| `b`       | `B`  | Second schema. |
+| Name | Type | Description    |
+| ---- | ---- | -------------- |
+| `a`  | `A`  | First schema.  |
+| `b`  | `B`  | Second schema. |
 
 ### Returns
 
-`Omit`\<`A`, keyof `B`\> & `B`
+`Omit<A, keyof B> & B` — A merged schema containing all fields.
 
-A merged schema containing all fields.
-
-### Example
+### Examples
 
 ```ts
 const common = args({ verbose: boolean() })
@@ -46,110 +32,83 @@ const network = args({ host: required(string()), port: withDefault(integer(), 80
 const schema = merge(common, network)
 ```
 
-## Call Signature
+### Tags
 
-```ts
-function merge<A, B, C>(a, b, c): Omit<Omit<A, keyof B | keyof C> & Omit<B, keyof C>, never> & C
-```
-
-**`Experimental`**
-
-Compose multiple [Args](../../default/interfaces/Args.md) schemas into one.
-
-### Type Parameters
-
-| Type Parameter                                           |
-| -------------------------------------------------------- |
-| `A` _extends_ [`Args`](../../default/interfaces/Args.md) |
-| `B` _extends_ [`Args`](../../default/interfaces/Args.md) |
-| `C` _extends_ [`Args`](../../default/interfaces/Args.md) |
-
-### Parameters
-
-| Parameter | Type | Description    |
-| --------- | ---- | -------------- |
-| `a`       | `A`  | First schema.  |
-| `b`       | `B`  | Second schema. |
-| `c`       | `C`  | Third schema.  |
-
-### Returns
-
-`Omit`\<`Omit`\<`A`, keyof `B` \| keyof `C`\> & `Omit`\<`B`, keyof `C`\>, `never`\> & `C`
-
-A merged schema containing all fields.
+- `@typeParam` — A - First schema type.
 
 ## Call Signature
 
 ```ts
-function merge<A, B, C, D>(
-  a,
-  b,
-  c,
-  d
-): Omit<
-  A,
-  keyof D | Exclude<keyof C, keyof D> | Exclude<keyof B, keyof D | Exclude<keyof C, keyof D>>
-> &
-  Omit<B, keyof D | Exclude<keyof C, keyof D>> &
-  Omit<C, keyof D> &
-  D
+export function merge<A extends Args, B extends Args, C extends Args>(
+  a: A,
+  b: B,
+  c: C
+): Omit<Omit<A, keyof B | keyof C> & Omit<B, keyof C>, never> & C
 ```
 
-**`Experimental`**
+> [!WARNING]
+> This API is experimental and may change in future versions.
 
-Compose multiple [Args](../../default/interfaces/Args.md) schemas into one.
-
-### Type Parameters
-
-| Type Parameter                                           |
-| -------------------------------------------------------- |
-| `A` _extends_ [`Args`](../../default/interfaces/Args.md) |
-| `B` _extends_ [`Args`](../../default/interfaces/Args.md) |
-| `C` _extends_ [`Args`](../../default/interfaces/Args.md) |
-| `D` _extends_ [`Args`](../../default/interfaces/Args.md) |
+Compose multiple [Args](/docs/default/interfaces/Args.md) schemas into one.
 
 ### Parameters
 
-| Parameter | Type | Description    |
-| --------- | ---- | -------------- |
-| `a`       | `A`  | First schema.  |
-| `b`       | `B`  | Second schema. |
-| `c`       | `C`  | Third schema.  |
-| `d`       | `D`  | Fourth schema. |
+| Name | Type | Description    |
+| ---- | ---- | -------------- |
+| `a`  | `A`  | First schema.  |
+| `b`  | `B`  | Second schema. |
+| `c`  | `C`  | Third schema.  |
 
 ### Returns
 
-`Omit`\<`A`,
-\| keyof `D`
-\| `Exclude`\<keyof `C`, keyof `D`\>
-\| `Exclude`\<keyof `B`, keyof `D` \| `Exclude`\<keyof `C`, keyof `D`\>\>\> & `Omit`\<`B`, keyof `D` \| `Exclude`\<keyof `C`, keyof `D`\>\> & `Omit`\<`C`, keyof `D`\> & `D`
-
-A merged schema containing all fields.
+`Omit<Omit<A, keyof B | keyof C> & Omit<B, keyof C>, never> & C` — A merged schema containing all fields.
 
 ## Call Signature
 
 ```ts
-function merge<T>(...schemas): MergeArgs<T>
+export function merge<A extends Args, B extends Args, C extends Args, D extends Args>(
+  a: A,
+  b: B,
+  c: C,
+  d: D
+): MergeArgs<[A, B, C, D]>
 ```
 
-**`Experimental`**
+> [!WARNING]
+> This API is experimental and may change in future versions.
 
-Compose multiple [Args](../../default/interfaces/Args.md) schemas into one.
-
-### Type Parameters
-
-| Type Parameter                                             |
-| ---------------------------------------------------------- |
-| `T` _extends_ [`Args`](../../default/interfaces/Args.md)[] |
+Compose multiple [Args](/docs/default/interfaces/Args.md) schemas into one.
 
 ### Parameters
 
-| Parameter    | Type | Description           |
-| ------------ | ---- | --------------------- |
-| ...`schemas` | `T`  | The schemas to merge. |
+| Name | Type | Description    |
+| ---- | ---- | -------------- |
+| `a`  | `A`  | First schema.  |
+| `b`  | `B`  | Second schema. |
+| `c`  | `C`  | Third schema.  |
+| `d`  | `D`  | Fourth schema. |
 
 ### Returns
 
-`MergeArgs`\<`T`\>
+`MergeArgs<[A, B, C, D]>` — A merged schema containing all fields.
 
-A merged schema containing all fields.
+## Call Signature
+
+```ts
+export function merge<T extends Args[]>(...schemas: T): MergeArgs<T>
+```
+
+> [!WARNING]
+> This API is experimental and may change in future versions.
+
+Compose multiple [Args](/docs/default/interfaces/Args.md) schemas into one.
+
+### Parameters
+
+| Name      | Type | Description           |
+| --------- | ---- | --------------------- |
+| `schemas` | `T`  | The schemas to merge. |
+
+### Returns
+
+`MergeArgs<T>` — A merged schema containing all fields.

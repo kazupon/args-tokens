@@ -1,43 +1,36 @@
-[**args-tokens**](../../index.md)
-
----
-
-[args-tokens](../../index.md) / [combinators](../index.md) / required
-
 # Function: required()
 
-```ts
-function required<T>(schema): ArgSchema & Combinator<T> & CombinatorRequired
-```
-
-**`Experimental`**
+> [!WARNING]
+> This API is experimental and may change in future versions.
 
 Mark a combinator schema as required.
 
 The original schema is not modified.
 
-## Type Parameters
+## Signature
 
-| Type Parameter | Description               |
-| -------------- | ------------------------- |
-| `T`            | The schema's parsed type. |
+```ts
+export function required<T>(schema: CombinatorSchema<T>): CombinatorSchema<T> & CombinatorRequired
+```
 
 ## Parameters
 
-| Parameter | Type                                                             | Description                 |
-| --------- | ---------------------------------------------------------------- | --------------------------- |
-| `schema`  | [`CombinatorSchema`](../type-aliases/CombinatorSchema.md)\<`T`\> | The base combinator schema. |
+| Name     | Type                                                                            | Description                 |
+| -------- | ------------------------------------------------------------------------------- | --------------------------- |
+| `schema` | [`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\> | The base combinator schema. |
 
 ## Returns
 
-[`ArgSchema`](../../default/interfaces/ArgSchema.md) & [`Combinator`](../type-aliases/Combinator.md)\<`T`\> & `CombinatorRequired`
+[`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\> & `CombinatorRequired` — A new schema with `required: true`.
 
-A new schema with `required: true`.
-
-## Example
+## Examples
 
 ```ts
 const args = {
   name: required(string())
 }
 ```
+
+## Tags
+
+- `@typeParam` — T - The schema's parsed type.

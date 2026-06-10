@@ -1,28 +1,20 @@
-[**args-tokens**](../../index.md)
-
----
-
-[args-tokens](../../index.md) / [combinators](../index.md) / BaseOptions
-
 # Interface: BaseOptions
 
-**`Experimental`**
+> [!WARNING]
+> This API is experimental and may change in future versions.
 
 Common options shared by all base combinators.
 
-## Extended by
+## Signature
 
-- [`StringOptions`](StringOptions.md)
-- [`NumberOptions`](NumberOptions.md)
-- [`IntegerOptions`](IntegerOptions.md)
-- [`FloatOptions`](FloatOptions.md)
-- [`BooleanOptions`](BooleanOptions.md)
-- [`CombinatorOptions`](CombinatorOptions.md)
+```ts
+export interface BaseOptions
+```
 
 ## Properties
 
-| Property                                         | Type      | Description                                                             |
-| ------------------------------------------------ | --------- | ----------------------------------------------------------------------- |
-| <a id="property-description"></a> `description?` | `string`  | **`Experimental`** Human-readable description for help text generation. |
-| <a id="property-required"></a> `required?`       | `boolean` | **`Experimental`** Mark as required.                                    |
-| <a id="property-short"></a> `short?`             | `string`  | **`Experimental`** Single character short alias.                        |
+| Name                       | Type      | Description                                          |
+| -------------------------- | --------- | ---------------------------------------------------- |
+| `description` _(optional)_ | `string`  | Human-readable description for help text generation. |
+| `required` _(optional)_    | `boolean` | Mark as required.                                    |
+| `short` _(optional)_       | `string`  | Single character short alias.                        |
