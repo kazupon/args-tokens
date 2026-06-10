@@ -694,6 +694,114 @@ describe('positional arguments', () => {
     expect(rest).toEqual([])
   })
 
+  test('optional positional before required positional leaves value for required positional', () => {
+    const argv = ['users']
+    const tokens = parseArgs(argv)
+    const { error, values, explicit } = resolveArgs(
+      {
+        query: {
+          type: 'positional',
+          required: false
+        },
+        table: {
+          type: 'positional'
+        }
+      },
+      tokens
+    )
+    expect(error).toBeUndefined()
+    expect(values).toEqual({
+      table: 'users'
+    })
+    expect(explicit).toMatchObject({
+      query: false,
+      table: true
+    })
+  })
+
+  test('optional positional before required positional consumes value when enough values remain', () => {
+    const argv = ['select *', 'users']
+    const tokens = parseArgs(argv)
+    const { error, values, explicit } = resolveArgs(
+      {
+        query: {
+          type: 'positional',
+          required: false
+        },
+        table: {
+          type: 'positional'
+        }
+      },
+      tokens
+    )
+    expect(error).toBeUndefined()
+    expect(values).toEqual({
+      query: 'select *',
+      table: 'users'
+    })
+    expect(explicit).toMatchObject({
+      query: true,
+      table: true
+    })
+  })
+
+  test('default positional before required positional leaves value for required positional', () => {
+    const argv = ['users']
+    const tokens = parseArgs(argv)
+    const { error, values, explicit } = resolveArgs(
+      {
+        query: {
+          type: 'positional',
+          default: 'select *'
+        },
+        table: {
+          type: 'positional'
+        }
+      },
+      tokens
+    )
+    expect(error).toBeUndefined()
+    expect(values).toEqual({
+      query: 'select *',
+      table: 'users'
+    })
+    expect(explicit).toMatchObject({
+      query: false,
+      table: true
+    })
+  })
+
+  test('multiple optional positionals preserve later required positional', () => {
+    const argv = ['search', 'users']
+    const tokens = parseArgs(argv)
+    const { error, values, explicit } = resolveArgs(
+      {
+        namespace: {
+          type: 'positional',
+          required: false
+        },
+        query: {
+          type: 'positional',
+          required: false
+        },
+        table: {
+          type: 'positional'
+        }
+      },
+      tokens
+    )
+    expect(error).toBeUndefined()
+    expect(values).toEqual({
+      namespace: 'search',
+      table: 'users'
+    })
+    expect(explicit).toMatchObject({
+      namespace: true,
+      query: false,
+      table: true
+    })
+  })
+
   test('positionals & termination', () => {
     const argv = ['dev', '--help', 'info', 'foo', '--', 'bar']
     const tokens = parseArgs(argv)
@@ -1093,6 +1201,111 @@ describe('multiple values', () => {
     )
     expect(values.files).toEqual(['foo', 'bar'])
     expect(values.help).toBeTruthy()
+  })
+
+  test('positional multiple leaves value for later required positional', () => {
+    const argv = ['a.ts', 'b.ts', 'out.js']
+    const tokens = parseArgs(argv)
+    const { error, values, explicit } = resolveArgs(
+      {
+        files: {
+          type: 'positional',
+          multiple: true
+        },
+        output: {
+          type: 'positional'
+        }
+      },
+      tokens
+    )
+    expect(error).toBeUndefined()
+    expect(values).toEqual({
+      files: ['a.ts', 'b.ts'],
+      output: 'out.js'
+    })
+    expect(explicit).toMatchObject({
+      files: true,
+      output: true
+    })
+  })
+
+  test('positional multiple can be omitted before later required positional', () => {
+    const argv = ['out.js']
+    const tokens = parseArgs(argv)
+    const { error, values, explicit } = resolveArgs(
+      {
+        files: {
+          type: 'positional',
+          multiple: true
+        },
+        output: {
+          type: 'positional'
+        }
+      },
+      tokens
+    )
+    expect(error).toBeUndefined()
+    expect(values).toEqual({
+      output: 'out.js'
+    })
+    expect(explicit).toMatchObject({
+      files: false,
+      output: true
+    })
+  })
+
+  test('required positional multiple before later required positional needs one value', () => {
+    const argv = ['out.js']
+    const tokens = parseArgs(argv)
+    const { error, values, explicit } = resolveArgs(
+      {
+        files: {
+          type: 'positional',
+          multiple: true,
+          required: true
+        },
+        output: {
+          type: 'positional'
+        }
+      },
+      tokens
+    )
+    expect(error?.errors.length).toBe(1)
+    expect((error?.errors[0] as Error).message).toEqual("Positional argument 'files' is required")
+    expect(values).toEqual({
+      output: 'out.js'
+    })
+    expect(explicit).toMatchObject({
+      files: false,
+      output: true
+    })
+  })
+
+  test('required positional multiple before later required positional consumes extra values', () => {
+    const argv = ['a.ts', 'out.js']
+    const tokens = parseArgs(argv)
+    const { error, values, explicit } = resolveArgs(
+      {
+        files: {
+          type: 'positional',
+          multiple: true,
+          required: true
+        },
+        output: {
+          type: 'positional'
+        }
+      },
+      tokens
+    )
+    expect(error).toBeUndefined()
+    expect(values).toEqual({
+      files: ['a.ts'],
+      output: 'out.js'
+    })
+    expect(explicit).toMatchObject({
+      files: true,
+      output: true
+    })
   })
 })
 

@@ -129,8 +129,10 @@ export interface ArgSchema {
    * When `true`, the argument must be provided by the user.
    * If missing, an `ArgResolveError` with type 'required' will be thrown.
    *
-   * For single positional arguments, omitting `required` keeps the argument required for
-   * compatibility. Set `required: false` to make a single positional argument optional.
+   * For single-value positional arguments, omitting `required` keeps the argument
+   * required for compatibility. Set `required: false` to make a positional argument
+   * optional. Optional positional arguments leave enough input values for later
+   * required positional arguments before consuming a value.
    *
    * @example
    * Required arguments:
@@ -154,7 +156,8 @@ export interface ArgSchema {
    *
    * When `true`, the resolved value becomes an array.
    * For options: can be specified multiple times (--tag foo --tag bar)
-   * For positional: collects remaining positional arguments
+   * For positional: collects remaining positional arguments after preserving values for
+   * later required positional arguments.
    *
    * Note: Only `true` is allowed (not `false`) to make intent explicit.
    *
@@ -236,8 +239,9 @@ export interface ArgSchema {
    * - `enum` type: must be one of the `choices` values
    * - `positional`/`custom` type: any appropriate default
    *
-   * For single positional arguments, the default is used when the positional
-   * value is missing unless `required: true` is set.
+   * For single-value positional arguments, the default is used when the positional
+   * value is missing or when the value is preserved for later required positional
+   * arguments, unless `required: true` is set.
    *
    * @example
    * Default values by type:
@@ -794,6 +798,17 @@ export function resolveArgs<A extends Args>(
   const errors: Error[] = []
   const explicit = Object.create(null) as ArgExplicitlyProvided<A>
   const actualInputNames = new Map<string, string>()
+  const positionalEntries = Object.entries(args).filter(
+    ([, schema]) => schema.type === 'positional'
+  )
+  const requiredPositionalsAfter = new Map<string, number>()
+  let minimumRequiredPositionals = 0
+
+  for (let i = positionalEntries.length - 1; i >= 0; i--) {
+    const [rawArg, schema] = positionalEntries[i]
+    requiredPositionalsAfter.set(rawArg, minimumRequiredPositionals)
+    minimumRequiredPositionals += getRequiredPositionalInputCount(schema)
+  }
 
   function checkTokenName(option: string, schema: ArgSchema, token: ArgToken): boolean {
     return (
@@ -827,8 +842,15 @@ export function resolveArgs<A extends Args>(
         }
       }
 
+      const requiredPositionals = requiredPositionalsAfter.get(rawArg) ?? 0
+      const availablePositionals = Math.max(positionalTokens.length - positionalsCount, 0)
+
       if (schema.multiple) {
-        const remainingPositionals = positionalTokens.slice(positionalsCount)
+        const positionalsToConsume = Math.max(availablePositionals - requiredPositionals, 0)
+        const remainingPositionals = positionalTokens.slice(
+          positionalsCount,
+          positionalsCount + positionalsToConsume
+        )
         if (remainingPositionals.length > 0) {
           if (typeof schema.parse === 'function') {
             const parsed: unknown[] = []
@@ -854,7 +876,11 @@ export function resolveArgs<A extends Args>(
         }
       } else {
         const positional = positionalTokens[positionalsCount]
-        if (positional != null) {
+        const shouldConsumePositional =
+          positional != null &&
+          (shouldRequireMissingSinglePositional(schema) ||
+            availablePositionals > requiredPositionals)
+        if (shouldConsumePositional) {
           if (typeof schema.parse === 'function') {
             try {
               // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment -- NOTE(kazupon): Allow any type for resolving
@@ -869,6 +895,7 @@ export function resolveArgs<A extends Args>(
           // mark as explicitly set when positional argument is provided.
           // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(sushichan044): Allow any type for resolving
           ;(explicit as any)[rawArg] = true
+          positionalsCount++
         } else {
           if (shouldRequireMissingSinglePositional(schema)) {
             errors.push(createRequireError(arg, schema))
@@ -877,7 +904,6 @@ export function resolveArgs<A extends Args>(
             ;(values as any)[rawArg] = schema.default
           }
         }
-        positionalsCount++
       }
       continue
     }
@@ -1035,6 +1061,16 @@ function shouldRequireMissingSinglePositional(schema: ArgSchema): boolean {
     return false
   }
   return !hasDefault(schema)
+}
+
+function getRequiredPositionalInputCount(schema: ArgSchema): number {
+  if (schema.type !== 'positional') {
+    return 0
+  }
+  if (schema.multiple) {
+    return schema.required === true ? 1 : 0
+  }
+  return shouldRequireMissingSinglePositional(schema) ? 1 : 0
 }
 
 /**

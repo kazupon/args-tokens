@@ -330,6 +330,20 @@ test('ResolveArgValues', () => {
       { files: string[] }
     >
   >().toEqualTypeOf<{ files?: string[] | undefined }>()
+
+  // required multiple positional
+  expectTypeOf<
+    ResolveArgValues<
+      {
+        files: {
+          type: 'positional'
+          multiple: true
+          required: true
+        }
+      },
+      { files: string[] }
+    >
+  >().toEqualTypeOf<{ files: string[] }>()
 })
 
 test('ArgValues', () => {

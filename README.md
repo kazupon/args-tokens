@@ -374,7 +374,7 @@ Human-readable description used for help text generation and documentation.
 
 Marks the argument as required. When `true`, the argument must be provided or an `ArgResolveError` will be thrown.
 
-For single positional arguments, omitting `required` keeps the argument required for compatibility. Set `required: false` to make a single positional argument explicitly optional.
+Single-value positional arguments are required by default for compatibility. Set `required: false` to make a positional argument explicitly optional. When an optional positional argument appears before later required positional arguments, it consumes a value only when enough values remain for those required positional arguments.
 
 <!-- eslint-skip -->
 
@@ -401,7 +401,7 @@ For single positional arguments, omitting `required` keeps the argument required
 Allows the argument to accept multiple values. The resolved value becomes an array.
 
 - For options: can be specified multiple times (`--tag foo --tag bar`)
-- For positional: collects remaining positional arguments
+- For positional: collects remaining positional arguments after preserving values for later required positional arguments
 
 <!-- eslint-skip -->
 
@@ -415,6 +415,9 @@ Allows the argument to accept multiple values. The resolved value becomes an arr
   files: {
     type: 'positional',
     multiple: true   // Collects all remaining positional args
+  },
+  output: {
+    type: 'positional' // Keeps the last positional value when declared after files
   }
 }
 ```
@@ -463,7 +466,7 @@ Array of allowed string values for enum-type arguments. Required when `type: 'en
 
 Default value used when the argument is not provided. The type must match the argument's `type` property.
 
-For single positional arguments, the default is used when the positional value is missing unless `required: true` is set.
+For single-value positional arguments, the default is used when the positional value is missing or when the value is preserved for later required positional arguments, unless `required: true` is set.
 
 <!-- eslint-skip -->
 
