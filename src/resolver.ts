@@ -838,67 +838,76 @@ export function resolveArgs<A extends Args>(
         }
       }
 
-      const requiredPositionals = getRequiredPositionalsAfter(rawArg)
-      const availablePositionals = Math.max(positionalTokens.length - positionalsCount, 0)
-
       if (schema.multiple) {
-        const positionalsToConsume = Math.max(availablePositionals - requiredPositionals, 0)
-        const remainingPositionals = positionalTokens.slice(
-          positionalsCount,
-          positionalsCount + positionalsToConsume
-        )
-        if (remainingPositionals.length > 0) {
-          if (typeof schema.parse === 'function') {
-            const parsed: unknown[] = []
-            for (const p of remainingPositionals) {
-              try {
-                parsed.push(schema.parse(p.value!))
-              } catch (error) {
-                errors.push(error as Error)
+        const availablePositionals = Math.max(positionalTokens.length - positionalsCount, 0)
+        if (availablePositionals > 0) {
+          const requiredPositionals = getRequiredPositionalsAfter(rawArg)
+          const positionalsToConsume = Math.max(availablePositionals - requiredPositionals, 0)
+          if (positionalsToConsume > 0) {
+            const endPositionals = positionalsCount + positionalsToConsume
+            if (typeof schema.parse === 'function') {
+              const parsed: unknown[] = []
+              for (let i = positionalsCount; i < endPositionals; i++) {
+                const p = positionalTokens[i]
+                try {
+                  parsed.push(schema.parse(p.value!))
+                } catch (error) {
+                  errors.push(error as Error)
+                }
               }
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(kazupon): Allow any type for resolving
+              ;(values as any)[rawArg] = parsed
+            } else {
+              const valuesArray: string[] = []
+              for (let i = positionalsCount; i < endPositionals; i++) {
+                valuesArray.push(positionalTokens[i].value!)
+              }
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(kazupon): Allow any type for resolving
+              ;(values as any)[rawArg] = valuesArray
             }
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(kazupon): Allow any type for resolving
-            ;(values as any)[rawArg] = parsed
-          } else {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(kazupon): Allow any type for resolving
-            ;(values as any)[rawArg] = remainingPositionals.map(p => p.value!)
+            positionalsCount = endPositionals
+            // mark as explicitly set when positional arguments are provided.
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(sushichan044): Allow any type for resolving
+            ;(explicit as any)[rawArg] = true
+          } else if (schema.required) {
+            errors.push(createRequireError(arg, schema))
           }
-          positionalsCount += remainingPositionals.length
-          // mark as explicitly set when positional arguments are provided.
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(sushichan044): Allow any type for resolving
-          ;(explicit as any)[rawArg] = true
         } else if (schema.required) {
           errors.push(createRequireError(arg, schema))
         }
       } else {
         const positional = positionalTokens[positionalsCount]
-        const shouldConsumePositional =
-          positional != null &&
-          (shouldRequireMissingSinglePositional(schema) ||
-            availablePositionals > requiredPositionals)
-        if (shouldConsumePositional) {
-          if (typeof schema.parse === 'function') {
-            try {
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment -- NOTE(kazupon): Allow any type for resolving
-              ;(values as any)[rawArg] = schema.parse(positional.value!)
-            } catch (error) {
-              errors.push(error as Error)
-            }
+
+        if (shouldRequireMissingSinglePositional(schema)) {
+          if (positional != null) {
+            resolveSinglePositionalValue(values, errors, rawArg, schema, positional)
+            // mark as explicitly set when positional argument is provided.
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(sushichan044): Allow any type for resolving
+            ;(explicit as any)[rawArg] = true
+            positionalsCount++
           } else {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(kazupon): Allow any type for resolving
-            ;(values as any)[rawArg] = positional.value!
-          }
-          // mark as explicitly set when positional argument is provided.
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(sushichan044): Allow any type for resolving
-          ;(explicit as any)[rawArg] = true
-          positionalsCount++
-        } else {
-          if (shouldRequireMissingSinglePositional(schema)) {
             errors.push(createRequireError(arg, schema))
-          } else if (hasDefault(schema)) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(kazupon): Allow any type for resolving
-            ;(values as any)[rawArg] = schema.default
           }
+          continue
+        }
+
+        if (positional != null) {
+          const requiredPositionals = getRequiredPositionalsAfter(rawArg)
+          const availablePositionals = Math.max(positionalTokens.length - positionalsCount, 0)
+
+          if (availablePositionals > requiredPositionals) {
+            resolveSinglePositionalValue(values, errors, rawArg, schema, positional)
+            // mark as explicitly set when positional argument is provided.
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(sushichan044): Allow any type for resolving
+            ;(explicit as any)[rawArg] = true
+            positionalsCount++
+            continue
+          }
+        }
+
+        if (hasDefault(schema)) {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(kazupon): Allow any type for resolving
+          ;(values as any)[rawArg] = schema.default
         }
       }
       continue
@@ -1043,6 +1052,24 @@ function createRequireError(option: string, schema: ArgSchema): ArgResolveError 
       ? `Positional argument '${option}' is required`
       : `Optional argument '--${option}' ${schema.short ? `or '-${schema.short}' ` : ''}is required`
   return new ArgResolveError(message, option, 'required', schema)
+}
+
+function resolveSinglePositionalValue(
+  values: Record<string, unknown>,
+  errors: Error[],
+  rawArg: string,
+  schema: ArgSchema,
+  positional: ArgToken
+): void {
+  if (typeof schema.parse === 'function') {
+    try {
+      values[rawArg] = schema.parse(positional.value!)
+    } catch (error) {
+      errors.push(error as Error)
+    }
+  } else {
+    values[rawArg] = positional.value!
+  }
 }
 
 function hasDefault(schema: ArgSchema): boolean {

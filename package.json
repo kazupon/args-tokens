@@ -79,6 +79,7 @@
   },
   "scripts": {
     "bench:mitata": "node --expose-gc bench/mitata.js",
+    "bench:positionals": "node --expose-gc bench/positionals.js",
     "bench:vitest": "vitest bench --run",
     "build": "tsdown",
     "build:docs": "node scripts/generate-docs.mjs",
