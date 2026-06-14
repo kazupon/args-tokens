@@ -2,19 +2,19 @@
   "version": "5",
   "specifiers": {
     "jsr:@kazupon/args-tokens@*": "0.3.2",
-    "jsr:@kazupon/args-tokens@0.26": "0.26.0"
+    "jsr:@kazupon/args-tokens@0.27": "0.27.0"
   },
   "jsr": {
     "@kazupon/args-tokens@0.3.2": {
       "integrity": "72d6666abc92c6531c9fa2c7a05b879715440afa2beea9fd56723636aa95717b"
     },
-    "@kazupon/args-tokens@0.26.0": {
-      "integrity": "8735eb0897c2e66bc503c580265b3c2d5cc4d10d4489522942960921c9e6a6ee"
+    "@kazupon/args-tokens@0.27.0": {
+      "integrity": "d8e02272a4665d244e10e36ae47fae0f2f7b8f60d37fc0f9848ecc1cbe9f1367"
     }
   },
   "workspace": {
     "dependencies": [
-      "jsr:@kazupon/args-tokens@0.26"
+      "jsr:@kazupon/args-tokens@0.27"
     ]
   }
 }
