@@ -7,6 +7,7 @@ import {
   describe,
   extend,
   float,
+  hidden,
   integer,
   map,
   merge,
@@ -215,6 +216,40 @@ test('describe type inference', () => {
   const described = describe(string(), 'Your name')
   expectTypeOf<ExtractOptionValue<typeof described>>().toEqualTypeOf<string>()
   expectTypeOf(described.description).toEqualTypeOf<'Your name'>()
+})
+
+test('hidden metadata type inference', () => {
+  const hiddenString = string({ hidden: true })
+  expectTypeOf<ExtractOptionValue<typeof hiddenString>>().toEqualTypeOf<string>()
+  expectTypeOf(hiddenString.hidden).toEqualTypeOf<boolean | undefined>()
+
+  const hiddenNumber = number({ hidden: true })
+  expectTypeOf<ExtractOptionValue<typeof hiddenNumber>>().toEqualTypeOf<number>()
+
+  const hiddenInteger = integer({ hidden: true })
+  expectTypeOf<ExtractOptionValue<typeof hiddenInteger>>().toEqualTypeOf<number>()
+
+  const hiddenFloat = float({ hidden: true })
+  expectTypeOf<ExtractOptionValue<typeof hiddenFloat>>().toEqualTypeOf<number>()
+
+  const hiddenBoolean = boolean({ hidden: true })
+  expectTypeOf<ExtractOptionValue<typeof hiddenBoolean>>().toEqualTypeOf<boolean>()
+
+  const hiddenChoice = choice(['debug', 'info'] as const, { hidden: true })
+  expectTypeOf<ExtractOptionValue<typeof hiddenChoice>>().toEqualTypeOf<'debug' | 'info'>()
+
+  const hiddenPositional = positional({ hidden: true })
+  expectTypeOf<ExtractOptionValue<typeof hiddenPositional>>().toEqualTypeOf<string>()
+
+  const hiddenParsedPositional = positional(integer({ hidden: true }))
+  expectTypeOf<ExtractOptionValue<typeof hiddenParsedPositional>>().toEqualTypeOf<number>()
+
+  const hiddenCustom = combinator({ hidden: true, parse: Number })
+  expectTypeOf<ExtractOptionValue<typeof hiddenCustom>>().toEqualTypeOf<number>()
+
+  const hiddenSchema = hidden(string())
+  expectTypeOf<ExtractOptionValue<typeof hiddenSchema>>().toEqualTypeOf<string>()
+  expectTypeOf(hiddenSchema.hidden).toEqualTypeOf<true>()
 })
 
 test('unrequired type inference', () => {

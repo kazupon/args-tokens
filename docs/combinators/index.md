@@ -61,6 +61,7 @@ const { values } = resolveArgs(schema, tokens)
 | [describe](/docs/combinators/functions/describe.md)       | Set a description on a combinator schema for help text generation.          |
 | [extend](/docs/combinators/functions/extend.md)           | Extend a schema by overriding or adding fields.                             |
 | [float](/docs/combinators/functions/float.md)             | Create a floating-point argument schema with optional range validation.     |
+| [hidden](/docs/combinators/functions/hidden.md)           | Hide a combinator schema from generated help or usage output.               |
 | [integer](/docs/combinators/functions/integer.md)         | Create an integer argument schema with optional range validation.           |
 | [map](/docs/combinators/functions/map.md)                 | Transform the output of a combinator schema.                                |
 | [merge](/docs/combinators/functions/merge.md)             | Compose multiple [Args](/docs/default/interfaces/Args.md) schemas into one. |

@@ -370,6 +370,27 @@ Human-readable description used for help text generation and documentation.
 }
 ```
 
+#### `hidden` (optional)
+
+Hides the argument from generated help or usage output. This is renderer metadata only; parsing, validation, defaults, conflicts, and resolved values are unchanged.
+
+<!-- eslint-skip -->
+
+```js
+{
+  legacy: {
+    type: 'string',
+    hidden: true,
+    description: 'Deprecated compatibility option'
+  },
+  internal: {
+    type: 'boolean',
+    hidden: true,
+    description: 'Internal diagnostic flag'
+  }
+}
+```
+
 #### `required` (optional)
 
 Marks the argument as required. When `true`, the argument must be provided or an `ArgResolveError` will be thrown.
@@ -664,6 +685,7 @@ const { values } = resolveArgs(schema, tokens)
 
 - `describe(schema, text)` — Set a human-readable description for help text generation
 - `short(schema, alias)` — Set a single-character short alias (e.g., `-v` for `--verbose`)
+- `hidden(schema)` — Hide from generated help or usage output
 - `required(schema)` — Mark as required (error if not provided)
 - `unrequired(schema)` — Mark as not required (override `required: true`, or make a positional optional)
 - `withDefault(schema, defaultValue)` — Set a default value

@@ -99,6 +99,10 @@ export interface BaseOptions {
    */
   description?: string
   /**
+   * Hide from generated help or usage output.
+   */
+  hidden?: boolean
+  /**
    * Single character short alias.
    */
   short?: string
@@ -149,6 +153,7 @@ export function string(opts?: StringOptions): CombinatorSchema<string> {
     type: 'string',
     metavar: 'string',
     ...(opts?.description != null ? { description: opts.description } : {}),
+    ...(opts?.hidden != null ? { hidden: opts.hidden } : {}),
     ...(opts?.short != null ? { short: opts.short } : {}),
     ...(opts?.required != null ? { required: opts.required } : {}),
     parse(value: string): string {
@@ -205,6 +210,7 @@ export function number(opts?: NumberOptions): CombinatorSchema<number> {
     type: 'number',
     metavar: 'number',
     ...(opts?.description != null ? { description: opts.description } : {}),
+    ...(opts?.hidden != null ? { hidden: opts.hidden } : {}),
     ...(opts?.short != null ? { short: opts.short } : {}),
     ...(opts?.required != null ? { required: opts.required } : {}),
     parse(value: string): number {
@@ -262,6 +268,7 @@ export function integer(opts?: IntegerOptions): CombinatorSchema<number> {
     type: 'custom',
     metavar: 'integer',
     ...(opts?.description != null ? { description: opts.description } : {}),
+    ...(opts?.hidden != null ? { hidden: opts.hidden } : {}),
     ...(opts?.short != null ? { short: opts.short } : {}),
     ...(opts?.required != null ? { required: opts.required } : {}),
     parse(value: string): number {
@@ -322,6 +329,7 @@ export function float(opts?: FloatOptions): CombinatorSchema<number> {
     type: 'custom',
     metavar: 'float',
     ...(opts?.description != null ? { description: opts.description } : {}),
+    ...(opts?.hidden != null ? { hidden: opts.hidden } : {}),
     ...(opts?.short != null ? { short: opts.short } : {}),
     ...(opts?.required != null ? { required: opts.required } : {}),
     parse(value: string): number {
@@ -382,6 +390,7 @@ export function boolean(opts?: BooleanOptions): CombinatorSchema<boolean> {
     ...(opts?.negatable != null ? { negatable: opts.negatable } : {}),
     metavar: 'boolean',
     ...(opts?.description != null ? { description: opts.description } : {}),
+    ...(opts?.hidden != null ? { hidden: opts.hidden } : {}),
     ...(opts?.short != null ? { short: opts.short } : {}),
     ...(opts?.required != null ? { required: opts.required } : {}),
     parse(value: string): boolean {
@@ -452,6 +461,7 @@ export function positional<T>(
       parse: parser.parse,
       metavar: parser.metavar,
       ...(parser.description != null ? { description: parser.description } : {}),
+      ...(parser.hidden != null ? { hidden: parser.hidden } : {}),
       ...(parser.required != null ? { required: parser.required } : {}),
       ...(parser.default != null ? { default: parser.default } : {})
     }
@@ -460,6 +470,7 @@ export function positional<T>(
   return {
     type: 'positional',
     ...(opts?.description != null ? { description: opts.description } : {}),
+    ...(opts?.hidden != null ? { hidden: opts.hidden } : {}),
     ...(opts?.short != null ? { short: opts.short } : {}),
     ...(opts?.required != null ? { required: opts.required } : {})
   }
@@ -496,6 +507,7 @@ export function choice<const T extends readonly string[]>(
     metavar: values.join('|'),
     choices: values,
     ...(opts?.description != null ? { description: opts.description } : {}),
+    ...(opts?.hidden != null ? { hidden: opts.hidden } : {}),
     ...(opts?.short != null ? { short: opts.short } : {}),
     ...(opts?.required != null ? { required: opts.required } : {}),
     parse(value: string): T[number] {
@@ -570,6 +582,7 @@ export function combinator<T>(config: CombinatorOptions<T>): CombinatorSchema<T>
     type: 'custom',
     metavar: config.metavar ?? 'custom',
     ...(config.description != null ? { description: config.description } : {}),
+    ...(config.hidden != null ? { hidden: config.hidden } : {}),
     ...(config.short != null ? { short: config.short } : {}),
     ...(config.required != null ? { required: config.required } : {}),
     parse: config.parse
@@ -788,6 +801,39 @@ export function describe<T, D extends string>(
   return {
     ...schema,
     description: text
+  }
+}
+
+/**
+ * Options for the {@link hidden} combinator.
+ */
+type CombinatorHidden = { hidden: true }
+
+/**
+ * Hide a combinator schema from generated help or usage output.
+ *
+ * The original schema is not modified. This only marks renderer metadata and
+ * does not change parsing, validation, defaults, conflicts, or resolved values.
+ *
+ * @typeParam T - The schema type.
+ *
+ * @param schema - The base combinator schema.
+ * @returns A new schema with `hidden: true`.
+ *
+ * @example
+ * ```ts
+ * const args = {
+ *   legacy: hidden(string())
+ * }
+ * ```
+ *
+ * @experimental
+ */
+// @__NO_SIDE_EFFECTS__
+export function hidden<T extends ArgSchema>(schema: T): Omit<T, 'hidden'> & CombinatorHidden {
+  return {
+    ...schema,
+    hidden: true
   }
 }
 
