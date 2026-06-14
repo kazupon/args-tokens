@@ -18,7 +18,7 @@ import type { ArgToken } from './parser.ts'
  * An argument schema definition for command-line argument parsing.
  *
  * This schema is similar to the schema of Node.js `util.parseArgs` but with extended features:
- * - Additional `required` and `description` properties
+ * - Additional `required`, `description`, and `hidden` properties
  * - Extended `type` support: 'string', 'boolean', 'number', 'enum', 'positional', 'custom'
  * - Simplified `default` property (single type, not union types)
  *
@@ -123,6 +123,25 @@ export interface ArgSchema {
    * ```
    */
   description?: string
+  /**
+   * Hide the argument from generated help or usage output.
+   *
+   * This is metadata for renderers. It does not affect parsing, validation,
+   * required checks, defaults, conflicts, or resolved values.
+   *
+   * @example
+   * Hidden compatibility option:
+   * ```ts
+   * {
+   *   legacy: {
+   *     type: 'string',
+   *     hidden: true,
+   *     description: 'Deprecated compatibility option'
+   *   }
+   * }
+   * ```
+   */
+  hidden?: boolean
   /**
    * Marks the argument as required.
    *

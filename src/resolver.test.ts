@@ -247,6 +247,87 @@ describe('resolveArgs', () => {
   })
 })
 
+describe('hidden metadata', () => {
+  test('hidden option resolves normally', () => {
+    const tokens = parseArgs(['--legacy=compat'])
+    const { values, error } = resolveArgs(
+      {
+        legacy: {
+          type: 'string',
+          hidden: true
+        }
+      },
+      tokens
+    )
+
+    expect(values).toEqual({
+      legacy: 'compat'
+    })
+    expect(error).toBeUndefined()
+  })
+
+  test('hidden positional resolves normally', () => {
+    const tokens = parseArgs(['deploy'])
+    const { values, error } = resolveArgs(
+      {
+        command: {
+          type: 'positional',
+          hidden: true
+        }
+      },
+      tokens
+    )
+
+    expect(values).toEqual({
+      command: 'deploy'
+    })
+    expect(error).toBeUndefined()
+  })
+
+  test('hidden required option still errors when missing', () => {
+    const tokens = parseArgs([])
+    const { error } = resolveArgs(
+      {
+        token: {
+          type: 'string',
+          hidden: true,
+          required: true
+        }
+      },
+      tokens
+    )
+
+    expect(error?.errors.length).toBe(1)
+    expect((error?.errors[0] as ArgResolveError).message).toEqual(
+      "Optional argument '--token' is required"
+    )
+    expect((error?.errors[0] as ArgResolveError).schema.hidden).toBe(true)
+  })
+
+  test('hidden option conflicts still error', () => {
+    const tokens = parseArgs(['--legacy', '--modern'])
+    const { error } = resolveArgs(
+      {
+        legacy: {
+          type: 'boolean',
+          hidden: true,
+          conflicts: 'modern'
+        },
+        modern: {
+          type: 'boolean'
+        }
+      },
+      tokens
+    )
+
+    expect(error?.errors.length).toBe(1)
+    expect((error?.errors[0] as ArgResolveError).message).toEqual(
+      "Optional argument '--legacy' conflicts with '--modern'"
+    )
+    expect((error?.errors[0] as ArgResolveError).schema.hidden).toBe(true)
+  })
+})
+
 describe('option group', () => {
   test('basic', () => {
     const argv = ['dev', '-dsV']

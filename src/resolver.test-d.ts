@@ -3,6 +3,7 @@ import { z } from 'zod/v4-mini'
 
 import type {
   ArgExplicitlyProvided,
+  ArgSchema,
   ArgValues,
   ExtractOptionValue,
   FilterArgs,
@@ -168,6 +169,37 @@ test('ExtractOptionValue with parse priority', () => {
       type: 'positional'
     }>
   >().toEqualTypeOf<string>()
+})
+
+test('ArgSchema hidden metadata', () => {
+  const hiddenString = {
+    type: 'string',
+    hidden: true
+  } satisfies ArgSchema
+
+  const visibleString = {
+    type: 'string',
+    hidden: false
+  } satisfies ArgSchema
+
+  expectTypeOf<ExtractOptionValue<typeof hiddenString>>().toEqualTypeOf<string>()
+  expectTypeOf<ExtractOptionValue<typeof visibleString>>().toEqualTypeOf<string>()
+
+  type HiddenArgs = {
+    legacy: {
+      type: 'string'
+      hidden: true
+    }
+    command: {
+      type: 'positional'
+      hidden: true
+    }
+  }
+
+  expectTypeOf<ArgValues<HiddenArgs>>().toEqualTypeOf<{
+    legacy?: string
+    command: string
+  }>()
 })
 
 test('FilterArgs', () => {
