@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { kebabnize } from './utils.ts'
+import { formatChoices, kebabnize } from './utils.ts'
 
 describe('kebabnize', () => {
   test('simple camelCase to kebab-case', () => {
@@ -8,5 +8,11 @@ describe('kebabnize', () => {
 
   test('complex camelCase to kebab-case', () => {
     expect(kebabnize('camelCaseComplexCase')).toBe('camel-case-complex-case')
+  })
+})
+
+describe('formatChoices', () => {
+  test('formats choices with JSON string quoting', () => {
+    expect(formatChoices(['debug', 'info', 'warn'])).toBe('"debug", "info", "warn"')
   })
 })

@@ -35,12 +35,12 @@ Main entry point of `args-tokens`.
 | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
 | [ArgExplicitlyProvided](/docs/default/type-aliases/ArgExplicitlyProvided.md)     | Tracks which arguments were explicitly provided by the user.                   |
 | [ArgResolveErrorType](/docs/default/type-aliases/ArgResolveErrorType.md)         | An error type for [ArgResolveError](/docs/default/classes/ArgResolveError.md). |
-| [ArgsValidationErrorCode](/docs/default/type-aliases/ArgsValidationErrorCode.md) | An i18n resource key for argument validation errors.                           |
+| [ArgsValidationErrorCode](/docs/default/type-aliases/ArgsValidationErrorCode.md) | A machine-readable argument validation error code.                             |
 | [ArgValues](/docs/default/type-aliases/ArgValues.md)                             | An object that contains the values of the arguments.                           |
 | [ParsedArgs](/docs/default/type-aliases/ParsedArgs.md)                           | Parsed command line arguments.                                                 |
 
 ## Variables
 
-| Variable                                                                      | Description                                                                          |
-| ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| [ArgsValidationErrorKeys](/docs/default/variables/ArgsValidationErrorKeys.md) | Error codes for [ArgsValidationError](/docs/default/classes/ArgsValidationError.md). |
+| Variable                                                                      | Description                                                                                           |
+| ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| [ArgsValidationErrorKeys](/docs/default/variables/ArgsValidationErrorKeys.md) | Machine-readable error codes for [ArgsValidationError](/docs/default/classes/ArgsValidationError.md). |

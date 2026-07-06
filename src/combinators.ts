@@ -56,6 +56,7 @@
  */
 
 import { ArgsValidationError, ArgsValidationErrorKeys } from './resolver.ts'
+import { formatChoices } from './utils.ts'
 
 import type { Args, ArgSchema } from './resolver.ts'
 
@@ -114,10 +115,6 @@ function createInvalidChoiceError(
       actual
     }
   })
-}
-
-function formatChoices(choices: readonly string[]): string {
-  return choices.map(value => JSON.stringify(value)).join(', ')
 }
 
 // ------------------------------------------------------------------------------------------------

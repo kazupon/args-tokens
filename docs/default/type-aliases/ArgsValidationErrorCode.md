@@ -1,6 +1,9 @@
 # Type Alias: ArgsValidationErrorCode
 
-An i18n resource key for argument validation errors.
+A machine-readable argument validation error code.
+
+Each code is one of [ArgsValidationErrorKeys](/docs/default/variables/ArgsValidationErrorKeys.md) and can also be used as
+an i18n resource key.
 
 ## Signature
 

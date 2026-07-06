@@ -2,9 +2,9 @@
 
 An error that contains structured metadata for argument validation failures.
 
-The `message` remains the English fallback message. Renderers can use
-[code](#property-code) and [values](#property-values)
-to localize the error, falling back to `message` when localization is unavailable.
+The `message` remains the English fallback message. Renderers can use `code`
+and `values` to localize the error, falling back to `message` when localization
+is unavailable.
 
 ## Extends
 
@@ -46,7 +46,7 @@ Create an `ArgsValidationError` instance.
 
 ## Properties
 
-| Name                          | Type                                                                               | Description                                      |
-| ----------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------ |
-| `code` _(optional, readonly)_ | [`ArgsValidationErrorCode`](/docs/default/type-aliases/ArgsValidationErrorCode.md) | i18n resource key for this validation error.     |
-| `values` _(readonly)_         | `Record<string, unknown>`                                                          | Interpolation values for [code](#property-code). |
+| Name                          | Type                                                                               | Description                                                                                                  |
+| ----------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `code` _(optional, readonly)_ | [`ArgsValidationErrorCode`](/docs/default/type-aliases/ArgsValidationErrorCode.md) | Machine-readable error code for this validation failure. This code can also be used as an i18n resource key. |
+| `values` _(readonly)_         | `Record<string, unknown>`                                                          | Interpolation values for `code`.                                                                             |

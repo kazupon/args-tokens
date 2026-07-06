@@ -1,8 +1,9 @@
 # Variable: ArgsValidationErrorKeys
 
-Error codes for [ArgsValidationError](/docs/default/classes/ArgsValidationError.md).
+Machine-readable error codes for [ArgsValidationError](/docs/default/classes/ArgsValidationError.md).
 
-Each value is also an i18n resource key for argument validation errors.
+Each code identifies a validation failure category and is also suitable as an
+i18n resource key for localized rendering.
 
 ## Signature
 

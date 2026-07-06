@@ -10,7 +10,7 @@
  */
 
 import { hasLongOptionPrefix, isShortOption } from './parser.ts'
-import { kebabnize } from './utils.ts'
+import { formatChoices, kebabnize } from './utils.ts'
 
 import type { ArgToken } from './parser.ts'
 
@@ -467,9 +467,10 @@ export interface ArgSchema {
 }
 
 /**
- * Error codes for {@link ArgsValidationError}.
+ * Machine-readable error codes for {@link ArgsValidationError}.
  *
- * Each value is also an i18n resource key for argument validation errors.
+ * Each code identifies a validation failure category and is also suitable as an
+ * i18n resource key for localized rendering.
  */
 export const ArgsValidationErrorKeys = {
   requiredOption: 'err:arg:required-option',
@@ -481,7 +482,10 @@ export const ArgsValidationErrorKeys = {
 } as const
 
 /**
- * An i18n resource key for argument validation errors.
+ * A machine-readable argument validation error code.
+ *
+ * Each code is one of {@link ArgsValidationErrorKeys} and can also be used as
+ * an i18n resource key.
  */
 export type ArgsValidationErrorCode =
   (typeof ArgsValidationErrorKeys)[keyof typeof ArgsValidationErrorKeys]
@@ -489,17 +493,19 @@ export type ArgsValidationErrorCode =
 /**
  * An error that contains structured metadata for argument validation failures.
  *
- * The `message` remains the English fallback message. Renderers can use
- * {@link ArgsValidationError.code | code} and {@link ArgsValidationError.values | values}
- * to localize the error, falling back to `message` when localization is unavailable.
+ * The `message` remains the English fallback message. Renderers can use `code`
+ * and `values` to localize the error, falling back to `message` when localization
+ * is unavailable.
  */
 export class ArgsValidationError extends Error {
   /**
-   * i18n resource key for this validation error.
+   * Machine-readable error code for this validation failure.
+   *
+   * This code can also be used as an i18n resource key.
    */
   readonly code?: ArgsValidationErrorCode
   /**
-   * Interpolation values for {@link ArgsValidationError.code | code}.
+   * Interpolation values for `code`.
    */
   readonly values: Record<string, unknown>
 
@@ -1232,7 +1238,7 @@ export class ArgResolveError extends ArgsValidationError {
    *
    * @param message - the error message
    * @param name - the name of the argument
-   * @param type - the type of the error, either 'type' or 'required'
+   * @param type - the type of the error: 'type', 'required', or 'conflict'
    * @param schema - the argument schema that caused the error
    * @param options - structured validation metadata
    */
@@ -1373,10 +1379,6 @@ function createArgumentDisplayName(option: string, schema: ArgSchema): string {
 
 function createOptionDisplayName(option: string, schema: ArgSchema): string {
   return `'--${option}'${schema.short ? ` or '-${schema.short}'` : ''}`
-}
-
-function formatChoices(choices: string[] | readonly string[]): string {
-  return choices.map(c => JSON.stringify(c)).join(', ')
 }
 
 function checkConflicts<A extends Args>(
