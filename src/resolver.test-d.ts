@@ -1,14 +1,38 @@
 import { expectTypeOf, test } from 'vitest'
 import { z } from 'zod/v4-mini'
+import { ArgsValidationError, ArgsValidationErrorKeys, isArgsValidationError } from './resolver.ts'
 
 import type {
   ArgExplicitlyProvided,
   ArgSchema,
   ArgValues,
+  ArgsValidationErrorCode,
   ExtractOptionValue,
   FilterArgs,
   ResolveArgValues
 } from './resolver.ts'
+
+test('ArgsValidationErrorCode', () => {
+  expectTypeOf<ArgsValidationErrorCode>().toEqualTypeOf<
+    (typeof ArgsValidationErrorKeys)[keyof typeof ArgsValidationErrorKeys]
+  >()
+  expectTypeOf<typeof ArgsValidationErrorKeys.invalidType>().toEqualTypeOf<'err:arg:invalid-type'>()
+})
+
+test('isArgsValidationError', () => {
+  const error: unknown = new ArgsValidationError('fallback', {
+    code: ArgsValidationErrorKeys.customParse,
+    values: {
+      name: 'config'
+    }
+  })
+
+  if (isArgsValidationError(error)) {
+    expectTypeOf(error).toEqualTypeOf<ArgsValidationError>()
+    expectTypeOf(error.code).toEqualTypeOf<ArgsValidationErrorCode | undefined>()
+    expectTypeOf(error.values).toEqualTypeOf<Record<string, unknown>>()
+  }
+})
 
 test('ExtractOptionValue', () => {
   // string type

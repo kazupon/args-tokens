@@ -11,7 +11,13 @@
 
 export { parse } from './parse.ts'
 export { parseArgs } from './parser.ts'
-export { ArgResolveError, resolveArgs } from './resolver.ts'
+export {
+  ArgResolveError,
+  ArgsValidationError,
+  ArgsValidationErrorKeys,
+  isArgsValidationError,
+  resolveArgs
+} from './resolver.ts'
 
 export type { ParsedArgs, ParseOptions } from './parse.ts'
 export type { ArgToken, ParserOptions } from './parser.ts'
@@ -19,6 +25,7 @@ export type {
   ArgExplicitlyProvided,
   ArgResolveErrorType,
   Args,
+  ArgsValidationErrorCode,
   ArgSchema,
   ArgValues,
   ResolveArgs

@@ -20,7 +20,7 @@ import {
   withDefault
 } from './combinators.ts'
 import { parseArgs } from './parser.ts'
-import { resolveArgs } from './resolver.ts'
+import { ArgsValidationError, ArgsValidationErrorKeys, resolveArgs } from './resolver.ts'
 
 import type { Args, ArgSchema } from './resolver.ts'
 
@@ -38,6 +38,8 @@ describe('string combinator', () => {
     const { error } = resolveArgs({ name: { ...string({ minLength: 3 }), required: true } }, tokens)
     expect(error).toBeDefined()
     expect((error!.errors[0] as Error).message).toContain('at least 3 characters')
+    expect((error!.errors[0] as ArgsValidationError).code).toBe(ArgsValidationErrorKeys.customParse)
+    expect((error!.errors[0] as ArgsValidationError).cause).toBeInstanceOf(RangeError)
   })
 
   test('maxLength validation', () => {
@@ -117,6 +119,13 @@ describe('number combinator', () => {
     const { error } = resolveArgs({ port: { ...number(), required: true } }, tokens)
     expect(error).toBeDefined()
     expect((error!.errors[0] as Error).message).toContain('Expected a number')
+    expect((error!.errors[0] as ArgsValidationError).code).toBe(ArgsValidationErrorKeys.invalidType)
+    expect((error!.errors[0] as ArgsValidationError).values).toEqual({
+      expected: 'number',
+      actual: 'abc',
+      name: 'port',
+      displayName: "'--port'"
+    })
   })
 
   test('min validation', () => {
@@ -125,6 +134,8 @@ describe('number combinator', () => {
     const { error } = resolveArgs({ port: { ...number({ min: 1 }), required: true } }, tokens)
     expect(error).toBeDefined()
     expect((error!.errors[0] as Error).message).toContain('>= 1')
+    expect((error!.errors[0] as ArgsValidationError).code).toBe(ArgsValidationErrorKeys.customParse)
+    expect((error!.errors[0] as ArgsValidationError).cause).toBeInstanceOf(RangeError)
   })
 
   test('max validation', () => {
@@ -176,6 +187,13 @@ describe('integer combinator', () => {
     const { error } = resolveArgs({ count: { ...integer(), required: true } }, tokens)
     expect(error).toBeDefined()
     expect((error!.errors[0] as Error).message).toContain('Expected an integer')
+    expect((error!.errors[0] as ArgsValidationError).code).toBe(ArgsValidationErrorKeys.invalidType)
+    expect((error!.errors[0] as ArgsValidationError).values).toEqual({
+      expected: 'integer',
+      actual: '3.14',
+      name: 'count',
+      displayName: "'--count'"
+    })
   })
 
   test('range validation', () => {
@@ -223,6 +241,13 @@ describe('float combinator', () => {
     const { error } = resolveArgs({ ratio: { ...float(), required: true } }, tokens)
     expect(error).toBeDefined()
     expect((error!.errors[0] as Error).message).toContain('finite float')
+    expect((error!.errors[0] as ArgsValidationError).code).toBe(ArgsValidationErrorKeys.invalidType)
+    expect((error!.errors[0] as ArgsValidationError).values).toEqual({
+      expected: 'float',
+      actual: 'abc',
+      name: 'ratio',
+      displayName: "'--ratio'"
+    })
   })
 
   test('rejects Infinity', () => {
@@ -408,6 +433,17 @@ describe('choice combinator', () => {
     )
     expect(error).toBeDefined()
     expect((error!.errors[0] as Error).message).toContain('one of')
+    expect((error!.errors[0] as ArgsValidationError).code).toBe(
+      ArgsValidationErrorKeys.invalidChoice
+    )
+    expect((error!.errors[0] as ArgsValidationError).values).toEqual({
+      expected: 'enum',
+      choices: '"debug", "info", "warn", "error"',
+      choiceValues: ['debug', 'info', 'warn', 'error'],
+      actual: 'trace',
+      name: 'level',
+      displayName: "'--level'"
+    })
   })
 })
 
@@ -444,6 +480,13 @@ describe('custom combinator', () => {
     const { error } = resolveArgs({ since: { ...date, required: true } }, tokens)
     expect(error).toBeDefined()
     expect((error!.errors[0] as Error).message).toContain('Invalid date format')
+    expect((error!.errors[0] as ArgsValidationError).code).toBe(ArgsValidationErrorKeys.customParse)
+    expect((error!.errors[0] as ArgsValidationError).values).toEqual({
+      displayName: "'--since'",
+      name: 'since',
+      reason: 'Invalid date format'
+    })
+    expect((error!.errors[0] as ArgsValidationError).cause).toBeInstanceOf(Error)
   })
 
   test('default metavar is custom', () => {
@@ -529,6 +572,34 @@ describe('map combinator', () => {
     )
     expect(error).toBeDefined()
     expect((error!.errors[0] as Error).message).toContain('Expected an integer')
+    expect((error!.errors[0] as ArgsValidationError).code).toBe(ArgsValidationErrorKeys.invalidType)
+    expect((error!.errors[0] as ArgsValidationError).cause).toBeUndefined()
+  })
+
+  test('wraps transform error as custom parse failure', () => {
+    const cause = new Error('Cannot double')
+    const argv = ['--count', '5']
+    const tokens = parseArgs(argv)
+    const { error } = resolveArgs(
+      {
+        count: {
+          ...map(integer(), () => {
+            throw cause
+          }),
+          required: true
+        }
+      },
+      tokens
+    )
+
+    expect(error).toBeDefined()
+    expect((error!.errors[0] as ArgsValidationError).code).toBe(ArgsValidationErrorKeys.customParse)
+    expect((error!.errors[0] as ArgsValidationError).values).toEqual({
+      displayName: "'--count'",
+      name: 'count',
+      reason: 'Cannot double'
+    })
+    expect((error!.errors[0] as ArgsValidationError).cause).toBe(cause)
   })
 
   test('immutability', () => {

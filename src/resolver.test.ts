@@ -3,7 +3,13 @@
 import { describe, expect, test } from 'vitest'
 import { z } from 'zod/v4-mini'
 import { parseArgs } from './parser.ts'
-import { ArgResolveError, resolveArgs } from './resolver.ts'
+import {
+  ArgResolveError,
+  ArgsValidationError,
+  ArgsValidationErrorKeys,
+  isArgsValidationError,
+  resolveArgs
+} from './resolver.ts'
 
 import type { Args } from './resolver.ts'
 
@@ -63,6 +69,15 @@ describe('resolveArgs', () => {
     expect((error?.errors[0] as ArgResolveError).name).toEqual('host')
     expect((error?.errors[0] as ArgResolveError).type).toEqual('required')
     expect((error?.errors[0] as ArgResolveError).schema.type).toEqual('string')
+    expect(error?.errors[0]).toBeInstanceOf(ArgsValidationError)
+    expect(isArgsValidationError(error?.errors[0])).toBe(true)
+    expect((error?.errors[0] as ArgsValidationError).code).toEqual(
+      ArgsValidationErrorKeys.requiredOption
+    )
+    expect((error?.errors[0] as ArgsValidationError).values).toEqual({
+      displayName: "'--host' or '-o'",
+      name: 'host'
+    })
   })
 
   test('missing defaultable option', () => {
@@ -88,6 +103,15 @@ describe('resolveArgs', () => {
     expect((error?.errors[0] as ArgResolveError).name).toEqual('port')
     expect((error?.errors[0] as ArgResolveError).type).toEqual('type')
     expect((error?.errors[0] as ArgResolveError).schema.type).toEqual('number')
+    expect((error?.errors[0] as ArgsValidationError).code).toEqual(
+      ArgsValidationErrorKeys.invalidType
+    )
+    expect((error?.errors[0] as ArgsValidationError).values).toEqual({
+      displayName: "'--port' or '-p'",
+      name: 'port',
+      expected: 'number',
+      actual: 'foo'
+    })
   })
 
   test('multiple errors', () => {
@@ -328,6 +352,125 @@ describe('hidden metadata', () => {
   })
 })
 
+describe('structured validation errors', () => {
+  test('wraps custom parse failures with code, values and cause', () => {
+    const cause = new Error('Invalid config')
+    const tokens = parseArgs(['--config', 'bad'])
+    const { error } = resolveArgs(
+      {
+        config: {
+          type: 'custom',
+          parse() {
+            throw cause
+          }
+        }
+      },
+      tokens
+    )
+
+    expect(error?.errors.length).toBe(1)
+    const validationError = error?.errors[0] as ArgsValidationError
+    expect(validationError).toBeInstanceOf(ArgsValidationError)
+    expect(validationError).not.toBeInstanceOf(ArgResolveError)
+    expect(validationError.message).toBe('Invalid config')
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.customParse)
+    expect(validationError.values).toEqual({
+      displayName: "'--config'",
+      name: 'config',
+      reason: 'Invalid config'
+    })
+    expect(validationError.cause).toBe(cause)
+  })
+
+  test('wraps non-error parse failures with the thrown value as cause', () => {
+    const tokens = parseArgs(['--config', 'bad'])
+    const { error } = resolveArgs(
+      {
+        config: {
+          type: 'custom',
+          parse() {
+            // eslint-disable-next-line @typescript-eslint/only-throw-error -- Verify non-Error compatibility.
+            throw 'Invalid config'
+          }
+        }
+      },
+      tokens
+    )
+
+    const validationError = error?.errors[0] as ArgsValidationError
+    expect(validationError.message).toBe('Invalid config')
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.customParse)
+    expect(validationError.values).toEqual({
+      displayName: "'--config'",
+      name: 'config',
+      reason: 'Invalid config'
+    })
+    expect(validationError.cause).toBe('Invalid config')
+  })
+
+  test('does not double wrap user thrown ArgsValidationError', () => {
+    const thrown = new ArgsValidationError('Use a finite count', {
+      code: ArgsValidationErrorKeys.invalidType,
+      values: {
+        expected: 'finite-count'
+      }
+    })
+    const tokens = parseArgs(['--count', 'bad'])
+    const { error } = resolveArgs(
+      {
+        count: {
+          type: 'custom',
+          parse() {
+            throw thrown
+          }
+        }
+      },
+      tokens
+    )
+
+    const validationError = error?.errors[0] as ArgsValidationError
+    expect(validationError).toBe(thrown)
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.invalidType)
+    expect(validationError.values).toEqual({
+      expected: 'finite-count',
+      name: 'count',
+      displayName: "'--count'",
+      actual: 'bad'
+    })
+  })
+
+  test('wraps multiple positional parse failures with positional values', () => {
+    const cause = new Error('Not a count')
+    const tokens = parseArgs(['1', 'bad', '2'])
+    const { error } = resolveArgs(
+      {
+        counts: {
+          type: 'positional',
+          multiple: true,
+          parse(value: string) {
+            if (value === 'bad') {
+              throw cause
+            }
+            return Number(value)
+          }
+        }
+      },
+      tokens
+    )
+
+    expect(error?.errors.length).toBe(1)
+    const validationError = error?.errors[0] as ArgsValidationError
+    expect(validationError.message).toBe('Not a count')
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.customParse)
+    expect(validationError.values).toEqual({
+      displayName: "'counts'",
+      name: 'counts',
+      reason: 'Not a count'
+    })
+    expect(validationError.cause).toBe(cause)
+  })
+})
+
 describe('option group', () => {
   test('basic', () => {
     const argv = ['dev', '-dsV']
@@ -441,6 +584,17 @@ describe('enum option', () => {
     expect((error?.errors[0] as ArgResolveError).name).toEqual('log')
     expect((error?.errors[0] as ArgResolveError).type).toEqual('type')
     expect((error?.errors[0] as ArgResolveError).schema.type).toEqual('enum')
+    expect((error?.errors[0] as ArgsValidationError).code).toEqual(
+      ArgsValidationErrorKeys.invalidChoice
+    )
+    expect((error?.errors[0] as ArgsValidationError).values).toEqual({
+      displayName: "'--log' or '-l'",
+      name: 'log',
+      expected: 'enum',
+      choices: '"debug", "info", "warn", "error"',
+      choiceValues: ['debug', 'info', 'warn', 'error'],
+      actual: 'foo'
+    })
   })
 
   test('required', () => {
@@ -572,6 +726,12 @@ describe('positional arguments', () => {
     expect((error?.errors[0] as ArgResolveError).message).toEqual(
       `Positional argument 'command' is required`
     )
+    expect((error?.errors[0] as ArgsValidationError).code).toEqual(
+      ArgsValidationErrorKeys.requiredPositional
+    )
+    expect((error?.errors[0] as ArgsValidationError).values).toEqual({
+      name: 'command'
+    })
   })
 
   test('missing optional single positional', () => {
@@ -1779,7 +1939,10 @@ describe('conflicts', () => {
     expect(error).toBeDefined()
     expect(error?.errors.length).toBe(1)
     expect(error?.errors[0]).toBeInstanceOf(ArgResolveError)
+    expect(error?.errors[0]).toBeInstanceOf(ArgsValidationError)
     expect((error?.errors[0] as ArgResolveError).type).toBe('conflict')
+    expect((error?.errors[0] as ArgsValidationError).code).toBeUndefined()
+    expect((error?.errors[0] as ArgsValidationError).values).toEqual({})
     expect((error?.errors[0] as ArgResolveError).message).toBe(
       "Optional argument '--summer' conflicts with '--autumn'"
     )
