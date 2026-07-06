@@ -276,6 +276,50 @@ console.log('values:', values)
 console.log('positionals:', positionals)
 ```
 
+## Validation errors
+
+`resolveArgs` and `parse` return validation failures as an `AggregateError` in the `error` field. Each argument validation failure is an `ArgsValidationError`, which keeps the existing English `message` as a fallback and adds structured metadata for localization or custom rendering.
+
+Use `isArgsValidationError()` to narrow individual errors:
+
+```js
+import { ArgsValidationErrorKeys, isArgsValidationError, parseArgs, resolveArgs } from 'args-tokens'
+
+const tokens = parseArgs(['--port=abc'])
+const { error } = resolveArgs(
+  {
+    port: {
+      type: 'number',
+      required: true
+    }
+  },
+  tokens
+)
+
+for (const cause of error?.errors ?? []) {
+  if (!isArgsValidationError(cause)) {
+    continue
+  }
+
+  if (cause.code === ArgsValidationErrorKeys.invalidType) {
+    console.log(cause.message) // Optional argument '--port' should be 'number'
+    console.log(cause.values)
+    // {
+    //   displayName: "'--port'",
+    //   name: 'port',
+    //   expected: 'number',
+    //   actual: 'abc'
+    // }
+  }
+}
+```
+
+The resolver uses stable error codes for required options, required positionals, invalid types, invalid choices, and custom parse failures. The `values` object contains interpolation data such as `name`, `displayName`, `expected`, `actual`, `choices`, `choiceValues`, and `reason` depending on the error kind.
+
+When a custom `parse` function throws, args-tokens wraps the failure as `ArgsValidationErrorKeys.customParse` and preserves the thrown value as `cause`. If the parser already throws an `ArgsValidationError`, it is reused without double wrapping.
+
+`ArgResolveError` now extends `ArgsValidationError` for backward compatibility. Existing checks for `instanceof ArgResolveError`, `.name`, `.type`, `.schema`, and `.message` continue to work. Conflict errors keep their existing `ArgResolveError` shape and do not currently expose a structured validation code.
+
 ## Node.js `parseArgs` tokens compatible
 
 If you want to use the same short options tokens as returned Node.js `parseArgs`, you can use `allowCompatible` parse option on `parseArgs`:

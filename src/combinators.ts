@@ -55,6 +55,9 @@
  * @license MIT
  */
 
+import { ArgsValidationError, ArgsValidationErrorKeys } from './resolver.ts'
+import { formatChoices } from './utils.ts'
+
 import type { Args, ArgSchema } from './resolver.ts'
 
 /**
@@ -83,6 +86,36 @@ export type Combinator<T> = {
  * @experimental
  */
 export type CombinatorSchema<T> = ArgSchema & Combinator<T>
+
+function createInvalidTypeError(
+  message: string,
+  expected: string,
+  actual: string
+): ArgsValidationError {
+  return new ArgsValidationError(message, {
+    code: ArgsValidationErrorKeys.invalidType,
+    values: {
+      expected,
+      actual
+    }
+  })
+}
+
+function createInvalidChoiceError(
+  message: string,
+  choices: readonly string[],
+  actual: string
+): ArgsValidationError {
+  return new ArgsValidationError(message, {
+    code: ArgsValidationErrorKeys.invalidChoice,
+    values: {
+      expected: 'enum',
+      choices: formatChoices(choices),
+      choiceValues: [...choices],
+      actual
+    }
+  })
+}
 
 // ------------------------------------------------------------------------------------------------
 // Base Combinators
@@ -216,7 +249,7 @@ export function number(opts?: NumberOptions): CombinatorSchema<number> {
     parse(value: string): number {
       const n = Number(value)
       if (value.trim() === '' || isNaN(n)) {
-        throw new TypeError(`Expected a number, got '${value}'`)
+        throw createInvalidTypeError(`Expected a number, got '${value}'`, 'number', value)
       }
       if (opts?.min != null && n < opts.min) {
         throw new RangeError(`Number must be >= ${opts.min}, got ${n}`)
@@ -273,11 +306,11 @@ export function integer(opts?: IntegerOptions): CombinatorSchema<number> {
     ...(opts?.required != null ? { required: opts.required } : {}),
     parse(value: string): number {
       if (!/^-?\d+$/.test(value)) {
-        throw new TypeError(`Expected an integer, got '${value}'`)
+        throw createInvalidTypeError(`Expected an integer, got '${value}'`, 'integer', value)
       }
       const n = Number.parseInt(value, 10)
       if (isNaN(n)) {
-        throw new TypeError(`Expected an integer, got '${value}'`)
+        throw createInvalidTypeError(`Expected an integer, got '${value}'`, 'integer', value)
       }
       if (opts?.min != null && n < opts.min) {
         throw new RangeError(`Integer must be >= ${opts.min}, got ${n}`)
@@ -335,11 +368,11 @@ export function float(opts?: FloatOptions): CombinatorSchema<number> {
     parse(value: string): number {
       const trimmed = value.trim()
       if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i.test(trimmed)) {
-        throw new TypeError(`Expected a finite float, got '${value}'`)
+        throw createInvalidTypeError(`Expected a finite float, got '${value}'`, 'float', value)
       }
       const n = Number.parseFloat(trimmed)
       if (isNaN(n) || !isFinite(n)) {
-        throw new TypeError(`Expected a finite float, got '${value}'`)
+        throw createInvalidTypeError(`Expected a finite float, got '${value}'`, 'float', value)
       }
       if (opts?.min != null && n < opts.min) {
         throw new RangeError(`Float must be >= ${opts.min}, got ${n}`)
@@ -512,7 +545,7 @@ export function choice<const T extends readonly string[]>(
     ...(opts?.required != null ? { required: opts.required } : {}),
     parse(value: string): T[number] {
       if (!(values as readonly string[]).includes(value)) {
-        throw new Error(`Value must be one of: ${values.join(', ')}`)
+        throw createInvalidChoiceError(`Value must be one of: ${values.join(', ')}`, values, value)
       }
       return value
     }

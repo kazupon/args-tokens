@@ -10,7 +10,7 @@
  */
 
 import { hasLongOptionPrefix, isShortOption } from './parser.ts'
-import { kebabnize } from './utils.ts'
+import { formatChoices, kebabnize } from './utils.ts'
 
 import type { ArgToken } from './parser.ts'
 
@@ -433,7 +433,7 @@ export interface ArgSchema {
    *
    * @param value - Raw string value from command line
    * @returns Parsed value of any type
-   * @throws Error or subclass when value is invalid
+   * @throws {Error} Error or subclass when value is invalid
    *
    * @example
    * Custom parsing functions:
@@ -464,6 +464,80 @@ export interface ArgSchema {
    * ```
    */
   parse?: (value: string) => any
+}
+
+/**
+ * Machine-readable error codes for {@link ArgsValidationError}.
+ *
+ * Each code identifies a validation failure category and is also suitable as an
+ * i18n resource key for localized rendering.
+ */
+export const ArgsValidationErrorKeys = {
+  requiredOption: 'err:arg:required-option',
+  requiredPositional: 'err:arg:required-positional',
+  invalidType: 'err:arg:invalid-type',
+  invalidChoice: 'err:arg:invalid-choice',
+  customParse: 'err:arg:custom-parse',
+  unknownOption: 'err:arg:unknown-option'
+} as const
+
+/**
+ * A machine-readable argument validation error code.
+ *
+ * Each code is one of {@link ArgsValidationErrorKeys} and can also be used as
+ * an i18n resource key.
+ */
+export type ArgsValidationErrorCode =
+  (typeof ArgsValidationErrorKeys)[keyof typeof ArgsValidationErrorKeys]
+
+/**
+ * An error that contains structured metadata for argument validation failures.
+ *
+ * The `message` remains the English fallback message. Renderers can use `code`
+ * and `values` to localize the error, falling back to `message` when localization
+ * is unavailable.
+ */
+export class ArgsValidationError extends Error {
+  /**
+   * Machine-readable error code for this validation failure.
+   *
+   * This code can also be used as an i18n resource key.
+   */
+  readonly code?: ArgsValidationErrorCode
+  /**
+   * Interpolation values for `code`.
+   */
+  readonly values: Record<string, unknown>
+
+  /**
+   * Create an `ArgsValidationError` instance.
+   *
+   * @param message - fallback error message
+   * @param options - structured validation metadata
+   */
+  constructor(
+    message: string,
+    options: {
+      code?: ArgsValidationErrorCode
+      values?: Record<string, unknown>
+      cause?: unknown
+    } = {}
+  ) {
+    super(message, { cause: options.cause })
+    this.name = 'ArgsValidationError'
+    this.code = options.code
+    this.values = options.values ?? {}
+  }
+}
+
+/**
+ * Check whether the given value is an {@link ArgsValidationError}.
+ *
+ * @param error - value to check
+ * @returns `true` when the value is an `ArgsValidationError`
+ */
+export function isArgsValidationError(error: unknown): error is ArgsValidationError {
+  return error instanceof ArgsValidationError
 }
 
 /**
@@ -868,10 +942,11 @@ export function resolveArgs<A extends Args>(
               const parsed: unknown[] = []
               for (let i = positionalsCount; i < endPositionals; i++) {
                 const p = positionalTokens[i]
-                try {
-                  parsed.push(schema.parse(p.value!))
-                } catch (error) {
-                  errors.push(error as Error)
+                const [parsedValue, error] = parseSchemaValue(p.value!, rawArg, arg, schema)
+                if (error) {
+                  errors.push(error)
+                } else {
+                  parsed.push(parsedValue)
                 }
               }
               // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(kazupon): Allow any type for resolving
@@ -889,23 +964,23 @@ export function resolveArgs<A extends Args>(
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(sushichan044): Allow any type for resolving
             ;(explicit as any)[rawArg] = true
           } else if (schema.required) {
-            errors.push(createRequireError(arg, schema))
+            errors.push(createRequireError(rawArg, arg, schema))
           }
         } else if (schema.required) {
-          errors.push(createRequireError(arg, schema))
+          errors.push(createRequireError(rawArg, arg, schema))
         }
       } else {
         const positional = positionalTokens[positionalsCount]
 
         if (shouldRequireMissingSinglePositional(schema)) {
           if (positional != null) {
-            resolveSinglePositionalValue(values, errors, rawArg, schema, positional)
+            resolveSinglePositionalValue(values, errors, rawArg, arg, schema, positional)
             // mark as explicitly set when positional argument is provided.
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(sushichan044): Allow any type for resolving
             ;(explicit as any)[rawArg] = true
             positionalsCount++
           } else {
-            errors.push(createRequireError(arg, schema))
+            errors.push(createRequireError(rawArg, arg, schema))
           }
           continue
         }
@@ -915,7 +990,7 @@ export function resolveArgs<A extends Args>(
           const availablePositionals = Math.max(positionalTokens.length - positionalsCount, 0)
 
           if (availablePositionals > requiredPositionals) {
-            resolveSinglePositionalValue(values, errors, rawArg, schema, positional)
+            resolveSinglePositionalValue(values, errors, rawArg, arg, schema, positional)
             // mark as explicitly set when positional argument is provided.
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(sushichan044): Allow any type for resolving
             ;(explicit as any)[rawArg] = true
@@ -940,7 +1015,7 @@ export function resolveArgs<A extends Args>(
         )
       })
       if (!found) {
-        errors.push(createRequireError(arg, schema))
+        errors.push(createRequireError(rawArg, arg, schema))
         continue
       }
     }
@@ -954,7 +1029,7 @@ export function resolveArgs<A extends Args>(
           hasLongOptionPrefix(token.rawName)) ||
         (schema.short === token.name && token.rawName != undefined && isShortOption(token.rawName))
       ) {
-        const invalid = validateRequire(token, arg, schema)
+        const invalid = validateRequire(token, rawArg, arg, schema)
         if (invalid) {
           errors.push(invalid)
           continue
@@ -969,8 +1044,7 @@ export function resolveArgs<A extends Args>(
         const actualInputName = isShortOption(token.rawName) ? `-${token.name}` : `--${arg}`
         actualInputNames.set(rawArg, actualInputName)
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- NOTE(kazupon): Allow any type for parsing
-        const [parsedValue, error] = parse(token, arg, schema)
+        const [parsedValue, error] = parse(token, rawArg, arg, schema)
         if (error) {
           errors.push(error)
         } else {
@@ -980,7 +1054,7 @@ export function resolveArgs<A extends Args>(
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call -- NOTE(kazupon): Allow any type for resolving
             ;(values as any)[rawArg].push(parsedValue)
           } else {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment -- NOTE(kazupon): Allow any type for resolving
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(kazupon): Allow any type for resolving
             ;(values as any)[rawArg] = parsedValue
           }
         }
@@ -1007,50 +1081,40 @@ export function resolveArgs<A extends Args>(
   }
 }
 
-function parse(token: ArgToken, option: string, schema: ArgSchema): [any, Error | undefined] {
+function parse(
+  token: ArgToken,
+  rawArg: string,
+  option: string,
+  schema: ArgSchema
+): [unknown, Error | undefined] {
   // When schema.parse is defined, use it directly (all types including boolean).
   if (typeof schema.parse === 'function') {
-    try {
-      if (schema.type === 'boolean') {
-        // boolean is existence-based: pass negation result as string to parse
-        const boolValue = !(schema.negatable && token.name!.startsWith('no-'))
-        return [schema.parse(String(boolValue)), undefined]
-      }
-      return [schema.parse(token.value ?? String(schema.default ?? '')), undefined]
-    } catch (error) {
-      return [undefined, error as Error]
+    if (schema.type === 'boolean') {
+      // boolean is existence-based: pass negation result as string to parse
+      const boolValue = !(schema.negatable && token.name!.startsWith('no-'))
+      return parseSchemaValue(String(boolValue), rawArg, option, schema)
     }
+    return parseSchemaValue(token.value ?? String(schema.default ?? ''), rawArg, option, schema)
   }
   switch (schema.type) {
     case 'string': {
       // prettier-ignore
       return typeof token.value === 'string'
         ? [token.value || schema.default, undefined]
-        : [undefined, createTypeError(option, schema)];
+        : [undefined, createTypeError(rawArg, option, schema, token.value)];
     }
     case 'boolean': {
       return [!(schema.negatable && token.name!.startsWith('no-')), undefined]
     }
     case 'number': {
       if (!isNumeric(token.value!)) {
-        return [undefined, createTypeError(option, schema)]
+        return [undefined, createTypeError(rawArg, option, schema, token.value)]
       }
       return token.value ? [+token.value, undefined] : [+(schema.default || ''), undefined]
     }
     case 'enum': {
       if (schema.choices && !schema.choices.includes(token.value!)) {
-        return [
-          undefined,
-          new ArgResolveError(
-            // prettier-ignore
-            `Optional argument '--${option}' ${schema.short
-              ? `or '-${schema.short}' `
-              : ''}should be chosen from '${schema.type}' [${schema.choices.map(c => JSON.stringify(c)).join(', ')}] values`,
-            option,
-            'type',
-            schema
-          )
-        ]
+        return [undefined, createChoiceError(rawArg, option, schema, token.value)]
       }
       return [token.value || schema.default, undefined]
     }
@@ -1065,26 +1129,51 @@ function parse(token: ArgToken, option: string, schema: ArgSchema): [any, Error 
   }
 }
 
-function createRequireError(option: string, schema: ArgSchema): ArgResolveError {
+function parseSchemaValue(
+  value: string,
+  rawArg: string,
+  option: string,
+  schema: ArgSchema
+): [unknown, Error | undefined] {
+  try {
+    const parsedValue: unknown = schema.parse!(value)
+    return [parsedValue, undefined]
+  } catch (error) {
+    return [undefined, createCustomParseError(error, rawArg, option, schema, value)]
+  }
+}
+
+function createRequireError(rawArg: string, option: string, schema: ArgSchema): ArgResolveError {
   const message =
     schema.type === 'positional'
       ? `Positional argument '${option}' is required`
-      : `Optional argument '--${option}' ${schema.short ? `or '-${schema.short}' ` : ''}is required`
-  return new ArgResolveError(message, option, 'required', schema)
+      : `Optional argument ${createOptionDisplayName(option, schema)} is required`
+  return new ArgResolveError(message, option, 'required', schema, {
+    code:
+      schema.type === 'positional'
+        ? ArgsValidationErrorKeys.requiredPositional
+        : ArgsValidationErrorKeys.requiredOption,
+    values:
+      schema.type === 'positional'
+        ? { name: rawArg }
+        : { displayName: createOptionDisplayName(option, schema), name: rawArg }
+  })
 }
 
 function resolveSinglePositionalValue(
   values: Record<string, unknown>,
   errors: Error[],
   rawArg: string,
+  option: string,
   schema: ArgSchema,
   positional: ArgToken
 ): void {
   if (typeof schema.parse === 'function') {
-    try {
-      values[rawArg] = schema.parse(positional.value!)
-    } catch (error) {
-      errors.push(error as Error)
+    const [parsedValue, error] = parseSchemaValue(positional.value!, rawArg, option, schema)
+    if (error) {
+      errors.push(error)
+    } else {
+      values[rawArg] = parsedValue
     }
   } else {
     values[rawArg] = positional.value!
@@ -1140,7 +1229,7 @@ export type ArgResolveErrorType = 'type' | 'required' | 'conflict'
  * An error that occurs when resolving arguments.
  * This error is thrown when the argument is not valid.
  */
-export class ArgResolveError extends Error {
+export class ArgResolveError extends ArgsValidationError {
   override name: string
   schema: ArgSchema
   type: ArgResolveErrorType
@@ -1149,20 +1238,36 @@ export class ArgResolveError extends Error {
    *
    * @param message - the error message
    * @param name - the name of the argument
-   * @param type - the type of the error, either 'type' or 'required'
+   * @param type - the type of the error: 'type', 'required', or 'conflict'
    * @param schema - the argument schema that caused the error
+   * @param options - structured validation metadata
    */
-  constructor(message: string, name: string, type: ArgResolveErrorType, schema: ArgSchema) {
-    super(message)
+  constructor(
+    message: string,
+    name: string,
+    type: ArgResolveErrorType,
+    schema: ArgSchema,
+    options: {
+      code?: ArgsValidationErrorCode
+      values?: Record<string, unknown>
+      cause?: unknown
+    } = {}
+  ) {
+    super(message, options)
     this.name = name
     this.type = type
     this.schema = schema
   }
 }
 
-function validateRequire(token: ArgToken, option: string, schema: ArgSchema): Error | undefined {
+function validateRequire(
+  token: ArgToken,
+  rawArg: string,
+  option: string,
+  schema: ArgSchema
+): Error | undefined {
   if (schema.required && schema.type !== 'boolean' && !token.value) {
-    return createRequireError(option, schema)
+    return createRequireError(rawArg, option, schema)
   }
 }
 
@@ -1171,13 +1276,109 @@ function isNumeric(str: string): boolean {
   return str.trim() !== '' && !isNaN(str)
 }
 
-function createTypeError(option: string, schema: ArgSchema): TypeError {
+function createTypeError(
+  rawArg: string,
+  option: string,
+  schema: ArgSchema,
+  actual: unknown
+): ArgResolveError {
   return new ArgResolveError(
-    `Optional argument '--${option}' ${schema.short ? `or '-${schema.short}' ` : ''}should be '${schema.type}'`,
+    `Optional argument ${createOptionDisplayName(option, schema)} should be '${schema.type}'`,
     option,
     'type',
-    schema
+    schema,
+    {
+      code: ArgsValidationErrorKeys.invalidType,
+      values: {
+        displayName: createOptionDisplayName(option, schema),
+        name: rawArg,
+        expected: schema.type,
+        ...(actual != null ? { actual } : {})
+      }
+    }
   )
+}
+
+function createChoiceError(
+  rawArg: string,
+  option: string,
+  schema: ArgSchema,
+  actual: unknown
+): ArgResolveError {
+  const choices = schema.choices ?? []
+  return new ArgResolveError(
+    `Optional argument ${createOptionDisplayName(option, schema)} should be chosen from '${schema.type}' [${formatChoices(choices)}] values`,
+    option,
+    'type',
+    schema,
+    {
+      code: ArgsValidationErrorKeys.invalidChoice,
+      values: {
+        displayName: createOptionDisplayName(option, schema),
+        name: rawArg,
+        expected: schema.type,
+        choices: formatChoices(choices),
+        choiceValues: [...choices],
+        ...(actual != null ? { actual } : {})
+      }
+    }
+  )
+}
+
+function createCustomParseError(
+  error: unknown,
+  rawArg: string,
+  option: string,
+  schema: ArgSchema,
+  value: string
+): Error {
+  if (isArgsValidationError(error)) {
+    augmentValidationError(error, rawArg, option, schema, value)
+    return error
+  }
+
+  const reason = getErrorReason(error)
+  return new ArgsValidationError(reason, {
+    code: ArgsValidationErrorKeys.customParse,
+    values: {
+      displayName: createArgumentDisplayName(option, schema),
+      name: rawArg,
+      reason
+    },
+    cause: error
+  })
+}
+
+function augmentValidationError(
+  error: ArgsValidationError,
+  rawArg: string,
+  option: string,
+  schema: ArgSchema,
+  value: string
+): void {
+  const values = error.values
+  values.name ??= rawArg
+  values.displayName ??= createArgumentDisplayName(option, schema)
+
+  if (
+    (error.code === ArgsValidationErrorKeys.invalidType ||
+      error.code === ArgsValidationErrorKeys.invalidChoice) &&
+    values.actual == null
+  ) {
+    values.actual = value
+  }
+}
+
+function getErrorReason(error: unknown): string {
+  return error instanceof Error ? error.message : String(error)
+}
+
+function createArgumentDisplayName(option: string, schema: ArgSchema): string {
+  return schema.type === 'positional' ? `'${option}'` : createOptionDisplayName(option, schema)
+}
+
+function createOptionDisplayName(option: string, schema: ArgSchema): string {
+  return `'--${option}'${schema.short ? ` or '-${schema.short}'` : ''}`
 }
 
 function checkConflicts<A extends Args>(
