@@ -811,7 +811,14 @@ export function resolveArgs<A extends Args>(
           applyShortOptionValue(token.value)
         }
       } else if (currentLongOption) {
-        const isBoolean = args[currentLongOption.name!]?.type === 'boolean'
+        const isBoolean = Object.entries(args).some(([rawArg, schema]) => {
+          if (schema.type !== 'boolean') {
+            return false
+          }
+          const option = toKebab || schema.toKebab ? kebabnize(rawArg) : rawArg
+          const name = currentLongOption!.name
+          return name === option || (schema.negatable === true && name === `no-${option}`)
+        })
         if (isBoolean) {
           positionalTokens.push({ ...token })
           applyLongOptionValue() // finalize boolean without value
