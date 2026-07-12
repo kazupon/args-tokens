@@ -815,9 +815,9 @@ export function resolveArgs<A extends Args>(
           if (schema.type !== 'boolean') {
             return false
           }
-          const option = toKebab || schema.toKebab ? kebabnize(rawArg) : rawArg
+          const arg = toKebab || schema.toKebab ? kebabnize(rawArg) : rawArg
           const name = currentLongOption!.name
-          return name === option || (schema.negatable === true && name === `no-${option}`)
+          return name === arg || (schema.negatable === true && name === `no-${arg}`)
         })
         if (isBoolean) {
           positionalTokens.push({ ...token })
