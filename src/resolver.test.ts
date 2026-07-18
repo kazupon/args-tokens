@@ -176,6 +176,18 @@ describe('resolveArgs', () => {
     expect(rest).toEqual([])
   })
 
+  test('long option matching a short alias does not satisfy required option', () => {
+    const tokens = parseArgs(['--o=example.com'])
+    const { error } = resolveArgs(args, tokens)
+
+    expect(
+      error?.errors.some(
+        item =>
+          (item as ArgResolveError).name === 'host' && (item as ArgResolveError).type === 'required'
+      )
+    ).toBe(true)
+  })
+
   test('required negatable boolean accepts negated long option', () => {
     const argv = ['--no-color']
     const tokens = parseArgs(argv)

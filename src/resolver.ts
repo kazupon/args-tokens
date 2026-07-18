@@ -1024,7 +1024,11 @@ export function resolveArgs<A extends Args>(
     if (schema.required) {
       const found = optionTokens.find(token => {
         return (
-          (schema.short && token.name === schema.short) || checkLongTokenName(arg, schema, token)
+          (schema.short &&
+            token.name === schema.short &&
+            token.rawName != undefined &&
+            isShortOption(token.rawName)) ||
+          checkLongTokenName(arg, schema, token)
         )
       })
       if (!found) {
