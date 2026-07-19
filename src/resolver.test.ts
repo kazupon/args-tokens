@@ -2333,6 +2333,77 @@ describe('schema.parse priority', () => {
     expect(values.port).toBe(8080)
     expect(positionals).toEqual(['foo'])
   })
+
+  test('analyze phase: kebab-case boolean followed by positional', () => {
+    const schema = {
+      file: {
+        type: 'positional',
+        required: false
+      },
+      enableLogging: {
+        type: 'boolean',
+        toKebab: true
+      },
+      force: {
+        type: 'boolean',
+        toKebab: true
+      }
+    } as const
+
+    const flagThenPositional = resolveArgs(schema, parseArgs(['--enable-logging', 'app.js']))
+    expect(flagThenPositional.values.enableLogging).toBe(true)
+    expect(flagThenPositional.values.file).toBe('app.js')
+    expect(flagThenPositional.positionals).toEqual(['app.js'])
+
+    const positionalThenFlag = resolveArgs(schema, parseArgs(['app.js', '--enable-logging']))
+    expect(positionalThenFlag.values.enableLogging).toBe(true)
+    expect(positionalThenFlag.values.file).toBe('app.js')
+    expect(positionalThenFlag.positionals).toEqual(['app.js'])
+
+    const nonHyphenatedBoolean = resolveArgs(schema, parseArgs(['--force', 'app.js']))
+    expect(nonHyphenatedBoolean.values.force).toBe(true)
+    expect(nonHyphenatedBoolean.values.file).toBe('app.js')
+    expect(nonHyphenatedBoolean.positionals).toEqual(['app.js'])
+  })
+
+  test('analyze phase: global toKebab boolean followed by positional', () => {
+    const schema = {
+      file: {
+        type: 'positional',
+        required: false
+      },
+      enableLogging: {
+        type: 'boolean'
+      }
+    } as const
+
+    const { values, positionals } = resolveArgs(schema, parseArgs(['--enable-logging', 'app.js']), {
+      toKebab: true
+    })
+    expect(values.enableLogging).toBe(true)
+    expect(values.file).toBe('app.js')
+    expect(positionals).toEqual(['app.js'])
+  })
+
+  test('analyze phase: negatable kebab-case boolean followed by positional', () => {
+    const { values, positionals } = resolveArgs(
+      {
+        file: {
+          type: 'positional',
+          required: false
+        },
+        enableLogging: {
+          type: 'boolean',
+          toKebab: true,
+          negatable: true
+        }
+      },
+      parseArgs(['--no-enable-logging', 'app.js'])
+    )
+    expect(values.enableLogging).toBe(false)
+    expect(values.file).toBe('app.js')
+    expect(positionals).toEqual(['app.js'])
+  })
 })
 
 /* oxlint-enable no-unsafe-optional-chaining */
