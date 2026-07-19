@@ -176,6 +176,39 @@ describe('resolveArgs', () => {
     expect(rest).toEqual([])
   })
 
+  test('long option matching a short alias does not satisfy required option', () => {
+    const tokens = parseArgs(['--o=example.com'])
+    const { error } = resolveArgs(args, tokens)
+
+    expect(
+      error?.errors.some(
+        item =>
+          (item as ArgResolveError).name === 'host' && (item as ArgResolveError).type === 'required'
+      )
+    ).toBe(true)
+  })
+
+  test('required negatable boolean accepts negated long option', () => {
+    const argv = ['--no-color']
+    const tokens = parseArgs(argv)
+    const { values, error, explicit } = resolveArgs(
+      {
+        color: {
+          type: 'boolean',
+          negatable: true,
+          required: true
+        }
+      },
+      tokens
+    )
+
+    expect(error).toBeUndefined()
+    expect(values).toEqual({
+      color: false
+    })
+    expect(explicit.color).toBe(true)
+  })
+
   test('short options value specified with equals', () => {
     const argv = ['dev', '-p=9131', '-o=example.com', '-h']
     const tokens = parseArgs(argv)
@@ -1581,6 +1614,28 @@ describe(`'toKebab' option`, () => {
     })
   })
 
+  test('per argument required negatable boolean accepts negated kebab-case long option', () => {
+    const argv = ['--no-kebab-case']
+    const tokens = parseArgs(argv)
+    const { values, error, explicit } = resolveArgs(
+      {
+        kebabCase: {
+          type: 'boolean',
+          negatable: true,
+          required: true,
+          toKebab: true
+        }
+      },
+      tokens
+    )
+
+    expect(error).toBeUndefined()
+    expect(values).toEqual({
+      kebabCase: false
+    })
+    expect(explicit.kebabCase).toBe(true)
+  })
+
   test('all arguments', () => {
     const argv = ['test', '--to-kebab=foo', '--no-kebab-case', '--foo-bar']
     const tokens = parseArgs(argv)
@@ -1608,6 +1663,28 @@ describe(`'toKebab' option`, () => {
       toKebab: true,
       kebabCase: false
     })
+  })
+
+  test('global required negatable boolean accepts negated kebab-case long option', () => {
+    const argv = ['--no-kebab-case']
+    const tokens = parseArgs(argv)
+    const { values, error, explicit } = resolveArgs(
+      {
+        kebabCase: {
+          type: 'boolean',
+          negatable: true,
+          required: true
+        }
+      },
+      tokens,
+      { toKebab: true }
+    )
+
+    expect(error).toBeUndefined()
+    expect(values).toEqual({
+      kebabCase: false
+    })
+    expect(explicit.kebabCase).toBe(true)
   })
 })
 
@@ -2149,6 +2226,30 @@ describe('conflicts', () => {
     expect(error).toBeDefined()
     expect((error?.errors[0] as ArgResolveError).message).toBe(
       "Optional argument '--summer-season' conflicts with '--autumn-season'"
+    )
+  })
+
+  test('conflict error message preserves negated long option input', () => {
+    const args = {
+      color: {
+        type: 'boolean',
+        negatable: true,
+        conflicts: 'format'
+      },
+      format: {
+        type: 'string',
+        conflicts: 'color'
+      }
+    } as const satisfies Args
+
+    const argv = ['--no-color', '--format=json']
+    const tokens = parseArgs(argv)
+    const { error } = resolveArgs(args, tokens)
+
+    expect(error).toBeDefined()
+    expect(error?.errors.length).toBe(1)
+    expect((error?.errors[0] as ArgResolveError).message).toBe(
+      "Optional argument '--no-color' conflicts with '--format'"
     )
   })
 

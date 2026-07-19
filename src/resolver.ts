@@ -753,10 +753,26 @@ export function resolveArgs<A extends Args>(
 
   const optionTokens: ArgToken[] = []
   const positionalTokens: ArgToken[] = []
+  const argEntries = Object.entries(args)
 
   let currentLongOption: ArgToken | undefined
   let currentShortOption: ArgToken | undefined
   const expandableShortOptions: ArgToken[] = []
+
+  function getOptionName(rawArg: string, schema: ArgSchema): string {
+    return toKebab || schema.toKebab ? kebabnize(rawArg) : rawArg
+  }
+
+  function checkLongTokenName(option: string, schema: ArgSchema, token: ArgToken): boolean {
+    if (token.rawName == undefined || !hasLongOptionPrefix(token.rawName)) {
+      return false
+    }
+
+    return (
+      token.name === option ||
+      (schema.type === 'boolean' && schema.negatable === true && token.name === `no-${option}`)
+    )
+  }
 
   function toShortValue(): string | undefined {
     if (expandableShortOptions.length === 0) {
@@ -901,19 +917,7 @@ export function resolveArgs<A extends Args>(
   const errors: Error[] = []
   const explicit = Object.create(null) as ArgExplicitlyProvided<A>
   const actualInputNames = new Map<string, string>()
-  const argEntries = Object.entries(args)
   let requiredPositionalsAfter: Record<string, number> | undefined
-
-  function checkTokenName(option: string, schema: ArgSchema, token: ArgToken): boolean {
-    return (
-      token.name ===
-      (schema.type === 'boolean'
-        ? schema.negatable && token.name?.startsWith('no-')
-          ? `no-${option}`
-          : option
-        : option)
-    )
-  }
 
   const positionalItemCount = tokens.filter(token => token.kind === 'positional').length
   function getPositionalSkipIndex() {
@@ -927,7 +931,7 @@ export function resolveArgs<A extends Args>(
 
   let positionalsCount = 0
   for (const [rawArg, schema] of argEntries) {
-    const arg = toKebab || schema.toKebab ? kebabnize(rawArg) : rawArg
+    const arg = getOptionName(rawArg, schema)
 
     // initialize explicit state for all options.
     // keyof explicit is generic and cannot be indexed for settings value.
@@ -1020,8 +1024,11 @@ export function resolveArgs<A extends Args>(
     if (schema.required) {
       const found = optionTokens.find(token => {
         return (
-          (schema.short && token.name === schema.short) ||
-          (token.rawName && hasLongOptionPrefix(token.rawName) && token.name === arg)
+          (schema.short &&
+            token.name === schema.short &&
+            token.rawName != undefined &&
+            isShortOption(token.rawName)) ||
+          checkLongTokenName(arg, schema, token)
         )
       })
       if (!found) {
@@ -1034,9 +1041,7 @@ export function resolveArgs<A extends Args>(
       const token = optionTokens[i]
 
       if (
-        (checkTokenName(arg, schema, token) &&
-          token.rawName != undefined &&
-          hasLongOptionPrefix(token.rawName)) ||
+        checkLongTokenName(arg, schema, token) ||
         (schema.short === token.name && token.rawName != undefined && isShortOption(token.rawName))
       ) {
         const invalid = validateRequire(token, rawArg, arg, schema)
@@ -1051,7 +1056,8 @@ export function resolveArgs<A extends Args>(
         ;(explicit as any)[rawArg] = true
 
         // Record the actual input name used (e.g., '-v' or '--verbose')
-        const actualInputName = isShortOption(token.rawName) ? `-${token.name}` : `--${arg}`
+        const rawName = token.rawName!
+        const actualInputName = isShortOption(rawName) ? `-${token.name}` : rawName
         actualInputNames.set(rawArg, actualInputName)
 
         const [parsedValue, error] = parse(token, rawArg, arg, schema)
