@@ -2366,6 +2366,25 @@ describe('schema.parse priority', () => {
     expect(nonHyphenatedBoolean.positionals).toEqual(['app.js'])
   })
 
+  test('analyze phase: global toKebab boolean followed by positional', () => {
+    const schema = {
+      file: {
+        type: 'positional',
+        required: false
+      },
+      enableLogging: {
+        type: 'boolean'
+      }
+    } as const
+
+    const { values, positionals } = resolveArgs(schema, parseArgs(['--enable-logging', 'app.js']), {
+      toKebab: true
+    })
+    expect(values.enableLogging).toBe(true)
+    expect(values.file).toBe('app.js')
+    expect(positionals).toEqual(['app.js'])
+  })
+
   test('analyze phase: negatable kebab-case boolean followed by positional', () => {
     const { values, positionals } = resolveArgs(
       {
