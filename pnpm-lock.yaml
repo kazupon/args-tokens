@@ -81,8 +81,8 @@ importers:
         specifier: ^0.25.0
         version: 0.25.0
       pkg-pr-new:
-        specifier: ^0.0.78
-        version: 0.0.78
+        specifier: ^0.0.79
+        version: 0.0.79
       tsdown:
         specifier: ^0.22.2
         version: 0.22.2(@typescript/native-preview@7.0.0-dev.20260707.2)(oxc-resolver@11.20.0)(typescript@6.0.3)
@@ -2527,8 +2527,8 @@ packages:
     resolution: {integrity: sha512-QP88BAKvMam/3NxH6vj2o21R6MjxZUAd6nlwAS/pnGvN9IVLocLHxGYIzFhg6fUQ+5th6P4dv4eW9jX3DSIj7A==}
     engines: {node: '>=12'}
 
-  pkg-pr-new@0.0.78:
-    resolution: {integrity: sha512-sBfGGCiCLmJArx99Z/QmNN3jmkqRYhp1TV8Y1IOpSpXfOljqFcEjDyyc4HCVy+nbrmlkw9qXRq/9/L4ahF/d4w==}
+  pkg-pr-new@0.0.79:
+    resolution: {integrity: sha512-ip74NzaakGZha5s/X1T7j+Ez9/bRNDhzxQZTfnzAzoI7zO9JnMRdoiIfCLyy+ZzxxXg8WXRW2WcdvdORI0O30w==}
     hasBin: true
 
   postcss@8.5.15:
@@ -5245,7 +5245,7 @@ snapshots:
 
   picomatch@4.0.4: {}
 
-  pkg-pr-new@0.0.78: {}
+  pkg-pr-new@0.0.79: {}
 
   postcss@8.5.15:
     dependencies:
