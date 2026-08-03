@@ -119,7 +119,7 @@
     "eslint-plugin-oxlint": "^1.69.0",
     "eslint-plugin-regexp": "^3.1.0",
     "eslint-plugin-yml": "^3.4.0",
-    "gh-changelogen": "^0.2.8",
+    "gh-changelogen": "^2.0.0",
     "jsr": "^0.14.3",
     "jsr-exports-lint": "^0.4.2",
     "knip": "^6.16.1",
