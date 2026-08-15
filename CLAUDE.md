@@ -41,7 +41,7 @@ pnpm fix          # Fix all issues (eslint, prettier, knip)
 pnpm fix:eslint   # Fix ESLint issues
 pnpm fix:prettier # Fix formatting
 
-pnpm typecheck    # Run TypeScript type checking (tsc and deno)
+pnpm typecheck    # Run TypeScript type checking (tsc --noEmit)
 ```
 
 ### Development
