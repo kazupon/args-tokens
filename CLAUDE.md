@@ -60,7 +60,7 @@ pnpm bench:vitest # Run performance benchmarks with vitest
 ### Release
 
 ```bash
-pnpm release      # Create a new release
+GH_TOKEN="$(gh auth token)" pnpm release      # Create a new release
 ```
 
 ## Architecture

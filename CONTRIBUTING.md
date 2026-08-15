@@ -62,3 +62,16 @@ $ pnpm fix
 There are some other scripts available in the `scripts` section of the `package.json` file.
 
 **Please make sure to have this pass successfully before submitting a PR.** Although the lint will be run against your PR on the CI server, it is better to have it working locally beforehand.
+
+### `pnpm release`
+
+Bump versions, write `CHANGELOG.md` from GitHub-generated notes, then commit,
+tag, and push. Run on a clean `main` whose `HEAD` is already on `origin`.
+Provide a token with Contents: write:
+
+```sh
+GH_TOKEN="$(gh auth token)" pnpm release
+```
+
+Do not leave unrelated tracked changes: bumpp commits every tracked dirty file
+(`all: true`).
