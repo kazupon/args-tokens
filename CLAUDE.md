@@ -41,7 +41,7 @@ pnpm fix          # Fix all issues (eslint, prettier, knip)
 pnpm fix:eslint   # Fix ESLint issues
 pnpm fix:prettier # Fix formatting
 
-pnpm typecheck    # Run TypeScript type checking (tsc and deno)
+pnpm typecheck    # Run TypeScript type checking (tsc --noEmit)
 ```
 
 ### Development
@@ -60,7 +60,7 @@ pnpm bench:vitest # Run performance benchmarks with vitest
 ### Release
 
 ```bash
-pnpm release      # Create a new release
+GH_TOKEN="$(gh auth token)" pnpm release      # Create a new release
 ```
 
 ## Architecture

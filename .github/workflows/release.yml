@@ -5,6 +5,10 @@ name: Release
 #     then release-notes on success of both.
 #   - workflow_dispatch: fallback recovery. Pick which job to run for an
 #     existing tag (npm-publish / jsr-publish / release-notes / all).
+#
+# CHANGELOG.md is already part of the tagged release commit produced by
+# `pnpm release`. This workflow does not generate or commit the changelog.
+# release-notes only creates the GitHub Release.
 on:
   push:
     branches-ignore:
@@ -125,34 +129,26 @@ jobs:
       )
     runs-on: ubuntu-latest
     permissions:
-      contents: write # GitHub Release creation + CHANGELOG push
+      contents: write # create GitHub Release
 
     steps:
-      - name: Checkout codes
-        # zizmor: ignore[artipacked] -- git-auto-commit-action needs persisted credentials to push.
+      - name: Checkout tag
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: main
-          fetch-depth: 0
+          ref: ${{ env.TAG }}
+          persist-credentials: false
 
-      - name: Create GitHub Release
+      - name: Create GitHub Release (idempotent)
         run: |
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "Release $TAG already exists, skipping creation"
           else
-            gh release create "$TAG" --generate-notes
+            FLAGS=(--verify-tag --generate-notes)
+            # SemVer prerelease: '-' after major.minor.patch, not build metadata.
+            if [[ "$TAG" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+- ]]; then
+              FLAGS+=(--prerelease)
+            fi
+            gh release create "$TAG" "${FLAGS[@]}"
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Sync changelog from GitHub Releases
-        run: npx gh-changelogen --repo=kazupon/args-tokens --tag="$TAG"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Commit changelog
-        uses: stefanzweifel/git-auto-commit-action@4a55954c782fc1ea30b9056cd3e7a2b40ca8887d # v7.2.0
-        with:
-          branch: main
-          file_pattern: CHANGELOG.md
-          commit_message: 'chore: generate changelog'

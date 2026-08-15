@@ -96,6 +96,7 @@
     }
   ],
   "ignorePatterns": [
+    ".plans/**",
     ".vscode",
     "lib",
     "docs",
