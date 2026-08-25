@@ -93,8 +93,8 @@ importers:
         specifier: ^8.67.0
         version: 8.67.0(eslint@10.8.1(jiti@2.7.0))(typescript@6.0.3)
       vitepress-api-references:
-        specifier: ^0.2.2
-        version: 0.2.2(vite@7.3.1(@types/node@25.9.5)(jiti@2.7.0)(yaml@2.9.0))(vitepress@2.0.0-alpha.17(@types/node@25.9.5)(jiti@2.7.0)(postcss@8.5.15)(typescript@6.0.3)(yaml@2.9.0))
+        specifier: ^0.3.0
+        version: 0.3.0(vite@7.3.1(@types/node@25.9.5)(jiti@2.7.0)(yaml@2.9.0))(vitepress@2.0.0-alpha.17(@types/node@25.9.5)(jiti@2.7.0)(postcss@8.5.15)(typescript@6.0.3)(yaml@2.9.0))
       vitest:
         specifier: ^4.1.10
         version: 4.1.10(@types/node@25.9.5)(vite@7.3.1(@types/node@25.9.5)(jiti@2.7.0)(yaml@2.9.0))
@@ -542,47 +542,47 @@ packages:
     resolution: {integrity: sha512-XRO0zi2NIUKq2lUk3T1ecFSld1fMWRKE6naRFGkgkdeosx7IslyUKNv5Dcb5PJTja9tHJoFu0v/7yEpAkrkrTg==}
     engines: {node: ^20.19.0 || ^22.13.0 || >=24}
 
-  '@ox-content/binding-darwin-arm64@2.82.1':
-    resolution: {integrity: sha512-1jgokRuBFOB7iZ90933C9dB/PXddJXJ2g3ax3sjVgOS3cetRjaZkROqxbaqShAi+EmMaDP7TkgC3q/6IuOXb4A==}
+  '@ox-content/binding-darwin-arm64@3.0.0-alpha.4':
+    resolution: {integrity: sha512-6Zuhyxo34mTucC+HXHmM36qNd2BDy7iuSKtREPwVE+63qBF5McaUY+FmJ4fSOFnRi9iDxQcSeNNnqP2MoVuYOQ==}
     cpu: [arm64]
     os: [darwin]
 
-  '@ox-content/binding-darwin-x64@2.82.1':
-    resolution: {integrity: sha512-ySLr2TtBRoguM4dt5Foz7pK0LeWoqH893LxPveRy35BOOnK9GJeN2o9CNHa5wR2j9w6uXIXxSCHwnp44wQFQkw==}
+  '@ox-content/binding-darwin-x64@3.0.0-alpha.4':
+    resolution: {integrity: sha512-SpkZsxgLvTDbj4RQGd12+YaOWFnxMD9IHbbf7Pdmbo9Otz7kBZomq879EZS28zYzQIgZoX5eJMJgM/XtIFy0+g==}
     cpu: [x64]
     os: [darwin]
 
-  '@ox-content/binding-linux-arm64-gnu@2.82.1':
-    resolution: {integrity: sha512-ck38PftGpRvynehF8tI+CQLPbxxqe7NavlJ0wpmYy9Za26FxN0zB+7J0arj/1BVaynDWnxgW8Ygdpcj/sDUJqA==}
+  '@ox-content/binding-linux-arm64-gnu@3.0.0-alpha.4':
+    resolution: {integrity: sha512-FpKrpT62N3YELtVUl2qpmMvrBhNae+sBVNLC1CGsoCRxYfjP0+Z6GmFw6BuPhUnC/JPF54bLS68oWmMHMegzQQ==}
     cpu: [arm64]
     os: [linux]
     libc: [glibc]
 
-  '@ox-content/binding-linux-arm64-musl@2.82.1':
-    resolution: {integrity: sha512-2Hgfjdz8GqXyEevDAx1jy+LqtK+ep4zHx05HBkkcLI+K3RAQYi48hLp77cYgUVQmytz//RkV64meRwT0oMJJhg==}
+  '@ox-content/binding-linux-arm64-musl@3.0.0-alpha.4':
+    resolution: {integrity: sha512-4ab4rNP285gNCjjCTRLm3jE+ZQQKjgh/xguhIT8k5DwuvtFLfzUa+yRxBwNKNeISPCFAjicOlch7RLbhU+PHYg==}
     cpu: [arm64]
     os: [linux]
     libc: [musl]
 
-  '@ox-content/binding-linux-x64-gnu@2.82.1':
-    resolution: {integrity: sha512-UM69FJOOi8zJpGKMaN7oiO9XH9DdFg96pE0GuioqcgzLQEcu7oSkW6o9HIqn5rkzf7zVZqp3rb+sD/+nKOsDHQ==}
+  '@ox-content/binding-linux-x64-gnu@3.0.0-alpha.4':
+    resolution: {integrity: sha512-6/WbrHVyoqyvjq2rCC8KbVnkcfekENxsXIGZxMkCPyFjLD/IRMBJR425ixxF2M1vZU1JB2IoZH/bvbNkVqqZTw==}
     cpu: [x64]
     os: [linux]
     libc: [glibc]
 
-  '@ox-content/binding-linux-x64-musl@2.82.1':
-    resolution: {integrity: sha512-tkf08Z7Go+oCSsl6Qgi7KW5mI4PSYvfB5wNFMFfP2PGwbnq/25D6OD7PBHJPU9VxLfUlPA5SE73m26Pd7Q2mIQ==}
+  '@ox-content/binding-linux-x64-musl@3.0.0-alpha.4':
+    resolution: {integrity: sha512-+u57AoWrIGFEyQt475QxTU6NhlxgA6F7cJLou5B8Tb0bxYCa3JYq5TVW+rRK5ZFsLtQZJuGUMAQhvphj7q7cZA==}
     cpu: [x64]
     os: [linux]
     libc: [musl]
 
-  '@ox-content/binding-win32-x64-msvc@2.82.1':
-    resolution: {integrity: sha512-RzEc3gMzRsXmUTS2vch/SfoeMx7b9d4a75VlV1VomEtzUVp/PTlT7xcxG8jWhrCad4SoxSv1Sv3PNjKr8guUmg==}
+  '@ox-content/binding-win32-x64-msvc@3.0.0-alpha.4':
+    resolution: {integrity: sha512-wjdwx5o25w600AmjFxiXVcvtaBKyFCp0EjbMdB7YN0KqlJe1NrfhVz5K8OZO0sRuzDDZOfZPLtHZI/Ol38MnSA==}
     cpu: [x64]
     os: [win32]
 
-  '@ox-content/napi@2.82.1':
-    resolution: {integrity: sha512-hABlSxzEy0mM6T6j7PXiaUyzGFPXEVIxACO0A+3orE1W46WtzFpQbYkxKh9Bl/sxN/cVjCcGh4J3Tw/SattbKg==}
+  '@ox-content/napi@3.0.0-alpha.4':
+    resolution: {integrity: sha512-X3ZQ1Yim1iKKokQd0LRdYA4QeG8sVmYptRv4lyQ3WKe0wvIoWkxT3EaxJOa4Z6MrIVtGPQYh/NC2VVRQYL7cmg==}
 
   '@oxc-parser/binding-android-arm-eabi@0.143.0':
     resolution: {integrity: sha512-n9uozULWflPqBtdmI8lAabLqGKNgLVNN0ZH8HfgCwpKGNtzRzauB76jTiW/3YLkcA7N1zskpi9GdVnZuu1SAvg==}
@@ -2877,8 +2877,8 @@ packages:
       yaml:
         optional: true
 
-  vitepress-api-references@0.2.2:
-    resolution: {integrity: sha512-maQIjo7Ls9wpNr0qolryV+xN9rC13KqFIKxbzyf86yr9NtqxvzFwctv+AYrjrrdFCr7xadJL34pb+RxoIUjSYw==}
+  vitepress-api-references@0.3.0:
+    resolution: {integrity: sha512-3o6YvTGPTpf7mQHT1GyQ8uY+5J1wYaMBwskm4KYEqG/0ybnHk2cY7nOPj/dUiDA0MPWQhxBCVbGuuDp5cwectw==}
     engines: {node: '>= 22'}
     peerDependencies:
       vite: '>=5'
@@ -3266,36 +3266,36 @@ snapshots:
 
   '@ota-meshi/ast-token-store@0.3.0': {}
 
-  '@ox-content/binding-darwin-arm64@2.82.1':
+  '@ox-content/binding-darwin-arm64@3.0.0-alpha.4':
     optional: true
 
-  '@ox-content/binding-darwin-x64@2.82.1':
+  '@ox-content/binding-darwin-x64@3.0.0-alpha.4':
     optional: true
 
-  '@ox-content/binding-linux-arm64-gnu@2.82.1':
+  '@ox-content/binding-linux-arm64-gnu@3.0.0-alpha.4':
     optional: true
 
-  '@ox-content/binding-linux-arm64-musl@2.82.1':
+  '@ox-content/binding-linux-arm64-musl@3.0.0-alpha.4':
     optional: true
 
-  '@ox-content/binding-linux-x64-gnu@2.82.1':
+  '@ox-content/binding-linux-x64-gnu@3.0.0-alpha.4':
     optional: true
 
-  '@ox-content/binding-linux-x64-musl@2.82.1':
+  '@ox-content/binding-linux-x64-musl@3.0.0-alpha.4':
     optional: true
 
-  '@ox-content/binding-win32-x64-msvc@2.82.1':
+  '@ox-content/binding-win32-x64-msvc@3.0.0-alpha.4':
     optional: true
 
-  '@ox-content/napi@2.82.1':
+  '@ox-content/napi@3.0.0-alpha.4':
     optionalDependencies:
-      '@ox-content/binding-darwin-arm64': 2.82.1
-      '@ox-content/binding-darwin-x64': 2.82.1
-      '@ox-content/binding-linux-arm64-gnu': 2.82.1
-      '@ox-content/binding-linux-arm64-musl': 2.82.1
-      '@ox-content/binding-linux-x64-gnu': 2.82.1
-      '@ox-content/binding-linux-x64-musl': 2.82.1
-      '@ox-content/binding-win32-x64-msvc': 2.82.1
+      '@ox-content/binding-darwin-arm64': 3.0.0-alpha.4
+      '@ox-content/binding-darwin-x64': 3.0.0-alpha.4
+      '@ox-content/binding-linux-arm64-gnu': 3.0.0-alpha.4
+      '@ox-content/binding-linux-arm64-musl': 3.0.0-alpha.4
+      '@ox-content/binding-linux-x64-gnu': 3.0.0-alpha.4
+      '@ox-content/binding-linux-x64-musl': 3.0.0-alpha.4
+      '@ox-content/binding-win32-x64-msvc': 3.0.0-alpha.4
 
   '@oxc-parser/binding-android-arm-eabi@0.143.0':
     optional: true
@@ -5483,9 +5483,9 @@ snapshots:
       jiti: 2.7.0
       yaml: 2.9.0
 
-  vitepress-api-references@0.2.2(vite@7.3.1(@types/node@25.9.5)(jiti@2.7.0)(yaml@2.9.0))(vitepress@2.0.0-alpha.17(@types/node@25.9.5)(jiti@2.7.0)(postcss@8.5.15)(typescript@6.0.3)(yaml@2.9.0)):
+  vitepress-api-references@0.3.0(vite@7.3.1(@types/node@25.9.5)(jiti@2.7.0)(yaml@2.9.0))(vitepress@2.0.0-alpha.17(@types/node@25.9.5)(jiti@2.7.0)(postcss@8.5.15)(typescript@6.0.3)(yaml@2.9.0)):
     dependencies:
-      '@ox-content/napi': 2.82.1
+      '@ox-content/napi': 3.0.0-alpha.4
       vite: 7.3.1(@types/node@25.9.5)(jiti@2.7.0)(yaml@2.9.0)
       vitepress: 2.0.0-alpha.17(@types/node@25.9.5)(jiti@2.7.0)(postcss@8.5.15)(typescript@6.0.3)(yaml@2.9.0)
 
