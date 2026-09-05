@@ -1,4 +1,4 @@
-import { expect, test } from 'vitest'
+import { expect, test } from 'vite-plus/test'
 import { parse } from './parse.ts'
 import { parseArgs } from './parser.ts'
 

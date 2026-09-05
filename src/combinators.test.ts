@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vite-plus/test'
 import {
   args,
   boolean,
@@ -20,9 +20,9 @@ import {
   withDefault
 } from './combinators.ts'
 import { parseArgs } from './parser.ts'
-import { ArgsValidationError, ArgsValidationErrorKeys, resolveArgs } from './resolver.ts'
+import { ArgsValidationErrorKeys, resolveArgs } from './resolver.ts'
 
-import type { Args, ArgSchema } from './resolver.ts'
+import type { Args, ArgSchema, ArgsValidationError } from './resolver.ts'
 
 describe('string combinator', () => {
   test('basic', () => {

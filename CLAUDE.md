@@ -2,65 +2,26 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+Vite+ commands, hooks, and the review checklist are in [AGENTS.md](./AGENTS.md).
+
 ## Project Overview
 
 `args-tokens` is a high-performance command-line argument parser written in TypeScript. It provides a `parseArgs` tokens compatibility with Node.js's built-in `util.parseArgs` but with better performance and enhanced features.
 
 ## Development Commands
 
-### Setup
+See [AGENTS.md](./AGENTS.md) for `vp install`, `vp check`, `vp test`, `vp pack`, and other Vite+ built-ins.
+
+This repository also uses:
 
 ```sh
-pnpm install
-```
-
-### Build
-
-```sh
-pnpm build        # Build the project using tsdown
-```
-
-### Testing
-
-```sh
-pnpm test         # Run tests with typecheck using Vitest
-vitest            # Run tests in watch mode
-
-# Run specific test file
-vitest src/parser.test.ts
-```
-
-### Linting and Code Quality
-
-```bash
-pnpm lint         # Run all linters in parallel (eslint, prettier, knip, jsr)
-pnpm lint:eslint  # Run ESLint only
-pnpm lint:prettier # Check formatting
-
-pnpm fix          # Fix all issues (eslint, prettier, knip)
-pnpm fix:eslint   # Fix ESLint issues
-pnpm fix:prettier # Fix formatting
-
-pnpm typecheck    # Run TypeScript type checking (tsc --noEmit)
-```
-
-### Development
-
-```bash
-pnpm dev:eslint   # Open ESLint config inspector
-```
-
-### Benchmarking
-
-```bash
-pnpm bench:mitata # Run performance benchmarks with mitata
-pnpm bench:vitest # Run performance benchmarks with vitest
-```
-
-### Release
-
-```bash
-GH_TOKEN="$(gh auth token)" pnpm release      # Create a new release
+vpr check                 # vp check plus knip and deno check src
+vp run lint:jsr           # JSR publish dry-run
+vp run bench:mitata       # mitata benchmarks
+vp run bench:vitest       # Vitest benchmarks
+vp test src/parser.test.ts
+vp test watch
+GH_TOKEN="$(gh auth token)" vp run release
 ```
 
 ## Architecture
@@ -90,7 +51,7 @@ The library uses a two-phase approach:
 
 ## Testing Approach
 
-- Uses Vitest as the test runner
+- Uses Vite+ (`vp test`, Vitest) as the test runner
 - Tests are colocated with source files (e.g., `parser.ts` → `parser.test.ts`)
 - Snapshot testing is used for token output comparison
 - Type definition tests use `.test-d.ts` suffix (e.g., `resolver.test-d.ts`)
@@ -102,7 +63,7 @@ The library uses a two-phase approach:
 - The build output goes to the `lib/` directory
 - Minimum Node.js version is 22
 - The project is published to both npm and JSR (Deno registry)
-- Package manager is pnpm (version 10.12.4)
+- Package manager is pnpm (via Vite+ `vp`, packageManager pnpm@11.25.0)
 
 ## API docs style
 

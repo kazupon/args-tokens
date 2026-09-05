@@ -1,4 +1,4 @@
-import { expectTypeOf, test } from 'vitest'
+import { expectTypeOf, test } from 'vite-plus/test'
 import { z } from 'zod/v4-mini'
 import { ArgsValidationError, ArgsValidationErrorKeys, isArgsValidationError } from './resolver.ts'
 
