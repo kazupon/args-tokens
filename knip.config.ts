@@ -10,7 +10,7 @@ const config: KnipConfig = {
     'playground/bun/index.ts'
   ],
   ignore: ['playground/deno/**', 'bench/mitata.js', 'bench/positionals.js'],
-  ignoreDependencies: ['mitata', 'pkg-pr-new', '@typescript/native-preview'],
+  ignoreDependencies: ['mitata', 'pkg-pr-new'],
   rules: {
     catalog: 'off'
   }

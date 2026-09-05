@@ -94,7 +94,6 @@
   "devDependencies": {
     "@kazupon/vp-config": "^0.5.1",
     "@types/node": "^25.9.5",
-    "@typescript/native-preview": "7.0.0-dev.20260707.2",
     "bumpp": "^12.0.0",
     "deno": "^2.9.5",
     "gh-changelogen": "^2.0.2",
@@ -103,7 +102,7 @@
     "knip": "^6.32.2",
     "mitata": "^1.0.34",
     "pkg-pr-new": "^0.0.88",
-    "typescript": "^6.0.3",
+    "typescript": "^7.0.2",
     "vite": "catalog:",
     "vite-plus": "catalog:",
     "vitepress-api-references": "^0.3.0",
