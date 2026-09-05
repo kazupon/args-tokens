@@ -1,5 +1,5 @@
 import { parseArgs as parseArgsNode } from 'node:util'
-import { bench, describe } from 'vitest'
+import { bench, describe } from 'vite-plus/test'
 import { parse, parseArgs } from '../lib/index.js'
 
 const args = [

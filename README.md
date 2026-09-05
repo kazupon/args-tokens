@@ -1,9 +1,6 @@
 # args-tokens
 
-[![Version][npm-version-src]][npm-version-href]
-[![JSR][jsr-src]][jsr-href]
-[![InstallSize][install-size-src]][install-size-href]
-[![CI][ci-src]][ci-href]
+[![Version][npm-version-src]][npm-version-href] [![JSR][jsr-src]][jsr-href] [![InstallSize][install-size-src]][install-size-href] [![CI][ci-src]][ci-href]
 
 > [`parseArgs` tokens](https://nodejs.org/api/util.html#parseargs-tokens) compatibility and more high-performance parser
 
@@ -655,8 +652,7 @@ Conflicts only need to be defined on one side - if option A defines a conflict w
 
 <!-- eslint-disable markdown/no-missing-label-refs -->
 
-> [!NOTE]
-> Parser combinators are experimental and may change in future versions.
+> [!NOTE] Parser combinators are experimental and may change in future versions.
 
 <!-- eslint-enable markdown/no-missing-label-refs -->
 

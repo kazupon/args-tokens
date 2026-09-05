@@ -1,5 +1,5 @@
 import { parseArgs as parseArgsNode } from 'node:util'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vite-plus/test'
 import { parseArgs } from './parser.ts'
 
 describe('short options', () => {

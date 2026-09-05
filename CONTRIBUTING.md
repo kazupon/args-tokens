@@ -46,32 +46,35 @@
 After cloning the repo, run:
 
 ```sh
-$ pnpm install
+$ vp install
 ```
 
-### Commonly used NPM scripts
+### Commonly used commands
 
 ```sh
-# lint source codes
-$ pnpm lint
+# format, lint, type-check, knip, and deno check
+$ vpr check
 
-# code format and lint fix
-$ pnpm fix
+# format
+$ vp fmt
+
+# tests
+$ vp test
+
+# library build
+$ vp pack
 ```
 
 There are some other scripts available in the `scripts` section of the `package.json` file.
 
 **Please make sure to have this pass successfully before submitting a PR.** Although the lint will be run against your PR on the CI server, it is better to have it working locally beforehand.
 
-### `pnpm release`
+### `vp run release`
 
-Bump versions, write `CHANGELOG.md` from GitHub-generated notes, then commit,
-tag, and push. Run on a clean `main` whose `HEAD` is already on `origin`.
-Provide a token with Contents: write:
+Bump versions, write `CHANGELOG.md` from GitHub-generated notes, then commit, tag, and push. Run on a clean `main` whose `HEAD` is already on `origin`. Provide a token with Contents: write:
 
 ```sh
-GH_TOKEN="$(gh auth token)" pnpm release
+GH_TOKEN="$(gh auth token)" vp run release
 ```
 
-Do not leave unrelated tracked changes: bumpp commits every tracked dirty file
-(`all: true`).
+Do not leave unrelated tracked changes: bumpp commits every tracked dirty file (`all: true`).

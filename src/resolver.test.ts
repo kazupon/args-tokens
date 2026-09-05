@@ -1,6 +1,6 @@
 /* oxlint-disable no-unsafe-optional-chaining */
 
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vite-plus/test'
 import { z } from 'zod/v4-mini'
 import { parseArgs } from './parser.ts'
 import {
@@ -2404,7 +2404,9 @@ describe('schema.parse priority', () => {
           type: 'positional',
           parse: (v: string) => {
             const n = parseInt(v, 10)
-            if (isNaN(n)) throw new Error('Expected integer')
+            if (isNaN(n)) {
+              throw new Error('Expected integer')
+            }
             return n
           }
         }

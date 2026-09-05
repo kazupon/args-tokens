@@ -11,56 +11,45 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Setup
 
 ```sh
-pnpm install
+vp install
 ```
 
 ### Build
 
 ```sh
-pnpm build        # Build the project using tsdown
+vp pack           # Build the library with Vite+ (tsdown)
 ```
 
 ### Testing
 
 ```sh
-pnpm test         # Run tests with typecheck using Vitest
-vitest            # Run tests in watch mode
+vp test           # Run tests with typecheck using Vitest
+vp test watch     # Run tests in watch mode
 
 # Run specific test file
-vitest src/parser.test.ts
+vp test src/parser.test.ts
 ```
 
 ### Linting and Code Quality
 
 ```bash
-pnpm lint         # Run all linters in parallel (eslint, prettier, knip, jsr)
-pnpm lint:eslint  # Run ESLint only
-pnpm lint:prettier # Check formatting
-
-pnpm fix          # Fix all issues (eslint, prettier, knip)
-pnpm fix:eslint   # Fix ESLint issues
-pnpm fix:prettier # Fix formatting
-
-pnpm typecheck    # Run TypeScript type checking (tsc --noEmit)
-```
-
-### Development
-
-```bash
-pnpm dev:eslint   # Open ESLint config inspector
+vpr check         # Format, lint, type-check, knip, and deno check
+vp check          # Format, lint, and type-check only
+vp check --fix    # Format and autofix
+vp run lint:jsr   # JSR publish dry-run
 ```
 
 ### Benchmarking
 
 ```bash
-pnpm bench:mitata # Run performance benchmarks with mitata
-pnpm bench:vitest # Run performance benchmarks with vitest
+vp run bench:mitata   # Run performance benchmarks with mitata
+vp run bench:vitest   # Run performance benchmarks with Vitest
 ```
 
 ### Release
 
 ```bash
-GH_TOKEN="$(gh auth token)" pnpm release      # Create a new release
+GH_TOKEN="$(gh auth token)" vp run release      # Create a new release
 ```
 
 ## Architecture
@@ -90,7 +79,7 @@ The library uses a two-phase approach:
 
 ## Testing Approach
 
-- Uses Vitest as the test runner
+- Uses Vite+ (`vp test`, Vitest) as the test runner
 - Tests are colocated with source files (e.g., `parser.ts` → `parser.test.ts`)
 - Snapshot testing is used for token output comparison
 - Type definition tests use `.test-d.ts` suffix (e.g., `resolver.test-d.ts`)
@@ -102,7 +91,7 @@ The library uses a two-phase approach:
 - The build output goes to the `lib/` directory
 - Minimum Node.js version is 22
 - The project is published to both npm and JSR (Deno registry)
-- Package manager is pnpm (version 10.12.4)
+- Package manager is pnpm (via Vite+ `vp`, packageManager pnpm@11.25.0)
 
 ## API docs style
 
