@@ -58,12 +58,11 @@ jobs:
       - name: Setup Vite Plus
         uses: voidzero-dev/setup-vp@1b32467adbe183473499fd9d5d372c3ed9641754 # v1.18.0
         with:
-          node-version: 22
-          cache: true
+          # Node 24 ships npm 11.5+, required for OIDC trusted publishing.
+          # Avoid `npm install -g` (zizmor adhoc-packages).
+          node-version: 24
+          cache: false
           run-install: false
-
-      - name: Install npm 11+ (required for OIDC trusted publishing)
-        run: npm install -g npm@11
 
       - name: Install dependencies
         run: vp install --frozen-lockfile
