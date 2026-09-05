@@ -5,7 +5,7 @@
   - [Pull Request Guidelines](#pull-request-guidelines)
     - [Work Step Example](#work-step-example)
   - [Development Setup](#development-setup)
-    - [Commonly used NPM scripts](#commonly-used-npm-scripts)
+    - [Commonly used commands](#commonly-used-commands)
 
 ## Issue Reporting Guidelines
 

@@ -2,54 +2,26 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+Vite+ commands, hooks, and the review checklist are in [AGENTS.md](./AGENTS.md).
+
 ## Project Overview
 
 `args-tokens` is a high-performance command-line argument parser written in TypeScript. It provides a `parseArgs` tokens compatibility with Node.js's built-in `util.parseArgs` but with better performance and enhanced features.
 
 ## Development Commands
 
-### Setup
+See [AGENTS.md](./AGENTS.md) for `vp install`, `vp check`, `vp test`, `vp pack`, and other Vite+ built-ins.
+
+This repository also uses:
 
 ```sh
-vp install
-```
-
-### Build
-
-```sh
-vp pack           # Build the library with Vite+ (tsdown)
-```
-
-### Testing
-
-```sh
-vp test           # Run tests with typecheck using Vitest
-vp test watch     # Run tests in watch mode
-
-# Run specific test file
+vpr check                 # vp check plus knip and deno check src
+vp run lint:jsr           # JSR publish dry-run
+vp run bench:mitata       # mitata benchmarks
+vp run bench:vitest       # Vitest benchmarks
 vp test src/parser.test.ts
-```
-
-### Linting and Code Quality
-
-```bash
-vpr check         # Format, lint, type-check, knip, and deno check
-vp check          # Format, lint, and type-check only
-vp check --fix    # Format and autofix
-vp run lint:jsr   # JSR publish dry-run
-```
-
-### Benchmarking
-
-```bash
-vp run bench:mitata   # Run performance benchmarks with mitata
-vp run bench:vitest   # Run performance benchmarks with Vitest
-```
-
-### Release
-
-```bash
-GH_TOKEN="$(gh auth token)" vp run release      # Create a new release
+vp test watch
+GH_TOKEN="$(gh auth token)" vp run release
 ```
 
 ## Architecture
