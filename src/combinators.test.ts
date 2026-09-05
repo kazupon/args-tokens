@@ -633,6 +633,23 @@ describe('multiple combinator', () => {
     const { values } = resolveArgs({ tag: multiple(string()) }, tokens)
     expect(values.tag).toEqual(['foo', 'bar'])
   })
+
+  test('required(multiple) and multiple(required) keep both flags and resolve arrays', () => {
+    const requiredMultiple = required(multiple(string()))
+    const multipleRequired = multiple(required(string()))
+    expect(requiredMultiple.multiple).toBe(true)
+    expect(requiredMultiple.required).toBe(true)
+    expect(multipleRequired.multiple).toBe(true)
+    expect(multipleRequired.required).toBe(true)
+
+    const tokens = parseArgs(['--items', 'a', '--items', 'b'])
+    const a = resolveArgs({ items: requiredMultiple }, tokens)
+    const b = resolveArgs({ items: multipleRequired }, tokens)
+    expect(a.error).toBeUndefined()
+    expect(b.error).toBeUndefined()
+    expect(a.values.items).toEqual(['a', 'b'])
+    expect(b.values.items).toEqual(['a', 'b'])
+  })
 })
 
 describe('required combinator', () => {

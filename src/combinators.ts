@@ -699,6 +699,14 @@ export function withDefault<T extends string | boolean | number>(
 }
 
 /**
+ * Overlay a flag onto a combinator schema without dropping other modifiers.
+ *
+ * Omits the flag keys from `S` first so optional `ArgSchema` fields
+ * (`multiple?: true`, `required?: boolean`) cannot stay as unions.
+ */
+type WithFlag<S, F> = Omit<S, keyof F> & F
+
+/**
  * Options for the {@link multiple} combinator.
  */
 type CombinatorMultiple = { multiple: true }
@@ -707,10 +715,11 @@ type CombinatorMultiple = { multiple: true }
  * Mark a combinator schema as accepting multiple values.
  *
  * The resolved value becomes an array. The original schema is not modified.
+ * Other modifiers on `schema` (for example {@link required}) are kept.
  *
- * @typeParam T - The schema's parsed type.
+ * @typeParam S - The input combinator schema.
  * @param schema - The base combinator schema.
- * @returns A new schema with `multiple: true`.
+ * @returns A copy of `schema` with `multiple: true`.
  *
  * @example
  * ```ts
@@ -723,7 +732,9 @@ type CombinatorMultiple = { multiple: true }
  * @experimental
  */
 // @__NO_SIDE_EFFECTS__
-export function multiple<T>(schema: CombinatorSchema<T>): CombinatorSchema<T> & CombinatorMultiple {
+export function multiple<S extends CombinatorSchema<unknown>>(
+  schema: S
+): WithFlag<S, CombinatorMultiple> {
   return {
     ...schema,
     multiple: true
@@ -739,11 +750,12 @@ type CombinatorRequired = { required: true }
  * Mark a combinator schema as required.
  *
  * The original schema is not modified.
+ * Other modifiers on `schema` (for example {@link multiple}) are kept.
  *
- * @typeParam T - The schema's parsed type.
+ * @typeParam S - The input combinator schema.
  *
  * @param schema - The base combinator schema.
- * @returns A new schema with `required: true`.
+ * @returns A copy of `schema` with `required: true`.
  *
  * @example
  * ```ts
@@ -755,7 +767,9 @@ type CombinatorRequired = { required: true }
  * @experimental
  */
 // @__NO_SIDE_EFFECTS__
-export function required<T>(schema: CombinatorSchema<T>): CombinatorSchema<T> & CombinatorRequired {
+export function required<S extends CombinatorSchema<unknown>>(
+  schema: S
+): WithFlag<S, CombinatorRequired> {
   return {
     ...schema,
     required: true

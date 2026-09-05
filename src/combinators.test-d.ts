@@ -145,6 +145,31 @@ test('required + short composition type inference', () => {
   expectTypeOf<ExtractOptionValue<typeof composed>>().toEqualTypeOf<number>()
 })
 
+test('required + multiple composition type inference', () => {
+  const requiredMultiple = { items: required(multiple(string())) }
+  type RM = ArgValues<typeof requiredMultiple>['items']
+  expectTypeOf<RM>().toEqualTypeOf<string[]>()
+
+  const multipleRequired = { items: multiple(required(string())) }
+  type MR = ArgValues<typeof multipleRequired>['items']
+  expectTypeOf<MR>().toEqualTypeOf<string[]>()
+
+  const rm = required(multiple(string()))
+  const mr = multiple(required(string()))
+  expectTypeOf<ExtractOptionValue<typeof rm>>().toEqualTypeOf<string[]>()
+  expectTypeOf<ExtractOptionValue<typeof mr>>().toEqualTypeOf<string[]>()
+
+  const reqMultiInt = required(multiple(integer()))
+  type RMI = ArgValues<{ items: typeof reqMultiInt }>['items']
+  expectTypeOf<RMI>().toEqualTypeOf<number[]>()
+
+  const unreq = unrequired(multiple(required(string())))
+  type U = ArgValues<{ items: typeof unreq }>['items']
+  expectTypeOf<U>().toEqualTypeOf<string[] | undefined>()
+  expectTypeOf(unreq.required).toEqualTypeOf<false>()
+  expectTypeOf(unreq.multiple).toEqualTypeOf<true>()
+})
+
 test('ArgValues with combinators', () => {
   const args = {
     host: string(),
