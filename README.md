@@ -317,6 +317,8 @@ When a custom `parse` function throws, args-tokens wraps the failure as `ArgsVal
 
 `ArgResolveError` now extends `ArgsValidationError` for backward compatibility. Existing checks for `instanceof ArgResolveError`, `.name`, `.type`, `.schema`, and `.message` continue to work. Conflict errors keep their existing `ArgResolveError` shape and do not currently expose a structured validation code.
 
+`isArgsValidationError()` works across bundled copies of `args-tokens`. Each error instance carries a non-enumerable brand keyed by `Symbol.for('args-tokens.ArgsValidationError')`, so the guard recognizes errors created by another copy of the library, for example when a host and a plugin each bundle `args-tokens`, even though `instanceof` does not match. The guard does not depend on `error.name`, which `ArgResolveError` overrides with the argument name.
+
 ## Node.js `parseArgs` tokens compatible
 
 If you want to use the same short options tokens as returned Node.js `parseArgs`, you can use `allowCompatible` parse option on `parseArgs`:
