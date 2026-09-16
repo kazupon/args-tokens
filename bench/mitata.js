@@ -36,7 +36,7 @@ barplot(() => {
   })
   bench('args-tokens parse (equivalent to util.parseArgs)', () => {
     parse(args, {
-      options: {
+      args: {
         foo: {
           type: 'boolean',
           short: 'f'

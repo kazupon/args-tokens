@@ -44,7 +44,7 @@ describe('parse and resolve', () => {
 
   bench('args-tokens parse', () => {
     parse(args, {
-      options: {
+      args: {
         foo: {
           type: 'boolean',
           short: 'f'
