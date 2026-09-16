@@ -491,11 +491,25 @@ export type ArgsValidationErrorCode =
   (typeof ArgsValidationErrorKeys)[keyof typeof ArgsValidationErrorKeys]
 
 /**
+ * Brand that marks {@link ArgsValidationError} instances.
+ *
+ * The brand is looked up in the global symbol registry with `Symbol.for`, so it stays
+ * identical across bundled copies of this module and across realms. It lets
+ * {@link isArgsValidationError} recognize errors created by another copy of `args-tokens`,
+ * where `instanceof` cannot match.
+ */
+const ARGS_VALIDATION_ERROR_BRAND: unique symbol = Symbol.for('args-tokens.ArgsValidationError')
+
+/**
  * An error that contains structured metadata for argument validation failures.
  *
  * The `message` remains the English fallback message. Renderers can use `code`
  * and `values` to localize the error, falling back to `message` when localization
  * is unavailable.
+ *
+ * Each instance carries a non-enumerable brand keyed by
+ * `Symbol.for('args-tokens.ArgsValidationError')`, which {@link isArgsValidationError}
+ * uses to recognize instances created by another bundled copy of `args-tokens`.
  */
 export class ArgsValidationError extends Error {
   /**
@@ -527,17 +541,38 @@ export class ArgsValidationError extends Error {
     this.name = 'ArgsValidationError'
     this.code = options.code
     this.values = options.values ?? {}
+    // Put the brand on the instance, not the prototype: each bundled copy has its own prototype.
+    // Subclasses such as `ArgResolveError` get it through `super()` and keep it even though they
+    // override `name`.
+    Object.defineProperty(this, ARGS_VALIDATION_ERROR_BRAND, {
+      value: true,
+      enumerable: false,
+      writable: false,
+      configurable: false
+    })
   }
 }
 
 /**
  * Check whether the given value is an {@link ArgsValidationError}.
  *
+ * This guard also recognizes errors created by another bundled copy of `args-tokens`,
+ * where `instanceof` does not match, by checking the brand keyed by
+ * `Symbol.for('args-tokens.ArgsValidationError')`. It does not rely on `error.name`, so
+ * subclasses such as {@link ArgResolveError} that override `name` are still recognized.
+ *
  * @param error - value to check
  * @returns `true` when the value is an `ArgsValidationError`
  */
 export function isArgsValidationError(error: unknown): error is ArgsValidationError {
-  return error instanceof ArgsValidationError
+  if (error instanceof ArgsValidationError) {
+    return true
+  }
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    (error as Record<PropertyKey, unknown>)[ARGS_VALIDATION_ERROR_BRAND] === true
+  )
 }
 
 /**
