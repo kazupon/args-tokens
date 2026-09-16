@@ -1,5 +1,6 @@
 /* oxlint-disable no-unsafe-optional-chaining */
 
+import { runInNewContext } from 'node:vm'
 import { afterEach, describe, expect, test, vi } from 'vite-plus/test'
 import { z } from 'zod/v4-mini'
 import { parseArgs } from './parser.ts'
@@ -684,15 +685,98 @@ describe('isArgsValidationError', () => {
         values: {}
       }
     },
-    { title: 'brand set to a string', value: { [ARGS_VALIDATION_ERROR_BRAND]: 'true' } },
-    { title: 'brand set to 1', value: { [ARGS_VALIDATION_ERROR_BRAND]: 1 } },
-    { title: 'brand set to false', value: { [ARGS_VALIDATION_ERROR_BRAND]: false } },
+    {
+      title: 'brand set to a string',
+      value: { [ARGS_VALIDATION_ERROR_BRAND]: 'true', values: {} }
+    },
+    { title: 'brand set to 1', value: { [ARGS_VALIDATION_ERROR_BRAND]: 1, values: {} } },
+    { title: 'brand set to false', value: { [ARGS_VALIDATION_ERROR_BRAND]: false, values: {} } },
     {
       title: 'brand keyed by a non-registry symbol',
-      value: { [Symbol('args-tokens.ArgsValidationError')]: true }
+      value: { [Symbol('args-tokens.ArgsValidationError')]: true, values: {} }
+    },
+    {
+      title: 'inherited brand',
+      value: Object.assign(Object.create({ [ARGS_VALIDATION_ERROR_BRAND]: true }) as object, {
+        values: {}
+      })
+    },
+    { title: 'brand without values', value: { [ARGS_VALIDATION_ERROR_BRAND]: true } },
+    {
+      title: 'brand with null values',
+      value: { [ARGS_VALIDATION_ERROR_BRAND]: true, values: null }
     }
   ])('rejects $title', ({ value }) => {
     expect(isArgsValidationError(value)).toBe(false)
+  })
+
+  test('recognizes a branded error created in another realm', () => {
+    const error: unknown = runInNewContext(`
+      const error = new Error('Invalid config')
+      Object.defineProperty(error, Symbol.for('args-tokens.ArgsValidationError'), { value: true })
+      error.values = {}
+      error
+    `)
+
+    // the global symbol registry is shared across realms, while `Error` is not
+    expect(error).not.toBeInstanceOf(Error)
+    expect(isArgsValidationError(error)).toBe(true)
+  })
+
+  test('wraps a forged brand without values thrown from a custom parse', () => {
+    const forged = { [ARGS_VALIDATION_ERROR_BRAND]: true }
+    const tokens = parseArgs(['--config', 'bad'])
+
+    const { error } = resolveArgs(
+      {
+        config: {
+          type: 'custom',
+          parse() {
+            // eslint-disable-next-line @typescript-eslint/only-throw-error -- Verify forged brand handling.
+            throw forged
+          }
+        }
+      },
+      tokens
+    )
+
+    expect(error?.errors.length).toBe(1)
+    const validationError = error?.errors[0] as ArgsValidationError
+    expect(validationError).not.toBe(forged)
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.customParse)
+    expect(validationError.cause).toBe(forged)
+  })
+
+  test('ignores a brand inherited from a polluted Object.prototype', () => {
+    Object.defineProperty(Object.prototype, ARGS_VALIDATION_ERROR_BRAND, {
+      value: true,
+      writable: true,
+      configurable: true
+    })
+    try {
+      const cause = new Error('Invalid config')
+      expect(isArgsValidationError(cause)).toBe(false)
+
+      const { error } = resolveArgs(
+        {
+          config: {
+            type: 'custom',
+            parse() {
+              throw cause
+            }
+          }
+        },
+        parseArgs(['--config', 'bad'])
+      )
+
+      expect(error?.errors.length).toBe(1)
+      const validationError = error?.errors[0] as ArgsValidationError
+      expect(validationError.code).toBe(ArgsValidationErrorKeys.customParse)
+      expect(validationError.cause).toBe(cause)
+    } finally {
+      Reflect.deleteProperty(Object.prototype, ARGS_VALIDATION_ERROR_BRAND)
+    }
+    expect(ARGS_VALIDATION_ERROR_BRAND in {}).toBe(false)
   })
 
   test('does not double wrap ArgsValidationError thrown from another module copy', async () => {
