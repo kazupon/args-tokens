@@ -18,15 +18,19 @@ This repository also uses:
 vpr check                 # vp check plus knip and deno check src
 vp run lint:jsr           # JSR publish dry-run
 vp run bench:mitata       # mitata benchmarks
+vp run bench:positionals  # mitata benchmarks for positional arguments
 vp run bench:vitest       # Vitest benchmarks
+vp run build:docs         # Regenerate docs/ from JSDoc with vitepress-api-references
 vp test src/parser.test.ts
 vp test watch
 GH_TOKEN="$(gh auth token)" vp run release
 ```
 
+Benchmarks import from `lib/`, so run `vp pack` first.
+
 ## Architecture
 
-The library is structured into four main modules:
+The library is structured into five entry points:
 
 1. **parser.ts** (`/parser` export): Low-level token parser that transforms command-line arguments into tokens
    - `parseArgs()` function that processes args array into tokens
@@ -36,13 +40,20 @@ The library is structured into four main modules:
 2. **resolver.ts** (`/resolver` export): Resolves values from tokens based on option schemas
    - `resolveArgs()` function that takes tokens and schema to produce values
    - Handles type conversion, defaults, and validation
-   - Supports boolean, string, and number types
+   - Supports `string`, `boolean`, `number`, `enum`, `positional` and `custom` types
+   - Returns validation failures as an `AggregateError` of `ArgsValidationError` / `ArgResolveError` (never throws)
 
 3. **parse.ts** (main export): High-level convenience API that combines parsing and resolving
    - `parse()` function that does both tokenization and value resolution in one step
    - The recommended API for most use cases
 
-4. **utils.ts** (`/utils` export): Utility functions used internally
+4. **utils.ts** (`/utils` export): Utility functions used internally (`kebabnize`, `formatChoices`), also imported by gunshi
+
+5. **combinators.ts** (`/combinators` export, experimental): Parser combinator factory functions
+   - Base combinators (`string`, `number`, `integer`, `float`, `boolean`, `positional`, `choice`, `combinator`) generate `ArgSchema` objects
+   - Modifier combinators (`map`, `withDefault`, `multiple`, `required`, `unrequired`, `short`, `describe`, `hidden`) return a new schema without mutating the input
+   - Schema combinators (`args`, `merge`, `extend`) compose schema objects
+   - Marked `@experimental`; API may change
 
 The library uses a two-phase approach:
 
@@ -63,7 +74,8 @@ The library uses a two-phase approach:
 - The build output goes to the `lib/` directory
 - Minimum Node.js version is 22
 - The project is published to both npm and JSR (Deno registry)
-- Package manager is pnpm (via Vite+ `vp`, packageManager pnpm@11.25.0)
+- Package manager is pnpm via Vite+ `vp` (see `packageManager` in `package.json` for the pinned version)
+- `parse()` takes the schema via the `args` option (`parse(argv, { args: schema })`), not `options`
 
 ## API docs style
 

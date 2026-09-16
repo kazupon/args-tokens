@@ -4,6 +4,7 @@ node_modules
 .eslintcache
 .plans
 .vite-hooks/_
+.notes
 lib
 dist
 
