@@ -1,6 +1,6 @@
 /* oxlint-disable no-unsafe-optional-chaining */
 
-import { describe, expect, test } from 'vite-plus/test'
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test'
 import { z } from 'zod/v4-mini'
 import { parseArgs } from './parser.ts'
 import {
@@ -502,6 +502,94 @@ describe('structured validation errors', () => {
     })
     expect(validationError.cause).toBe(cause)
   })
+})
+
+describe('isArgsValidationError', () => {
+  afterEach(() => {
+    vi.resetModules()
+  })
+
+  /**
+   * Load two independent copies of the resolver module, like a host and a plugin that each
+   * bundle `args-tokens`. `instanceof` does not match across the copies.
+   *
+   * @returns The two module copies
+   */
+  async function loadResolverCopies() {
+    const copyA = await import('./resolver.ts')
+    vi.resetModules()
+    const copyB = await import('./resolver.ts')
+    // guard the premise: otherwise the cross-copy tests would pass trivially
+    expect(copyA.ArgsValidationError).not.toBe(copyB.ArgsValidationError)
+    return { copyA, copyB }
+  }
+
+  const crossCopyCases: {
+    title: string
+    schema: Args
+    argv: string[]
+    name: string
+  }[] = [
+    {
+      title: 'required option',
+      schema: { foo: { type: 'string', required: true } },
+      argv: [],
+      name: 'foo'
+    },
+    {
+      title: 'required positional',
+      schema: { file: { type: 'positional' } },
+      argv: [],
+      name: 'file'
+    },
+    {
+      title: 'invalid type',
+      schema: { port: { type: 'number' } },
+      argv: ['--port', 'abc'],
+      name: 'port'
+    },
+    {
+      title: 'invalid choice',
+      schema: { level: { type: 'enum', choices: ['debug', 'info'] } },
+      argv: ['--level', 'warn'],
+      name: 'level'
+    },
+    {
+      title: 'conflict',
+      schema: { foo: { type: 'boolean', conflicts: 'bar' }, bar: { type: 'boolean' } },
+      argv: ['--foo', '--bar'],
+      name: 'foo'
+    },
+    {
+      title: 'custom parse',
+      schema: {
+        config: {
+          type: 'custom',
+          parse() {
+            throw new Error('Invalid config')
+          }
+        }
+      },
+      argv: ['--config', 'bad'],
+      name: 'ArgsValidationError'
+    }
+  ]
+
+  test.each(crossCopyCases)(
+    'recognizes $title error created by another module copy',
+    async ({ schema, argv, name }) => {
+      const { copyA, copyB } = await loadResolverCopies()
+
+      const { error } = copyA.resolveArgs(schema, parseArgs(argv))
+      expect(error?.errors.length).toBe(1)
+      const [thrown] = error!.errors as Error[]
+
+      expect(thrown).not.toBeInstanceOf(copyB.ArgsValidationError)
+      // `ArgResolveError` overrides `name` with the argument name, so `name` cannot be the brand
+      expect(thrown.name).toBe(name)
+      expect(copyB.isArgsValidationError(thrown)).toBe(true)
+    }
+  )
 })
 
 describe('option group', () => {
