@@ -505,6 +505,9 @@ describe('structured validation errors', () => {
 })
 
 describe('isArgsValidationError', () => {
+  // the registry key is the contract shared with other bundled copies of `args-tokens`
+  const ARGS_VALIDATION_ERROR_BRAND = Symbol.for('args-tokens.ArgsValidationError')
+
   afterEach(() => {
     vi.resetModules()
   })
@@ -590,6 +593,141 @@ describe('isArgsValidationError', () => {
       expect(copyB.isArgsValidationError(thrown)).toBe(true)
     }
   )
+
+  test('recognizes ArgsValidationError and ArgResolveError instances', () => {
+    const validationError = new ArgsValidationError('Invalid config', {
+      code: ArgsValidationErrorKeys.customParse
+    })
+    const resolveError = new ArgResolveError(
+      "Optional argument '--foo' is required",
+      'foo',
+      'required',
+      { type: 'string', required: true },
+      { code: ArgsValidationErrorKeys.requiredOption }
+    )
+
+    expect(isArgsValidationError(validationError)).toBe(true)
+    expect(resolveError.name).toBe('foo')
+    expect(isArgsValidationError(resolveError)).toBe(true)
+  })
+
+  test('brand is non-enumerable and immutable', () => {
+    const error = new ArgResolveError(
+      "Optional argument '--foo' is required",
+      'foo',
+      'required',
+      { type: 'string', required: true },
+      { code: ArgsValidationErrorKeys.requiredOption, values: { name: 'foo' } }
+    )
+
+    expect(Object.getOwnPropertyDescriptor(error, ARGS_VALIDATION_ERROR_BRAND)).toEqual({
+      value: true,
+      enumerable: false,
+      writable: false,
+      configurable: false
+    })
+    // copying own enumerable properties (string and symbol keys) must not carry the brand
+    expect(ARGS_VALIDATION_ERROR_BRAND in Object.assign({}, error)).toBe(false)
+    // equality with an unbranded error that has the same shape is not affected by the brand
+    expect(error).toEqual(
+      Object.assign(new Error("Optional argument '--foo' is required"), {
+        name: 'foo',
+        type: 'required',
+        schema: { type: 'string', required: true },
+        code: ArgsValidationErrorKeys.requiredOption,
+        values: { name: 'foo' }
+      })
+    )
+
+    // modules are strict mode, so writing or deleting a non-writable, non-configurable property throws
+    expect(() => {
+      ;(error as unknown as Record<PropertyKey, unknown>)[ARGS_VALIDATION_ERROR_BRAND] = false
+    }).toThrow(TypeError)
+    expect(() => {
+      delete (error as unknown as Record<PropertyKey, unknown>)[ARGS_VALIDATION_ERROR_BRAND]
+    }).toThrow(TypeError)
+    expect(isArgsValidationError(error)).toBe(true)
+  })
+
+  test('recognizes a branded error from a foreign class that overrides name', () => {
+    class ForeignArgResolveError extends Error {
+      code = ArgsValidationErrorKeys.requiredOption
+      values = {}
+      constructor() {
+        super("Optional argument '--foo' is required")
+        this.name = 'foo'
+        Object.defineProperty(this, ARGS_VALIDATION_ERROR_BRAND, { value: true })
+      }
+    }
+
+    const error = new ForeignArgResolveError()
+    expect(error).not.toBeInstanceOf(ArgsValidationError)
+    expect(isArgsValidationError(error)).toBe(true)
+  })
+
+  test.each([
+    { title: 'null', value: null },
+    { title: 'undefined', value: undefined },
+    { title: 'string', value: 'ArgsValidationError' },
+    { title: 'number', value: 42 },
+    { title: 'plain Error', value: new Error('Invalid config') },
+    {
+      title: 'Error named ArgsValidationError',
+      value: Object.assign(new Error('Invalid config'), { name: 'ArgsValidationError' })
+    },
+    {
+      title: 'object shaped like ArgsValidationError',
+      value: {
+        name: 'ArgsValidationError',
+        message: 'Invalid config',
+        code: ArgsValidationErrorKeys.customParse,
+        values: {}
+      }
+    },
+    { title: 'brand set to a string', value: { [ARGS_VALIDATION_ERROR_BRAND]: 'true' } },
+    { title: 'brand set to 1', value: { [ARGS_VALIDATION_ERROR_BRAND]: 1 } },
+    { title: 'brand set to false', value: { [ARGS_VALIDATION_ERROR_BRAND]: false } },
+    {
+      title: 'brand keyed by a non-registry symbol',
+      value: { [Symbol('args-tokens.ArgsValidationError')]: true }
+    }
+  ])('rejects $title', ({ value }) => {
+    expect(isArgsValidationError(value)).toBe(false)
+  })
+
+  test('does not double wrap ArgsValidationError thrown from another module copy', async () => {
+    const { copyA, copyB } = await loadResolverCopies()
+    const thrown = new copyB.ArgsValidationError('Use a finite count', {
+      code: copyB.ArgsValidationErrorKeys.invalidType,
+      values: {
+        expected: 'finite-count'
+      }
+    })
+
+    const { error } = copyA.resolveArgs(
+      {
+        count: {
+          type: 'custom',
+          parse() {
+            throw thrown
+          }
+        }
+      },
+      parseArgs(['--count', 'bad'])
+    )
+
+    expect(error?.errors.length).toBe(1)
+    const validationError = error?.errors[0] as ArgsValidationError
+    expect(validationError).toBe(thrown)
+    expect(validationError).not.toBeInstanceOf(copyA.ArgsValidationError)
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.invalidType)
+    expect(validationError.values).toEqual({
+      expected: 'finite-count',
+      name: 'count',
+      displayName: "'--count'",
+      actual: 'bad'
+    })
+  })
 })
 
 describe('option group', () => {
