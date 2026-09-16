@@ -2,10 +2,14 @@
 
 Check whether the given value is an [ArgsValidationError](/docs/default/classes/ArgsValidationError.md).
 
-This guard also recognizes errors created by another bundled copy of `args-tokens`,
-where `instanceof` does not match, by checking the brand keyed by
-`Symbol.for('args-tokens.ArgsValidationError')`. It does not rely on `error.name`, so
-subclasses such as [ArgResolveError](/docs/default/classes/ArgResolveError.md) that override `name` are still recognized.
+This guard also recognizes errors created by another bundled copy of `args-tokens`
+(0.29.0 or later), where `instanceof` does not match. Such an error must have an own brand
+keyed by `Symbol.for('args-tokens.ArgsValidationError')` set to `true`, and a `values` object.
+The guard does not rely on `error.name`, so subclasses such as [ArgResolveError](/docs/default/classes/ArgResolveError.md) that
+override `name` are still recognized.
+
+The guard narrows to `ArgsValidationError` only. Across bundled copies,
+`instanceof ArgResolveError` still does not match.
 
 ## Signature
 
