@@ -313,7 +313,7 @@ for (const cause of error?.errors ?? []) {
 
 The resolver uses stable error codes for required options, required positionals, invalid types, invalid choices, and custom parse failures. The `values` object contains interpolation data such as `name`, `displayName`, `expected`, `actual`, `choices`, `choiceValues`, and `reason` depending on the error kind.
 
-When a custom `parse` function throws, args-tokens wraps the failure as `ArgsValidationErrorKeys.customParse` and preserves the thrown value as `cause`. If the parser already throws an `ArgsValidationError`, it is reused without double wrapping.
+When a custom `parse` function throws, args-tokens wraps the failure as `ArgsValidationErrorKeys.customParse` and preserves the thrown value as `cause`. If the parser already throws an `ArgsValidationError`, it is reused without double wrapping, and missing `name`, `displayName`, and `actual` values are filled in. When that update fails, for example because its `values` object is frozen, the thrown error is wrapped like any other thrown value.
 
 `ArgResolveError` now extends `ArgsValidationError` for backward compatibility. Existing checks for `instanceof ArgResolveError`, `.name`, `.type`, `.schema`, and `.message` continue to work. Conflict errors keep their existing `ArgResolveError` shape and do not currently expose a structured validation code.
 
