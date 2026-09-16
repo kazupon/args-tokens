@@ -1,6 +1,7 @@
 /* oxlint-disable no-unsafe-optional-chaining */
 
-import { describe, expect, test } from 'vite-plus/test'
+import { runInNewContext } from 'node:vm'
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test'
 import { z } from 'zod/v4-mini'
 import { parseArgs } from './parser.ts'
 import {
@@ -501,6 +502,426 @@ describe('structured validation errors', () => {
       reason: 'Not a count'
     })
     expect(validationError.cause).toBe(cause)
+  })
+})
+
+describe('isArgsValidationError', () => {
+  // the registry key is the contract shared with other bundled copies of `args-tokens`
+  const ARGS_VALIDATION_ERROR_BRAND = Symbol.for('args-tokens.ArgsValidationError')
+
+  afterEach(() => {
+    vi.resetModules()
+  })
+
+  /**
+   * Load two independent copies of the resolver module, like a host and a plugin that each
+   * bundle `args-tokens`. `instanceof` does not match across the copies.
+   *
+   * @returns The two module copies
+   */
+  async function loadResolverCopies() {
+    const copyA = await import('./resolver.ts')
+    vi.resetModules()
+    const copyB = await import('./resolver.ts')
+    // guard the premise: otherwise the cross-copy tests would pass trivially
+    expect(copyA.ArgsValidationError).not.toBe(copyB.ArgsValidationError)
+    return { copyA, copyB }
+  }
+
+  const crossCopyCases: {
+    title: string
+    schema: Args
+    argv: string[]
+    name: string
+  }[] = [
+    {
+      title: 'required option',
+      schema: { foo: { type: 'string', required: true } },
+      argv: [],
+      name: 'foo'
+    },
+    {
+      title: 'required positional',
+      schema: { file: { type: 'positional' } },
+      argv: [],
+      name: 'file'
+    },
+    {
+      title: 'invalid type',
+      schema: { port: { type: 'number' } },
+      argv: ['--port', 'abc'],
+      name: 'port'
+    },
+    {
+      title: 'invalid choice',
+      schema: { level: { type: 'enum', choices: ['debug', 'info'] } },
+      argv: ['--level', 'warn'],
+      name: 'level'
+    },
+    {
+      title: 'conflict',
+      schema: { foo: { type: 'boolean', conflicts: 'bar' }, bar: { type: 'boolean' } },
+      argv: ['--foo', '--bar'],
+      name: 'foo'
+    },
+    {
+      title: 'custom parse',
+      schema: {
+        config: {
+          type: 'custom',
+          parse() {
+            throw new Error('Invalid config')
+          }
+        }
+      },
+      argv: ['--config', 'bad'],
+      name: 'ArgsValidationError'
+    }
+  ]
+
+  test.each(crossCopyCases)(
+    'recognizes $title error created by another module copy',
+    async ({ schema, argv, name }) => {
+      const { copyA, copyB } = await loadResolverCopies()
+
+      const { error } = copyA.resolveArgs(schema, parseArgs(argv))
+      expect(error?.errors.length).toBe(1)
+      const [thrown] = error!.errors as Error[]
+
+      expect(thrown).not.toBeInstanceOf(copyB.ArgsValidationError)
+      // `ArgResolveError` overrides `name` with the argument name, so `name` cannot be the brand
+      expect(thrown.name).toBe(name)
+      expect(copyB.isArgsValidationError(thrown)).toBe(true)
+    }
+  )
+
+  test('recognizes ArgsValidationError and ArgResolveError instances', () => {
+    const validationError = new ArgsValidationError('Invalid config', {
+      code: ArgsValidationErrorKeys.customParse
+    })
+    const resolveError = new ArgResolveError(
+      "Optional argument '--foo' is required",
+      'foo',
+      'required',
+      { type: 'string', required: true },
+      { code: ArgsValidationErrorKeys.requiredOption }
+    )
+
+    expect(isArgsValidationError(validationError)).toBe(true)
+    expect(resolveError.name).toBe('foo')
+    expect(isArgsValidationError(resolveError)).toBe(true)
+  })
+
+  test('brand is non-enumerable and immutable', () => {
+    const error = new ArgResolveError(
+      "Optional argument '--foo' is required",
+      'foo',
+      'required',
+      { type: 'string', required: true },
+      { code: ArgsValidationErrorKeys.requiredOption, values: { name: 'foo' } }
+    )
+
+    expect(Object.getOwnPropertyDescriptor(error, ARGS_VALIDATION_ERROR_BRAND)).toEqual({
+      value: true,
+      enumerable: false,
+      writable: false,
+      configurable: false
+    })
+    // copying own enumerable properties (string and symbol keys) must not carry the brand
+    expect(ARGS_VALIDATION_ERROR_BRAND in Object.assign({}, error)).toBe(false)
+    // equality with an unbranded error that has the same shape is not affected by the brand
+    expect(error).toEqual(
+      Object.assign(new Error("Optional argument '--foo' is required"), {
+        name: 'foo',
+        type: 'required',
+        schema: { type: 'string', required: true },
+        code: ArgsValidationErrorKeys.requiredOption,
+        values: { name: 'foo' }
+      })
+    )
+
+    // modules are strict mode, so writing or deleting a non-writable, non-configurable property throws
+    expect(() => {
+      ;(error as unknown as Record<PropertyKey, unknown>)[ARGS_VALIDATION_ERROR_BRAND] = false
+    }).toThrow(TypeError)
+    expect(() => {
+      delete (error as unknown as Record<PropertyKey, unknown>)[ARGS_VALIDATION_ERROR_BRAND]
+    }).toThrow(TypeError)
+    expect(isArgsValidationError(error)).toBe(true)
+  })
+
+  test('recognizes a branded error from a foreign class that overrides name', () => {
+    class ForeignArgResolveError extends Error {
+      code = ArgsValidationErrorKeys.requiredOption
+      values = {}
+      constructor() {
+        super("Optional argument '--foo' is required")
+        this.name = 'foo'
+        Object.defineProperty(this, ARGS_VALIDATION_ERROR_BRAND, { value: true })
+      }
+    }
+
+    const error = new ForeignArgResolveError()
+    expect(error).not.toBeInstanceOf(ArgsValidationError)
+    expect(isArgsValidationError(error)).toBe(true)
+  })
+
+  test.each([
+    { title: 'null', value: null },
+    { title: 'undefined', value: undefined },
+    { title: 'string', value: 'ArgsValidationError' },
+    { title: 'number', value: 42 },
+    { title: 'plain Error', value: new Error('Invalid config') },
+    {
+      title: 'Error named ArgsValidationError',
+      value: Object.assign(new Error('Invalid config'), { name: 'ArgsValidationError' })
+    },
+    {
+      title: 'object shaped like ArgsValidationError',
+      value: {
+        name: 'ArgsValidationError',
+        message: 'Invalid config',
+        code: ArgsValidationErrorKeys.customParse,
+        values: {}
+      }
+    },
+    {
+      title: 'brand set to a string',
+      value: { [ARGS_VALIDATION_ERROR_BRAND]: 'true', values: {} }
+    },
+    { title: 'brand set to 1', value: { [ARGS_VALIDATION_ERROR_BRAND]: 1, values: {} } },
+    { title: 'brand set to false', value: { [ARGS_VALIDATION_ERROR_BRAND]: false, values: {} } },
+    {
+      title: 'brand keyed by a non-registry symbol',
+      value: { [Symbol('args-tokens.ArgsValidationError')]: true, values: {} }
+    },
+    {
+      title: 'inherited brand',
+      value: Object.assign(Object.create({ [ARGS_VALIDATION_ERROR_BRAND]: true }) as object, {
+        values: {}
+      })
+    },
+    { title: 'brand without values', value: { [ARGS_VALIDATION_ERROR_BRAND]: true } },
+    {
+      title: 'brand with null values',
+      value: { [ARGS_VALIDATION_ERROR_BRAND]: true, values: null }
+    },
+    {
+      title: 'brand with string values',
+      value: { [ARGS_VALIDATION_ERROR_BRAND]: true, values: 'name' }
+    },
+    { title: 'brand with number values', value: { [ARGS_VALIDATION_ERROR_BRAND]: true, values: 1 } }
+  ])('rejects $title', ({ value }) => {
+    expect(isArgsValidationError(value)).toBe(false)
+  })
+
+  test('recognizes a branded error created in another realm', () => {
+    const error: unknown = runInNewContext(`
+      const error = new Error('Invalid config')
+      Object.defineProperty(error, Symbol.for('args-tokens.ArgsValidationError'), { value: true })
+      error.values = {}
+      error
+    `)
+
+    // the global symbol registry is shared across realms, while `Error` is not
+    expect(error).not.toBeInstanceOf(Error)
+    expect(isArgsValidationError(error)).toBe(true)
+  })
+
+  test('wraps a forged brand without values thrown from a custom parse', () => {
+    const forged = { [ARGS_VALIDATION_ERROR_BRAND]: true }
+    const tokens = parseArgs(['--config', 'bad'])
+
+    const { error } = resolveArgs(
+      {
+        config: {
+          type: 'custom',
+          parse() {
+            // eslint-disable-next-line @typescript-eslint/only-throw-error -- Verify forged brand handling.
+            throw forged
+          }
+        }
+      },
+      tokens
+    )
+
+    expect(error?.errors.length).toBe(1)
+    const validationError = error?.errors[0] as ArgsValidationError
+    expect(validationError).not.toBe(forged)
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.customParse)
+    expect(validationError.cause).toBe(forged)
+  })
+
+  test('ignores a brand inherited from a polluted Object.prototype', () => {
+    Object.defineProperty(Object.prototype, ARGS_VALIDATION_ERROR_BRAND, {
+      value: true,
+      writable: true,
+      configurable: true
+    })
+    try {
+      // own `values`, so only the own-brand check can reject it
+      const cause = Object.assign(new Error('Invalid config'), { values: {} })
+      expect(isArgsValidationError(cause)).toBe(false)
+
+      const { error } = resolveArgs(
+        {
+          config: {
+            type: 'custom',
+            parse() {
+              throw cause
+            }
+          }
+        },
+        parseArgs(['--config', 'bad'])
+      )
+
+      expect(error?.errors.length).toBe(1)
+      const validationError = error?.errors[0] as ArgsValidationError
+      expect(validationError.code).toBe(ArgsValidationErrorKeys.customParse)
+      expect(validationError.cause).toBe(cause)
+    } finally {
+      Reflect.deleteProperty(Object.prototype, ARGS_VALIDATION_ERROR_BRAND)
+    }
+    expect(ARGS_VALIDATION_ERROR_BRAND in {}).toBe(false)
+  })
+
+  /**
+   * Resolve a custom argument whose `parse` throws the given value.
+   *
+   * @param thrown - The value thrown from `parse`
+   * @param resolve - The `resolveArgs` implementation to use
+   * @returns The resolved result
+   */
+  function resolveWithThrowingParse(thrown: unknown, resolve: typeof resolveArgs = resolveArgs) {
+    return resolve(
+      {
+        count: {
+          type: 'custom',
+          parse() {
+            // eslint-disable-next-line @typescript-eslint/only-throw-error -- Verify arbitrary thrown values.
+            throw thrown
+          }
+        }
+      },
+      parseArgs(['--count', 'bad'])
+    )
+  }
+
+  test('wraps an ArgsValidationError from another module copy whose values cannot be updated', async () => {
+    const { copyA, copyB } = await loadResolverCopies()
+    const thrown = new copyB.ArgsValidationError('Use a finite count', {
+      code: copyB.ArgsValidationErrorKeys.invalidType,
+      values: Object.freeze({ expected: 'finite-count' })
+    })
+
+    const { error } = resolveWithThrowingParse(thrown, copyA.resolveArgs)
+
+    expect(error?.errors.length).toBe(1)
+    const validationError = error?.errors[0] as ArgsValidationError
+    expect(validationError).not.toBe(thrown)
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.customParse)
+    expect(validationError.message).toBe('Use a finite count')
+    expect(validationError.cause).toBe(thrown)
+  })
+
+  test('wraps an ArgsValidationError whose values cannot be updated', () => {
+    const thrown = new ArgsValidationError('Use a finite count', {
+      code: ArgsValidationErrorKeys.invalidType,
+      values: Object.freeze({ expected: 'finite-count' })
+    })
+
+    const { error } = resolveWithThrowingParse(thrown)
+
+    expect(error?.errors.length).toBe(1)
+    const validationError = error?.errors[0] as ArgsValidationError
+    expect(validationError).not.toBe(thrown)
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.customParse)
+    expect(validationError.cause).toBe(thrown)
+  })
+
+  test('reuses an ArgsValidationError with frozen values that need no update', () => {
+    const thrown = new ArgsValidationError('Use a finite count', {
+      code: ArgsValidationErrorKeys.customParse,
+      values: Object.freeze({ name: 'count', displayName: "'--count'" })
+    })
+
+    const { error } = resolveWithThrowingParse(thrown)
+
+    expect(error?.errors[0]).toBe(thrown)
+  })
+
+  test.each([
+    {
+      title: 'a forged brand with frozen values',
+      thrown: { [ARGS_VALIDATION_ERROR_BRAND]: true, values: Object.freeze({}) }
+    },
+    {
+      title: 'a brand accessor that throws',
+      thrown: Object.defineProperty({ values: {} }, ARGS_VALIDATION_ERROR_BRAND, {
+        get() {
+          throw new Error('brand getter')
+        }
+      })
+    },
+    {
+      title: 'a values accessor that throws',
+      thrown: Object.defineProperty({ [ARGS_VALIDATION_ERROR_BRAND]: true }, 'values', {
+        get() {
+          throw new Error('values getter')
+        }
+      })
+    },
+    {
+      title: 'a proxy whose getOwnPropertyDescriptor trap throws',
+      thrown: new Proxy(new Error('proxied'), {
+        getOwnPropertyDescriptor() {
+          throw new Error('getOwnPropertyDescriptor trap')
+        }
+      })
+    }
+  ])('wraps $title thrown from a custom parse without throwing', ({ thrown }) => {
+    // before the fix, resolveArgs itself threw here
+    const { error } = resolveWithThrowingParse(thrown)
+
+    expect(error?.errors.length).toBe(1)
+    const validationError = error?.errors[0] as ArgsValidationError
+    expect(validationError).not.toBe(thrown)
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.customParse)
+    expect(validationError.cause).toBe(thrown)
+  })
+
+  test('does not double wrap ArgsValidationError thrown from another module copy', async () => {
+    const { copyA, copyB } = await loadResolverCopies()
+    const thrown = new copyB.ArgsValidationError('Use a finite count', {
+      code: copyB.ArgsValidationErrorKeys.invalidType,
+      values: {
+        expected: 'finite-count'
+      }
+    })
+
+    const { error } = copyA.resolveArgs(
+      {
+        count: {
+          type: 'custom',
+          parse() {
+            throw thrown
+          }
+        }
+      },
+      parseArgs(['--count', 'bad'])
+    )
+
+    expect(error?.errors.length).toBe(1)
+    const validationError = error?.errors[0] as ArgsValidationError
+    expect(validationError).toBe(thrown)
+    expect(validationError).not.toBeInstanceOf(copyA.ArgsValidationError)
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.invalidType)
+    expect(validationError.values).toEqual({
+      expected: 'finite-count',
+      name: 'count',
+      displayName: "'--count'",
+      actual: 'bad'
+    })
   })
 })
 

@@ -313,9 +313,11 @@ for (const cause of error?.errors ?? []) {
 
 The resolver uses stable error codes for required options, required positionals, invalid types, invalid choices, and custom parse failures. The `values` object contains interpolation data such as `name`, `displayName`, `expected`, `actual`, `choices`, `choiceValues`, and `reason` depending on the error kind.
 
-When a custom `parse` function throws, args-tokens wraps the failure as `ArgsValidationErrorKeys.customParse` and preserves the thrown value as `cause`. If the parser already throws an `ArgsValidationError`, it is reused without double wrapping.
+When a custom `parse` function throws, args-tokens wraps the failure as `ArgsValidationErrorKeys.customParse` and preserves the thrown value as `cause`. If the parser already throws an `ArgsValidationError`, it is reused without double wrapping, and missing `name`, `displayName`, and `actual` values are filled in. When that update fails, for example because its `values` object is frozen, the thrown error is wrapped like any other thrown value.
 
 `ArgResolveError` now extends `ArgsValidationError` for backward compatibility. Existing checks for `instanceof ArgResolveError`, `.name`, `.type`, `.schema`, and `.message` continue to work. Conflict errors keep their existing `ArgResolveError` shape and do not currently expose a structured validation code.
+
+Since 0.29.0, `isArgsValidationError()` works across bundled copies of `args-tokens`. Each error instance carries a non-enumerable brand keyed by `Symbol.for('args-tokens.ArgsValidationError')`, so the guard recognizes errors created by another copy of the library, for example when a host and a plugin each bundle `args-tokens`, even though `instanceof` does not match. Every copy involved must be 0.29.0 or later, because older versions neither set nor check the brand. The guard does not depend on `error.name`, which `ArgResolveError` overrides with the argument name. It narrows only to `ArgsValidationError`: across copies, `instanceof ArgResolveError` still fails, so do not rely on `type` or `schema` for errors that may come from another copy.
 
 ## Node.js `parseArgs` tokens compatible
 

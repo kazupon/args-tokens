@@ -491,11 +491,25 @@ export type ArgsValidationErrorCode =
   (typeof ArgsValidationErrorKeys)[keyof typeof ArgsValidationErrorKeys]
 
 /**
+ * Brand that marks {@link ArgsValidationError} instances.
+ *
+ * The brand is looked up in the global symbol registry with `Symbol.for`, so it stays
+ * identical across bundled copies of this module and across realms. It lets
+ * {@link isArgsValidationError} recognize errors created by another copy of `args-tokens`,
+ * where `instanceof` cannot match.
+ */
+const ARGS_VALIDATION_ERROR_BRAND: unique symbol = Symbol.for('args-tokens.ArgsValidationError')
+
+/**
  * An error that contains structured metadata for argument validation failures.
  *
  * The `message` remains the English fallback message. Renderers can use `code`
  * and `values` to localize the error, falling back to `message` when localization
  * is unavailable.
+ *
+ * Each instance carries a non-enumerable brand keyed by
+ * `Symbol.for('args-tokens.ArgsValidationError')`, which {@link isArgsValidationError}
+ * uses to recognize instances created by another bundled copy of `args-tokens`.
  */
 export class ArgsValidationError extends Error {
   /**
@@ -527,17 +541,52 @@ export class ArgsValidationError extends Error {
     this.name = 'ArgsValidationError'
     this.code = options.code
     this.values = options.values ?? {}
+    // Put the brand on each constructed instance as an own, non-configurable property.
+    // `isArgsValidationError` accepts only an own brand, so objects that merely inherit it (for
+    // example from a polluted prototype) are not recognized. Subclasses such as `ArgResolveError`
+    // get the brand through `super()` and keep it even though they override `name`.
+    Object.defineProperty(this, ARGS_VALIDATION_ERROR_BRAND, {
+      value: true,
+      enumerable: false,
+      writable: false,
+      configurable: false
+    })
   }
 }
 
 /**
  * Check whether the given value is an {@link ArgsValidationError}.
  *
+ * This guard also recognizes errors created by another bundled copy of `args-tokens`
+ * (0.29.0 or later), where `instanceof` does not match. Such an error must have an own brand
+ * keyed by `Symbol.for('args-tokens.ArgsValidationError')` set to `true`, and a `values` object.
+ * The guard does not rely on `error.name`, so subclasses such as {@link ArgResolveError} that
+ * override `name` are still recognized.
+ *
+ * The guard narrows to `ArgsValidationError` only. Across bundled copies,
+ * `instanceof ArgResolveError` still does not match.
+ *
  * @param error - value to check
  * @returns `true` when the value is an `ArgsValidationError`
  */
 export function isArgsValidationError(error: unknown): error is ArgsValidationError {
-  return error instanceof ArgsValidationError
+  if (error instanceof ArgsValidationError) {
+    return true
+  }
+  if (typeof error !== 'object' || error === null) {
+    return false
+  }
+  // Accept only an own brand so an inherited one (e.g. a polluted prototype) cannot mark arbitrary
+  // objects.
+  if (
+    !Object.hasOwn(error, ARGS_VALIDATION_ERROR_BRAND) ||
+    (error as Record<PropertyKey, unknown>)[ARGS_VALIDATION_ERROR_BRAND] !== true
+  ) {
+    return false
+  }
+  // Require `values` so a forged brand cannot break callers that read it.
+  const values = (error as { values?: unknown }).values
+  return typeof values === 'object' && values !== null
 }
 
 /**
@@ -1350,9 +1399,9 @@ function createCustomParseError(
   schema: ArgSchema,
   value: string
 ): Error {
-  if (isArgsValidationError(error)) {
-    augmentValidationError(error, rawArg, option, schema, value)
-    return error
+  const reused = reuseValidationError(error, rawArg, option, schema, value)
+  if (reused) {
+    return reused
   }
 
   const reason = getErrorReason(error)
@@ -1365,6 +1414,36 @@ function createCustomParseError(
     },
     cause: error
   })
+}
+
+/**
+ * Reuse an {@link ArgsValidationError} thrown from a custom `parse` function, filling in missing values.
+ *
+ * @param error - The value thrown from `parse`
+ * @param rawArg - The argument key in the schema
+ * @param option - The option name used on the command line
+ * @param schema - The argument schema
+ * @param value - The raw input value
+ * @returns The same error when it can be reused, otherwise `undefined` so the caller wraps it.
+ * Inspecting or updating the thrown value can throw, for example when its `values` object is frozen
+ * or an accessor throws; such values are not reused, so a custom `parse` cannot make `resolveArgs` throw this way.
+ */
+function reuseValidationError(
+  error: unknown,
+  rawArg: string,
+  option: string,
+  schema: ArgSchema,
+  value: string
+): ArgsValidationError | undefined {
+  try {
+    if (isArgsValidationError(error)) {
+      augmentValidationError(error, rawArg, option, schema, value)
+      return error
+    }
+  } catch {
+    // fall back to wrapping the thrown value as a custom parse error
+  }
+  return undefined
 }
 
 function augmentValidationError(
