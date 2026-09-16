@@ -1399,9 +1399,9 @@ function createCustomParseError(
   schema: ArgSchema,
   value: string
 ): Error {
-  if (isArgsValidationError(error)) {
-    augmentValidationError(error, rawArg, option, schema, value)
-    return error
+  const reused = reuseValidationError(error, rawArg, option, schema, value)
+  if (reused) {
+    return reused
   }
 
   const reason = getErrorReason(error)
@@ -1414,6 +1414,36 @@ function createCustomParseError(
     },
     cause: error
   })
+}
+
+/**
+ * Reuse an {@link ArgsValidationError} thrown from a custom `parse` function, filling in missing values.
+ *
+ * @param error - The value thrown from `parse`
+ * @param rawArg - The argument key in the schema
+ * @param option - The option name used on the command line
+ * @param schema - The argument schema
+ * @param value - The raw input value
+ * @returns The same error when it can be reused, otherwise `undefined` so the caller wraps it.
+ * Inspecting or updating the thrown value can throw, for example when its `values` object is frozen
+ * or an accessor throws; such values are not reused, so a custom `parse` cannot make `resolveArgs` throw this way.
+ */
+function reuseValidationError(
+  error: unknown,
+  rawArg: string,
+  option: string,
+  schema: ArgSchema,
+  value: string
+): ArgsValidationError | undefined {
+  try {
+    if (isArgsValidationError(error)) {
+      augmentValidationError(error, rawArg, option, schema, value)
+      return error
+    }
+  } catch {
+    // fall back to wrapping the thrown value as a custom parse error
+  }
+  return undefined
 }
 
 function augmentValidationError(

@@ -705,7 +705,12 @@ describe('isArgsValidationError', () => {
     {
       title: 'brand with null values',
       value: { [ARGS_VALIDATION_ERROR_BRAND]: true, values: null }
-    }
+    },
+    {
+      title: 'brand with string values',
+      value: { [ARGS_VALIDATION_ERROR_BRAND]: true, values: 'name' }
+    },
+    { title: 'brand with number values', value: { [ARGS_VALIDATION_ERROR_BRAND]: true, values: 1 } }
   ])('rejects $title', ({ value }) => {
     expect(isArgsValidationError(value)).toBe(false)
   })
@@ -754,7 +759,8 @@ describe('isArgsValidationError', () => {
       configurable: true
     })
     try {
-      const cause = new Error('Invalid config')
+      // own `values`, so only the own-brand check can reject it
+      const cause = Object.assign(new Error('Invalid config'), { values: {} })
       expect(isArgsValidationError(cause)).toBe(false)
 
       const { error } = resolveArgs(
@@ -777,6 +783,111 @@ describe('isArgsValidationError', () => {
       Reflect.deleteProperty(Object.prototype, ARGS_VALIDATION_ERROR_BRAND)
     }
     expect(ARGS_VALIDATION_ERROR_BRAND in {}).toBe(false)
+  })
+
+  /**
+   * Resolve a custom argument whose `parse` throws the given value.
+   *
+   * @param thrown - The value thrown from `parse`
+   * @param resolve - The `resolveArgs` implementation to use
+   * @returns The resolved result
+   */
+  function resolveWithThrowingParse(thrown: unknown, resolve: typeof resolveArgs = resolveArgs) {
+    return resolve(
+      {
+        count: {
+          type: 'custom',
+          parse() {
+            // eslint-disable-next-line @typescript-eslint/only-throw-error -- Verify arbitrary thrown values.
+            throw thrown
+          }
+        }
+      },
+      parseArgs(['--count', 'bad'])
+    )
+  }
+
+  test('wraps an ArgsValidationError from another module copy whose values cannot be updated', async () => {
+    const { copyA, copyB } = await loadResolverCopies()
+    const thrown = new copyB.ArgsValidationError('Use a finite count', {
+      code: copyB.ArgsValidationErrorKeys.invalidType,
+      values: Object.freeze({ expected: 'finite-count' })
+    })
+
+    const { error } = resolveWithThrowingParse(thrown, copyA.resolveArgs)
+
+    expect(error?.errors.length).toBe(1)
+    const validationError = error?.errors[0] as ArgsValidationError
+    expect(validationError).not.toBe(thrown)
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.customParse)
+    expect(validationError.message).toBe('Use a finite count')
+    expect(validationError.cause).toBe(thrown)
+  })
+
+  test('wraps an ArgsValidationError whose values cannot be updated', () => {
+    const thrown = new ArgsValidationError('Use a finite count', {
+      code: ArgsValidationErrorKeys.invalidType,
+      values: Object.freeze({ expected: 'finite-count' })
+    })
+
+    const { error } = resolveWithThrowingParse(thrown)
+
+    expect(error?.errors.length).toBe(1)
+    const validationError = error?.errors[0] as ArgsValidationError
+    expect(validationError).not.toBe(thrown)
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.customParse)
+    expect(validationError.cause).toBe(thrown)
+  })
+
+  test('reuses an ArgsValidationError with frozen values that need no update', () => {
+    const thrown = new ArgsValidationError('Use a finite count', {
+      code: ArgsValidationErrorKeys.customParse,
+      values: Object.freeze({ name: 'count', displayName: "'--count'" })
+    })
+
+    const { error } = resolveWithThrowingParse(thrown)
+
+    expect(error?.errors[0]).toBe(thrown)
+  })
+
+  test.each([
+    {
+      title: 'a forged brand with frozen values',
+      thrown: { [ARGS_VALIDATION_ERROR_BRAND]: true, values: Object.freeze({}) }
+    },
+    {
+      title: 'a brand accessor that throws',
+      thrown: Object.defineProperty({ values: {} }, ARGS_VALIDATION_ERROR_BRAND, {
+        get() {
+          throw new Error('brand getter')
+        }
+      })
+    },
+    {
+      title: 'a values accessor that throws',
+      thrown: Object.defineProperty({ [ARGS_VALIDATION_ERROR_BRAND]: true }, 'values', {
+        get() {
+          throw new Error('values getter')
+        }
+      })
+    },
+    {
+      title: 'a proxy whose getOwnPropertyDescriptor trap throws',
+      thrown: new Proxy(new Error('proxied'), {
+        getOwnPropertyDescriptor() {
+          throw new Error('getOwnPropertyDescriptor trap')
+        }
+      })
+    }
+  ])('wraps $title thrown from a custom parse without throwing', ({ thrown }) => {
+    // before the fix, resolveArgs itself threw here
+    const { error } = resolveWithThrowingParse(thrown)
+
+    expect(error?.errors.length).toBe(1)
+    const validationError = error?.errors[0] as ArgsValidationError
+    expect(validationError).not.toBe(thrown)
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.customParse)
+    expect(validationError.cause).toBe(thrown)
   })
 
   test('does not double wrap ArgsValidationError thrown from another module copy', async () => {
