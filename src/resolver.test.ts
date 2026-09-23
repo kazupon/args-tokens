@@ -3005,6 +3005,156 @@ describe('boolean inline value', () => {
     expect(error).toBeUndefined()
     expect(values.verbose).toEqual([false, true, true])
   })
+
+  test('long option with an explicit true', () => {
+    const { values, error } = resolveArgs(args, parseArgs(['--silent=true']))
+    expect(error).toBeUndefined()
+    expect(values.silent).toBe(true)
+  })
+
+  test('explicit false on a kebab-case option', () => {
+    const perArgument = resolveArgs(
+      {
+        toKebab: {
+          type: 'boolean',
+          toKebab: true
+        }
+      },
+      parseArgs(['--to-kebab=false'])
+    )
+    expect(perArgument.error).toBeUndefined()
+    expect(perArgument.values.toKebab).toBe(false)
+
+    const global = resolveArgs(
+      {
+        toKebab: {
+          type: 'boolean'
+        }
+      },
+      parseArgs(['--to-kebab=false']),
+      { toKebab: true }
+    )
+    expect(global.error).toBeUndefined()
+    expect(global.values.toKebab).toBe(false)
+  })
+
+  test('explicit false satisfies required, and an invalid value reports only the type error', () => {
+    const flag = {
+      flag: {
+        type: 'boolean',
+        required: true
+      }
+    } as const satisfies Args
+    const valid = resolveArgs(flag, parseArgs(['--flag=false']))
+    expect(valid.error).toBeUndefined()
+    expect(valid.values.flag).toBe(false)
+
+    const invalid = resolveArgs(flag, parseArgs(['--flag=0']))
+    expect(invalid.error?.errors.length).toBe(1)
+    expect((invalid.error?.errors[0] as ArgResolveError).code).toBe(
+      ArgsValidationErrorKeys.invalidType
+    )
+  })
+
+  test('multiple values keep the valid tokens when a negated form has a value', () => {
+    const { values, error } = resolveArgs(
+      {
+        color: {
+          type: 'boolean',
+          negatable: true,
+          multiple: true
+        }
+      },
+      parseArgs(['--no-color=false', '--color'])
+    )
+    expect(error?.errors.length).toBe(1)
+    expect((error?.errors[0] as ArgResolveError).code).toBe(ArgsValidationErrorKeys.unexpectedValue)
+    expect(values.color).toEqual([true])
+  })
+
+  test('a rejected value still counts as provided for conflicts', () => {
+    const { values, error } = resolveArgs(
+      {
+        a: {
+          type: 'boolean',
+          conflicts: 'b'
+        },
+        b: {
+          type: 'boolean'
+        }
+      },
+      parseArgs(['--a=0', '--b'])
+    )
+    expect(error?.errors.map(e => (e as ArgResolveError).type)).toEqual(['type', 'conflict'])
+    expect(values.a).toBeUndefined()
+    expect(values.b).toBe(true)
+  })
+
+  test('parse function receives only the resolved value', () => {
+    const received: string[] = []
+    const custom = {
+      v: {
+        type: 'boolean',
+        negatable: true,
+        parse: (value: string) => {
+          received.push(value)
+          return value === 'true'
+        }
+      }
+    } as const satisfies Args
+    expect(resolveArgs(custom, parseArgs(['--v=false'])).values.v).toBe(false)
+    expect(resolveArgs(custom, parseArgs(['--v=0'])).error?.errors.length).toBe(1)
+    expect(resolveArgs(custom, parseArgs(['--no-v=false'])).error?.errors.length).toBe(1)
+    expect(received).toEqual(['false'])
+  })
+
+  test('short option group with shortGrouping', () => {
+    const { values, error } = resolveArgs(args, parseArgs(['-vs=false']), { shortGrouping: true })
+    expect(error).toBeUndefined()
+    expect(values.verbose).toEqual([true])
+    expect(values.silent).toBe(false)
+  })
+
+  test('explicit value on a negatable option named with a no- prefix', () => {
+    const noCache = {
+      'no-cache': {
+        type: 'boolean',
+        negatable: true
+      }
+    } as const satisfies Args
+    expect(resolveArgs(noCache, parseArgs(['--no-cache=false'])).values).toEqual({
+      'no-cache': false
+    })
+    expect(resolveArgs(noCache, parseArgs(['--no-cache=true'])).values).toEqual({
+      'no-cache': true
+    })
+
+    const { values, error } = resolveArgs(noCache, parseArgs(['--no-no-cache=false']))
+    expect(error?.errors.length).toBe(1)
+    const resolveError = error?.errors[0] as ArgResolveError
+    expect(resolveError.code).toBe(ArgsValidationErrorKeys.unexpectedValue)
+    expect(resolveError.values.rawName).toBe('--no-no-cache')
+    expect(values).toEqual({})
+  })
+
+  test.each([
+    { argv: ['--silent', 'false'], silent: true, positionals: ['false'] },
+    { argv: ['-s', 'false'], silent: true, positionals: ['false'] },
+    { argv: ['-sfalse'], silent: true, positionals: [] },
+    { argv: ['-sv'], silent: true, positionals: [] },
+    { argv: ['-s='], silent: true, positionals: [] }
+  ])('input without a value after = is unchanged: $argv', ({ argv, silent, positionals }) => {
+    const result = resolveArgs(args, parseArgs(argv))
+    expect(result.error).toBeUndefined()
+    expect(result.values.silent).toBe(silent)
+    expect(result.positionals).toEqual(positionals)
+  })
+
+  test('negated form without a value is unchanged', () => {
+    const { values, error } = resolveArgs(args, parseArgs(['--no-color']))
+    expect(error).toBeUndefined()
+    expect(values.color).toBe(false)
+  })
 })
 
 describe('schema.parse priority', () => {
