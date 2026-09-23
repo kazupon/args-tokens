@@ -1199,10 +1199,11 @@ function parse(
       return resolveBooleanValue(token, rawArg, option, schema)
     }
     case 'number': {
-      if (!isNumeric(token.value!)) {
+      // an option without a value has no `token.value`, like the `string` branch above
+      if (typeof token.value !== 'string' || !isNumeric(token.value)) {
         return [undefined, createTypeError(rawArg, option, schema, token.value)]
       }
-      return token.value ? [+token.value, undefined] : [+(schema.default || ''), undefined]
+      return [+token.value, undefined]
     }
     case 'enum': {
       if (schema.choices && !schema.choices.includes(token.value!)) {
