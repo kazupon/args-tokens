@@ -2206,6 +2206,49 @@ describe('negatable option named with a no- prefix', () => {
     expect(resolveArgs(custom, parseArgs(['--no-no-cache'])).values).toEqual({ 'no-cache': false })
     expect(received).toEqual(['true', 'false'])
   })
+
+  test('short alias resolves to true', () => {
+    const { values, error } = resolveArgs(args, parseArgs(['-n']))
+    expect(error).toBeUndefined()
+    expect(values).toEqual({ 'no-cache': true })
+  })
+
+  test('a name with a no- prefix that is not negatable resolves to true', () => {
+    const { values, error } = resolveArgs(
+      { 'no-emit': { type: 'boolean' } },
+      parseArgs(['--no-emit'])
+    )
+    expect(error).toBeUndefined()
+    expect(values).toEqual({ 'no-emit': true })
+  })
+
+  test('negated name of an option that is not negatable is not matched', () => {
+    const { values, error, explicit } = resolveArgs(
+      { color: { type: 'boolean' } },
+      parseArgs(['--no-color'])
+    )
+    expect(error).toBeUndefined()
+    expect(values).toEqual({})
+    expect(explicit.color).toBe(false)
+  })
+
+  test('an option and its no- prefixed sibling resolve separately', () => {
+    const { values, error } = resolveArgs(
+      {
+        cache: { type: 'boolean', negatable: true },
+        'no-cache': { type: 'boolean' }
+      },
+      parseArgs(['--no-cache'])
+    )
+    expect(error).toBeUndefined()
+    expect(values).toEqual({ cache: false, 'no-cache': true })
+  })
+
+  test('an option whose name does not start with no- is unaffected', () => {
+    const color = { color: { type: 'boolean', negatable: true } } as const satisfies Args
+    expect(resolveArgs(color, parseArgs(['--color'])).values).toEqual({ color: true })
+    expect(resolveArgs(color, parseArgs(['--no-color'])).values).toEqual({ color: false })
+  })
 })
 
 test('custom type argument', () => {
