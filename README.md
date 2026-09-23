@@ -488,7 +488,7 @@ Allows the argument to accept multiple values. The resolved value becomes an arr
 
 #### `negatable` (optional)
 
-Enables negation for boolean arguments using `--no-` prefix. Only applicable to `type: 'boolean'`.
+Enables negation for boolean arguments using `--no-` prefix. Only applicable to `type: 'boolean'`. The negated name is always `no-` followed by the full option name. An option named `no-cache` is negated by `--no-no-cache`, and `--no-cache` sets it to `true`.
 
 <!-- eslint-skip -->
 

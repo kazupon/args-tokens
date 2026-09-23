@@ -2109,6 +2109,148 @@ describe(`'toKebab' option`, () => {
   })
 })
 
+describe('negatable option named with a no- prefix', () => {
+  const args = {
+    'no-cache': {
+      type: 'boolean',
+      negatable: true,
+      short: 'n'
+    }
+  } as const satisfies Args
+
+  test('own name resolves to true', () => {
+    const { values, error, explicit } = resolveArgs(args, parseArgs(['--no-cache']))
+    expect(error).toBeUndefined()
+    expect(values).toEqual({ 'no-cache': true })
+    expect(explicit['no-cache']).toBe(true)
+  })
+
+  test('negated name resolves to false', () => {
+    const { values, error, explicit } = resolveArgs(args, parseArgs(['--no-no-cache']))
+    expect(error).toBeUndefined()
+    expect(values).toEqual({ 'no-cache': false })
+    expect(explicit['no-cache']).toBe(true)
+  })
+
+  test('multiple values follow each token', () => {
+    const { values, error } = resolveArgs(
+      {
+        'no-cache': {
+          type: 'boolean',
+          negatable: true,
+          multiple: true
+        }
+      },
+      parseArgs(['--no-cache', '--no-no-cache', '--no-cache'])
+    )
+    expect(error).toBeUndefined()
+    expect(values).toEqual({ 'no-cache': [true, false, true] })
+  })
+
+  test('own name satisfies required', () => {
+    const { values, error } = resolveArgs(
+      {
+        'no-cache': {
+          type: 'boolean',
+          negatable: true,
+          required: true
+        }
+      },
+      parseArgs(['--no-cache'])
+    )
+    expect(error).toBeUndefined()
+    expect(values).toEqual({ 'no-cache': true })
+  })
+
+  test('per argument toKebab', () => {
+    const kebab = {
+      noVerify: {
+        type: 'boolean',
+        negatable: true,
+        toKebab: true
+      }
+    } as const satisfies Args
+    expect(resolveArgs(kebab, parseArgs(['--no-verify'])).values).toEqual({ noVerify: true })
+    expect(resolveArgs(kebab, parseArgs(['--no-no-verify'])).values).toEqual({ noVerify: false })
+  })
+
+  test('global toKebab', () => {
+    const kebab = {
+      noVerify: {
+        type: 'boolean',
+        negatable: true
+      }
+    } as const satisfies Args
+    const options = { toKebab: true }
+    expect(resolveArgs(kebab, parseArgs(['--no-verify']), options).values).toEqual({
+      noVerify: true
+    })
+    expect(resolveArgs(kebab, parseArgs(['--no-no-verify']), options).values).toEqual({
+      noVerify: false
+    })
+  })
+
+  test('parse function receives the resolved value', () => {
+    const received: string[] = []
+    const custom = {
+      'no-cache': {
+        type: 'boolean',
+        negatable: true,
+        parse: (v: string) => {
+          received.push(v)
+          return v === 'true'
+        }
+      }
+    } as const satisfies Args
+    expect(resolveArgs(custom, parseArgs(['--no-cache'])).values).toEqual({ 'no-cache': true })
+    expect(resolveArgs(custom, parseArgs(['--no-no-cache'])).values).toEqual({ 'no-cache': false })
+    expect(received).toEqual(['true', 'false'])
+  })
+
+  test('short alias resolves to true', () => {
+    const { values, error } = resolveArgs(args, parseArgs(['-n']))
+    expect(error).toBeUndefined()
+    expect(values).toEqual({ 'no-cache': true })
+  })
+
+  test('a name with a no- prefix that is not negatable resolves to true', () => {
+    const { values, error } = resolveArgs(
+      { 'no-emit': { type: 'boolean' } },
+      parseArgs(['--no-emit'])
+    )
+    expect(error).toBeUndefined()
+    expect(values).toEqual({ 'no-emit': true })
+  })
+
+  test('negated name of an option that is not negatable is not matched', () => {
+    const { values, error, explicit } = resolveArgs(
+      { color: { type: 'boolean' } },
+      parseArgs(['--no-color'])
+    )
+    expect(error).toBeUndefined()
+    expect(values).toEqual({})
+    expect(explicit.color).toBe(false)
+  })
+
+  test('an option and its no- prefixed sibling resolve separately', () => {
+    const { values, error } = resolveArgs(
+      {
+        cache: { type: 'boolean', negatable: true },
+        'no-cache': { type: 'boolean' }
+      },
+      parseArgs(['--no-cache'])
+    )
+    expect(error).toBeUndefined()
+    expect(values).toEqual({ cache: false, 'no-cache': true })
+  })
+
+  test('an option whose name does not start with no- is unaffected', () => {
+    const color = { color: { type: 'boolean', negatable: true } } as const satisfies Args
+    expect(resolveArgs(color, parseArgs(['--color'])).values).toEqual({ color: true })
+    expect(resolveArgs(color, parseArgs(['--no-color'])).values).toEqual({ color: false })
+  })
+})
+
 test('custom type argument', () => {
   const argv = [
     'import',

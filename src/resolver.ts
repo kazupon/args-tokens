@@ -206,6 +206,9 @@ export interface ArgSchema {
    *
    * Only applicable to `type: 'boolean'` arguments.
    *
+   * The negated name is always `no-` followed by the full option name. An option named
+   * `no-cache` is negated by `--no-no-cache`, and `--no-cache` sets it to `true`.
+   *
    * @example
    * Negatable boolean:
    * ```ts
@@ -819,10 +822,7 @@ export function resolveArgs<A extends Args>(
       return false
     }
 
-    return (
-      token.name === option ||
-      (schema.type === 'boolean' && schema.negatable === true && token.name === `no-${option}`)
-    )
+    return token.name === option || isNegatedToken(token, option, schema)
   }
 
   function toShortValue(): string | undefined {
@@ -1148,6 +1148,21 @@ export function resolveArgs<A extends Args>(
   }
 }
 
+/**
+ * Check whether an option token is the negated form (`--no-<option>`) of a negatable boolean option.
+ *
+ * The negated name is always `no-` followed by the full option name, so an option named
+ * `no-cache` is negated only by `--no-no-cache`, and `--no-cache` is the option itself.
+ *
+ * @param token - The option token
+ * @param option - The option name used on the command line (after `toKebab` conversion)
+ * @param schema - The argument schema
+ * @returns Whether the token negates the option.
+ */
+function isNegatedToken(token: ArgToken, option: string, schema: ArgSchema): boolean {
+  return schema.type === 'boolean' && schema.negatable === true && token.name === `no-${option}`
+}
+
 function parse(
   token: ArgToken,
   rawArg: string,
@@ -1158,7 +1173,7 @@ function parse(
   if (typeof schema.parse === 'function') {
     if (schema.type === 'boolean') {
       // boolean is existence-based: pass negation result as string to parse
-      const boolValue = !(schema.negatable && token.name!.startsWith('no-'))
+      const boolValue = !isNegatedToken(token, option, schema)
       return parseSchemaValue(String(boolValue), rawArg, option, schema)
     }
     return parseSchemaValue(token.value ?? String(schema.default ?? ''), rawArg, option, schema)
@@ -1171,7 +1186,7 @@ function parse(
         : [undefined, createTypeError(rawArg, option, schema, token.value)]
     }
     case 'boolean': {
-      return [!(schema.negatable && token.name!.startsWith('no-')), undefined]
+      return [!isNegatedToken(token, option, schema), undefined]
     }
     case 'number': {
       if (!isNumeric(token.value!)) {
