@@ -2880,6 +2880,133 @@ describe('conflicts', () => {
   })
 })
 
+describe('boolean inline value', () => {
+  const args = {
+    silent: {
+      type: 'boolean',
+      short: 's'
+    },
+    color: {
+      type: 'boolean',
+      negatable: true,
+      default: true
+    },
+    verbose: {
+      type: 'boolean',
+      short: 'v',
+      multiple: true
+    }
+  } as const satisfies Args
+
+  test('long option with an explicit false', () => {
+    const { values, error, explicit } = resolveArgs(args, parseArgs(['--silent=false']))
+    expect(error).toBeUndefined()
+    expect(values.silent).toBe(false)
+    expect(explicit.silent).toBe(true)
+  })
+
+  test('short option with an explicit false', () => {
+    const { values, error, explicit } = resolveArgs(args, parseArgs(['-s=false']))
+    expect(error).toBeUndefined()
+    expect(values.silent).toBe(false)
+    expect(explicit.silent).toBe(true)
+  })
+
+  test.each(['0', '', 'TRUE', 'yes'])(
+    'value %j other than true or false is a type error',
+    actual => {
+      const { values, error } = resolveArgs(args, parseArgs([`--silent=${actual}`]))
+      expect(error?.errors.length).toBe(1)
+      const resolveError = error?.errors[0] as ArgResolveError
+      expect(resolveError).toBeInstanceOf(ArgResolveError)
+      expect(resolveError.name).toBe('silent')
+      expect(resolveError.type).toBe('type')
+      expect(resolveError.code).toBe(ArgsValidationErrorKeys.invalidType)
+      expect(resolveError.values).toEqual({
+        displayName: "'--silent' or '-s'",
+        name: 'silent',
+        expected: 'boolean',
+        actual
+      })
+      expect(values.silent).toBeUndefined()
+    }
+  )
+
+  test('explicit false overrides a default of true', () => {
+    const flag = {
+      flag: {
+        type: 'boolean',
+        default: true
+      }
+    } as const satisfies Args
+    const valid = resolveArgs(flag, parseArgs(['--flag=false']))
+    expect(valid.error).toBeUndefined()
+    expect(valid.values.flag).toBe(false)
+
+    const invalid = resolveArgs(flag, parseArgs(['--flag=0']))
+    expect(invalid.error?.errors.length).toBe(1)
+    expect(invalid.values.flag).toBe(true)
+  })
+
+  test('negatable option with an explicit false', () => {
+    const { values, error } = resolveArgs(args, parseArgs(['--color=false']))
+    expect(error).toBeUndefined()
+    expect(values.color).toBe(false)
+  })
+
+  test.each(['false', 'true', 'x', ''])(
+    'negated form with value %j does not take a value',
+    actual => {
+      const { values, error, explicit } = resolveArgs(args, parseArgs([`--no-color=${actual}`]))
+      expect(error?.errors.length).toBe(1)
+      const resolveError = error?.errors[0] as ArgResolveError
+      expect(resolveError).toBeInstanceOf(ArgResolveError)
+      expect(resolveError.name).toBe('color')
+      expect(resolveError.type).toBe('type')
+      expect(resolveError.code).toBe('err:arg:unexpected-value')
+      expect(resolveError.message).toBe("Optional argument '--no-color' does not take a value")
+      expect(resolveError.values).toEqual({
+        displayName: "'--no-color'",
+        name: 'color',
+        rawName: '--no-color',
+        actual
+      })
+      expect(values.color).toBe(true)
+      expect(explicit.color).toBe(true)
+    }
+  )
+
+  test('negated form of a kebab-case option does not take a value', () => {
+    const { values, error } = resolveArgs(
+      {
+        kebabCase: {
+          type: 'boolean',
+          negatable: true,
+          toKebab: true
+        }
+      },
+      parseArgs(['--no-kebab-case=false'])
+    )
+    expect(error?.errors.length).toBe(1)
+    const resolveError = error?.errors[0] as ArgResolveError
+    expect(resolveError.name).toBe('kebab-case')
+    expect(resolveError.code).toBe('err:arg:unexpected-value')
+    expect(resolveError.values).toEqual({
+      displayName: "'--no-kebab-case'",
+      name: 'kebabCase',
+      rawName: '--no-kebab-case',
+      actual: 'false'
+    })
+    expect(values.kebabCase).toBeUndefined()
+  })
+
+  test('multiple values follow each token', () => {
+    const { values, error } = resolveArgs(args, parseArgs(['-v=false', '-v', '-v=true']))
+    expect(error).toBeUndefined()
+    expect(values.verbose).toEqual([false, true, true])
+  })
+})
+
 describe('schema.parse priority', () => {
   test('string type with parse function', () => {
     const argv = ['--port', '8080']
