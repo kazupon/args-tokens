@@ -304,6 +304,12 @@ describe('boolean combinator', () => {
     expect(values.color).toBe(false)
   })
 
+  test('negatable option named with a no- prefix', () => {
+    const args = { 'no-color': boolean({ negatable: true }) }
+    expect(resolveArgs(args, parseArgs(['--no-color'])).values).toEqual({ 'no-color': true })
+    expect(resolveArgs(args, parseArgs(['--no-no-color'])).values).toEqual({ 'no-color': false })
+  })
+
   test('description option', () => {
     const schema = boolean({ description: 'Enable verbose output' })
     expect(schema.description).toBe('Enable verbose output')
