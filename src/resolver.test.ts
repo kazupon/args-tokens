@@ -1004,7 +1004,8 @@ describe('number option without a value', () => {
       short: 'p'
     },
     verbose: {
-      type: 'boolean'
+      type: 'boolean',
+      short: 'v'
     }
   } as const satisfies Args
 
@@ -1024,18 +1025,55 @@ describe('number option without a value', () => {
     expect(resolveError.message).toBe(`Optional argument ${displayName} should be 'number'`)
     // no `actual`: there is no value, unlike an explicit empty value (`--port=`)
     expect(resolveError.values).toEqual({ displayName, name: 'port', expected: 'number' })
+    expect(resolveError.values).not.toHaveProperty('actual')
   }
 
   test.each([
-    { argv: ['--port'] },
-    { argv: ['-p'] },
-    { argv: ['-p'], options: { shortGrouping: true } },
-    { argv: ['--port', '-5'] }
-  ])('$argv reports a type error', ({ argv, options }) => {
+    { label: '--port', argv: ['--port'] },
+    { label: '-p', argv: ['-p'] },
+    { label: '--port -5', argv: ['--port', '-5'] },
+    // grouped short options take the `shortGrouping` path, where `-p` gets no value either
+    {
+      label: '-pv with shortGrouping',
+      argv: ['-pv'],
+      options: { shortGrouping: true },
+      verbose: true
+    },
+    {
+      label: '-vp with shortGrouping',
+      argv: ['-vp'],
+      options: { shortGrouping: true },
+      verbose: true
+    }
+  ])('$label reports a type error', ({ argv, options, verbose }) => {
     const { values, error, explicit } = resolveArgs(args, parseArgs(argv), options)
     expectMissingNumberValue(error, "'--port' or '-p'")
     expect(values.port).toBeUndefined()
+    expect(values.verbose).toBe(verbose)
     expect(explicit.port).toBe(true)
+  })
+
+  test('kebab-case option name', () => {
+    const { values, error } = resolveArgs(
+      {
+        serverPort: {
+          type: 'number'
+        }
+      },
+      parseArgs(['--server-port']),
+      { toKebab: true }
+    )
+    expect(error?.errors.length).toBe(1)
+    const resolveError = error?.errors[0] as ArgResolveError
+    expect(resolveError.name).toBe('server-port')
+    expect(resolveError.message).toBe("Optional argument '--server-port' should be 'number'")
+    expect(resolveError.values).toEqual({
+      displayName: "'--server-port'",
+      name: 'serverPort',
+      expected: 'number'
+    })
+    expect(resolveError.values).not.toHaveProperty('actual')
+    expect(values.serverPort).toBeUndefined()
   })
 
   test('before the option terminator', () => {
@@ -1124,6 +1162,7 @@ describe('number option without a value', () => {
       name: 'name',
       expected: 'string'
     })
+    expect(resolveError.values).not.toHaveProperty('actual')
   })
 
   // #617 will change this: an option with a parse function gets '' when no value is given

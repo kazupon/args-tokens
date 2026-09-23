@@ -165,7 +165,9 @@ describe('number combinator', () => {
     expect(error).toBeDefined()
   })
 
-  test('option without a value', () => {
+  // number() has a parse function, so a missing value goes through the parse-function path with ''
+  // instead of the `number` branch. #617 will change this.
+  test('option without a value goes through the parse function (#617)', () => {
     const { values, error } = resolveArgs({ port: number() }, parseArgs(['--port']))
     const validationError = error!.errors[0] as ArgsValidationError
     expect(validationError.code).toBe(ArgsValidationErrorKeys.invalidType)
