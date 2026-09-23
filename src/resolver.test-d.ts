@@ -17,6 +17,9 @@ test('ArgsValidationErrorCode', () => {
     (typeof ArgsValidationErrorKeys)[keyof typeof ArgsValidationErrorKeys]
   >()
   expectTypeOf<typeof ArgsValidationErrorKeys.invalidType>().toEqualTypeOf<'err:arg:invalid-type'>()
+  expectTypeOf<
+    typeof ArgsValidationErrorKeys.unexpectedValue
+  >().toEqualTypeOf<'err:arg:unexpected-value'>()
 })
 
 test('isArgsValidationError', () => {

@@ -59,7 +59,8 @@ export interface ArgSchema {
    * Type of the argument value.
    *
    * - `'string'`: Text value (default if not specified)
-   * - `'boolean'`: `true`/`false` flag (can be negatable with `--no-` prefix)
+   * - `'boolean'`: `true`/`false` flag (can be negatable with `--no-` prefix). `--flag=true` and
+   *   `--flag=false` set the value explicitly; any other value after `=` is a type error
    * - `'number'`: Numeric value (parsed as integer or float)
    * - `'enum'`: One of predefined string values (requires `choices` property)
    * - `'positional'`: Non-option argument by position
@@ -208,6 +209,9 @@ export interface ArgSchema {
    *
    * The negated name is always `no-` followed by the full option name. An option named
    * `no-cache` is negated by `--no-no-cache`, and `--no-cache` sets it to `true`.
+   *
+   * The negated form does not take a value. `--no-flag=<value>` is reported as
+   * `err:arg:unexpected-value` ({@link ArgsValidationErrorKeys}.unexpectedValue).
    *
    * @example
    * Negatable boolean:
@@ -481,7 +485,8 @@ export const ArgsValidationErrorKeys = {
   invalidType: 'err:arg:invalid-type',
   invalidChoice: 'err:arg:invalid-choice',
   customParse: 'err:arg:custom-parse',
-  unknownOption: 'err:arg:unknown-option'
+  unknownOption: 'err:arg:unknown-option',
+  unexpectedValue: 'err:arg:unexpected-value'
 } as const
 
 /**
@@ -937,6 +942,7 @@ export function resolveArgs<A extends Args>(
         // short option value
         if (currentShortOption && currentShortOption.index == token.index && token.inlineValue) {
           currentShortOption.value = token.value
+          currentShortOption.inlineValue = true
           optionTokens.push({ ...currentShortOption })
           currentShortOption = undefined
         }
@@ -1172,8 +1178,12 @@ function parse(
   // When schema.parse is defined, use it directly (all types including boolean).
   if (typeof schema.parse === 'function') {
     if (schema.type === 'boolean') {
-      // boolean is existence-based: pass negation result as string to parse
-      const boolValue = !isNegatedToken(token, option, schema)
+      // boolean is existence-based unless an explicit `=` value is given: pass the resolved
+      // boolean as a string to parse
+      const [boolValue, error] = resolveBooleanValue(token, rawArg, option, schema)
+      if (error) {
+        return [undefined, error]
+      }
       return parseSchemaValue(String(boolValue), rawArg, option, schema)
     }
     return parseSchemaValue(token.value ?? String(schema.default ?? ''), rawArg, option, schema)
@@ -1186,7 +1196,7 @@ function parse(
         : [undefined, createTypeError(rawArg, option, schema, token.value)]
     }
     case 'boolean': {
-      return [!isNegatedToken(token, option, schema), undefined]
+      return resolveBooleanValue(token, rawArg, option, schema)
     }
     case 'number': {
       if (!isNumeric(token.value!)) {
@@ -1209,6 +1219,38 @@ function parse(
       throw new Error(`Unsupported argument type '${schema.type}' for option '${option}'`)
     }
   }
+}
+
+/**
+ * Resolve the value of a boolean option token.
+ *
+ * `--flag` is `true` and `--no-flag` is `false`. An explicit inline value (`--flag=true`,
+ * `--flag=false`, `-f=false`) is read instead; any other inline value is a type error.
+ * The negated form does not take a value, so `--no-flag=<value>` is an error.
+ *
+ * @param token - The option token
+ * @param rawArg - The argument key in the schema
+ * @param option - The option name used on the command line
+ * @param schema - The argument schema
+ * @returns The resolved boolean, or a validation error
+ */
+function resolveBooleanValue(
+  token: ArgToken,
+  rawArg: string,
+  option: string,
+  schema: ArgSchema
+): [boolean | undefined, Error | undefined] {
+  const negated = isNegatedToken(token, option, schema)
+  if (!token.inlineValue) {
+    return [!negated, undefined]
+  }
+  if (negated) {
+    return [undefined, createUnexpectedValueError(rawArg, option, schema, token)]
+  }
+  if (token.value !== 'true' && token.value !== 'false') {
+    return [undefined, createTypeError(rawArg, option, schema, token.value)]
+  }
+  return [token.value === 'true', undefined]
 }
 
 function parseSchemaValue(
@@ -1376,6 +1418,31 @@ function createTypeError(
         name: rawArg,
         expected: schema.type,
         ...(actual != null ? { actual } : {})
+      }
+    }
+  )
+}
+
+function createUnexpectedValueError(
+  rawArg: string,
+  option: string,
+  schema: ArgSchema,
+  token: ArgToken
+): ArgResolveError {
+  const rawName = token.rawName!
+  const displayName = `'${rawName}'`
+  return new ArgResolveError(
+    `Optional argument ${displayName} does not take a value`,
+    option,
+    'type',
+    schema,
+    {
+      code: ArgsValidationErrorKeys.unexpectedValue,
+      values: {
+        displayName,
+        name: rawArg,
+        rawName,
+        ...(token.value != null ? { actual: token.value } : {})
       }
     }
   )

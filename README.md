@@ -311,7 +311,7 @@ for (const cause of error?.errors ?? []) {
 }
 ```
 
-The resolver uses stable error codes for required options, required positionals, invalid types, invalid choices, and custom parse failures. The `values` object contains interpolation data such as `name`, `displayName`, `expected`, `actual`, `choices`, `choiceValues`, and `reason` depending on the error kind.
+The resolver uses stable error codes for required options, required positionals, invalid types, invalid choices, custom parse failures, and values given to options that do not take one. The `values` object contains interpolation data such as `name`, `displayName`, `rawName`, `expected`, `actual`, `choices`, `choiceValues`, and `reason` depending on the error kind.
 
 When a custom `parse` function throws, args-tokens wraps the failure as `ArgsValidationErrorKeys.customParse` and preserves the thrown value as `cause`. If the parser already throws an `ArgsValidationError`, it is reused without double wrapping, and missing `name`, `displayName`, and `actual` values are filled in. When that update fails, for example because its `values` object is frozen, the thrown error is wrapped like any other thrown value.
 
@@ -356,7 +356,7 @@ The `ArgSchema` interface defines the configuration for command-line arguments. 
 Type of the argument value:
 
 - `'string'`: Text value (default if not specified)
-- `'boolean'`: True/false flag (can be negatable with `--no-` prefix)
+- `'boolean'`: True/false flag (can be negatable with `--no-` prefix). `--flag=true` and `--flag=false` set the value explicitly; any other value after `=` is an error
 - `'number'`: Numeric value (parsed as integer or float)
 - `'enum'`: One of predefined string values (requires `choices` property)
 - `'positional'`: Non-option argument by position
@@ -488,7 +488,7 @@ Allows the argument to accept multiple values. The resolved value becomes an arr
 
 #### `negatable` (optional)
 
-Enables negation for boolean arguments using `--no-` prefix. Only applicable to `type: 'boolean'`. The negated name is always `no-` followed by the full option name. An option named `no-cache` is negated by `--no-no-cache`, and `--no-cache` sets it to `true`.
+Enables negation for boolean arguments using `--no-` prefix. Only applicable to `type: 'boolean'`. The negated name is always `no-` followed by the full option name. An option named `no-cache` is negated by `--no-no-cache`, and `--no-cache` sets it to `true`. The negated form does not take a value: `--no-color=false` is reported as an error with the code `ArgsValidationErrorKeys.unexpectedValue`.
 
 <!-- eslint-skip -->
 

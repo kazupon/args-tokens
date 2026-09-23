@@ -310,6 +310,27 @@ describe('boolean combinator', () => {
     expect(resolveArgs(args, parseArgs(['--no-no-color'])).values).toEqual({ 'no-color': false })
   })
 
+  test('explicit inline value', () => {
+    const args = { force: boolean() }
+    expect(resolveArgs(args, parseArgs(['--force=false'])).values.force).toBe(false)
+    expect(resolveArgs(args, parseArgs(['--force=true'])).values.force).toBe(true)
+
+    const { values, error } = resolveArgs(args, parseArgs(['--force=0']))
+    expect((error!.errors[0] as ArgsValidationError).code).toBe(ArgsValidationErrorKeys.invalidType)
+    expect(values.force).toBeUndefined()
+  })
+
+  test('negated form does not take a value', () => {
+    const { values, error } = resolveArgs(
+      { color: boolean({ negatable: true }) },
+      parseArgs(['--no-color=false'])
+    )
+    expect((error!.errors[0] as ArgsValidationError).code).toBe(
+      ArgsValidationErrorKeys.unexpectedValue
+    )
+    expect(values.color).toBeUndefined()
+  })
+
   test('description option', () => {
     const schema = boolean({ description: 'Enable verbose output' })
     expect(schema.description).toBe('Enable verbose output')

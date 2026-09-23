@@ -1,8 +1,9 @@
 import { expect, test } from 'vite-plus/test'
 import { parse } from './parse.ts'
 import { parseArgs } from './parser.ts'
+import { ArgsValidationErrorKeys } from './resolver.ts'
 
-import type { Args } from './resolver.ts'
+import type { Args, ArgsValidationError } from './resolver.ts'
 
 const args = {
   help: {
@@ -64,4 +65,12 @@ test('parse', () => {
   expect(positionals).toEqual(['dev', 'foo', 'bar', 'baz'])
   expect(rest).toEqual(['--help', '--version', '--port', '8080'])
   expect(tokens).toEqual(parseArgs(argv))
+})
+
+test('boolean option with an explicit value', () => {
+  expect(parse(['--help=false']).values.help).toBe(false)
+
+  const { values, error } = parse(['--help=x'])
+  expect((error!.errors[0] as ArgsValidationError).code).toBe(ArgsValidationErrorKeys.invalidType)
+  expect(values.help).toBeUndefined()
 })
