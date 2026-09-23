@@ -401,7 +401,8 @@ export interface BooleanOptions extends BaseOptions {
  * Create a boolean argument schema.
  *
  * Boolean arguments are existence-based. The resolver passes `"true"` or `"false"`
- * to the parse function based on the presence or negation of the flag.
+ * to the parse function based on the presence or negation of the flag, or on an explicit
+ * `=true` / `=false` value. Other inline values are rejected before the parse function is called.
  *
  * @param opts - Boolean options.
  * @returns A combinator schema for boolean flags.

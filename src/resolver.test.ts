@@ -2006,7 +2006,7 @@ describe('multiple values', () => {
 
 describe(`'toKebab' option`, () => {
   test('per argument', () => {
-    const argv = ['test', '--to-kebab=foo', '--no-kebab-case', '--noKebab']
+    const argv = ['test', '--to-kebab=true', '--no-kebab-case', '--noKebab']
     const tokens = parseArgs(argv)
     const { values } = resolveArgs(
       {
@@ -2058,7 +2058,7 @@ describe(`'toKebab' option`, () => {
   })
 
   test('all arguments', () => {
-    const argv = ['test', '--to-kebab=foo', '--no-kebab-case', '--foo-bar']
+    const argv = ['test', '--to-kebab=true', '--no-kebab-case', '--foo-bar']
     const tokens = parseArgs(argv)
     const { values } = resolveArgs(
       {
