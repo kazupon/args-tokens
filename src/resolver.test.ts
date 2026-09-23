@@ -1079,6 +1079,67 @@ describe('number option without a value', () => {
     expectMissingNumberValue(error, "'--port'")
     expect(values.port).toEqual([1])
   })
+
+  test('required reports only the missing option', () => {
+    const { values, error } = resolveArgs(
+      {
+        port: {
+          type: 'number',
+          required: true
+        }
+      },
+      parseArgs(['--port'])
+    )
+    expect(error?.errors.length).toBe(1)
+    expect((error?.errors[0] as ArgResolveError).code).toBe(ArgsValidationErrorKeys.requiredOption)
+    expect(values.port).toBeUndefined()
+  })
+
+  test('an explicit empty value keeps its actual value', () => {
+    const { values, error } = resolveArgs(args, parseArgs(['--port=']))
+    expect(error?.errors.length).toBe(1)
+    const resolveError = error?.errors[0] as ArgResolveError
+    expect(resolveError.code).toBe(ArgsValidationErrorKeys.invalidType)
+    expect(resolveError.values.actual).toBe('')
+    expect(values.port).toBeUndefined()
+  })
+
+  test.each([
+    { argv: ['--port=-5'], port: -5 },
+    { argv: ['--port', '8080'], port: 8080 },
+    { argv: ['-p', '8080'], port: 8080 },
+    { argv: ['--port=0'], port: 0 }
+  ])('$argv still resolves to a number', ({ argv, port }) => {
+    const { values, error } = resolveArgs(args, parseArgs(argv))
+    expect(error).toBeUndefined()
+    expect(values.port).toBe(port)
+  })
+
+  test('a string option without a value reports the same kind of error', () => {
+    const { error } = resolveArgs({ name: { type: 'string' } }, parseArgs(['--name']))
+    const resolveError = error?.errors[0] as ArgResolveError
+    expect(resolveError.code).toBe(ArgsValidationErrorKeys.invalidType)
+    expect(resolveError.values).toEqual({
+      displayName: "'--name'",
+      name: 'name',
+      expected: 'string'
+    })
+  })
+
+  // #617 will change this: an option with a parse function gets '' when no value is given
+  test('a number option with a parse function keeps its current result (#617)', () => {
+    const { values, error } = resolveArgs(
+      {
+        port: {
+          type: 'number',
+          parse: (value: string) => Number(value)
+        }
+      },
+      parseArgs(['--port'])
+    )
+    expect(error).toBeUndefined()
+    expect(values.port).toBe(0)
+  })
 })
 
 describe('enum option', () => {

@@ -164,6 +164,14 @@ describe('number combinator', () => {
     const { error } = resolveArgs({ port: number({ required: true }) }, tokens)
     expect(error).toBeDefined()
   })
+
+  test('option without a value', () => {
+    const { values, error } = resolveArgs({ port: number() }, parseArgs(['--port']))
+    const validationError = error!.errors[0] as ArgsValidationError
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.invalidType)
+    expect(validationError.values.actual).toBe('')
+    expect(values.port).toBeUndefined()
+  })
 })
 
 describe('integer combinator', () => {
