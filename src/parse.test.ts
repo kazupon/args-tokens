@@ -74,3 +74,9 @@ test('boolean option with an explicit value', () => {
   expect((error!.errors[0] as ArgsValidationError).code).toBe(ArgsValidationErrorKeys.invalidType)
   expect(values.help).toBeUndefined()
 })
+
+test('number option without a value', () => {
+  const { values, error } = parse(['--port'], { args: { port: { type: 'number' } } })
+  expect((error!.errors[0] as ArgsValidationError).code).toBe(ArgsValidationErrorKeys.invalidType)
+  expect(values.port).toBeUndefined()
+})

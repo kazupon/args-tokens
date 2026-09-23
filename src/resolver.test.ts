@@ -997,6 +997,90 @@ describe('option group', () => {
   })
 })
 
+describe('number option without a value', () => {
+  const args = {
+    port: {
+      type: 'number',
+      short: 'p'
+    },
+    verbose: {
+      type: 'boolean'
+    }
+  } as const satisfies Args
+
+  /**
+   * Assert that the resolve error reports a missing value on the `port` number option.
+   *
+   * @param error - The aggregate error returned by `resolveArgs`
+   * @param displayName - The expected display name of the option
+   */
+  function expectMissingNumberValue(error: AggregateError | undefined, displayName: string) {
+    expect(error?.errors.length).toBe(1)
+    const resolveError = error?.errors[0] as ArgResolveError
+    expect(resolveError).toBeInstanceOf(ArgResolveError)
+    expect(resolveError.name).toBe('port')
+    expect(resolveError.type).toBe('type')
+    expect(resolveError.code).toBe(ArgsValidationErrorKeys.invalidType)
+    expect(resolveError.message).toBe(`Optional argument ${displayName} should be 'number'`)
+    // no `actual`: there is no value, unlike an explicit empty value (`--port=`)
+    expect(resolveError.values).toEqual({ displayName, name: 'port', expected: 'number' })
+  }
+
+  test.each([
+    { argv: ['--port'] },
+    { argv: ['-p'] },
+    { argv: ['-p'], options: { shortGrouping: true } },
+    { argv: ['--port', '-5'] }
+  ])('$argv reports a type error', ({ argv, options }) => {
+    const { values, error, explicit } = resolveArgs(args, parseArgs(argv), options)
+    expectMissingNumberValue(error, "'--port' or '-p'")
+    expect(values.port).toBeUndefined()
+    expect(explicit.port).toBe(true)
+  })
+
+  test('before the option terminator', () => {
+    const { values, error, rest } = resolveArgs(args, parseArgs(['--port', '--', 'x']))
+    expectMissingNumberValue(error, "'--port' or '-p'")
+    expect(values.port).toBeUndefined()
+    expect(rest).toEqual(['x'])
+  })
+
+  test('followed by another option', () => {
+    const { values, error } = resolveArgs(args, parseArgs(['--port', '--verbose']))
+    expectMissingNumberValue(error, "'--port' or '-p'")
+    expect(values.port).toBeUndefined()
+    expect(values.verbose).toBe(true)
+  })
+
+  test('with a default', () => {
+    const { values, error } = resolveArgs(
+      {
+        port: {
+          type: 'number',
+          default: 8080
+        }
+      },
+      parseArgs(['--port'])
+    )
+    expectMissingNumberValue(error, "'--port'")
+    expect(values.port).toBe(8080)
+  })
+
+  test('with multiple values', () => {
+    const { values, error } = resolveArgs(
+      {
+        port: {
+          type: 'number',
+          multiple: true
+        }
+      },
+      parseArgs(['--port', '1', '--port'])
+    )
+    expectMissingNumberValue(error, "'--port'")
+    expect(values.port).toEqual([1])
+  })
+})
+
 describe('enum option', () => {
   test('basic', () => {
     const argv = ['dev', '--log=debug']
