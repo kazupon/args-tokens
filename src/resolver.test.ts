@@ -2932,6 +2932,24 @@ describe('boolean inline value', () => {
     }
   )
 
+  test.each(['0', 'yes', 'TRUE'])(
+    'short option value %j other than true or false is a type error',
+    actual => {
+      const { values, error } = resolveArgs(args, parseArgs([`-s=${actual}`]))
+      expect(error?.errors.length).toBe(1)
+      const resolveError = error?.errors[0] as ArgResolveError
+      expect(resolveError).toBeInstanceOf(ArgResolveError)
+      expect(resolveError.code).toBe(ArgsValidationErrorKeys.invalidType)
+      expect(resolveError.values).toEqual({
+        displayName: "'--silent' or '-s'",
+        name: 'silent',
+        expected: 'boolean',
+        actual
+      })
+      expect(values.silent).toBeUndefined()
+    }
+  )
+
   test('explicit false overrides a default of true', () => {
     const flag = {
       flag: {
