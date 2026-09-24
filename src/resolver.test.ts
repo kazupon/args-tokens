@@ -4000,6 +4000,8 @@ describe('option given without a value followed by an argument starting with -',
     { label: '--port -x', argv: ['--port', '-x'], values: port },
     { label: '--port -vx', argv: ['--port', '-vx'], values: port },
     { label: '--port --foo', argv: ['--port', '--foo'], values: port },
+    // numeric only in part
+    { label: '--port -5x', argv: ['--port', '-5x'], values: port },
     { label: '--name --no-color', argv: ['--name', '--no-color'], values: name },
     {
       label: '-pv -5 with shortGrouping',
@@ -4109,6 +4111,59 @@ describe('option given without a value followed by an argument starting with -',
     expect(result.values.level).toBeUndefined()
   })
 
+  test('an enum with a parse function suggests one of its choices', () => {
+    const result = resolveArgs(
+      { level: { type: 'enum', choices: ['-1', '0', '1'], parse: (value: string) => value } },
+      parseArgs(['--level', '-1'])
+    )
+    expectMissingValueError(result.error, {
+      displayName: "'--level'",
+      name: 'level',
+      expected: 'enum',
+      choices: '"-1", "0", "1"',
+      choiceValues: ['-1', '0', '1'],
+      next: '-1',
+      suggestion: '--level=-1'
+    })
+    expect(result.error?.errors[0].message).toBe(
+      "Optional argument '--level' requires a value (to pass '-1' as its value, write '--level=-1')"
+    )
+  })
+
+  test('an enum with no choices suggests nothing', () => {
+    const result = resolveArgs(
+      { level: { type: 'enum', choices: [] } },
+      parseArgs(['--level', '-x'])
+    )
+    expectMissingValueError(result.error, {
+      displayName: "'--level'",
+      name: 'level',
+      expected: 'enum',
+      choices: '',
+      choiceValues: []
+    })
+    expect(result.error?.errors[0].message).toBe("Optional argument '--level' requires a value")
+  })
+
+  test('choices of an option that is not an enum do not limit the suggestion', () => {
+    const result = resolveArgs(
+      { name: { type: 'string', choices: ['a'] } },
+      parseArgs(['--name', '-x'])
+    )
+    expectMissingValueError(result.error, {
+      displayName: "'--name'",
+      name: 'name',
+      expected: 'string',
+      next: '-x',
+      suggestion: '--name=-x'
+    })
+    expect(result.error?.errors[0].message).toBe(
+      "Optional argument '--name' requires a value (to pass '-x' as its value, write '--name=-x')"
+    )
+  })
+
+  // `Number('-x')` is `NaN` and does not throw, so this `parse` would take `-x`. The error expects a
+  // number, though, so a number option is checked by its type, also with a parse function.
   test('a number option with a parse function does not suggest a value that is not a number', () => {
     const result = resolveArgs(
       { x: { type: 'number', parse: (value: string) => Number(value) } },

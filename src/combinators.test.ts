@@ -123,6 +123,7 @@ describe('number combinator', () => {
       name: 'port',
       expected: 'number'
     })
+    expect(validationError.message).toBe("Optional argument '--port' requires a value")
     expect(values.port).toBeUndefined()
   })
 
@@ -137,6 +138,9 @@ describe('number combinator', () => {
       next: '-5',
       suggestion: '--port=-5'
     })
+    expect(validationError.message).toBe(
+      "Optional argument '--port' requires a value (to pass '-5' as its value, write '--port=-5')"
+    )
   })
 
   test('basic', () => {
@@ -553,7 +557,26 @@ describe('choice combinator', () => {
       choices: '"a", "b"',
       choiceValues: ['a', 'b']
     })
+    expect(validationError.message).toBe("Optional argument '--level' requires a value")
     expect(values.level).toBeUndefined()
+  })
+
+  test('option followed by one of the choices that starts with -', () => {
+    const { error } = resolveArgs({ level: choice(['-1', '0', '1']) }, parseArgs(['--level', '-1']))
+    const validationError = error!.errors[0] as ArgsValidationError
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.missingValue)
+    expect(validationError.values).toStrictEqual({
+      displayName: "'--level'",
+      name: 'level',
+      expected: 'enum',
+      choices: '"-1", "0", "1"',
+      choiceValues: ['-1', '0', '1'],
+      next: '-1',
+      suggestion: '--level=-1'
+    })
+    expect(validationError.message).toBe(
+      "Optional argument '--level' requires a value (to pass '-1' as its value, write '--level=-1')"
+    )
   })
 
   test('valid value', () => {
