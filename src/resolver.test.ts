@@ -1442,6 +1442,7 @@ describe('enum option with a parse function', () => {
     expect((error?.errors[0] as ArgResolveError).code).toBe(ArgsValidationErrorKeys.invalidChoice)
     expect(values.level).toBeUndefined()
   })
+
   test('a value in the choices goes through parse', () => {
     const received: string[] = []
     const { values, error } = resolveArgs(
@@ -1522,6 +1523,66 @@ describe('enum option with a parse function', () => {
     )
     expect((error?.errors[0] as ArgResolveError).code).toBe(ArgsValidationErrorKeys.invalidChoice)
     expect(values.level).toBe('debug')
+  })
+
+  test('an explicit empty value is checked against the choices too', () => {
+    const received: string[] = []
+    const level = {
+      type: 'enum',
+      choices: ['debug', 'info'],
+      parse: (value: string) => {
+        received.push(value)
+        return value
+      }
+    } as const
+    const { values, error } = resolveArgs({ level }, parseArgs(['--level=']))
+    expect(error?.errors.length).toBe(1)
+    const resolveError = error?.errors[0] as ArgResolveError
+    expect(resolveError.code).toBe(ArgsValidationErrorKeys.invalidChoice)
+    expect(resolveError.values.actual).toBe('')
+    expect(values.level).toBeUndefined()
+
+    // a default does not stand in for the explicit empty value, but is filled in next to the error
+    const withDefault = resolveArgs(
+      { level: { ...level, default: 'debug' } },
+      parseArgs(['--level='])
+    )
+    expect((withDefault.error?.errors[0] as ArgResolveError).code).toBe(
+      ArgsValidationErrorKeys.invalidChoice
+    )
+    expect(withDefault.values.level).toBe('debug')
+
+    // a required option reports an explicit empty value as required, before the choices
+    const required = resolveArgs({ level: { ...level, required: true } }, parseArgs(['--level=']))
+    expect((required.error?.errors[0] as ArgResolveError).code).toBe(
+      ArgsValidationErrorKeys.requiredOption
+    )
+    expect(received).toEqual([])
+  })
+
+  test('a default outside the choices is used as is', () => {
+    const { values, error } = resolveArgs(
+      {
+        level: {
+          type: 'enum',
+          choices: ['debug', 'info'],
+          default: 'foo',
+          parse: (value: string) => value.toUpperCase()
+        }
+      },
+      parseArgs([])
+    )
+    expect(error).toBeUndefined()
+    expect(values.level).toBe('foo')
+  })
+
+  test('choices are only checked for an enum option', () => {
+    const { values, error } = resolveArgs(
+      { x: { type: 'string', choices: ['a'] } },
+      parseArgs(['--x=b'])
+    )
+    expect(error).toBeUndefined()
+    expect(values.x).toBe('b')
   })
 
   test('an option without a value still reports a missing value', () => {

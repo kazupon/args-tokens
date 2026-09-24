@@ -546,6 +546,20 @@ describe('choice combinator', () => {
     })
   })
 
+  test('a positional choice keeps its own check', () => {
+    const { values, error } = resolveArgs(
+      { level: positional(choice(['debug', 'info'] as const)) },
+      parseArgs(['verbose'])
+    )
+    // a positional argument has no choices to check, so the error comes from `choice()` itself
+    expect(error!.errors[0]).not.toBeInstanceOf(ArgResolveError)
+    expect((error!.errors[0] as Error).message).toBe('Value must be one of: debug, info')
+    expect((error!.errors[0] as ArgsValidationError).code).toBe(
+      ArgsValidationErrorKeys.invalidChoice
+    )
+    expect(values.level).toBeUndefined()
+  })
+
   test('choices are checked before a mapped parse', () => {
     const args = { level: map(choice(['debug', 'info'] as const), value => value.length) }
     expect(resolveArgs(args, parseArgs(['--level=info'])).values.level).toBe(4)
