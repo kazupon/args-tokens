@@ -3541,6 +3541,54 @@ describe('option given without a value', () => {
     expect(result.values.verbose).toBe(verbose)
     expect(result.rest).toEqual(rest)
   })
+
+  test('an explicit empty value is not a missing value', () => {
+    for (const argv of [['--x='], ['--x', '']]) {
+      expect(resolveArgs({ x: { type: 'string' } }, parseArgs(argv)).error).toBeUndefined()
+      const required = resolveArgs({ x: { type: 'string', required: true } }, parseArgs(argv))
+      expect(required.error?.errors.map(error => (error as ArgResolveError).code)).toEqual([
+        ArgsValidationErrorKeys.requiredOption
+      ])
+    }
+  })
+
+  const booleanArgs = {
+    color: {
+      type: 'boolean',
+      negatable: true
+    },
+    flag: {
+      type: 'boolean',
+      required: true
+    }
+  } as const satisfies Args
+
+  test.each([
+    { label: '--color --flag', argv: ['--color', '--flag'], values: { color: true, flag: true } },
+    {
+      label: '--no-color --flag',
+      argv: ['--no-color', '--flag'],
+      values: { color: false, flag: true }
+    },
+    {
+      label: '--no-color -5 --flag',
+      argv: ['--no-color', '-5', '--flag'],
+      values: { color: false, flag: true }
+    }
+  ])('boolean options given as $label have no missing value', ({ argv, values }) => {
+    const result = resolveArgs(booleanArgs, parseArgs(argv))
+    expect(result.error).toBeUndefined()
+    expect(result.values).toEqual(values)
+  })
+
+  test('boolean options keep their errors for a value given with =', () => {
+    const codes = (argv: string[]) =>
+      resolveArgs(booleanArgs, parseArgs(argv)).error?.errors.map(
+        error => (error as ArgResolveError).code
+      )
+    expect(codes(['--flag', '--no-color=false'])).toEqual([ArgsValidationErrorKeys.unexpectedValue])
+    expect(codes(['--flag', '--color=maybe'])).toEqual([ArgsValidationErrorKeys.invalidType])
+  })
 })
 
 describe('option given without a value followed by an argument starting with -', () => {
@@ -3750,6 +3798,35 @@ describe('option given without a value followed by an argument starting with -',
       expected: 'number'
     })
     expect(result.values.five).toBe(true)
+  })
+
+  test.each([
+    { label: '--port=-5', argv: ['--port=-5'], values: { port: -5 } },
+    { label: '--name=-x', argv: ['--name=-x'], values: { name: '-x' } },
+    { label: '--max-count=-5', argv: ['--max-count=-5'], values: { maxCount: -5 } },
+    { label: '--name=--foo=bar', argv: ['--name=--foo=bar'], values: { name: '--foo=bar' } }
+  ])('the suggested $label passes the value', ({ argv, values }) => {
+    const result = resolveArgs(args, parseArgs(argv))
+    expect(result.error).toBeUndefined()
+    expect(result.values).toEqual(values)
+  })
+
+  test('a negated form is not taken for an option that takes a value', () => {
+    const result = resolveArgs({ name: { type: 'string' } }, parseArgs(['--no-name']))
+    expect(result.error).toBeUndefined()
+    expect(result.explicit.name).toBe(false)
+  })
+
+  test('an option whose name starts with no- takes a value', () => {
+    const proxyArgs = { 'no-proxy': { type: 'string' } } as const satisfies Args
+    const missing = resolveArgs(proxyArgs, parseArgs(['--no-proxy']))
+    expectMissingValueError(missing.error, {
+      displayName: "'--no-proxy'",
+      name: 'no-proxy',
+      expected: 'string'
+    })
+    const given = resolveArgs(proxyArgs, parseArgs(['--no-proxy', 'localhost']))
+    expect(given.values['no-proxy']).toBe('localhost')
   })
 })
 
