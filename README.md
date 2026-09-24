@@ -530,6 +530,8 @@ Array of allowed string values for enum-type arguments. Required when `type: 'en
 
 Default value used when the argument is not provided. The type must match the argument's `type` property.
 
+The default is used as is. It does not go through `parse`, including when an option is given without a value.
+
 For single-value positional arguments, the default is used when the positional value is missing or when the value is preserved for later required positional arguments, unless `required: true` is set.
 
 <!-- eslint-skip -->
@@ -583,6 +585,8 @@ Converts the argument name from camelCase to kebab-case for CLI usage. A propert
 #### `parse` (optional)
 
 Custom parsing function for `type: 'custom'` arguments. Required when `type: 'custom'`. Should throw an Error if parsing fails.
+
+`parse` receives the value from the command line, or `'true'` / `'false'` for a `boolean` option. When an option other than `boolean` is given without a value, `parse` is not called and the missing value is reported as a validation error. An explicit empty value given with the long name, such as `--config=`, is passed as `''` unless `required: true` is set.
 
 <!-- eslint-skip -->
 

@@ -265,6 +265,9 @@ export interface ArgSchema {
    * - `enum` type: must be one of the `choices` values
    * - `positional`/`custom` type: string, boolean, or number default
    *
+   * The default is used as is and never goes through `parse`, including when an option is given
+   * without a value.
+   *
    * For single-value positional arguments, the default is used when the positional
    * value is missing or when the value is preserved for later required positional
    * arguments, unless `required: true` is set.
@@ -437,6 +440,13 @@ export interface ArgSchema {
    * return the parsed result. Should throw an Error (or subclass) if parsing fails.
    *
    * The function's return type becomes the resolved argument type.
+   *
+   * A `boolean` option calls `parse` with `'true'`, or `'false'` for the negated form. Other
+   * options call it only with a value from the command line: when the option is given without a
+   * value, `parse` is not called and the missing value is reported as a validation error
+   * (`err:arg:required-option` when `required: true` is set, `err:arg:invalid-choice` for `enum`,
+   * `err:arg:invalid-type` otherwise). An explicit empty value given with the long name, such as
+   * `--name=`, is passed as `''` unless `required: true` is set.
    *
    * @param value - Raw string value from command line
    * @returns Parsed value of any type
@@ -1186,7 +1196,12 @@ function parse(
       }
       return parseSchemaValue(String(boolValue), rawArg, option, schema)
     }
-    return parseSchemaValue(token.value ?? String(schema.default ?? ''), rawArg, option, schema)
+    // a missing value never reaches `parse`: it is reported the way the type's own branch below
+    // reports it, and a `default` is filled in afterwards as for the other types
+    if (typeof token.value !== 'string') {
+      return [undefined, createMissingValueError(rawArg, option, schema)]
+    }
+    return parseSchemaValue(token.value, rawArg, option, schema)
   }
   switch (schema.type) {
     case 'string': {
@@ -1405,10 +1420,11 @@ function createTypeError(
   rawArg: string,
   option: string,
   schema: ArgSchema,
-  actual: unknown
+  actual: unknown,
+  expected: string = schema.type
 ): ArgResolveError {
   return new ArgResolveError(
-    `Optional argument ${createOptionDisplayName(option, schema)} should be '${schema.type}'`,
+    `Optional argument ${createOptionDisplayName(option, schema)} should be '${expected}'`,
     option,
     'type',
     schema,
@@ -1417,11 +1433,35 @@ function createTypeError(
       values: {
         displayName: createOptionDisplayName(option, schema),
         name: rawArg,
-        expected: schema.type,
+        expected,
         ...(actual != null ? { actual } : {})
       }
     }
   )
+}
+
+/**
+ * Create the error for an option with a `parse` function that is given without a value.
+ *
+ * The error is the one the type reports without a `parse` function: a choice error for `enum`
+ * and a type error otherwise. A `custom` type has no built-in name, so its `metavar` (for example
+ * `'integer'` for the `integer()` combinator) names what was expected.
+ *
+ * @param rawArg - The argument key in the schema
+ * @param option - The option name used on the command line
+ * @param schema - The argument schema
+ * @returns The validation error
+ */
+function createMissingValueError(
+  rawArg: string,
+  option: string,
+  schema: ArgSchema
+): ArgResolveError {
+  if (schema.type === 'enum') {
+    return createChoiceError(rawArg, option, schema, undefined)
+  }
+  const expected = schema.type === 'custom' ? (schema.metavar ?? schema.type) : schema.type
+  return createTypeError(rawArg, option, schema, undefined, expected)
 }
 
 function createUnexpectedValueError(
