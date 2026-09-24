@@ -861,7 +861,10 @@ export function resolveArgs<A extends Args>(
     if (expandableShortOptions.length === 0) {
       return undefined
     } else {
-      const value = expandableShortOptions.map(token => token.name).join('')
+      let value = ''
+      for (let i = 0; i < expandableShortOptions.length; i++) {
+        value += expandableShortOptions[i].name ?? ''
+      }
       expandableShortOptions.length = 0
       return value
     }
