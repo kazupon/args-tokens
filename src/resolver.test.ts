@@ -3542,6 +3542,32 @@ describe('option given without a value', () => {
     expect(result.rest).toEqual(rest)
   })
 
+  test('a lone - after an option is its value, not a missing value', () => {
+    const { values, error } = resolveArgs({ port: { type: 'number' } }, parseArgs(['--port', '-']))
+    expect(error?.errors.length).toBe(1)
+    const resolveError = error?.errors[0] as ArgResolveError
+    expect(resolveError.code).toBe(ArgsValidationErrorKeys.invalidType)
+    expect(resolveError.values.actual).toBe('-')
+    expect(values.port).toBeUndefined()
+  })
+
+  test('a required option given without a value takes part in conflicts', () => {
+    const { error } = resolveArgs(
+      {
+        a: { type: 'string', short: 'a', required: true, conflicts: 'b' },
+        b: { type: 'boolean' }
+      },
+      parseArgs(['-a', '--b'])
+    )
+    expect(error?.errors.map(error => (error as ArgResolveError).type)).toEqual([
+      'type',
+      'conflict'
+    ])
+    expect((error?.errors[0] as ArgResolveError).code).toBe(ArgsValidationErrorKeys.missingValue)
+    // the conflict names the option the way it was given
+    expect(error?.errors[1].message).toBe("Optional argument '-a' conflicts with '--b'")
+  })
+
   test('an explicit empty value is not a missing value', () => {
     for (const argv of [['--x='], ['--x', '']]) {
       expect(resolveArgs({ x: { type: 'string' } }, parseArgs(argv)).error).toBeUndefined()
@@ -3644,7 +3670,8 @@ describe('option given without a value followed by an argument starting with -',
     },
     { label: '--name -x', argv: ['--name', '-x'], values: name, next: '-x' },
     { label: '--name --foo', argv: ['--name', '--foo'], values: name, next: '--foo' },
-    { label: '--name --foo=bar', argv: ['--name', '--foo=bar'], values: name, next: '--foo=bar' }
+    { label: '--name --foo=bar', argv: ['--name', '--foo=bar'], values: name, next: '--foo=bar' },
+    { label: '--name --foo=', argv: ['--name', '--foo='], values: name, next: '--foo=' }
   ])('$label suggests the long form', ({ argv, options, values, next, option }) => {
     const suggestion = `--${option ?? values.name}=${next}`
     const result = resolveArgs(args, parseArgs(argv), options)
@@ -3728,10 +3755,8 @@ describe('option given without a value followed by an argument starting with -',
   })
 
   test('an enum keeps its choices next to the suggestion', () => {
-    const result = resolveArgs(
-      { level: { type: 'enum', choices: ['debug', 'info'] } },
-      parseArgs(['--level', '-d'])
-    )
+    const choices = ['debug', 'info']
+    const result = resolveArgs({ level: { type: 'enum', choices } }, parseArgs(['--level', '-d']))
     expectMissingValueError(result.error, {
       displayName: "'--level'",
       name: 'level',
@@ -3741,6 +3766,8 @@ describe('option given without a value followed by an argument starting with -',
       next: '-d',
       suggestion: '--level=-d'
     })
+    // a copy, so changing it does not change the schema
+    expect((result.error?.errors[0] as ArgResolveError).values.choiceValues).not.toBe(choices)
     expect(result.values.level).toBeUndefined()
   })
 
@@ -3792,6 +3819,35 @@ describe('option given without a value followed by an argument starting with -',
       expected: 'string'
     })
     expect(result.values.dryRun).toBe(false)
+  })
+
+  test('defined option names follow the toKebab option of resolveArgs', () => {
+    const result = resolveArgs(
+      { name: { type: 'string' }, dryRun: { type: 'boolean' } },
+      parseArgs(['--name', '--dry-run']),
+      { toKebab: true }
+    )
+    expectMissingValueError(result.error, {
+      displayName: "'--name'",
+      name: 'name',
+      expected: 'string'
+    })
+    expect(result.values.dryRun).toBe(true)
+  })
+
+  test('a positional argument is not a defined option', () => {
+    const result = resolveArgs(
+      { name: { type: 'string' }, file: { type: 'positional', required: false } },
+      parseArgs(['--name', '--file'])
+    )
+    expectMissingValueError(result.error, {
+      displayName: "'--name'",
+      name: 'name',
+      expected: 'string',
+      next: '--file',
+      suggestion: '--name=--file'
+    })
+    expect(result.values.file).toBeUndefined()
   })
 
   test('a digit defined as a short option is not suggested as a value', () => {
