@@ -997,6 +997,50 @@ describe('option group', () => {
   })
 })
 
+describe('short option with a value after =', () => {
+  const args = {
+    port: {
+      type: 'number',
+      short: 'p'
+    },
+    name: {
+      type: 'string',
+      short: 'n'
+    },
+    verbose: {
+      type: 'boolean',
+      short: 'v'
+    }
+  } as const satisfies Args
+
+  test.each([false, true])('-p=-5 resolves to -5 (shortGrouping: %s)', shortGrouping => {
+    const { values, error } = resolveArgs(args, parseArgs(['-p=-5']), { shortGrouping })
+    expect(error).toBeUndefined()
+    expect(values.port).toBe(-5)
+  })
+
+  test('-n=-foo keeps the dash', () => {
+    const { values, error } = resolveArgs(args, parseArgs(['-n=-foo']))
+    expect(error).toBeUndefined()
+    expect(values.name).toBe('-foo')
+  })
+
+  test('-n=-- is a value, not the option terminator', () => {
+    const { values, error, rest } = resolveArgs(args, parseArgs(['-n=--', '-v']))
+    expect(error).toBeUndefined()
+    expect(values.name).toBe('--')
+    expect(values.verbose).toBe(true)
+    expect(rest).toEqual([])
+  })
+
+  test('the value goes to the last option of a group with shortGrouping', () => {
+    const { values, error } = resolveArgs(args, parseArgs(['-vp=-5']), { shortGrouping: true })
+    expect(error).toBeUndefined()
+    expect(values.port).toBe(-5)
+    expect(values.verbose).toBe(true)
+  })
+})
+
 describe('number option without a value', () => {
   const args = {
     port: {

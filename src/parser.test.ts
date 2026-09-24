@@ -64,6 +64,42 @@ describe('short options', () => {
     const tokens = parseArgs(args, { allowCompatible: true })
     expect(nodeTokens).toEqual(tokens)
   })
+
+  describe('value after =', () => {
+    test.each([
+      { arg: '-p=-5', value: '-5' },
+      { arg: '-n=-foo', value: '-foo' },
+      { arg: '-n=--foo', value: '--foo' },
+      { arg: '-n=--', value: '--' },
+      { arg: '-n=-', value: '-' }
+    ])('$arg keeps the value $value', ({ arg, value }) => {
+      const name = arg.charAt(1)
+      expect(parseArgs([arg])).toEqual([
+        { kind: 'option', name, rawName: `-${name}`, index: 0 },
+        { kind: 'option', index: 0, value, inlineValue: true }
+      ])
+    })
+
+    test('the value goes to the last option of the group', () => {
+      expect(parseArgs(['-ab=-1'])).toEqual([
+        { kind: 'option', name: 'a', rawName: '-a', index: 0 },
+        { kind: 'option', name: 'b', rawName: '-b', index: 0 },
+        { kind: 'option', index: 0, value: '-1', inlineValue: true }
+      ])
+    })
+
+    test.each([
+      { argv: ['-n=', '-av'] },
+      { argv: ['-n=-', '-av'] },
+      { argv: ['-p=-5', '-av', 'x'] },
+      { argv: ['-=5', '-av'] }
+    ])('$argv does not change how the next argument is read', ({ argv }) => {
+      expect(parseArgs(argv).filter(token => token.index === 1)).toEqual([
+        { kind: 'option', name: 'a', rawName: '-a', index: 1 },
+        { kind: 'option', name: 'v', rawName: '-v', index: 1 }
+      ])
+    })
+  })
 })
 
 describe('long options', () => {
