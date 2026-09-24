@@ -746,9 +746,10 @@ export interface ResolveArgs {
    * Whether to group short arguments.
    *
    * When `true`, each letter of a short option group is an option, and a value goes to the last one:
-   * `-vp=5` and `-vp 5` are `-v` and `-p` with `5`. When `false`, the other letters of a group are the
-   * value of its first option, which then does not take the next argument: `-p5 file` is `-p` with `5`
-   * and the positional `file`, and `-nfoo=bar` is `-n` with `foo=bar`.
+   * `-vp 5` is `-v` and `-p` with `5`. When `false`, the other letters of a group are the value of its
+   * first option, which then does not take the next argument: `-p5 file` is `-p` with `5` and the
+   * positional `file`, and `-nfoo=bar` is `-n` with `foo=bar`. A boolean first option ignores the other
+   * letters, so `-vs` is only `-v`.
    *
    * @see guideline 5 in https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/V1_chap12.html
    *
