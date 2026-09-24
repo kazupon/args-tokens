@@ -1189,6 +1189,16 @@ describe('short option group without shortGrouping', () => {
       expect(error).toBeUndefined()
       expect(values.name).toBe('f=')
     })
+
+    test('a value token without inlineValue, which parseArgs does not make, is joined without =', () => {
+      const { values, error } = resolveArgs(args, [
+        { kind: 'option', name: 'n', rawName: '-n', index: 0 },
+        { kind: 'option', name: 'f', rawName: '-f', index: 0 },
+        { kind: 'option', index: 0, value: 'x' }
+      ])
+      expect(error).toBeUndefined()
+      expect(values.name).toBe('fx')
+    })
   })
 
   describe('a positional argument after the group', () => {
@@ -1352,6 +1362,21 @@ describe('short option with a value after -', () => {
     const { values, error } = resolveArgs(args, parseArgs(['-xf-']), { shortGrouping: true })
     expect(error).toBeUndefined()
     expect(values).toEqual({ extract: true, file: '-' })
+  })
+
+  test.each([false, true])(
+    'a group after a group with - keeps its value written with = (shortGrouping: %s)',
+    shortGrouping => {
+      const { values, error } = resolveArgs(args, parseArgs(['-o-', '-v=false']), { shortGrouping })
+      expect(error).toBeUndefined()
+      expect(values).toEqual({ output: '-', verbose: false })
+    }
+  )
+
+  test('without shortGrouping, a group after a group with - joins its value with =', () => {
+    const { values, error } = resolveArgs(args, parseArgs(['-o-', '-nx=y']))
+    expect(error).toBeUndefined()
+    expect(values).toEqual({ output: '-', name: 'x=y' })
   })
 })
 

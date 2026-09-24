@@ -220,6 +220,15 @@ describe('short options', () => {
       ])
     })
 
+    test('a group after a group with - keeps its own inlineValue', () => {
+      expect(parseArgs(['-o-', '-v=false'])).toEqual([
+        { kind: 'option', name: 'o', rawName: '-o', index: 0 },
+        { kind: 'option', index: 0, value: '-', inlineValue: false },
+        { kind: 'option', name: 'v', rawName: '-v', index: 1 },
+        { kind: 'option', index: 1, value: 'false', inlineValue: true }
+      ])
+    })
+
     test('a - after = is part of the value written with =', () => {
       expect(parseArgs(['-a=b-c'])).toEqual([
         { kind: 'option', name: 'a', rawName: '-a', index: 0 },
