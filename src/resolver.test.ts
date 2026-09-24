@@ -1434,6 +1434,16 @@ describe('explicit empty value of a string or enum option', () => {
     expect(withEmptyChoice.error).toBeUndefined()
     expect(withEmptyChoice.values.x).toBe('')
   })
+
+  test('an option that is not given still gets the default', () => {
+    const { values, explicit, error } = resolveArgs(
+      { x: { type: 'string', short: 'x', default: 'def' } },
+      parseArgs([])
+    )
+    expect(error).toBeUndefined()
+    expect(values.x).toBe('def')
+    expect(explicit.x).toBe(false)
+  })
 })
 
 describe('number option without a value', () => {
