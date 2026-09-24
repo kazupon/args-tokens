@@ -4509,6 +4509,13 @@ describe('option given without a value followed by an argument starting with -',
       options: { shortGrouping: true },
       values: port
     },
+    // `-n` does not end its argument, and a string option would take `--foo=bar`
+    {
+      label: '-nv --foo=bar with shortGrouping',
+      argv: ['-nv', '--foo=bar'],
+      options: { shortGrouping: true },
+      values: name
+    },
     { label: '--name -x=1', argv: ['--name', '-x=1'], values: name },
     // like `-x=1`, `-x=` has a value, even though it is empty
     { label: '--name -x=', argv: ['--name', '-x='], values: name },
