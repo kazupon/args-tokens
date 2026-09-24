@@ -20,7 +20,7 @@ import {
   withDefault
 } from './combinators.ts'
 import { parseArgs } from './parser.ts'
-import { ArgsValidationErrorKeys, resolveArgs } from './resolver.ts'
+import { ArgResolveError, ArgsValidationErrorKeys, resolveArgs } from './resolver.ts'
 
 import type { Args, ArgSchema, ArgsValidationError } from './resolver.ts'
 
@@ -528,7 +528,11 @@ describe('choice combinator', () => {
       tokens
     )
     expect(error).toBeDefined()
-    expect((error!.errors[0] as Error).message).toContain('one of')
+    // `choices` is checked before `parse`, so the error is the one of an enum option
+    expect(error!.errors[0]).toBeInstanceOf(ArgResolveError)
+    expect((error!.errors[0] as Error).message).toBe(
+      `Optional argument '--level' should be chosen from 'enum' ["debug", "info", "warn", "error"] values`
+    )
     expect((error!.errors[0] as ArgsValidationError).code).toBe(
       ArgsValidationErrorKeys.invalidChoice
     )
