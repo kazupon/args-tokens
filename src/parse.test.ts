@@ -80,3 +80,12 @@ test('number option without a value', () => {
   expect((error!.errors[0] as ArgsValidationError).code).toBe(ArgsValidationErrorKeys.missingValue)
   expect(values.port).toBeUndefined()
 })
+
+test('short option with its value in the same argument, followed by a positional argument', () => {
+  const { values, positionals, error } = parse(['-p5', 'file.txt'], {
+    args: { port: { type: 'number', short: 'p' } }
+  })
+  expect(error).toBeUndefined()
+  expect(values.port).toBe(5)
+  expect(positionals).toEqual(['file.txt'])
+})

@@ -995,6 +995,176 @@ describe('option group', () => {
       host: 'example.com'
     })
   })
+
+  test('the value after = goes to the last option, and the next option does not get the other letters', () => {
+    const { values, error } = resolveArgs(
+      {
+        verbose: {
+          type: 'boolean',
+          short: 'v'
+        },
+        silent: {
+          type: 'boolean',
+          short: 's'
+        },
+        name: {
+          type: 'string',
+          short: 'n'
+        }
+      },
+      parseArgs(['-vs=false', '-n']),
+      { shortGrouping: true }
+    )
+    expectMissingValueError(error, {
+      displayName: "'--name' or '-n'",
+      name: 'name',
+      expected: 'string'
+    })
+    expect(values).toEqual({ verbose: true, silent: false })
+  })
+})
+
+describe('short option group without shortGrouping', () => {
+  const args = {
+    verbose: {
+      type: 'boolean',
+      short: 'v'
+    },
+    silent: {
+      type: 'boolean',
+      short: 's'
+    },
+    name: {
+      type: 'string',
+      short: 'n'
+    },
+    port: {
+      type: 'number',
+      short: 'p'
+    },
+    define: {
+      type: 'string',
+      short: 'D',
+      multiple: true
+    }
+  } as const satisfies Args
+
+  const name = { displayName: "'--name' or '-n'", name: 'name', expected: 'string' }
+
+  describe('the value after =', () => {
+    test.each([
+      { argv: ['-nfoo=bar'], value: 'foo=bar' },
+      { argv: ['-nfoo=a=b'], value: 'foo=a=b' }
+    ])('$argv gives the first option the other letters and the value', ({ argv, value }) => {
+      const { values, error } = resolveArgs(args, parseArgs(argv))
+      expect(error).toBeUndefined()
+      expect(values.name).toBe(value)
+    })
+
+    test('-DDEBUG=1 -DLEVEL=2 main.c keeps the names of the definitions', () => {
+      const { values, positionals, error } = resolveArgs(
+        args,
+        parseArgs(['-DDEBUG=1', '-DLEVEL=2', 'main.c'])
+      )
+      expect(error).toBeUndefined()
+      expect(values.define).toEqual(['DEBUG=1', 'LEVEL=2'])
+      expect(positionals).toEqual(['main.c'])
+    })
+
+    test('-vs=false -n does not give s to -n', () => {
+      const { values, error } = resolveArgs(args, parseArgs(['-vs=false', '-n']))
+      const errors = error?.errors as ArgResolveError[] | undefined
+      expect(errors?.map(e => [e.code, e.values.name])).toEqual([
+        [ArgsValidationErrorKeys.invalidType, 'verbose'],
+        [ArgsValidationErrorKeys.missingValue, 'name']
+      ])
+      expect(errors?.[0].values.actual).toBe('s=false')
+      expect(values).toEqual({})
+    })
+
+    test('-np=5 -n does not give p to the second -n', () => {
+      const { values, error } = resolveArgs(args, parseArgs(['-np=5', '-n']))
+      expectMissingValueError(error, name)
+      expect(values.name).toBe('p=5')
+    })
+
+    test('-pv=5 gives -p the other letters and the value', () => {
+      const { values, error } = resolveArgs(args, parseArgs(['-pv=5']))
+      const errors = error?.errors as ArgResolveError[] | undefined
+      expect(errors?.map(e => e.code)).toEqual([ArgsValidationErrorKeys.invalidType])
+      expect(errors?.[0].values.actual).toBe('v=5')
+      expect(values.port).toBeUndefined()
+    })
+
+    // expected to change with #633, which gives `-n=` an empty value
+    test('-nfoo= gives only the other letters, as the empty value after = gives no token', () => {
+      const { values, error } = resolveArgs(args, parseArgs(['-nfoo=']))
+      expect(error).toBeUndefined()
+      expect(values.name).toBe('foo')
+    })
+
+    test('a value token without a value, which parseArgs does not make, gives the letters and =', () => {
+      const { values, error } = resolveArgs(args, [
+        { kind: 'option', name: 'n', rawName: '-n', index: 0 },
+        { kind: 'option', name: 'f', rawName: '-f', index: 0 },
+        { kind: 'option', index: 0, inlineValue: true }
+      ])
+      expect(error).toBeUndefined()
+      expect(values.name).toBe('f=')
+    })
+  })
+
+  describe('a positional argument after the group', () => {
+    test.each([
+      { argv: ['-p5', 'file.txt'], values: { port: 5 }, positionals: ['file.txt'] },
+      { argv: ['-nfoo', 'bar', '-p5'], values: { name: 'foo', port: 5 }, positionals: ['bar'] },
+      // `-x` is not defined
+      { argv: ['-xfoo', 'bar'], values: {}, positionals: ['bar'] },
+      { argv: ['-nfoo', ''], values: { name: 'foo' }, positionals: [''] }
+    ])('$argv keeps the positional argument', ({ argv, values, positionals }) => {
+      const result = resolveArgs(args, parseArgs(argv))
+      expect(result.error).toBeUndefined()
+      expect(result.values).toEqual(values)
+      expect(result.positionals).toEqual(positionals)
+    })
+
+    test('-nfoo bar -n does not give foo to the second -n', () => {
+      const { values, positionals, error } = resolveArgs(args, parseArgs(['-nfoo', 'bar', '-n']))
+      expectMissingValueError(error, name)
+      expect(values.name).toBe('foo')
+      expect(positionals).toEqual(['bar'])
+    })
+
+    // the first option is finished at the positional argument, so a later long option with `=` comes after it
+    test('the value of the first option comes before the value of a later long option', () => {
+      expect(resolveArgs(args, parseArgs(['-nfoo', 'bar', '--name=x'])).values.name).toBe('x')
+      expect(resolveArgs(args, parseArgs(['-DA', 'x', '--define=B'])).values.define).toEqual([
+        'A',
+        'B'
+      ])
+    })
+
+    test.each([{ argv: ['-vs', 'x'] }, { argv: ['-v', 'x'] }])(
+      '$argv does not give the positional argument to a boolean option',
+      ({ argv }) => {
+        const { values, positionals, error } = resolveArgs(args, parseArgs(argv))
+        expect(error).toBeUndefined()
+        expect(values).toEqual({ verbose: true })
+        expect(positionals).toEqual(['x'])
+      }
+    )
+
+    test('-n=bar x with the allowCompatible tokens gives -n the rest of the group and keeps x', () => {
+      const { values, positionals, error } = resolveArgs(
+        args,
+        parseArgs(['-n=bar', 'x'], { allowCompatible: true })
+      )
+      expect(error).toBeUndefined()
+      // these tokens do not read `=` in a group, so `=bar` is the rest of the group
+      expect(values.name).toBe('=bar')
+      expect(positionals).toEqual(['x'])
+    })
+  })
 })
 
 describe('short option with a value after =', () => {
