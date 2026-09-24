@@ -544,7 +544,7 @@ The value given on the command line is checked before `parse`, so `parse` receiv
 
 Default value used when the argument is not provided. The type must match the argument's `type` property.
 
-The default is used as is. It does not go through `parse`, including when an option is given without a value.
+The default is used as is. It does not go through `parse`, including when an option is given without a value. An explicit empty value, such as `--name=` or `-n ''`, is a value, not a missing one: a `string` option gets `''` instead of the default.
 
 For single-value positional arguments, the default is used when the positional value is missing or when the value is preserved for later required positional arguments, unless `required: true` is set.
 
