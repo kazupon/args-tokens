@@ -310,10 +310,12 @@ describe('rest arguments after the option terminator', () => {
     { argv: ['--', 'a', '', 'b'], rest: ['a', '', 'b'] },
     { argv: ['--', '', ''], rest: ['', ''] }
   ])('$argv puts every argument after -- into rest', ({ argv, rest }) => {
-    const result = resolveArgs({}, parseArgs(argv))
-    expect(result.error).toBeUndefined()
-    expect(result.rest).toEqual(rest)
-    expect(result.positionals).toEqual([])
+    for (const shortGrouping of [false, true]) {
+      const result = resolveArgs({}, parseArgs(argv), { shortGrouping })
+      expect(result.error, `shortGrouping: ${shortGrouping}`).toBeUndefined()
+      expect(result.rest, `shortGrouping: ${shortGrouping}`).toEqual(rest)
+      expect(result.positionals, `shortGrouping: ${shortGrouping}`).toEqual([])
+    }
   })
 
   test('a required positional argument does not take an empty argument after --', () => {
