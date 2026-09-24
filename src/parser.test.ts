@@ -99,6 +99,52 @@ describe('short options', () => {
         { kind: 'option', name: 'v', rawName: '-v', index: 1 }
       ])
     })
+
+    test.each(['-5', '-5.5', '--', '--foo', '-', '-a=b'])(
+      'a value %s is read like any other value',
+      value => {
+        for (const group of ['-p', '-ab']) {
+          const tokens = parseArgs([`${group}=${value}`, '-av'])
+          const other = parseArgs([`${group}=q`, '-av'])
+          expect(tokens).toEqual(
+            other.map(token => (token.rawName == null ? { ...token, value } : token))
+          )
+        }
+      }
+    )
+
+    test.each([
+      { arg: '-n=a=b', value: 'a=b' },
+      { arg: '-n==', value: '=' }
+    ])('$arg keeps the value $value', ({ arg, value }) => {
+      expect(parseArgs([arg])).toEqual([
+        { kind: 'option', name: 'n', rawName: '-n', index: 0 },
+        { kind: 'option', index: 0, value, inlineValue: true }
+      ])
+    })
+
+    test('an empty value after = gives no value', () => {
+      expect(parseArgs(['-n='])).toEqual([{ kind: 'option', name: 'n', rawName: '-n', index: 0 }])
+      expect(parseArgs(['-ab='])).toEqual([
+        { kind: 'option', name: 'a', rawName: '-a', index: 0 },
+        { kind: 'option', name: 'b', rawName: '-b', index: 0 }
+      ])
+    })
+
+    test('a value without an option before = is a positional argument', () => {
+      expect(parseArgs(['-=5'])).toEqual([{ kind: 'positional', index: 0, value: '5' }])
+    })
+
+    test('allowCompatible keeps the node:util tokens', () => {
+      const args = ['-p=-5']
+      const { tokens } = parseArgsNode({
+        allowPositionals: true,
+        strict: false,
+        args,
+        tokens: true
+      })
+      expect(parseArgs(args, { allowCompatible: true })).toEqual(tokens)
+    })
   })
 })
 
