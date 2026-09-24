@@ -3526,6 +3526,111 @@ describe('option with a parse function given without a value', () => {
     expect(result.values.verbose).toBe(verbose)
     expect(result.rest).toEqual(rest)
   })
+
+  test('an explicit empty value still reaches parse', () => {
+    const received: string[] = []
+    const args = {
+      x: {
+        type: 'string',
+        parse: (value: string) => {
+          received.push(value)
+          return `<${value}>`
+        }
+      }
+    } as const satisfies Args
+    for (const argv of [['--x='], ['--x', '']]) {
+      const { values, error } = resolveArgs(args, parseArgs(argv))
+      expect(error).toBeUndefined()
+      expect(values.x).toBe('<>')
+    }
+    expect(received).toEqual(['', ''])
+  })
+
+  test('a value still reaches parse', () => {
+    const { values, error } = resolveArgs(
+      { x: { type: 'custom', parse: (value: string) => value.split(',') } },
+      parseArgs(['--x=a,b'])
+    )
+    expect(error).toBeUndefined()
+    expect(values.x).toEqual(['a', 'b'])
+  })
+
+  test('required reports only the missing option', () => {
+    const received: string[] = []
+    const { values, error } = resolveArgs(
+      {
+        x: {
+          type: 'string',
+          required: true,
+          parse: (value: string) => {
+            received.push(value)
+            return value
+          }
+        }
+      },
+      parseArgs(['--x'])
+    )
+    expect(error?.errors.length).toBe(1)
+    expect((error?.errors[0] as ArgResolveError).code).toBe(ArgsValidationErrorKeys.requiredOption)
+    expect(values.x).toBeUndefined()
+    expect(received).toEqual([])
+  })
+
+  test('a metavar names the expected value only for a custom type', () => {
+    const { error } = resolveArgs(
+      { x: { type: 'string', metavar: 'path', parse: (value: string) => value } },
+      parseArgs(['--x'])
+    )
+    expectMissingValue(error, ArgsValidationErrorKeys.invalidType, {
+      displayName: "'--x'",
+      name: 'x',
+      expected: 'string'
+    })
+    expect(error?.errors[0].message).toBe("Optional argument '--x' should be 'string'")
+  })
+
+  test('multiple values keep the given ones and report the missing one', () => {
+    const { values, error } = resolveArgs(
+      { x: { type: 'custom', multiple: true, parse: (value: string) => value.toUpperCase() } },
+      parseArgs(['--x', 'a', '--x'])
+    )
+    expectMissingValue(error, ArgsValidationErrorKeys.invalidType, {
+      displayName: "'--x'",
+      name: 'x',
+      expected: 'custom'
+    })
+    expect(values.x).toEqual(['A'])
+  })
+
+  test('boolean and positional parse functions are unchanged', () => {
+    const received: string[] = []
+    const record = (value: string) => {
+      received.push(value)
+      return value
+    }
+    const boolArgs = {
+      v: {
+        type: 'boolean',
+        negatable: true,
+        parse: (value: string) => record(value) === 'true'
+      }
+    } as const satisfies Args
+    expect(resolveArgs(boolArgs, parseArgs(['--v'])).values.v).toBe(true)
+    expect(resolveArgs(boolArgs, parseArgs(['--no-v'])).values.v).toBe(false)
+
+    const positionalArgs = {
+      p: {
+        type: 'positional',
+        required: false,
+        default: 7,
+        parse: (value: string) => Number(record(value))
+      }
+    } as const satisfies Args
+    expect(resolveArgs(positionalArgs, parseArgs(['42'])).values.p).toBe(42)
+    expect(resolveArgs(positionalArgs, parseArgs([])).values.p).toBe(7)
+
+    expect(received).toEqual(['true', 'false', '42'])
+  })
 })
 
 describe('schema.parse priority', () => {
