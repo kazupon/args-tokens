@@ -2982,6 +2982,28 @@ describe('options resolved in the order of the arguments', () => {
       ])
     }
   )
+
+  test.each([
+    { argv: ['-s', 'v', '--str=x'], str: 'x' },
+    { argv: ['--str=x', '-sv'], str: 'v' },
+    { argv: ['-sv', '--str', 'x'], str: 'x' }
+  ])('$argv gives the value written last', ({ argv, str }) => {
+    const { values, error } = resolveArgs(args, parseArgs(argv))
+    expect(error).toBeUndefined()
+    expect(values.str).toBe(str)
+  })
+
+  test('with shortGrouping, a short option before a long option with = has no value', () => {
+    const { values, error } = resolveArgs(args, parseArgs(['-mv', '--multi=x']), {
+      shortGrouping: true
+    })
+    expectMissingValueError(error, {
+      displayName: "'--multi' or '-m'",
+      name: 'multi',
+      expected: 'string'
+    })
+    expect(values.multi).toEqual(['x'])
+  })
 })
 
 describe(`'toKebab' option`, () => {
