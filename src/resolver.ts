@@ -909,9 +909,10 @@ export function resolveArgs<A extends Args>(
         const isBoolean = schemas.find(
           schema => schema.short === currentShortOption!.name && schema.type === 'boolean'
         )
-        if (isBoolean) {
+        // without shortGrouping, the other letters of the group are already the value of its first option
+        if (isBoolean || expandableShortOptions.length > 0) {
           positionalTokens.push({ ...token })
-          applyShortOptionValue() // finalize boolean without value
+          applyShortOptionValue() // finalize without taking the positional as a value
         } else {
           applyShortOptionValue(token.value)
         }
@@ -963,7 +964,10 @@ export function resolveArgs<A extends Args>(
       } else {
         // short option value
         if (currentShortOption && currentShortOption.index == token.index && token.inlineValue) {
-          currentShortOption.value = token.value
+          // without shortGrouping, the other letters of the group come before `=` and are part of the value
+          const letters = toShortValue()
+          currentShortOption.value =
+            letters === undefined ? token.value : `${letters}=${token.value ?? ''}`
           currentShortOption.inlineValue = true
           optionTokens.push({ ...currentShortOption })
           currentShortOption = undefined
