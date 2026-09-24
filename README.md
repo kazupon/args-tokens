@@ -152,6 +152,8 @@ console.log(tokens)
 // ]
 ```
 
+After `=`, the rest of the argument is the value, even when it starts with `-`: `-p=-5` gives the value `-5`, and `-n=--` gives the value `--`, not the option terminator.
+
 ## 💿 Installation
 
 ```sh
