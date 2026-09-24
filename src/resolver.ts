@@ -1541,8 +1541,8 @@ function createMissingValueError(
  *
  * The option must end its own argument (with `shortGrouping`, `-pv` gives `-p` no value because of
  * `-v`), and the next argument must be written as options that are not all defined, such as `-5`
- * or `--foo`. The argument is rebuilt from its tokens. A short option written with `=`, such as
- * `-x=1` or `-x=`, has a value, and is not suggested.
+ * or `--foo`. The argument is rebuilt from its tokens. Without `allowCompatible`, a short option
+ * written with `=`, such as `-x=1` or `-x=`, has a value, and is not suggested.
  *
  * @param tokens - The tokens given to `resolveArgs()`
  * @param optionTokens - The option tokens that `resolveArgs()` resolves
