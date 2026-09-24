@@ -1388,9 +1388,10 @@ describe('explicit empty value of a string or enum option', () => {
         parseArgs(argv),
         { shortGrouping }
       )
-      expect(error).toBeUndefined()
-      expect(values).toEqual({ x: '' })
-      expect(explicit.x).toBe(true)
+      const mode = `shortGrouping: ${shortGrouping}`
+      expect(error, mode).toBeUndefined()
+      expect(values, mode).toEqual({ x: '' })
+      expect(explicit.x, mode).toBe(true)
     }
   })
 
@@ -1401,8 +1402,9 @@ describe('explicit empty value of a string or enum option', () => {
         parseArgs(argv),
         { shortGrouping }
       )
-      expect(error).toBeUndefined()
-      expect(values.x).toBe('')
+      const mode = `shortGrouping: ${shortGrouping}`
+      expect(error, mode).toBeUndefined()
+      expect(values.x, mode).toBe('')
     }
   })
 
@@ -1433,6 +1435,13 @@ describe('explicit empty value of a string or enum option', () => {
     )
     expect(withEmptyChoice.error).toBeUndefined()
     expect(withEmptyChoice.values.x).toBe('')
+
+    const multiple = resolveArgs(
+      { x: { type: 'enum', multiple: true } },
+      parseArgs(['--x=', '--x=a'])
+    )
+    expect(multiple.error).toBeUndefined()
+    expect(multiple.values.x).toEqual(['', 'a'])
   })
 
   test('an option that is not given still gets the default', () => {
