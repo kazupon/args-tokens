@@ -516,6 +516,8 @@ Enables negation for boolean arguments using `--no-` prefix. Only applicable to 
 
 Array of allowed string values for enum-type arguments. Required when `type: 'enum'`.
 
+The value given on the command line is checked before `parse`, so `parse` receives only one of the choices.
+
 <!-- eslint-skip -->
 
 ```js
@@ -595,6 +597,8 @@ Converts the argument name from camelCase to kebab-case for CLI usage. A propert
 Custom parsing function for `type: 'custom'` arguments. Required when `type: 'custom'`. Should throw an Error if parsing fails.
 
 `parse` receives the value from the command line, or `'true'` / `'false'` for a `boolean` option. When an option other than `boolean` is given without a value, `parse` is not called and the missing value is reported as a validation error. An explicit empty value given with the long name, such as `--config=`, is passed as `''` unless `required: true` is set.
+
+An `enum` option passes only one of its `choices` to `parse`. Any other value is reported as `ArgsValidationErrorKeys.invalidChoice`. List the values users type in `choices`, and use `parse` to change them.
 
 <!-- eslint-skip -->
 
