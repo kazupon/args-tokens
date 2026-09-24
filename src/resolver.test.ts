@@ -1301,7 +1301,6 @@ describe('short option with an empty value', () => {
     }
   )
 
-  // a string option without a parse function turns an empty value into undefined (#632)
   const args = {
     verbose: {
       type: 'boolean',
@@ -1377,6 +1376,81 @@ describe('short option with an empty value', () => {
       expect(positionals).toEqual([''])
     }
   )
+})
+
+describe('explicit empty value of a string or enum option', () => {
+  const forms = [{ argv: ['--x='] }, { argv: ['--x', ''] }, { argv: ['-x='] }, { argv: ['-x', ''] }]
+
+  test.each(forms)('$argv gives a string option the empty value', ({ argv }) => {
+    for (const shortGrouping of [false, true]) {
+      const { values, explicit, error } = resolveArgs(
+        { x: { type: 'string', short: 'x' } },
+        parseArgs(argv),
+        { shortGrouping }
+      )
+      expect(error, `shortGrouping: ${shortGrouping}`).toBeUndefined()
+      expect(values, `shortGrouping: ${shortGrouping}`).toEqual({ x: '' })
+      expect(explicit.x, `shortGrouping: ${shortGrouping}`).toBe(true)
+    }
+  })
+
+  test.each(forms)('$argv gives the empty value, not the default', ({ argv }) => {
+    for (const shortGrouping of [false, true]) {
+      const { values, error } = resolveArgs(
+        { x: { type: 'string', short: 'x', default: 'def' } },
+        parseArgs(argv),
+        { shortGrouping }
+      )
+      expect(error, `shortGrouping: ${shortGrouping}`).toBeUndefined()
+      expect(values.x, `shortGrouping: ${shortGrouping}`).toBe('')
+    }
+  })
+
+  test('an empty value is an element of a multiple option', () => {
+    const multiple = resolveArgs(
+      { x: { type: 'string', multiple: true } },
+      parseArgs(['--x=', '--x=a'])
+    )
+    expect(multiple.error).toBeUndefined()
+    expect(multiple.values.x).toEqual(['', 'a'])
+
+    const withDefault = resolveArgs(
+      { x: { type: 'string', multiple: true, default: 'def' } },
+      parseArgs(['--x='])
+    )
+    expect(withDefault.error).toBeUndefined()
+    expect(withDefault.values.x).toEqual([''])
+  })
+
+  test('an enum option that accepts an empty value gets it', () => {
+    const withoutChoices = resolveArgs({ x: { type: 'enum' } }, parseArgs(['--x=']))
+    expect(withoutChoices.error).toBeUndefined()
+    expect(withoutChoices.values).toEqual({ x: '' })
+
+    const withEmptyChoice = resolveArgs(
+      { x: { type: 'enum', choices: ['', 'a'], default: 'a' } },
+      parseArgs(['--x='])
+    )
+    expect(withEmptyChoice.error).toBeUndefined()
+    expect(withEmptyChoice.values.x).toBe('')
+
+    const multiple = resolveArgs(
+      { x: { type: 'enum', multiple: true } },
+      parseArgs(['--x=', '--x=a'])
+    )
+    expect(multiple.error).toBeUndefined()
+    expect(multiple.values.x).toEqual(['', 'a'])
+  })
+
+  test('an option that is not given still gets the default', () => {
+    const { values, explicit, error } = resolveArgs(
+      { x: { type: 'string', short: 'x', default: 'def' } },
+      parseArgs([])
+    )
+    expect(error).toBeUndefined()
+    expect(values.x).toBe('def')
+    expect(explicit.x).toBe(false)
+  })
 })
 
 describe('number option without a value', () => {

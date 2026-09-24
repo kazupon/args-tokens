@@ -272,7 +272,9 @@ export interface ArgSchema {
    * - `positional`/`custom` type: string, boolean, or number default
    *
    * The default is used as is and never goes through `parse`, including when an option is given
-   * without a value.
+   * without a value. An explicit empty value, such as `--name=` or `-n ''`, is a value, not a
+   * missing one: a `string` option without `parse` gets `''` instead of the default, unless it is
+   * `required`.
    *
    * For single-value positional arguments, the default is used when the positional
    * value is missing or when the value is preserved for later required positional
@@ -1257,7 +1259,7 @@ function parse(
     case 'string': {
       // prettier-ignore
       return typeof token.value === 'string'
-        ? [token.value || schema.default, undefined]
+        ? [token.value, undefined]
         : [undefined, createTypeError(rawArg, option, schema, token.value)]
     }
     case 'boolean': {
@@ -1272,7 +1274,7 @@ function parse(
       return [+token.value, undefined]
     }
     case 'enum': {
-      return [token.value || schema.default, undefined]
+      return [token.value, undefined]
     }
     case 'custom': {
       // When schema.parse is defined, it's handled by the priority check above.

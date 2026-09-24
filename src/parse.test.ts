@@ -89,3 +89,11 @@ test('short option with its value in the same argument, followed by a positional
   expect(values.port).toBe(5)
   expect(positionals).toEqual(['file.txt'])
 })
+
+test('string option with a default and an explicit empty value', () => {
+  const { values, error } = parse(['--name='], {
+    args: { name: { type: 'string', default: 'def' } }
+  })
+  expect(error).toBeUndefined()
+  expect(values.name).toBe('')
+})
