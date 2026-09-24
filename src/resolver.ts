@@ -273,7 +273,8 @@ export interface ArgSchema {
    *
    * The default is used as is and never goes through `parse`, including when an option is given
    * without a value. An explicit empty value, such as `--name=` or `-n ''`, is a value, not a
-   * missing one: a `string` option gets `''` instead of the default.
+   * missing one: a `string` option without `parse` gets `''` instead of the default, unless it is
+   * `required`.
    *
    * For single-value positional arguments, the default is used when the positional
    * value is missing or when the value is preserved for later required positional
