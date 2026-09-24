@@ -1481,8 +1481,8 @@ function createTypeError(
  *
  * `expected` names what the option takes: its type, or for a `custom` type its `metavar` (for
  * example `'integer'` for the `integer()` combinator). An `enum` also gets its choices. When the
- * argument after the option may be a value that starts with `-`, the error suggests the long form
- * with `=`, which passes such a value in every mode of the tokenizer.
+ * argument after the option may be a value that starts with `-` and the option accepts it, the error
+ * suggests the long form with `=`, which passes such a value in every mode of the tokenizer.
  *
  * @param rawArg - The argument key in the schema
  * @param option - The option name used on the command line
@@ -1497,7 +1497,8 @@ function createMissingValueError(
   next: string | undefined
 ): ArgResolveError {
   const displayName = createOptionDisplayName(option, schema)
-  const suggestion = next === undefined ? undefined : `--${option}=${next}`
+  const suggestion =
+    next === undefined || !acceptsSuggestedValue(schema, next) ? undefined : `--${option}=${next}`
   const hint =
     suggestion === undefined ? '' : ` (to pass '${next}' as its value, write '${suggestion}')`
   const choices = schema.choices ?? []
@@ -1515,7 +1516,7 @@ function createMissingValueError(
         ...(schema.type === 'enum'
           ? { choices: formatChoices(choices), choiceValues: [...choices] }
           : {}),
-        ...(next === undefined ? {} : { next, suggestion })
+        ...(suggestion === undefined ? {} : { next, suggestion })
       }
     }
   )
@@ -1604,6 +1605,28 @@ function createKnownOptionNames(
     }
   }
   return { long, short }
+}
+
+/**
+ * Check whether an option accepts the argument after it as its value, before suggesting it.
+ *
+ * Only what can be checked without calling a `parse` function is checked: the value of a `number`
+ * option must be numeric, as the error expects a number, and the value of an `enum` option with
+ * `choices` must be one of them, which is checked before any `parse` function. Other options are
+ * taken to accept it.
+ *
+ * @param schema - The argument schema
+ * @param value - The argument after the option
+ * @returns Whether the option accepts the value
+ */
+function acceptsSuggestedValue(schema: ArgSchema, value: string): boolean {
+  if (schema.type === 'number') {
+    return isNumeric(value)
+  }
+  if (schema.type === 'enum' && schema.choices) {
+    return schema.choices.includes(value)
+  }
+  return true
 }
 
 function createUnexpectedValueError(

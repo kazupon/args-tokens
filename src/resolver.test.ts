@@ -3966,7 +3966,6 @@ describe('option given without a value followed by an argument starting with -',
     },
     { label: '--port -5.5', argv: ['--port', '-5.5'], values: port, next: '-5.5' },
     { label: '--port -1e3', argv: ['--port', '-1e3'], values: port, next: '-1e3' },
-    { label: '--port -vx', argv: ['--port', '-vx'], values: port, next: '-vx' },
     {
       label: '--max-count -5',
       argv: ['--max-count', '-5'],
@@ -4067,16 +4066,17 @@ describe('option given without a value followed by an argument starting with -',
   })
 
   test('an enum keeps its choices next to the suggestion', () => {
-    const choices = ['debug', 'info']
-    const result = resolveArgs({ level: { type: 'enum', choices } }, parseArgs(['--level', '-d']))
+    // a value starting with `-` is suggested only when it is one of the choices
+    const choices = ['-1', '0', '1']
+    const result = resolveArgs({ level: { type: 'enum', choices } }, parseArgs(['--level', '-1']))
     expectMissingValueError(result.error, {
       displayName: "'--level'",
       name: 'level',
       expected: 'enum',
-      choices: '"debug", "info"',
-      choiceValues: ['debug', 'info'],
-      next: '-d',
-      suggestion: '--level=-d'
+      choices: '"-1", "0", "1"',
+      choiceValues: ['-1', '0', '1'],
+      next: '-1',
+      suggestion: '--level=-1'
     })
     // a copy, so changing it does not change the schema
     expect((result.error?.errors[0] as ArgResolveError).values.choiceValues).not.toBe(choices)
