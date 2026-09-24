@@ -1388,10 +1388,9 @@ describe('explicit empty value of a string or enum option', () => {
         parseArgs(argv),
         { shortGrouping }
       )
-      const mode = `shortGrouping: ${shortGrouping}`
-      expect(error, mode).toBeUndefined()
-      expect(values, mode).toEqual({ x: '' })
-      expect(explicit.x, mode).toBe(true)
+      expect(error, `shortGrouping: ${shortGrouping}`).toBeUndefined()
+      expect(values, `shortGrouping: ${shortGrouping}`).toEqual({ x: '' })
+      expect(explicit.x, `shortGrouping: ${shortGrouping}`).toBe(true)
     }
   })
 
@@ -1402,9 +1401,8 @@ describe('explicit empty value of a string or enum option', () => {
         parseArgs(argv),
         { shortGrouping }
       )
-      const mode = `shortGrouping: ${shortGrouping}`
-      expect(error, mode).toBeUndefined()
-      expect(values.x, mode).toBe('')
+      expect(error, `shortGrouping: ${shortGrouping}`).toBeUndefined()
+      expect(values.x, `shortGrouping: ${shortGrouping}`).toBe('')
     }
   })
 
