@@ -586,7 +586,7 @@ Converts the argument name from camelCase to kebab-case for CLI usage. A propert
 
 Custom parsing function for `type: 'custom'` arguments. Required when `type: 'custom'`. Should throw an Error if parsing fails.
 
-`parse` receives the value from the command line. When the option is given without a value, `parse` is not called and the missing value is reported as a validation error. An explicit empty value such as `--config=` is passed as `''`.
+`parse` receives the value from the command line, or `'true'` / `'false'` for a `boolean` option. When an option other than `boolean` is given without a value, `parse` is not called and the missing value is reported as a validation error. An explicit empty value given with the long name, such as `--config=`, is passed as `''` unless `required: true` is set.
 
 <!-- eslint-skip -->
 

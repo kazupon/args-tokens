@@ -265,8 +265,8 @@ export interface ArgSchema {
    * - `enum` type: must be one of the `choices` values
    * - `positional`/`custom` type: string, boolean, or number default
    *
-   * The default is used as is and never goes through `parse`. It is also filled in when an
-   * option is given without a value, next to the validation error for the missing value.
+   * The default is used as is and never goes through `parse`, including when an option is given
+   * without a value.
    *
    * For single-value positional arguments, the default is used when the positional
    * value is missing or when the value is preserved for later required positional
@@ -441,10 +441,12 @@ export interface ArgSchema {
    *
    * The function's return type becomes the resolved argument type.
    *
-   * `parse` is only called with a value from the command line. When the option is given without
-   * a value, `parse` is not called and the missing value is reported as a validation error
-   * (`err:arg:invalid-choice` for `enum`, `err:arg:invalid-type` otherwise). An explicit empty
-   * value such as `--name=` is passed as `''`.
+   * A `boolean` option calls `parse` with `'true'`, or `'false'` for the negated form. Other
+   * options call it only with a value from the command line: when the option is given without a
+   * value, `parse` is not called and the missing value is reported as a validation error
+   * (`err:arg:required-option` when `required: true` is set, `err:arg:invalid-choice` for `enum`,
+   * `err:arg:invalid-type` otherwise). An explicit empty value given with the long name, such as
+   * `--name=`, is passed as `''` unless `required: true` is set.
    *
    * @param value - Raw string value from command line
    * @returns Parsed value of any type
