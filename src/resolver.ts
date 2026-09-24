@@ -150,8 +150,7 @@ export interface ArgSchema {
    * If missing, an `ArgResolveError` with type 'required' will be thrown.
    * An option that is given without a value is reported as `err:arg:missing-value`
    * ({@link ArgsValidationErrorKeys}.missingValue) instead, because the option itself was given.
-   * An explicit empty value given with the long name, such as `--name=`, is still reported as
-   * required.
+   * An explicit empty value, such as `--name=` or `-n ''`, is still reported as required.
    *
    * For single-value positional arguments, omitting `required` keeps the argument
    * required for compatibility. Set `required: false` to make a positional argument
@@ -451,8 +450,8 @@ export interface ArgSchema {
    * A `boolean` option calls `parse` with `'true'`, or `'false'` for the negated form. Other
    * options call it only with a value from the command line: when the option is given without a
    * value, `parse` is not called and the missing value is reported as `err:arg:missing-value`
-   * ({@link ArgsValidationErrorKeys}.missingValue). An explicit empty value given with the long
-   * name, such as `--name=`, is passed as `''` unless `required: true` is set.
+   * ({@link ArgsValidationErrorKeys}.missingValue). An explicit empty value, such as `--name=` or
+   * `-n=`, is passed as `''` unless `required: true` is set.
    *
    * An `enum` option with `choices` calls it only with one of them. Any other value, an explicit
    * empty one included, is reported as `err:arg:invalid-choice`

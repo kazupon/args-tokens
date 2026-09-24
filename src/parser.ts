@@ -43,7 +43,7 @@ export interface ArgToken {
    */
   rawName?: string
   /**
-   * Option value, e.g. `--foo=bar` => `bar`, `-x=bar` => `bar`, `-x=-1` => `-1`.
+   * Option value, e.g. `--foo=bar` => `bar`, `-x=bar` => `bar`, `-x=-1` => `-1`, `-x=` => `''`.
    * If the `allowCompatible` option is `true`, short option value will be same as Node.js `parseArgs` behavior.
    */
   value?: string
