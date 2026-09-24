@@ -4470,7 +4470,6 @@ describe('option given without a value followed by an argument starting with -',
       options: { shortGrouping: true },
       values: port
     },
-    // a long option with an inline value comes before `-v` in the resolved order
     {
       label: '-pv --foo=bar with shortGrouping',
       argv: ['-pv', '--foo=bar'],
