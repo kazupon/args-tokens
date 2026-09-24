@@ -2972,6 +2972,17 @@ describe('options resolved in the order of the arguments', () => {
   })
 
   test.each([false, true])(
+    'a boolean short option gives way to the long option with = after it (shortGrouping: %s)',
+    shortGrouping => {
+      const { values, error } = resolveArgs(args, parseArgs(['-o', '--other=false']), {
+        shortGrouping
+      })
+      expect(error).toBeUndefined()
+      expect(values.other).toBe(false)
+    }
+  )
+
+  test.each([false, true])(
     'the errors of one option keep the order of the arguments (shortGrouping: %s)',
     shortGrouping => {
       const { error } = resolveArgs(args, parseArgs(['-H', '--ch=']), { shortGrouping })
