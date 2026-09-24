@@ -100,7 +100,7 @@ describe('short options', () => {
       ])
     })
 
-    test.each(['-5', '-5.5', '--', '--foo', '-', '-a=b'])(
+    test.each(['-5', '-5.5', '--', '--foo', '---', '-', '-a=b', '-é', ' '])(
       'a value %s is read like any other value',
       value => {
         for (const group of ['-p', '-ab']) {
@@ -131,8 +131,14 @@ describe('short options', () => {
       ])
     })
 
-    test('a value without an option before = is a positional argument', () => {
+    test('a value without an option before = is read as another argument', () => {
       expect(parseArgs(['-=5'])).toEqual([{ kind: 'positional', index: 0, value: '5' }])
+      // no option takes the value, so `-abc` is read as short options
+      expect(parseArgs(['-=-abc'])).toEqual([
+        { kind: 'option', name: 'a', rawName: '-a', index: 0 },
+        { kind: 'option', name: 'b', rawName: '-b', index: 0 },
+        { kind: 'option', name: 'c', rawName: '-c', index: 0 }
+      ])
     })
 
     test('allowCompatible keeps the node:util tokens', () => {

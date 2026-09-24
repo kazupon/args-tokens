@@ -1033,6 +1033,18 @@ describe('short option with a value after =', () => {
     expect(rest).toEqual([])
   })
 
+  test.each([false, true])(
+    'a boolean option rejects a value starting with - like any other value (shortGrouping: %s)',
+    shortGrouping => {
+      const { values, error } = resolveArgs(args, parseArgs(['-v=-5']), { shortGrouping })
+      expect(error?.errors.length).toBe(1)
+      const resolveError = error?.errors[0] as ArgResolveError
+      expect(resolveError.code).toBe(ArgsValidationErrorKeys.invalidType)
+      expect(resolveError.values.actual).toBe('-5')
+      expect(values.verbose).toBeUndefined()
+    }
+  )
+
   test('the value goes to the last option of a group with shortGrouping', () => {
     const { values, error } = resolveArgs(args, parseArgs(['-vp=-5']), { shortGrouping: true })
     expect(error).toBeUndefined()
@@ -3997,6 +4009,8 @@ describe('option given without a value followed by an argument starting with -',
       values: port
     },
     { label: '--name -x=1', argv: ['--name', '-x=1'], values: name },
+    // the value after `=` is kept, so the argument is not rebuilt as `-x5`
+    { label: '--name -x=-5', argv: ['--name', '-x=-5'], values: name },
     { label: '--name --port=5', argv: ['--name', '--port=5'], values: name }
   ])('$label suggests nothing', ({ argv, options, values }) => {
     const result = resolveArgs(args, parseArgs(argv), options)
