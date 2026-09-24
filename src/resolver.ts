@@ -972,12 +972,14 @@ export function resolveArgs<A extends Args>(
         }
       } else {
         // short option value
-        if (currentShortOption && currentShortOption.index == token.index && token.inlineValue) {
-          // without shortGrouping, the other letters of the group come before `=` and are part of the value
+        if (currentShortOption && currentShortOption.index == token.index) {
+          // without shortGrouping, the other letters of the group come before the value and are part of it
           const letters = toShortValue()
           currentShortOption.value =
-            letters === undefined ? token.value : `${letters}=${token.value ?? ''}`
-          currentShortOption.inlineValue = true
+            letters === undefined
+              ? token.value
+              : `${letters}${token.inlineValue ? '=' : ''}${token.value ?? ''}`
+          currentShortOption.inlineValue = token.inlineValue
           optionTokens.push({ ...currentShortOption })
           currentShortOption = undefined
         }
@@ -1543,7 +1545,7 @@ function createMissingValueError(
  * The option must end its own argument (with `shortGrouping`, `-pv` gives `-p` no value because of
  * `-v`), and the next argument must be written as options that are not all defined, such as `-5`
  * or `--foo`. The argument is rebuilt from its tokens. Without `allowCompatible`, a short option
- * written with `=`, such as `-x=1` or `-x=`, has a value, and is not suggested.
+ * written with a value, such as `-x=1`, `-x=` or `-x-1`, has a value, and is not suggested.
  *
  * @param tokens - The tokens given to `resolveArgs()`
  * @param optionTokens - The option tokens that `resolveArgs()` resolves

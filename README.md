@@ -154,6 +154,8 @@ console.log(tokens)
 
 When short options are written with `=` and a value, such as `-p=-5` or `-ab=-1`, the rest of the argument is the value of the last option, even when it starts with `-`: `-n=--` gives the value `--`, not the option terminator. `-p=` gives an empty value, as `--port=` does, and `allowCompatible: true` keeps the `node:util` tokens. With `shortGrouping: true`, `resolveArgs()` gives the value after `=` to the last option. With `shortGrouping: false`, the default of `resolveArgs()` and `parse()`, the other letters of the group are the value of its first option, as in `-p5`: `-ab=-1` gives `-a` the value `b=-1`.
 
+A `-` inside a group, as in `-o-` or `-p-5`, does not end the options: the rest of the group from the `-` is the value of the option before it, in a value token with `inlineValue: false`, since no `=` is written. So `-o- input.txt` gives `-o` the value `-`, and `input.txt` is read as usual. Unlike `node:util`, where `inlineValue: false` means that the value is the next argument, this value token is in the same argument and has its `index`. With `shortGrouping: false`, `resolveArgs()` gives the first option the other letters and that value, as in `-Wno-unused` (`no-unused`) and `-ab-c` (`-a` gets `b-c`), and with `shortGrouping: true` the last option gets it. A boolean option ignores such a value, as it ignores `false` in `-sfalse`. `allowCompatible: true` keeps the `node:util` tokens, where the `-` becomes the option terminator.
+
 ## 💿 Installation
 
 ```sh
@@ -315,7 +317,7 @@ for (const cause of error?.errors ?? []) {
 
 The resolver uses stable error codes for required options, required positionals, options given without a value, invalid types, invalid choices, custom parse failures, and values given to options that do not take one. The `values` object contains interpolation data such as `name`, `displayName`, `rawName`, `expected`, `actual`, `choices`, `choiceValues`, `reason`, `next`, and `suggestion` depending on the error kind.
 
-An option that takes a value reports `ArgsValidationErrorKeys.missingValue` when it is given without one, including a required option. The tokens are made without the schema, as `node:util` `parseArgs` makes them without option definitions, so `--port -5` is read as `--port` followed by the option `-5`, and a value that starts with `-` has to be written with `=`, such as `--port=-5` or `-p=-5`. When the option ends its argument and the next argument is one long option or a group of short options, such as `-5`, `-5.5` or `--foo`, that are not all in the schema, the error has `next` (`'-5'`) and `suggestion` (`'--port=-5'`) in `values`, and the message suggests that form:
+An option that takes a value reports `ArgsValidationErrorKeys.missingValue` when it is given without one, including a required option. The tokens are made without the schema, as `node:util` `parseArgs` makes them without option definitions, so `--port -5` is read as `--port` followed by the option `-5`, and a value that starts with `-` has to be written with `=` or attached to a short option, such as `--port=-5`, `-p=-5` or `-p-5`. When the option ends its argument and the next argument is one long option or a group of short options, such as `-5`, `-5.5` or `--foo`, that are not all in the schema, the error has `next` (`'-5'`) and `suggestion` (`'--port=-5'`) in `values`, and the message suggests that form:
 
 ```
 Optional argument '--port' requires a value (to pass '-5' as its value, write '--port=-5')

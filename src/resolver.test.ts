@@ -1189,6 +1189,16 @@ describe('short option group without shortGrouping', () => {
       expect(error).toBeUndefined()
       expect(values.name).toBe('f=')
     })
+
+    test('a value token without inlineValue, which parseArgs does not make, is joined without =', () => {
+      const { values, error } = resolveArgs(args, [
+        { kind: 'option', name: 'n', rawName: '-n', index: 0 },
+        { kind: 'option', name: 'f', rawName: '-f', index: 0 },
+        { kind: 'option', index: 0, value: 'x' }
+      ])
+      expect(error).toBeUndefined()
+      expect(values.name).toBe('fx')
+    })
   })
 
   describe('a positional argument after the group', () => {
@@ -1297,6 +1307,76 @@ describe('short option with a value after =', () => {
     expect(error).toBeUndefined()
     expect(values.port).toBe(-5)
     expect(values.verbose).toBe(true)
+  })
+})
+
+describe('short option with a value after -', () => {
+  const args = {
+    output: { type: 'string', short: 'o' },
+    name: { type: 'string', short: 'n' },
+    port: { type: 'number', short: 'p' },
+    verbose: { type: 'boolean', short: 'v' },
+    extract: { type: 'boolean', short: 'x' },
+    file: { type: 'string', short: 'f' },
+    warn: { type: 'string', short: 'W' },
+    define: { type: 'string', short: 'D', multiple: true },
+    alpha: { type: 'string', short: 'a' },
+    beta: { type: 'string', short: 'b' }
+  } as const satisfies Args
+
+  test.each([
+    { argv: ['-o-', 'input.txt'], values: { output: '-' }, positionals: ['input.txt'] },
+    { argv: ['-p-5'], values: { port: -5 }, positionals: [] },
+    {
+      argv: ['-n-foo', '--verbose', 'file'],
+      values: { name: '-foo', verbose: true },
+      positionals: ['file']
+    },
+    // a boolean option ignores a value that is not written with `=`, as in `-sfalse`
+    { argv: ['-v-', 'file'], values: { verbose: true }, positionals: ['file'] },
+    { argv: ['-o-=', 'x'], values: { output: '-=' }, positionals: ['x'] }
+  ])('$argv reads the rest of the group from - as a value', ({ argv, values, positionals }) => {
+    for (const shortGrouping of [false, true]) {
+      const result = resolveArgs(args, parseArgs(argv), { shortGrouping })
+      expect(result.error, `shortGrouping: ${shortGrouping}`).toBeUndefined()
+      expect(result.values, `shortGrouping: ${shortGrouping}`).toEqual(values)
+      expect(result.positionals, `shortGrouping: ${shortGrouping}`).toEqual(positionals)
+      expect(result.rest, `shortGrouping: ${shortGrouping}`).toEqual([])
+    }
+  })
+
+  test.each([
+    { argv: ['-Wno-unused'], values: { warn: 'no-unused' } },
+    { argv: ['-Dfoo-bar'], values: { define: ['foo-bar'] } },
+    { argv: ['-ab-c'], values: { alpha: 'b-c' } }
+  ])(
+    'without shortGrouping, $argv gives the first option the rest of the group',
+    ({ argv, values }) => {
+      const result = resolveArgs(args, parseArgs(argv))
+      expect(result.error).toBeUndefined()
+      expect(result.values).toEqual(values)
+    }
+  )
+
+  test('with shortGrouping, the value goes to the last option of the group', () => {
+    const { values, error } = resolveArgs(args, parseArgs(['-xf-']), { shortGrouping: true })
+    expect(error).toBeUndefined()
+    expect(values).toEqual({ extract: true, file: '-' })
+  })
+
+  test.each([false, true])(
+    'a group after a group with - keeps its value written with = (shortGrouping: %s)',
+    shortGrouping => {
+      const { values, error } = resolveArgs(args, parseArgs(['-o-', '-v=false']), { shortGrouping })
+      expect(error).toBeUndefined()
+      expect(values).toEqual({ output: '-', verbose: false })
+    }
+  )
+
+  test('without shortGrouping, a group after a group with - joins its value with =', () => {
+    const { values, error } = resolveArgs(args, parseArgs(['-o-', '-nx=y']))
+    expect(error).toBeUndefined()
+    expect(values).toEqual({ output: '-', name: 'x=y' })
   })
 })
 
@@ -4609,11 +4689,12 @@ describe('option given without a value followed by an argument starting with -',
     expect(result.values).not.toHaveProperty(values.name)
   })
 
-  test('--name -p-5 suggests nothing for either option', () => {
+  test('--name -p-5 suggests nothing, as -p takes -5', () => {
     const result = resolveArgs(args, parseArgs(['--name', '-p-5']))
-    // `-p-5` is split into `-p`, the option terminator and `-5`
-    expectMissingValueErrors(result.error, [port, name])
-    expect(result.rest).toEqual(['-5'])
+    // `-p-5` is `-p` with the value `-5`, which has a value token
+    expectMissingValueErrors(result.error, [name])
+    expect(result.values.port).toBe(-5)
+    expect(result.rest).toEqual([])
   })
 
   test('only the last of a repeated short option in one argument gets a suggestion', () => {
