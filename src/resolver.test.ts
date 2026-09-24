@@ -4664,11 +4664,12 @@ describe('option given without a value followed by an argument starting with -',
     expect(result.values).not.toHaveProperty(values.name)
   })
 
-  test('--name -p-5 suggests nothing for either option', () => {
+  test('--name -p-5 suggests nothing, as -p takes -5', () => {
     const result = resolveArgs(args, parseArgs(['--name', '-p-5']))
-    // `-p-5` is split into `-p`, the option terminator and `-5`
-    expectMissingValueErrors(result.error, [port, name])
-    expect(result.rest).toEqual(['-5'])
+    // `-p-5` is `-p` with the value `-5`, which has a value token
+    expectMissingValueErrors(result.error, [name])
+    expect(result.values.port).toBe(-5)
+    expect(result.rest).toEqual([])
   })
 
   test('only the last of a repeated short option in one argument gets a suggestion', () => {

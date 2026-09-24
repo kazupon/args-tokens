@@ -99,6 +99,7 @@ export function parseArgs(args: string[], options: ParserOptions = {}): ArgToken
   let index = -1
   let groupCount = 0
   let hasShortGroupValue = false
+  let shortGroupValueInline = true
 
   while (remainings.length > 0) {
     const arg = remainings.shift()
@@ -141,10 +142,11 @@ export function parseArgs(args: string[], options: ParserOptions = {}): ArgToken
           value,
           inlineValue
         })
-        // the last element of a group written with `=` is the value, even when it starts with `-`
+        // the last element of a group with a value after `=` or `-` is the value, even when it
+        // starts with `-`
         if (groupCount === 1 && hasShortGroupValue) {
           value = remainings.shift()
-          inlineValue = true
+          inlineValue = shortGroupValueInline
           hasShortGroupValue = false
           tokens.push({
             kind: 'option',
@@ -175,6 +177,7 @@ export function parseArgs(args: string[], options: ParserOptions = {}): ArgToken
       // expand short option group (e.g. `-abc` => `-a -b -c`, `-f=bar` => `-f bar`)
       const expanded = []
       let separated = false
+      let dashed = false
       let shortValue = ''
       for (let i = 1; i < arg.length; i++) {
         const shortableOption = arg.charAt(i)
@@ -183,6 +186,12 @@ export function parseArgs(args: string[], options: ParserOptions = {}): ArgToken
         } else {
           if (!allowCompatible && shortableOption.codePointAt(0) === EQUAL_CODE) {
             separated = true
+          } else if (!allowCompatible && shortableOption.codePointAt(0) === HYPHEN_CODE) {
+            // a `-` does not end the options: the rest of the group, `-` included, is the value of
+            // the option before it, written without `=`
+            separated = true
+            dashed = true
+            shortValue += shortableOption
           } else {
             expanded.push(`${SHORT_OPTION_PREFIX}${shortableOption}`)
           }
@@ -191,6 +200,7 @@ export function parseArgs(args: string[], options: ParserOptions = {}): ArgToken
       // decided for each group, so that a group does not change how the arguments after it are read
       // an empty value after `=` is a value too
       hasShortGroupValue = separated
+      shortGroupValueInline = !dashed
       if (separated) {
         expanded.push(shortValue)
       }
