@@ -999,60 +999,6 @@ export function resolveArgs<A extends Args>(
     return requiredPositionalsAfter[rawArg] ?? 0
   }
 
-  // names of the defined options, built only when an option is given without a value
-  let knownOptionNames: { long: Set<string>; short: Set<string> } | undefined
-  function getKnownOptionNames(): { long: Set<string>; short: Set<string> } {
-    if (knownOptionNames) {
-      return knownOptionNames
-    }
-    const long = new Set<string>()
-    const short = new Set<string>()
-    for (const [rawArg, schema] of argEntries) {
-      if (schema.type === 'positional') {
-        continue
-      }
-      const name = getOptionName(rawArg, schema)
-      long.add(name)
-      if (schema.type === 'boolean' && schema.negatable === true) {
-        long.add(`no-${name}`)
-      }
-      if (schema.short) {
-        short.add(schema.short)
-      }
-    }
-    return (knownOptionNames = { long, short })
-  }
-
-  // the argument right after an option given without a value, as written, when it looks like an
-  // option but is not made only of the defined ones: it may be a value starting with `-`
-  function findOptionLikeNextArgument(
-    token: ArgToken,
-    nextOptionToken: ArgToken | undefined
-  ): string | undefined {
-    // the option must end its own argument (`-pv` gives `-p` no value because of `-v`)
-    if (nextOptionToken != null && nextOptionToken.index === token.index) {
-      return undefined
-    }
-    const nextArg = tokens.filter(t => t.index === token.index + 1)
-    if (nextArg.length === 0 || nextArg.some(t => t.kind !== 'option' || t.rawName == null)) {
-      return undefined
-    }
-    const { long, short } = getKnownOptionNames()
-    let text: string
-    let known: boolean
-    if (nextArg.length === 1 && hasLongOptionPrefix(nextArg[0].rawName!)) {
-      const [option] = nextArg
-      text = option.inlineValue ? `${option.rawName}=${option.value}` : option.rawName!
-      known = long.has(option.name!)
-    } else if (nextArg.every(t => isShortOption(t.rawName!) && t.value === undefined)) {
-      text = `-${nextArg.map(t => t.name).join('')}`
-      known = nextArg.every(t => short.has(t.name!))
-    } else {
-      return undefined
-    }
-    return known ? undefined : text
-  }
-
   let positionalsCount = 0
   for (const [rawArg, schema] of argEntries) {
     const arg = getOptionName(rawArg, schema)
@@ -1196,7 +1142,7 @@ export function resolveArgs<A extends Args>(
                 rawArg,
                 arg,
                 schema,
-                findOptionLikeNextArgument(token, optionTokens[i + 1])
+                findOptionLikeNextArgument(tokens, token, optionTokens[i + 1], argEntries, toKebab)
               )
             ]
           : parse(token, rawArg, arg, schema)
@@ -1560,6 +1506,80 @@ function createMissingValueError(
       }
     }
   )
+}
+
+/**
+ * Find the argument right after an option that is given without a value, when it may be a value
+ * that starts with `-`.
+ *
+ * The option must end its own argument (`-pv` gives `-p` no value because of `-v`), and the next
+ * argument must be written as options that are not all defined, such as `-5` or `--foo`.
+ *
+ * @param tokens - The tokens given to `resolveArgs()`
+ * @param token - The option token given without a value
+ * @param nextOptionToken - The option token after it, in the order `resolveArgs()` resolved them
+ * @param argEntries - The argument schemas
+ * @param toKebab - Whether every option name is converted to kebab-case
+ * @returns The next argument as written, or `undefined` when there is nothing to suggest
+ */
+function findOptionLikeNextArgument(
+  tokens: ArgToken[],
+  token: ArgToken,
+  nextOptionToken: ArgToken | undefined,
+  argEntries: [string, ArgSchema][],
+  toKebab: boolean
+): string | undefined {
+  if (nextOptionToken != null && nextOptionToken.index === token.index) {
+    return undefined
+  }
+  const nextArg = tokens.filter(t => t.index === token.index + 1)
+  if (nextArg.length === 0 || nextArg.some(t => t.kind !== 'option' || t.rawName == null)) {
+    return undefined
+  }
+  let text: string
+  let known: boolean
+  if (nextArg.length === 1 && hasLongOptionPrefix(nextArg[0].rawName!)) {
+    const [option] = nextArg
+    text = option.inlineValue ? `${option.rawName}=${option.value}` : option.rawName!
+    known = createKnownOptionNames(argEntries, toKebab).long.has(option.name!)
+  } else if (nextArg.every(t => isShortOption(t.rawName!) && t.value === undefined)) {
+    text = `-${nextArg.map(t => t.name).join('')}`
+    const { short } = createKnownOptionNames(argEntries, toKebab)
+    known = nextArg.every(t => short.has(t.name!))
+  } else {
+    return undefined
+  }
+  return known ? undefined : text
+}
+
+/**
+ * Collect the names of the defined options: the long names, with the negated form of negatable
+ * booleans, and the short names.
+ *
+ * @param argEntries - The argument schemas
+ * @param toKebab - Whether every option name is converted to kebab-case
+ * @returns The long and short option names
+ */
+function createKnownOptionNames(
+  argEntries: [string, ArgSchema][],
+  toKebab: boolean
+): { long: Set<string>; short: Set<string> } {
+  const long = new Set<string>()
+  const short = new Set<string>()
+  for (const [rawArg, schema] of argEntries) {
+    if (schema.type === 'positional') {
+      continue
+    }
+    const name = toKebab || schema.toKebab ? kebabnize(rawArg) : rawArg
+    long.add(name)
+    if (schema.type === 'boolean' && schema.negatable === true) {
+      long.add(`no-${name}`)
+    }
+    if (schema.short) {
+      short.add(schema.short)
+    }
+  }
+  return { long, short }
 }
 
 function createUnexpectedValueError(
