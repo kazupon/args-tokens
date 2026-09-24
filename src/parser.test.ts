@@ -219,6 +219,26 @@ describe('short options', () => {
         { kind: 'option', index: 0, value: '-', inlineValue: false }
       ])
     })
+
+    test('a - after = is part of the value written with =', () => {
+      expect(parseArgs(['-a=b-c'])).toEqual([
+        { kind: 'option', name: 'a', rawName: '-a', index: 0 },
+        { kind: 'option', index: 0, value: 'b-c', inlineValue: true }
+      ])
+    })
+
+    test.each([{ argv: ['-o-', 'x'] }, { argv: ['-n-foo', '-v'] }])(
+      'allowCompatible keeps the node:util tokens of $argv',
+      ({ argv }) => {
+        const { tokens } = parseArgsNode({
+          allowPositionals: true,
+          strict: false,
+          args: argv,
+          tokens: true
+        })
+        expect(parseArgs(argv, { allowCompatible: true })).toEqual(tokens)
+      }
+    )
   })
 })
 
