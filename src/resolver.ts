@@ -1482,7 +1482,7 @@ function createTypeError(
  * `expected` names what the option takes: its type, or for a `custom` type its `metavar` (for
  * example `'integer'` for the `integer()` combinator). An `enum` also gets its choices. When the
  * argument after the option may be a value that starts with `-`, the error suggests the long form
- * with `=`, which is how such a value is passed.
+ * with `=`, which passes such a value in every mode of the tokenizer.
  *
  * @param rawArg - The argument key in the schema
  * @param option - The option name used on the command line

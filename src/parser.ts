@@ -43,7 +43,7 @@ export interface ArgToken {
    */
   rawName?: string
   /**
-   * Option value, e.g. `--foo=bar` => `bar`, `-x=bar` => `bar`.
+   * Option value, e.g. `--foo=bar` => `bar`, `-x=bar` => `bar`, `-x=-1` => `-1`.
    * If the `allowCompatible` option is `true`, short option value will be same as Node.js `parseArgs` behavior.
    */
   value?: string
@@ -98,7 +98,7 @@ export function parseArgs(args: string[], options: ParserOptions = {}): ArgToken
   const remainings = [...args]
   let index = -1
   let groupCount = 0
-  let hasShortValueSeparator = false
+  let hasShortGroupValue = false
 
   while (remainings.length > 0) {
     const arg = remainings.shift()
@@ -107,7 +107,6 @@ export function parseArgs(args: string[], options: ParserOptions = {}): ArgToken
       break
     }
 
-    const nextArg = remainings[0]
     if (groupCount > 0) {
       groupCount--
     } else {
@@ -142,12 +141,11 @@ export function parseArgs(args: string[], options: ParserOptions = {}): ArgToken
           value,
           inlineValue
         })
-        if (groupCount === 1 && hasOptionValue(nextArg)) {
+        // the last element of a group written with `=` is the value, even when it starts with `-`
+        if (groupCount === 1 && hasShortGroupValue) {
           value = remainings.shift()
-          if (hasShortValueSeparator) {
-            inlineValue = true
-            hasShortValueSeparator = false
-          }
+          inlineValue = true
+          hasShortGroupValue = false
           tokens.push({
             kind: 'option',
             index,
@@ -174,21 +172,24 @@ export function parseArgs(args: string[], options: ParserOptions = {}): ArgToken
     }
 
     if (isShortOptionGroup(arg)) {
-      // expend short option group (e.g. `-abc` => `-a -b -c`, `-f=bar` => `-f bar`)
+      // expand short option group (e.g. `-abc` => `-a -b -c`, `-f=bar` => `-f bar`)
       const expanded = []
+      let separated = false
       let shortValue = ''
       for (let i = 1; i < arg.length; i++) {
         const shortableOption = arg.charAt(i)
-        if (hasShortValueSeparator) {
+        if (separated) {
           shortValue += shortableOption
         } else {
           if (!allowCompatible && shortableOption.codePointAt(0) === EQUAL_CODE) {
-            hasShortValueSeparator = true
+            separated = true
           } else {
             expanded.push(`${SHORT_OPTION_PREFIX}${shortableOption}`)
           }
         }
       }
+      // decided for each group, so that a group does not change how the arguments after it are read
+      hasShortGroupValue = separated && shortValue !== ''
       if (shortValue) {
         expanded.push(shortValue)
       }
@@ -300,14 +301,4 @@ function isLongOptionAndValue(arg: string) {
  */
 export function hasLongOptionPrefix(arg: string): boolean {
   return arg.startsWith(LONG_OPTION_PREFIX) && arg.length > 2
-}
-
-/**
- * Check if a `value` is an option value.
- *
- * @param value - A value to check
- * @returns Whether a `value` is an option value.
- */
-function hasOptionValue(value: string | undefined): boolean {
-  return !(value == null) && value.codePointAt(0) !== HYPHEN_CODE
 }

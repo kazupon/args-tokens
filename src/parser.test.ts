@@ -64,6 +64,94 @@ describe('short options', () => {
     const tokens = parseArgs(args, { allowCompatible: true })
     expect(nodeTokens).toEqual(tokens)
   })
+
+  describe('value after =', () => {
+    test.each([
+      { arg: '-p=-5', value: '-5' },
+      { arg: '-n=-foo', value: '-foo' },
+      { arg: '-n=--foo', value: '--foo' },
+      { arg: '-n=--', value: '--' },
+      { arg: '-n=-', value: '-' }
+    ])('$arg keeps the value $value', ({ arg, value }) => {
+      const name = arg.charAt(1)
+      expect(parseArgs([arg])).toEqual([
+        { kind: 'option', name, rawName: `-${name}`, index: 0 },
+        { kind: 'option', index: 0, value, inlineValue: true }
+      ])
+    })
+
+    test('the value goes to the last option of the group', () => {
+      expect(parseArgs(['-ab=-1'])).toEqual([
+        { kind: 'option', name: 'a', rawName: '-a', index: 0 },
+        { kind: 'option', name: 'b', rawName: '-b', index: 0 },
+        { kind: 'option', index: 0, value: '-1', inlineValue: true }
+      ])
+    })
+
+    test.each([
+      { argv: ['-n=', '-av'] },
+      { argv: ['-n=-', '-av'] },
+      { argv: ['-p=-5', '-av', 'x'] },
+      { argv: ['-=5', '-av'] }
+    ])('$argv does not change how the next argument is read', ({ argv }) => {
+      expect(parseArgs(argv).filter(token => token.index === 1)).toEqual([
+        { kind: 'option', name: 'a', rawName: '-a', index: 1 },
+        { kind: 'option', name: 'v', rawName: '-v', index: 1 }
+      ])
+    })
+
+    test.each(['-5', '-5.5', '--', '--foo', '---', '-', '-a=b', '-é', ' '])(
+      'a value %s is read like any other value',
+      value => {
+        for (const group of ['-p', '-ab']) {
+          const tokens = parseArgs([`${group}=${value}`, '-av'])
+          const other = parseArgs([`${group}=q`, '-av'])
+          expect(tokens).toEqual(
+            other.map(token => (token.rawName == null ? { ...token, value } : token))
+          )
+        }
+      }
+    )
+
+    test.each([
+      { arg: '-n=a=b', value: 'a=b' },
+      { arg: '-n==', value: '=' }
+    ])('$arg keeps the value $value', ({ arg, value }) => {
+      expect(parseArgs([arg])).toEqual([
+        { kind: 'option', name: 'n', rawName: '-n', index: 0 },
+        { kind: 'option', index: 0, value, inlineValue: true }
+      ])
+    })
+
+    test('an empty value after = gives no value', () => {
+      expect(parseArgs(['-n='])).toEqual([{ kind: 'option', name: 'n', rawName: '-n', index: 0 }])
+      expect(parseArgs(['-ab='])).toEqual([
+        { kind: 'option', name: 'a', rawName: '-a', index: 0 },
+        { kind: 'option', name: 'b', rawName: '-b', index: 0 }
+      ])
+    })
+
+    test('a value without an option before = is read as another argument', () => {
+      expect(parseArgs(['-=5'])).toEqual([{ kind: 'positional', index: 0, value: '5' }])
+      // no option takes the value, so `-abc` is read as short options
+      expect(parseArgs(['-=-abc'])).toEqual([
+        { kind: 'option', name: 'a', rawName: '-a', index: 0 },
+        { kind: 'option', name: 'b', rawName: '-b', index: 0 },
+        { kind: 'option', name: 'c', rawName: '-c', index: 0 }
+      ])
+    })
+
+    test('allowCompatible keeps the node:util tokens', () => {
+      const args = ['-p=-5']
+      const { tokens } = parseArgsNode({
+        allowPositionals: true,
+        strict: false,
+        args,
+        tokens: true
+      })
+      expect(parseArgs(args, { allowCompatible: true })).toEqual(tokens)
+    })
+  })
 })
 
 describe('long options', () => {
