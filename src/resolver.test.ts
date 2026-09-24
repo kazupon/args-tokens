@@ -1165,19 +1165,23 @@ describe('number option without a value', () => {
     expect(resolveError.values).not.toHaveProperty('actual')
   })
 
-  // #617 will change this: an option with a parse function gets '' when no value is given
-  test('a number option with a parse function keeps its current result (#617)', () => {
+  test('a number option with a parse function reports the missing value (#617)', () => {
+    const received: string[] = []
     const { values, error } = resolveArgs(
       {
         port: {
           type: 'number',
-          parse: (value: string) => Number(value)
+          parse: (value: string) => {
+            received.push(value)
+            return Number(value)
+          }
         }
       },
       parseArgs(['--port'])
     )
-    expect(error).toBeUndefined()
-    expect(values.port).toBe(0)
+    expectMissingNumberValue(error, "'--port'")
+    expect(values.port).toBeUndefined()
+    expect(received).toEqual([])
   })
 })
 
