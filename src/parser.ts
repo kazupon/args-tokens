@@ -50,7 +50,8 @@ export interface ArgToken {
   value?: string
   /**
    * Inline value, e.g. `--foo=bar` => `true`, `-x=bar` => `true`, `-x-1` => `false`, since no `=`
-   * is written.
+   * is written. Unlike Node.js `parseArgs`, `false` does not mean that the value is the next
+   * argument: the value token of `-x-1` has the `index` of that argument.
    */
   inlineValue?: boolean
 }
