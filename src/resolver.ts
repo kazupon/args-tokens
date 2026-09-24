@@ -1142,7 +1142,7 @@ export function resolveArgs<A extends Args>(
                 rawArg,
                 arg,
                 schema,
-                findOptionLikeNextArgument(tokens, token, optionTokens[i + 1], argEntries, toKebab)
+                findOptionLikeNextArgument(tokens, optionTokens, i, argEntries, toKebab)
               )
             ]
           : parse(token, rawArg, arg, schema)
@@ -1512,25 +1512,32 @@ function createMissingValueError(
  * Find the argument right after an option that is given without a value, when it may be a value
  * that starts with `-`.
  *
- * The option must end its own argument (`-pv` gives `-p` no value because of `-v`), and the next
- * argument must be written as options that are not all defined, such as `-5` or `--foo`.
+ * The option must end its own argument (with `shortGrouping`, `-pv` gives `-p` no value because of
+ * `-v`), and the next argument must be written as options that are not all defined, such as `-5`
+ * or `--foo`. The argument is rebuilt from its tokens, so a form that the tokens do not keep comes
+ * back in the form that has the same tokens: `-x=` comes back as `-x`.
  *
  * @param tokens - The tokens given to `resolveArgs()`
- * @param token - The option token given without a value
- * @param nextOptionToken - The option token after it, in the order `resolveArgs()` resolved them
+ * @param optionTokens - The option tokens that `resolveArgs()` resolves
+ * @param position - The position of the option given without a value in `optionTokens`
  * @param argEntries - The argument schemas
  * @param toKebab - Whether every option name is converted to kebab-case
- * @returns The next argument as written, or `undefined` when there is nothing to suggest
+ * @returns The next argument rebuilt from its tokens, or `undefined` when there is nothing to suggest
  */
 function findOptionLikeNextArgument(
   tokens: ArgToken[],
-  token: ArgToken,
-  nextOptionToken: ArgToken | undefined,
+  optionTokens: ArgToken[],
+  position: number,
   argEntries: [string, ArgSchema][],
   toKebab: boolean
 ): string | undefined {
-  if (nextOptionToken != null && nextOptionToken.index === token.index) {
-    return undefined
+  const token = optionTokens[position]
+  // `optionTokens` is not always in the order of the arguments: a long option with an inline value
+  // is added before a short option that still waits for its value. So look at every later token.
+  for (let i = position + 1; i < optionTokens.length; i++) {
+    if (optionTokens[i].index === token.index) {
+      return undefined
+    }
   }
   const nextArg = tokens.filter(t => t.index === token.index + 1)
   if (nextArg.length === 0 || nextArg.some(t => t.kind !== 'option' || t.rawName == null)) {
@@ -1542,7 +1549,10 @@ function findOptionLikeNextArgument(
     const [option] = nextArg
     text = option.inlineValue ? `${option.rawName}=${option.value}` : option.rawName!
     known = createKnownOptionNames(argEntries, toKebab).long.has(option.name!)
-  } else if (nextArg.every(t => isShortOption(t.rawName!) && t.value === undefined)) {
+  } else if (
+    // tokens from `parseArgs()` never put a value on a short option, but other tokens may
+    nextArg.every(t => isShortOption(t.rawName!) && t.value === undefined)
+  ) {
     text = `-${nextArg.map(t => t.name).join('')}`
     const { short } = createKnownOptionNames(argEntries, toKebab)
     known = nextArg.every(t => short.has(t.name!))

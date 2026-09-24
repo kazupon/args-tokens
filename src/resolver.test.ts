@@ -3668,6 +3668,13 @@ describe('option given without a value followed by an argument starting with -',
       options: { shortGrouping: true },
       values: port
     },
+    // a long option with an inline value comes before `-v` in the resolved order
+    {
+      label: '-pv --foo=bar with shortGrouping',
+      argv: ['-pv', '--foo=bar'],
+      options: { shortGrouping: true },
+      values: port
+    },
     { label: '--name -x=1', argv: ['--name', '-x=1'], values: name },
     { label: '--name --port=5', argv: ['--name', '--port=5'], values: name }
   ])('$label suggests nothing', ({ argv, options, values }) => {
