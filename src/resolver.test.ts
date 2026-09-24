@@ -3994,6 +3994,10 @@ describe('option given without a value followed by an argument starting with -',
     { label: '--port -v', argv: ['--port', '-v'], values: port },
     { label: '--port --verbose', argv: ['--port', '--verbose'], values: port },
     { label: '--port -ve', argv: ['--port', '-ve'], values: port },
+    // a number option takes only a numeric value
+    { label: '--port -x', argv: ['--port', '-x'], values: port },
+    { label: '--port -vx', argv: ['--port', '-vx'], values: port },
+    { label: '--port --foo', argv: ['--port', '--foo'], values: port },
     { label: '--name --no-color', argv: ['--name', '--no-color'], values: name },
     {
       label: '-pv -5 with shortGrouping',
@@ -4077,6 +4081,39 @@ describe('option given without a value followed by an argument starting with -',
     // a copy, so changing it does not change the schema
     expect((result.error?.errors[0] as ArgResolveError).values.choiceValues).not.toBe(choices)
     expect(result.values.level).toBeUndefined()
+  })
+
+  test.each([
+    { label: 'an enum', schema: { type: 'enum', choices: ['debug', 'info'] } },
+    {
+      label: 'an enum with a parse function',
+      schema: {
+        type: 'enum',
+        choices: ['debug', 'info'],
+        parse: (value: string) => value.toUpperCase()
+      }
+    }
+  ])('$label does not suggest a value outside its choices', ({ schema }) => {
+    const result = resolveArgs({ level: schema as ArgSchema }, parseArgs(['--level', '-d']))
+    expectMissingValueError(result.error, {
+      displayName: "'--level'",
+      name: 'level',
+      expected: 'enum',
+      choices: '"debug", "info"',
+      choiceValues: ['debug', 'info']
+    })
+    expect(result.error?.errors[0].message).toBe("Optional argument '--level' requires a value")
+    expect(result.values.level).toBeUndefined()
+  })
+
+  test('a number option with a parse function does not suggest a value that is not a number', () => {
+    const result = resolveArgs(
+      { x: { type: 'number', parse: (value: string) => Number(value) } },
+      parseArgs(['--x', '-x'])
+    )
+    expectMissingValueError(result.error, { displayName: "'--x'", name: 'x', expected: 'number' })
+    expect(result.error?.errors[0].message).toBe("Optional argument '--x' requires a value")
+    expect(result.values.x).toBeUndefined()
   })
 
   test('a negated form counts as a defined option only for a negatable boolean', () => {

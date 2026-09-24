@@ -112,6 +112,20 @@ describe('string combinator', () => {
 })
 
 describe('number combinator', () => {
+  test('option followed by an argument that is not a number', () => {
+    const { values, error } = resolveArgs({ port: number() }, parseArgs(['--port', '-x']))
+    expect(error!.errors.length).toBe(1)
+    const validationError = error!.errors[0] as ArgsValidationError
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.missingValue)
+    // no suggestion to write `--port=-x`, which is not a number
+    expect(validationError.values).toStrictEqual({
+      displayName: "'--port'",
+      name: 'port',
+      expected: 'number'
+    })
+    expect(values.port).toBeUndefined()
+  })
+
   test('basic', () => {
     const argv = ['--port', '8080']
     const tokens = parseArgs(argv)
@@ -501,6 +515,25 @@ describe('choice combinator', () => {
     const validationError = error!.errors[0] as ArgsValidationError
     expect(validationError.code).toBe(ArgsValidationErrorKeys.missingValue)
     expect(validationError.values).toEqual({
+      displayName: "'--level'",
+      name: 'level',
+      expected: 'enum',
+      choices: '"a", "b"',
+      choiceValues: ['a', 'b']
+    })
+    expect(values.level).toBeUndefined()
+  })
+
+  test('option followed by an argument outside the choices', () => {
+    const { values, error } = resolveArgs(
+      { level: choice(['a', 'b']) },
+      parseArgs(['--level', '-x'])
+    )
+    expect(error!.errors.length).toBe(1)
+    const validationError = error!.errors[0] as ArgsValidationError
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.missingValue)
+    // no suggestion to write `--level=-x`, which is not one of the choices
+    expect(validationError.values).toStrictEqual({
       displayName: "'--level'",
       name: 'level',
       expected: 'enum',
