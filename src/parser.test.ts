@@ -123,11 +123,23 @@ describe('short options', () => {
       ])
     })
 
-    test('an empty value after = gives no value', () => {
-      expect(parseArgs(['-n='])).toEqual([{ kind: 'option', name: 'n', rawName: '-n', index: 0 }])
+    test('an empty value after = is a value too', () => {
+      expect(parseArgs(['-n='])).toEqual([
+        { kind: 'option', name: 'n', rawName: '-n', index: 0 },
+        { kind: 'option', index: 0, value: '', inlineValue: true }
+      ])
       expect(parseArgs(['-ab='])).toEqual([
         { kind: 'option', name: 'a', rawName: '-a', index: 0 },
-        { kind: 'option', name: 'b', rawName: '-b', index: 0 }
+        { kind: 'option', name: 'b', rawName: '-b', index: 0 },
+        { kind: 'option', index: 0, value: '', inlineValue: true }
+      ])
+    })
+
+    test('an empty value after = does not take the next argument', () => {
+      expect(parseArgs(['-n=', 'x'])).toEqual([
+        { kind: 'option', name: 'n', rawName: '-n', index: 0 },
+        { kind: 'option', index: 0, value: '', inlineValue: true },
+        { kind: 'positional', index: 1, value: 'x' }
       ])
     })
 
@@ -143,6 +155,17 @@ describe('short options', () => {
 
     test('allowCompatible keeps the node:util tokens', () => {
       const args = ['-p=-5']
+      const { tokens } = parseArgsNode({
+        allowPositionals: true,
+        strict: false,
+        args,
+        tokens: true
+      })
+      expect(parseArgs(args, { allowCompatible: true })).toEqual(tokens)
+    })
+
+    test('allowCompatible keeps the node:util tokens of an empty value after =', () => {
+      const args = ['-n=', 'x']
       const { tokens } = parseArgsNode({
         allowPositionals: true,
         strict: false,

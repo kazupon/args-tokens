@@ -152,7 +152,7 @@ console.log(tokens)
 // ]
 ```
 
-When short options are written with `=` and a value, such as `-p=-5` or `-ab=-1`, the rest of the argument is the value of the last option, even when it starts with `-`: `-n=--` gives the value `--`, not the option terminator. `-p=` gives no value, and `allowCompatible: true` keeps the `node:util` tokens. With `shortGrouping: true`, `resolveArgs()` gives the value after `=` to the last option. With `shortGrouping: false`, the default of `resolveArgs()` and `parse()`, the other letters of the group are the value of its first option, as in `-p5`: `-ab=-1` gives `-a` the value `b=-1`.
+When short options are written with `=` and a value, such as `-p=-5` or `-ab=-1`, the rest of the argument is the value of the last option, even when it starts with `-`: `-n=--` gives the value `--`, not the option terminator. `-p=` gives an empty value, as `--port=` does, and `allowCompatible: true` keeps the `node:util` tokens. With `shortGrouping: true`, `resolveArgs()` gives the value after `=` to the last option. With `shortGrouping: false`, the default of `resolveArgs()` and `parse()`, the other letters of the group are the value of its first option, as in `-p5`: `-ab=-1` gives `-a` the value `b=-1`.
 
 ## 💿 Installation
 
@@ -448,7 +448,7 @@ Hides the argument from generated help or usage output. This is renderer metadat
 
 Marks the argument as required. When `true`, the argument must be provided or an `ArgResolveError` will be thrown.
 
-An option given without a value, such as `--input` with nothing after it, is reported as `ArgsValidationErrorKeys.missingValue` instead. An explicit empty value given with the long name, such as `--input=`, is still reported as required.
+An option given without a value, such as `--input` with nothing after it, is reported as `ArgsValidationErrorKeys.missingValue` instead. An explicit empty value, such as `--input=`, or `-i ''` with the short name `i`, is still reported as required.
 
 Single-value positional arguments are required by default for compatibility. Set `required: false` to make a positional argument explicitly optional. When an optional positional argument appears before later required positional arguments, it consumes a value only when enough values remain for those required positional arguments.
 
@@ -600,7 +600,7 @@ Converts the argument name from camelCase to kebab-case for CLI usage. A propert
 
 Custom parsing function for `type: 'custom'` arguments. Required when `type: 'custom'`. Should throw an Error if parsing fails.
 
-`parse` receives the value from the command line, or `'true'` / `'false'` for a `boolean` option. When an option other than `boolean` is given without a value, `parse` is not called and the missing value is reported as a validation error. An explicit empty value given with the long name, such as `--config=`, is passed as `''` unless `required: true` is set.
+`parse` receives the value from the command line, or `'true'` / `'false'` for a `boolean` option. When an option other than `boolean` is given without a value, `parse` is not called and the missing value is reported as a validation error. An explicit empty value, such as `--config=`, or `-c=` with the short name `c`, is passed as `''` unless `required: true` is set.
 
 An `enum` option with `choices` passes only one of them to `parse`. Any other value, an explicit empty one included, is reported as `ArgsValidationErrorKeys.invalidChoice`, except that a required option reports an explicit empty value as required. List the values users type in `choices`, and use `parse` to change them.
 

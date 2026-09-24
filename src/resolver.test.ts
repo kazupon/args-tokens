@@ -1096,11 +1096,10 @@ describe('short option group without shortGrouping', () => {
       expect(values.port).toBeUndefined()
     })
 
-    // expected to change with #633, which gives `-n=` an empty value
-    test('-nfoo= gives only the other letters, as the empty value after = gives no token', () => {
+    test('-nfoo= gives the first option the other letters and the empty value', () => {
       const { values, error } = resolveArgs(args, parseArgs(['-nfoo=']))
       expect(error).toBeUndefined()
-      expect(values.name).toBe('foo')
+      expect(values.name).toBe('foo=')
     })
 
     test('a value token without a value, which parseArgs does not make, gives the letters and =', () => {
@@ -1221,6 +1220,163 @@ describe('short option with a value after =', () => {
     expect(values.port).toBe(-5)
     expect(values.verbose).toBe(true)
   })
+})
+
+describe('short option with an empty value', () => {
+  test.each([
+    { label: 'string', schema: { type: 'string', short: 'x' } },
+    {
+      label: 'string with a parse function',
+      schema: { type: 'string', short: 'x', parse: (value: string) => `<${value}>` }
+    },
+    { label: 'number', schema: { type: 'number', short: 'x' } },
+    { label: 'boolean', schema: { type: 'boolean', short: 'x' } },
+    { label: 'enum with choices', schema: { type: 'enum', short: 'x', choices: ['a', 'b'] } },
+    { label: 'required string', schema: { type: 'string', short: 'x', required: true } }
+  ])('$label resolves an empty value given with -x like one given with --x', ({ schema }) => {
+    const resolve = (argv: string[], shortGrouping: boolean) => {
+      const result = resolveArgs({ x: schema as ArgSchema }, parseArgs(argv), { shortGrouping })
+      const errors = result.error?.errors as ArgResolveError[] | undefined
+      return {
+        values: result.values,
+        positionals: result.positionals,
+        rest: result.rest,
+        explicit: result.explicit,
+        errors: errors?.map(e => [e.code, e.values])
+      }
+    }
+    for (const shortGrouping of [false, true]) {
+      for (const [short, long] of [
+        [
+          ['-x', ''],
+          ['--x', '']
+        ],
+        [['-x='], ['--x=']]
+      ]) {
+        expect(
+          resolve(short, shortGrouping),
+          `${JSON.stringify(short)} (shortGrouping: ${shortGrouping})`
+        ).toEqual(resolve(long, shortGrouping))
+      }
+    }
+  })
+
+  test.each([false, true])(
+    'a parse function receives the empty value of -n and -n= (shortGrouping: %s)',
+    shortGrouping => {
+      const received: string[] = []
+      const args = {
+        name: {
+          type: 'string',
+          short: 'n',
+          parse: (value: string) => {
+            received.push(value)
+            return value
+          }
+        }
+      } as const satisfies Args
+      for (const argv of [['-n', ''], ['-n=']]) {
+        const { values, positionals, error } = resolveArgs(args, parseArgs(argv), { shortGrouping })
+        expect(error).toBeUndefined()
+        expect(values.name).toBe('')
+        expect(positionals).toEqual([])
+      }
+      expect(received).toEqual(['', ''])
+    }
+  )
+
+  test.each([false, true])(
+    'a boolean option rejects the empty value after = like --verbose= (shortGrouping: %s)',
+    shortGrouping => {
+      const { values, error } = resolveArgs(
+        { verbose: { type: 'boolean', short: 'v' } },
+        parseArgs(['-v=']),
+        { shortGrouping }
+      )
+      expect(error?.errors.length).toBe(1)
+      const resolveError = error?.errors[0] as ArgResolveError
+      expect(resolveError.code).toBe(ArgsValidationErrorKeys.invalidType)
+      expect(resolveError.values.actual).toBe('')
+      expect(values.verbose).toBeUndefined()
+    }
+  )
+
+  // a string option without a parse function turns an empty value into undefined (#632)
+  const args = {
+    verbose: {
+      type: 'boolean',
+      short: 'v'
+    },
+    name: {
+      type: 'string',
+      short: 'n',
+      parse: (value: string) => value
+    },
+    alpha: {
+      type: 'string',
+      short: 'a',
+      parse: (value: string) => value
+    },
+    beta: {
+      type: 'string',
+      short: 'b',
+      parse: (value: string) => value
+    }
+  } as const satisfies Args
+
+  test.each([false, true])(
+    '-n= x keeps x as a positional argument (shortGrouping: %s)',
+    shortGrouping => {
+      const { values, positionals, error } = resolveArgs(args, parseArgs(['-n=', 'x']), {
+        shortGrouping
+      })
+      expect(error).toBeUndefined()
+      expect(values).toEqual({ name: '' })
+      expect(positionals).toEqual(['x'])
+    }
+  )
+
+  test('without shortGrouping, the other letters of a group come before the empty value', () => {
+    const vn = resolveArgs(args, parseArgs(['-vn=']))
+    const errors = vn.error?.errors as ArgResolveError[] | undefined
+    expect(errors?.map(e => [e.code, e.values.name])).toEqual([
+      [ArgsValidationErrorKeys.invalidType, 'verbose']
+    ])
+    expect(errors?.[0].values.actual).toBe('n=')
+    expect(vn.values).toEqual({})
+
+    const ab = resolveArgs(args, parseArgs(['-ab=', 'x']))
+    expect(ab.error).toBeUndefined()
+    expect(ab.values).toEqual({ alpha: 'b=' })
+    expect(ab.positionals).toEqual(['x'])
+  })
+
+  test('with shortGrouping, the empty value goes to the last option of a group', () => {
+    const vn = resolveArgs(args, parseArgs(['-vn=']), { shortGrouping: true })
+    expect(vn.error).toBeUndefined()
+    expect(vn.values).toEqual({ verbose: true, name: '' })
+
+    const ab = resolveArgs(args, parseArgs(['-ab=', 'x']), { shortGrouping: true })
+    expectMissingValueError(ab.error, {
+      displayName: "'--alpha' or '-a'",
+      name: 'alpha',
+      expected: 'string'
+    })
+    expect(ab.values).toEqual({ beta: '' })
+    expect(ab.positionals).toEqual(['x'])
+  })
+
+  test.each([false, true])(
+    'a boolean option does not take an empty argument as its value (shortGrouping: %s)',
+    shortGrouping => {
+      const { values, positionals, error } = resolveArgs(args, parseArgs(['-v', '']), {
+        shortGrouping
+      })
+      expect(error).toBeUndefined()
+      expect(values).toEqual({ verbose: true })
+      expect(positionals).toEqual([''])
+    }
+  )
 })
 
 describe('number option without a value', () => {
@@ -3845,8 +4001,7 @@ describe('boolean inline value', () => {
     { argv: ['--silent', 'false'], silent: true, positionals: ['false'] },
     { argv: ['-s', 'false'], silent: true, positionals: ['false'] },
     { argv: ['-sfalse'], silent: true, positionals: [] },
-    { argv: ['-sv'], silent: true, positionals: [] },
-    { argv: ['-s='], silent: true, positionals: [] }
+    { argv: ['-sv'], silent: true, positionals: [] }
   ])('input without a value after = is unchanged: $argv', ({ argv, silent, positionals }) => {
     const result = resolveArgs(args, parseArgs(argv))
     expect(result.error).toBeUndefined()
@@ -4002,9 +4157,7 @@ describe('option given without a value', () => {
       argv: ['-xv'],
       options: { shortGrouping: true },
       verbose: true
-    },
-    { label: '-x=', argv: ['-x='] },
-    { label: "-x ''", argv: ['-x', ''] }
+    }
   ])('$label reports a missing value', ({ argv, options, verbose, rest = [] }) => {
     const result = resolveArgs(shortArgs, parseArgs(argv), options)
     expectMissingValueError(result.error, {
@@ -4187,6 +4340,8 @@ describe('option given without a value followed by an argument starting with -',
       values: port
     },
     { label: '--name -x=1', argv: ['--name', '-x=1'], values: name },
+    // like `-x=1`, `-x=` has a value, even though it is empty
+    { label: '--name -x=', argv: ['--name', '-x='], values: name },
     // the value after `=` is kept, so the argument is not rebuilt as `-x5`
     { label: '--name -x=-5', argv: ['--name', '-x=-5'], values: name },
     { label: '--name --port=5', argv: ['--name', '--port=5'], values: name }
@@ -4646,9 +4801,7 @@ describe('option with a parse function given without a value', () => {
       argv: ['-xv'],
       options: { shortGrouping: true },
       verbose: true
-    },
-    { label: '-x=', argv: ['-x='] },
-    { label: "-x ''", argv: ['-x', ''] }
+    }
   ])('$label reports the missing value', ({ argv, options, verbose, rest = [] }) => {
     const result = resolveArgs(shortArgs, parseArgs(argv), options)
     expectMissingValueError(result.error, {

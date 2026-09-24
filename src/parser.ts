@@ -43,7 +43,7 @@ export interface ArgToken {
    */
   rawName?: string
   /**
-   * Option value, e.g. `--foo=bar` => `bar`, `-x=bar` => `bar`, `-x=-1` => `-1`.
+   * Option value, e.g. `--foo=bar` => `bar`, `-x=bar` => `bar`, `-x=-1` => `-1`, `-x=` => `''`.
    * If the `allowCompatible` option is `true`, short option value will be same as Node.js `parseArgs` behavior.
    */
   value?: string
@@ -189,8 +189,9 @@ export function parseArgs(args: string[], options: ParserOptions = {}): ArgToken
         }
       }
       // decided for each group, so that a group does not change how the arguments after it are read
-      hasShortGroupValue = separated && shortValue !== ''
-      if (shortValue) {
+      // an empty value after `=` is a value too
+      hasShortGroupValue = separated
+      if (separated) {
         expanded.push(shortValue)
       }
       remainings.unshift(...expanded)
