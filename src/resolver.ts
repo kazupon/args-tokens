@@ -939,15 +939,14 @@ export function resolveArgs<A extends Args>(
     } else if (token.kind === 'option') {
       if (token.rawName) {
         if (hasLongOptionPrefix(token.rawName)) {
-          // check if previous long option is not resolved
+          // check if previous long or short option is not resolved, before this one is added
           applyLongOptionValue()
+          applyShortOptionValue()
           if (token.inlineValue) {
             optionTokens.push({ ...token })
           } else {
             currentLongOption = { ...token }
           }
-          // check if previous short option is not resolved
-          applyShortOptionValue()
         } else if (isShortOption(token.rawName)) {
           if (currentShortOption) {
             if (currentShortOption.index === token.index) {
@@ -1562,8 +1561,7 @@ function findOptionLikeNextArgument(
   toKebab: boolean
 ): string | undefined {
   const token = optionTokens[position]
-  // `optionTokens` is not always in the order of the arguments: a long option with an inline value
-  // is added before a short option that still waits for its value. So look at every later token.
+  // the option must end its argument: no later option token may come from the same argument
   for (let i = position + 1; i < optionTokens.length; i++) {
     if (optionTokens[i].index === token.index) {
       return undefined

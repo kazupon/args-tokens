@@ -2920,6 +2920,103 @@ describe('multiple values', () => {
   })
 })
 
+describe('options resolved in the order of the arguments', () => {
+  const args = {
+    str: {
+      type: 'string',
+      short: 's',
+      conflicts: 'other'
+    },
+    multi: {
+      type: 'string',
+      short: 'm',
+      multiple: true
+    },
+    other: {
+      type: 'boolean',
+      short: 'o'
+    },
+    ch: {
+      type: 'enum',
+      short: 'H',
+      choices: ['a', 'b']
+    }
+  } as const satisfies Args
+
+  test('-sv --str=x gives the value written last', () => {
+    const { values, error } = resolveArgs(args, parseArgs(['-sv', '--str=x']))
+    expect(error).toBeUndefined()
+    expect(values.str).toBe('x')
+  })
+
+  test('-sv --str= gives the empty value written last', () => {
+    const { values, error } = resolveArgs(args, parseArgs(['-sv', '--str=']))
+    expect(error).toBeUndefined()
+    expect(values.str).toBe('')
+  })
+
+  test.each([
+    { argv: ['-mv', '--multi=x'], multi: ['v', 'x'] },
+    { argv: ['-mv', '--multi=x', '-my'], multi: ['v', 'x', 'y'] }
+  ])('$argv keeps the values of a multiple option in order', ({ argv, multi }) => {
+    const { values, error } = resolveArgs(args, parseArgs(argv))
+    expect(error).toBeUndefined()
+    expect(values.multi).toEqual(multi)
+  })
+
+  test('a conflict names the form written last', () => {
+    const { values, error } = resolveArgs(args, parseArgs(['-sv', '--str=x', '--other']))
+    expect(error?.errors.length).toBe(1)
+    expect(error?.errors[0].message).toBe("Optional argument '--str' conflicts with '--other'")
+    expect(values).toEqual({ str: 'x', other: true })
+  })
+
+  test.each([false, true])(
+    'a boolean short option gives way to the long option with = after it (shortGrouping: %s)',
+    shortGrouping => {
+      const { values, error } = resolveArgs(args, parseArgs(['-o', '--other=false']), {
+        shortGrouping
+      })
+      expect(error).toBeUndefined()
+      expect(values.other).toBe(false)
+    }
+  )
+
+  test.each([false, true])(
+    'the errors of one option keep the order of the arguments (shortGrouping: %s)',
+    shortGrouping => {
+      const { error } = resolveArgs(args, parseArgs(['-H', '--ch=']), { shortGrouping })
+      const errors = error?.errors as ArgResolveError[] | undefined
+      expect(errors?.map(e => e.code)).toEqual([
+        ArgsValidationErrorKeys.missingValue,
+        ArgsValidationErrorKeys.invalidChoice
+      ])
+    }
+  )
+
+  test.each([
+    { argv: ['-s', 'v', '--str=x'], str: 'x' },
+    { argv: ['--str=x', '-sv'], str: 'v' },
+    { argv: ['-sv', '--str', 'x'], str: 'x' }
+  ])('$argv gives the value written last', ({ argv, str }) => {
+    const { values, error } = resolveArgs(args, parseArgs(argv))
+    expect(error).toBeUndefined()
+    expect(values.str).toBe(str)
+  })
+
+  test('with shortGrouping, a short option before a long option with = has no value', () => {
+    const { values, error } = resolveArgs(args, parseArgs(['-mv', '--multi=x']), {
+      shortGrouping: true
+    })
+    expectMissingValueError(error, {
+      displayName: "'--multi' or '-m'",
+      name: 'multi',
+      expected: 'string'
+    })
+    expect(values.multi).toEqual(['x'])
+  })
+})
+
 describe(`'toKebab' option`, () => {
   test('per argument', () => {
     const argv = ['test', '--to-kebab=true', '--no-kebab-case', '--noKebab']
@@ -4406,12 +4503,18 @@ describe('option given without a value followed by an argument starting with -',
       options: { shortGrouping: true },
       values: port
     },
-    // a long option with an inline value comes before `-v` in the resolved order
     {
       label: '-pv --foo=bar with shortGrouping',
       argv: ['-pv', '--foo=bar'],
       options: { shortGrouping: true },
       values: port
+    },
+    // `-n` does not end its argument, and a string option would take `--foo=bar`
+    {
+      label: '-nv --foo=bar with shortGrouping',
+      argv: ['-nv', '--foo=bar'],
+      options: { shortGrouping: true },
+      values: name
     },
     { label: '--name -x=1', argv: ['--name', '-x=1'], values: name },
     // like `-x=1`, `-x=` has a value, even though it is empty
