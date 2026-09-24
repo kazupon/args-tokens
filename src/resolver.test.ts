@@ -1096,11 +1096,10 @@ describe('short option group without shortGrouping', () => {
       expect(values.port).toBeUndefined()
     })
 
-    // expected to change with #633, which gives `-n=` an empty value
-    test('-nfoo= gives only the other letters, as the empty value after = gives no token', () => {
+    test('-nfoo= gives the first option the other letters and the empty value', () => {
       const { values, error } = resolveArgs(args, parseArgs(['-nfoo=']))
       expect(error).toBeUndefined()
-      expect(values.name).toBe('foo')
+      expect(values.name).toBe('foo=')
     })
 
     test('a value token without a value, which parseArgs does not make, gives the letters and =', () => {
@@ -3990,8 +3989,7 @@ describe('boolean inline value', () => {
     { argv: ['--silent', 'false'], silent: true, positionals: ['false'] },
     { argv: ['-s', 'false'], silent: true, positionals: ['false'] },
     { argv: ['-sfalse'], silent: true, positionals: [] },
-    { argv: ['-sv'], silent: true, positionals: [] },
-    { argv: ['-s='], silent: true, positionals: [] }
+    { argv: ['-sv'], silent: true, positionals: [] }
   ])('input without a value after = is unchanged: $argv', ({ argv, silent, positionals }) => {
     const result = resolveArgs(args, parseArgs(argv))
     expect(result.error).toBeUndefined()
@@ -4148,7 +4146,6 @@ describe('option given without a value', () => {
       options: { shortGrouping: true },
       verbose: true
     },
-    { label: '-x=', argv: ['-x='] },
     { label: "-x ''", argv: ['-x', ''] }
   ])('$label reports a missing value', ({ argv, options, verbose, rest = [] }) => {
     const result = resolveArgs(shortArgs, parseArgs(argv), options)
@@ -4794,7 +4791,6 @@ describe('option with a parse function given without a value', () => {
       options: { shortGrouping: true },
       verbose: true
     },
-    { label: '-x=', argv: ['-x='] },
     { label: "-x ''", argv: ['-x', ''] }
   ])('$label reports the missing value', ({ argv, options, verbose, rest = [] }) => {
     const result = resolveArgs(shortArgs, parseArgs(argv), options)

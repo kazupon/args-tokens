@@ -189,8 +189,9 @@ export function parseArgs(args: string[], options: ParserOptions = {}): ArgToken
         }
       }
       // decided for each group, so that a group does not change how the arguments after it are read
-      hasShortGroupValue = separated && shortValue !== ''
-      if (shortValue) {
+      // an empty value after `=` is a value too
+      hasShortGroupValue = separated
+      if (separated) {
         expanded.push(shortValue)
       }
       remainings.unshift(...expanded)

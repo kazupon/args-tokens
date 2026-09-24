@@ -143,14 +143,6 @@ describe('short options', () => {
       ])
     })
 
-    test('an empty value after = gives no value', () => {
-      expect(parseArgs(['-n='])).toEqual([{ kind: 'option', name: 'n', rawName: '-n', index: 0 }])
-      expect(parseArgs(['-ab='])).toEqual([
-        { kind: 'option', name: 'a', rawName: '-a', index: 0 },
-        { kind: 'option', name: 'b', rawName: '-b', index: 0 }
-      ])
-    })
-
     test('a value without an option before = is read as another argument', () => {
       expect(parseArgs(['-=5'])).toEqual([{ kind: 'positional', index: 0, value: '5' }])
       // no option takes the value, so `-abc` is read as short options
