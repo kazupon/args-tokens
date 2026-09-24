@@ -29,7 +29,7 @@ describe('string combinator', () => {
     const { values, error } = resolveArgs({ name: string() }, parseArgs(['--name']))
     expect(error!.errors.length).toBe(1)
     const validationError = error!.errors[0] as ArgsValidationError
-    expect(validationError.code).toBe(ArgsValidationErrorKeys.invalidType)
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.missingValue)
     expect(validationError.values).toEqual({
       displayName: "'--name'",
       name: 'name',
@@ -182,7 +182,7 @@ describe('number combinator', () => {
     const { values, error } = resolveArgs({ port: number() }, parseArgs(['--port']))
     expect(error!.errors.length).toBe(1)
     const validationError = error!.errors[0] as ArgsValidationError
-    expect(validationError.code).toBe(ArgsValidationErrorKeys.invalidType)
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.missingValue)
     expect(validationError.values).toEqual({
       displayName: "'--port'",
       name: 'port',
@@ -197,8 +197,8 @@ describe('integer combinator', () => {
     const { values, error } = resolveArgs({ port: integer() }, parseArgs(['--port']))
     expect(error!.errors.length).toBe(1)
     const validationError = error!.errors[0] as ArgsValidationError
-    expect(validationError.code).toBe(ArgsValidationErrorKeys.invalidType)
-    expect(validationError.message).toBe("Optional argument '--port' should be 'integer'")
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.missingValue)
+    expect(validationError.message).toBe("Optional argument '--port' requires a value")
     expect(validationError.values).toEqual({
       displayName: "'--port'",
       name: 'port',
@@ -272,8 +272,8 @@ describe('float combinator', () => {
     const { values, error } = resolveArgs({ ratio: float() }, parseArgs(['--ratio']))
     expect(error!.errors.length).toBe(1)
     const validationError = error!.errors[0] as ArgsValidationError
-    expect(validationError.code).toBe(ArgsValidationErrorKeys.invalidType)
-    expect(validationError.message).toBe("Optional argument '--ratio' should be 'float'")
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.missingValue)
+    expect(validationError.message).toBe("Optional argument '--ratio' requires a value")
     expect(validationError.values).toEqual({
       displayName: "'--ratio'",
       name: 'ratio',
@@ -499,7 +499,7 @@ describe('choice combinator', () => {
     const { values, error } = resolveArgs({ level: choice(['a', 'b']) }, parseArgs(['--level']))
     expect(error!.errors.length).toBe(1)
     const validationError = error!.errors[0] as ArgsValidationError
-    expect(validationError.code).toBe(ArgsValidationErrorKeys.invalidChoice)
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.missingValue)
     expect(validationError.values).toEqual({
       displayName: "'--level'",
       name: 'level',
@@ -547,6 +547,9 @@ describe('custom combinator', () => {
   test('option without a value', () => {
     const plain = resolveArgs({ x: combinator({ parse: value => value }) }, parseArgs(['--x']))
     expect(plain.error!.errors.length).toBe(1)
+    expect((plain.error!.errors[0] as ArgsValidationError).code).toBe(
+      ArgsValidationErrorKeys.missingValue
+    )
     expect((plain.error!.errors[0] as ArgsValidationError).values).toEqual({
       displayName: "'--x'",
       name: 'x',
@@ -557,6 +560,9 @@ describe('custom combinator', () => {
     const date = resolveArgs(
       { since: combinator({ parse: value => new Date(value), metavar: 'date' }) },
       parseArgs(['--since'])
+    )
+    expect((date.error!.errors[0] as ArgsValidationError).code).toBe(
+      ArgsValidationErrorKeys.missingValue
     )
     expect((date.error!.errors[0] as ArgsValidationError).values).toEqual({
       displayName: "'--since'",
@@ -674,7 +680,7 @@ describe('map combinator', () => {
     const args = { port: map(withDefault(integer(), 8080), n => n * 2) }
     const missing = resolveArgs(args, parseArgs(['--port']))
     expect((missing.error!.errors[0] as ArgsValidationError).code).toBe(
-      ArgsValidationErrorKeys.invalidType
+      ArgsValidationErrorKeys.missingValue
     )
     expect(missing.values.port).toBe(8080)
     expect(resolveArgs(args, parseArgs([])).values.port).toBe(8080)
@@ -744,7 +750,9 @@ describe('withDefault combinator', () => {
       parseArgs(['--port'])
     )
     expect(error!.errors.length).toBe(1)
-    expect((error!.errors[0] as ArgsValidationError).code).toBe(ArgsValidationErrorKeys.invalidType)
+    expect((error!.errors[0] as ArgsValidationError).code).toBe(
+      ArgsValidationErrorKeys.missingValue
+    )
     expect(values.port).toBe(8080)
   })
 
