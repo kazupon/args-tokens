@@ -910,9 +910,9 @@ export function resolveArgs<A extends Args>(
   for (let i = 0; i < tokens.length; i++) {
     const token = tokens[i]
     if (token.kind === 'positional') {
-      // if the option-terminator is found, the rest of the tokens are positional arguments
-      if (terminated && token.value) {
-        rest.push(token.value)
+      // after the option terminator, every argument goes to `rest`, even an empty one
+      if (terminated) {
+        rest.push(token.value!)
         continue
       }
       if (currentShortOption) {

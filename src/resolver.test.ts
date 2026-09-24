@@ -305,6 +305,84 @@ describe('resolveArgs', () => {
   })
 })
 
+describe('rest arguments after the option terminator', () => {
+  test.each([
+    { argv: ['--', 'a', '', 'b'], rest: ['a', '', 'b'] },
+    { argv: ['--', '', ''], rest: ['', ''] }
+  ])('$argv puts every argument after -- into rest', ({ argv, rest }) => {
+    for (const shortGrouping of [false, true]) {
+      const result = resolveArgs({}, parseArgs(argv), { shortGrouping })
+      expect(result.error, `shortGrouping: ${shortGrouping}`).toBeUndefined()
+      expect(result.rest, `shortGrouping: ${shortGrouping}`).toEqual(rest)
+      expect(result.positionals, `shortGrouping: ${shortGrouping}`).toEqual([])
+    }
+  })
+
+  test('a required positional argument does not take an empty argument after --', () => {
+    const { values, positionals, rest, explicit, error } = resolveArgs(
+      { file: { type: 'positional' } },
+      parseArgs(['--', ''])
+    )
+    const errors = error?.errors as ArgResolveError[] | undefined
+    expect(errors?.map(e => e.code)).toEqual([ArgsValidationErrorKeys.requiredPositional])
+    expect(values).not.toHaveProperty('file')
+    expect(explicit.file).toBe(false)
+    expect(positionals).toEqual([])
+    expect(rest).toEqual([''])
+  })
+
+  test('a multiple positional argument does not take an empty argument after --', () => {
+    const { values, positionals, rest, error } = resolveArgs(
+      { more: { type: 'positional', multiple: true } },
+      parseArgs(['a', '--', ''])
+    )
+    expect(error).toBeUndefined()
+    expect(values.more).toEqual(['a'])
+    expect(positionals).toEqual(['a'])
+    expect(rest).toEqual([''])
+  })
+
+  test('with skipPositional, an empty argument after -- still goes to rest', () => {
+    const { values, positionals, rest, explicit, error } = resolveArgs(
+      { file: { type: 'positional', required: false } },
+      parseArgs(['sub', '--', '', 'x']),
+      { skipPositional: 0 }
+    )
+    expect(error).toBeUndefined()
+    expect(values).not.toHaveProperty('file')
+    expect(explicit.file).toBe(false)
+    expect(positionals).toEqual(['sub'])
+    expect(rest).toEqual(['', 'x'])
+  })
+
+  test('an option waiting for its value ends at --, and the empty argument goes to rest', () => {
+    const { positionals, rest, error } = resolveArgs(
+      { name: { type: 'string', short: 'n' } },
+      parseArgs(['-n', '--', ''])
+    )
+    expectMissingValueError(error, {
+      displayName: "'--name' or '-n'",
+      name: 'name',
+      expected: 'string'
+    })
+    expect(positionals).toEqual([])
+    expect(rest).toEqual([''])
+  })
+
+  test.each([
+    { argv: ['', '--', 'a'], positionals: [''], rest: ['a'] },
+    { argv: ['--'], positionals: [], rest: [] }
+  ])(
+    '$argv keeps the arguments before -- as positional arguments',
+    ({ argv, positionals, rest }) => {
+      const result = resolveArgs({}, parseArgs(argv))
+      expect(result.error).toBeUndefined()
+      expect(result.positionals).toEqual(positionals)
+      expect(result.rest).toEqual(rest)
+    }
+  )
+})
+
 describe('hidden metadata', () => {
   test('hidden option resolves normally', () => {
     const tokens = parseArgs(['--legacy=compat'])

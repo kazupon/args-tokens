@@ -105,3 +105,10 @@ test('long option with = written after the same short option with an attached va
   expect(error).toBeUndefined()
   expect(values.str).toBe('x')
 })
+
+test('an empty argument after -- goes to rest', () => {
+  const { positionals, rest, error } = parse(['x', '--', '', 'y'])
+  expect(error).toBeUndefined()
+  expect(positionals).toEqual(['x'])
+  expect(rest).toEqual(['', 'y'])
+})
