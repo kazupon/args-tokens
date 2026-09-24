@@ -1068,6 +1068,20 @@ describe('short option group without shortGrouping', () => {
       expect(errors?.[0].values.actual).toBe('v=5')
       expect(values.port).toBeUndefined()
     })
+
+    test('-nfoo= gives only the other letters, as the empty value after = gives no token', () => {
+      const { values, error } = resolveArgs(args, parseArgs(['-nfoo=']))
+      expect(error).toBeUndefined()
+      expect(values.name).toBe('foo')
+    })
+
+    test('shortGrouping reads each letter as an option', () => {
+      const { values, error } = resolveArgs(args, parseArgs(['-vs=false', '-n']), {
+        shortGrouping: true
+      })
+      expectMissingValueError(error, name)
+      expect(values).toEqual({ verbose: true, silent: false })
+    })
   })
 
   describe('a positional argument after the group', () => {
@@ -1090,6 +1104,16 @@ describe('short option group without shortGrouping', () => {
       expect(values.name).toBe('foo')
       expect(positionals).toEqual(['bar'])
     })
+
+    test.each([{ argv: ['-vs', 'x'] }, { argv: ['-v', 'x'] }])(
+      '$argv does not give the positional argument to a boolean option',
+      ({ argv }) => {
+        const { values, positionals, error } = resolveArgs(args, parseArgs(argv))
+        expect(error).toBeUndefined()
+        expect(values).toEqual({ verbose: true })
+        expect(positionals).toEqual(['x'])
+      }
+    )
 
     test('the tokens of allowCompatible are read the same way', () => {
       const { values, positionals, error } = resolveArgs(
