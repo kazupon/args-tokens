@@ -1300,6 +1300,61 @@ describe('short option with a value after =', () => {
   })
 })
 
+describe('short option with a value after -', () => {
+  const args = {
+    output: { type: 'string', short: 'o' },
+    name: { type: 'string', short: 'n' },
+    port: { type: 'number', short: 'p' },
+    verbose: { type: 'boolean', short: 'v' },
+    extract: { type: 'boolean', short: 'x' },
+    file: { type: 'string', short: 'f' },
+    warn: { type: 'string', short: 'W' },
+    define: { type: 'string', short: 'D', multiple: true },
+    alpha: { type: 'string', short: 'a' },
+    beta: { type: 'string', short: 'b' }
+  } as const satisfies Args
+
+  test.each([
+    { argv: ['-o-', 'input.txt'], values: { output: '-' }, positionals: ['input.txt'] },
+    { argv: ['-p-5'], values: { port: -5 }, positionals: [] },
+    {
+      argv: ['-n-foo', '--verbose', 'file'],
+      values: { name: '-foo', verbose: true },
+      positionals: ['file']
+    },
+    // a boolean option ignores a value that is not written with `=`, as in `-sfalse`
+    { argv: ['-v-', 'file'], values: { verbose: true }, positionals: ['file'] },
+    { argv: ['-o-=', 'x'], values: { output: '-=' }, positionals: ['x'] }
+  ])('$argv reads the rest of the group from - as a value', ({ argv, values, positionals }) => {
+    for (const shortGrouping of [false, true]) {
+      const result = resolveArgs(args, parseArgs(argv), { shortGrouping })
+      expect(result.error, `shortGrouping: ${shortGrouping}`).toBeUndefined()
+      expect(result.values, `shortGrouping: ${shortGrouping}`).toEqual(values)
+      expect(result.positionals, `shortGrouping: ${shortGrouping}`).toEqual(positionals)
+      expect(result.rest, `shortGrouping: ${shortGrouping}`).toEqual([])
+    }
+  })
+
+  test.each([
+    { argv: ['-Wno-unused'], values: { warn: 'no-unused' } },
+    { argv: ['-Dfoo-bar'], values: { define: ['foo-bar'] } },
+    { argv: ['-ab-c'], values: { alpha: 'b-c' } }
+  ])(
+    'without shortGrouping, $argv gives the first option the rest of the group',
+    ({ argv, values }) => {
+      const result = resolveArgs(args, parseArgs(argv))
+      expect(result.error).toBeUndefined()
+      expect(result.values).toEqual(values)
+    }
+  )
+
+  test('with shortGrouping, the value goes to the last option of the group', () => {
+    const { values, error } = resolveArgs(args, parseArgs(['-xf-']), { shortGrouping: true })
+    expect(error).toBeUndefined()
+    expect(values).toEqual({ extract: true, file: '-' })
+  })
+})
+
 describe('short option with an empty value', () => {
   test.each([
     { label: 'string', schema: { type: 'string', short: 'x' } },

@@ -175,6 +175,51 @@ describe('short options', () => {
       expect(parseArgs(args, { allowCompatible: true })).toEqual(tokens)
     })
   })
+
+  describe('value after -', () => {
+    test.each([
+      { arg: '-o-', value: '-' },
+      { arg: '-p-5', value: '-5' },
+      { arg: '-n-foo', value: '-foo' },
+      { arg: '-n--', value: '--' },
+      { arg: '-n--foo', value: '--foo' }
+    ])('$arg gives the option the value $value from the -', ({ arg, value }) => {
+      const name = arg.charAt(1)
+      expect(parseArgs([arg])).toEqual([
+        { kind: 'option', name, rawName: `-${name}`, index: 0 },
+        { kind: 'option', index: 0, value, inlineValue: false }
+      ])
+    })
+
+    test('the value goes to the last option of the group', () => {
+      expect(parseArgs(['-ab-c'])).toEqual([
+        { kind: 'option', name: 'a', rawName: '-a', index: 0 },
+        { kind: 'option', name: 'b', rawName: '-b', index: 0 },
+        { kind: 'option', index: 0, value: '-c', inlineValue: false }
+      ])
+      // `=` after the `-` is part of the value
+      expect(parseArgs(['-a-b=5'])).toEqual([
+        { kind: 'option', name: 'a', rawName: '-a', index: 0 },
+        { kind: 'option', index: 0, value: '-b=5', inlineValue: false }
+      ])
+    })
+
+    test('the arguments after the group keep their index', () => {
+      expect(parseArgs(['-n-foo', '--verbose', 'file'])).toEqual([
+        { kind: 'option', name: 'n', rawName: '-n', index: 0 },
+        { kind: 'option', index: 0, value: '-foo', inlineValue: false },
+        { kind: 'option', name: 'verbose', rawName: '--verbose', index: 1 },
+        { kind: 'positional', index: 2, value: 'file' }
+      ])
+    })
+
+    test('the value after a leading =, read as another argument, is read the same way', () => {
+      expect(parseArgs(['-=-v-'])).toEqual([
+        { kind: 'option', name: 'v', rawName: '-v', index: 0 },
+        { kind: 'option', index: 0, value: '-', inlineValue: false }
+      ])
+    })
+  })
 })
 
 describe('long options', () => {
