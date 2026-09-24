@@ -97,3 +97,11 @@ test('string option with a default and an explicit empty value', () => {
   expect(error).toBeUndefined()
   expect(values.name).toBe('')
 })
+
+test('long option with = written after the same short option with an attached value', () => {
+  const { values, error } = parse(['-sv', '--str=x'], {
+    args: { str: { type: 'string', short: 's' } }
+  })
+  expect(error).toBeUndefined()
+  expect(values.str).toBe('x')
+})

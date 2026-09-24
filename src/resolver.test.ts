@@ -2920,6 +2920,70 @@ describe('multiple values', () => {
   })
 })
 
+describe('options resolved in the order of the arguments', () => {
+  const args = {
+    str: {
+      type: 'string',
+      short: 's',
+      conflicts: 'other'
+    },
+    multi: {
+      type: 'string',
+      short: 'm',
+      multiple: true
+    },
+    other: {
+      type: 'boolean',
+      short: 'o'
+    },
+    ch: {
+      type: 'enum',
+      short: 'H',
+      choices: ['a', 'b']
+    }
+  } as const satisfies Args
+
+  test('-sv --str=x gives the value written last', () => {
+    const { values, error } = resolveArgs(args, parseArgs(['-sv', '--str=x']))
+    expect(error).toBeUndefined()
+    expect(values.str).toBe('x')
+  })
+
+  test('-sv --str= gives the empty value written last', () => {
+    const { values, error } = resolveArgs(args, parseArgs(['-sv', '--str=']))
+    expect(error).toBeUndefined()
+    expect(values.str).toBe('')
+  })
+
+  test.each([
+    { argv: ['-mv', '--multi=x'], multi: ['v', 'x'] },
+    { argv: ['-mv', '--multi=x', '-my'], multi: ['v', 'x', 'y'] }
+  ])('$argv keeps the values of a multiple option in order', ({ argv, multi }) => {
+    const { values, error } = resolveArgs(args, parseArgs(argv))
+    expect(error).toBeUndefined()
+    expect(values.multi).toEqual(multi)
+  })
+
+  test('a conflict names the form written last', () => {
+    const { values, error } = resolveArgs(args, parseArgs(['-sv', '--str=x', '--other']))
+    expect(error?.errors.length).toBe(1)
+    expect(error?.errors[0].message).toBe("Optional argument '--str' conflicts with '--other'")
+    expect(values).toEqual({ str: 'x', other: true })
+  })
+
+  test.each([false, true])(
+    'the errors of one option keep the order of the arguments (shortGrouping: %s)',
+    shortGrouping => {
+      const { error } = resolveArgs(args, parseArgs(['-H', '--ch=']), { shortGrouping })
+      const errors = error?.errors as ArgResolveError[] | undefined
+      expect(errors?.map(e => e.code)).toEqual([
+        ArgsValidationErrorKeys.missingValue,
+        ArgsValidationErrorKeys.invalidChoice
+      ])
+    }
+  )
+})
+
 describe(`'toKebab' option`, () => {
   test('per argument', () => {
     const argv = ['test', '--to-kebab=true', '--no-kebab-case', '--noKebab']
