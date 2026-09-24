@@ -881,7 +881,7 @@ export function resolveArgs<A extends Args>(
 
   function applyShortOptionValue(value?: string): void {
     if (currentShortOption) {
-      currentShortOption.value = value || toShortValue()
+      currentShortOption.value = value ?? toShortValue()
       optionTokens.push({ ...currentShortOption })
       currentShortOption = undefined
     }

@@ -4145,8 +4145,7 @@ describe('option given without a value', () => {
       argv: ['-xv'],
       options: { shortGrouping: true },
       verbose: true
-    },
-    { label: "-x ''", argv: ['-x', ''] }
+    }
   ])('$label reports a missing value', ({ argv, options, verbose, rest = [] }) => {
     const result = resolveArgs(shortArgs, parseArgs(argv), options)
     expectMissingValueError(result.error, {
@@ -4790,8 +4789,7 @@ describe('option with a parse function given without a value', () => {
       argv: ['-xv'],
       options: { shortGrouping: true },
       verbose: true
-    },
-    { label: "-x ''", argv: ['-x', ''] }
+    }
   ])('$label reports the missing value', ({ argv, options, verbose, rest = [] }) => {
     const result = resolveArgs(shortArgs, parseArgs(argv), options)
     expectMissingValueError(result.error, {
