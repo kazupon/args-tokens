@@ -150,7 +150,8 @@ export interface ArgSchema {
    * If missing, an `ArgResolveError` with type 'required' will be thrown.
    * An option that is given without a value is reported as `err:arg:missing-value`
    * ({@link ArgsValidationErrorKeys}.missingValue) instead, because the option itself was given.
-   * An explicit empty value such as `--name=` is still reported as required.
+   * An explicit empty value given with the long name, such as `--name=`, is still reported as
+   * required.
    *
    * For single-value positional arguments, omitting `required` keeps the argument
    * required for compatibility. Set `required: false` to make a positional argument
@@ -1239,7 +1240,8 @@ function parse(
       return resolveBooleanValue(token, rawArg, option, schema)
     }
     case 'number': {
-      // an option without a value has no `token.value`, like the `string` branch above
+      // `resolveArgs()` reports an option without a value before calling `parse()`, so the
+      // `typeof` check only narrows the type
       if (typeof token.value !== 'string' || !isNumeric(token.value)) {
         return [undefined, createTypeError(rawArg, option, schema, token.value)]
       }
@@ -1487,9 +1489,11 @@ function createMissingValueError(
 ): ArgResolveError {
   const displayName = createOptionDisplayName(option, schema)
   const suggestion = next === undefined ? undefined : `--${option}=${next}`
+  const hint =
+    suggestion === undefined ? '' : ` (to pass '${next}' as its value, write '${suggestion}')`
   const choices = schema.choices ?? []
   return new ArgResolveError(
-    `Optional argument ${displayName} requires a value${suggestion === undefined ? '' : ` (to pass '${next}' as its value, write '${suggestion}')`}`,
+    `Optional argument ${displayName} requires a value${hint}`,
     option,
     'type',
     schema,
@@ -1522,7 +1526,8 @@ function createMissingValueError(
  * @param position - The position of the option given without a value in `optionTokens`
  * @param argEntries - The argument schemas
  * @param toKebab - Whether every option name is converted to kebab-case
- * @returns The next argument rebuilt from its tokens, or `undefined` when there is nothing to suggest
+ * @returns The next argument rebuilt from its tokens, or `undefined` when there is nothing to
+ * suggest
  */
 function findOptionLikeNextArgument(
   tokens: ArgToken[],

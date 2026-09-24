@@ -313,7 +313,7 @@ for (const cause of error?.errors ?? []) {
 
 The resolver uses stable error codes for required options, required positionals, options given without a value, invalid types, invalid choices, custom parse failures, and values given to options that do not take one. The `values` object contains interpolation data such as `name`, `displayName`, `rawName`, `expected`, `actual`, `choices`, `choiceValues`, `reason`, `next`, and `suggestion` depending on the error kind.
 
-An option that takes a value reports `ArgsValidationErrorKeys.missingValue` when it is given without one, including a required option. `--port -5` is read as `--port` followed by the option `-5`, the same as the `node:util` `parseArgs` tokens, so a value that starts with `-` has to be written as `--port=-5`. When the argument after the option starts with `-` and is not made only of options in the schema, the error has `next` (`'-5'`) and `suggestion` (`'--port=-5'`) in `values`, and the message suggests that form:
+An option that takes a value reports `ArgsValidationErrorKeys.missingValue` when it is given without one, including a required option. The tokens are made without the schema, as `node:util` `parseArgs` makes them without option definitions, so `--port -5` is read as `--port` followed by the option `-5`, and a value that starts with `-` has to be written as `--port=-5`. When the option ends its argument and the next argument is one long option or a group of short options, such as `-5`, `-5.5` or `--foo`, that are not all in the schema, the error has `next` (`'-5'`) and `suggestion` (`'--port=-5'`) in `values`, and the message suggests that form:
 
 ```
 Optional argument '--port' requires a value (to pass '-5' as its value, write '--port=-5')
@@ -444,7 +444,7 @@ Hides the argument from generated help or usage output. This is renderer metadat
 
 Marks the argument as required. When `true`, the argument must be provided or an `ArgResolveError` will be thrown.
 
-An option given without a value, such as `--input` with nothing after it, is reported as `ArgsValidationErrorKeys.missingValue` instead. An explicit empty value such as `--input=` is still reported as required.
+An option given without a value, such as `--input` with nothing after it, is reported as `ArgsValidationErrorKeys.missingValue` instead. An explicit empty value given with the long name, such as `--input=`, is still reported as required.
 
 Single-value positional arguments are required by default for compatibility. Set `required: false` to make a positional argument explicitly optional. When an optional positional argument appears before later required positional arguments, it consumes a value only when enough values remain for those required positional arguments.
 
