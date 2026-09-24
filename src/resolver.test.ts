@@ -995,6 +995,33 @@ describe('option group', () => {
       host: 'example.com'
     })
   })
+
+  test('the value after = goes to the last option, and the next option does not get the other letters', () => {
+    const { values, error } = resolveArgs(
+      {
+        verbose: {
+          type: 'boolean',
+          short: 'v'
+        },
+        silent: {
+          type: 'boolean',
+          short: 's'
+        },
+        name: {
+          type: 'string',
+          short: 'n'
+        }
+      },
+      parseArgs(['-vs=false', '-n']),
+      { shortGrouping: true }
+    )
+    expectMissingValueError(error, {
+      displayName: "'--name' or '-n'",
+      name: 'name',
+      expected: 'string'
+    })
+    expect(values).toEqual({ verbose: true, silent: false })
+  })
 })
 
 describe('short option group without shortGrouping', () => {
@@ -1069,18 +1096,21 @@ describe('short option group without shortGrouping', () => {
       expect(values.port).toBeUndefined()
     })
 
+    // expected to change with #633, which gives `-n=` an empty value
     test('-nfoo= gives only the other letters, as the empty value after = gives no token', () => {
       const { values, error } = resolveArgs(args, parseArgs(['-nfoo=']))
       expect(error).toBeUndefined()
       expect(values.name).toBe('foo')
     })
 
-    test('shortGrouping reads each letter as an option', () => {
-      const { values, error } = resolveArgs(args, parseArgs(['-vs=false', '-n']), {
-        shortGrouping: true
-      })
-      expectMissingValueError(error, name)
-      expect(values).toEqual({ verbose: true, silent: false })
+    test('a value token without a value, which parseArgs does not make, gives the letters and =', () => {
+      const { values, error } = resolveArgs(args, [
+        { kind: 'option', name: 'n', rawName: '-n', index: 0 },
+        { kind: 'option', name: 'f', rawName: '-f', index: 0 },
+        { kind: 'option', index: 0, inlineValue: true }
+      ])
+      expect(error).toBeUndefined()
+      expect(values.name).toBe('f=')
     })
   })
 
@@ -1105,6 +1135,15 @@ describe('short option group without shortGrouping', () => {
       expect(positionals).toEqual(['bar'])
     })
 
+    // the first option is finished at the positional argument, so a later long option with `=` comes after it
+    test('the value of the first option comes before the value of a later long option', () => {
+      expect(resolveArgs(args, parseArgs(['-nfoo', 'bar', '--name=x'])).values.name).toBe('x')
+      expect(resolveArgs(args, parseArgs(['-DA', 'x', '--define=B'])).values.define).toEqual([
+        'A',
+        'B'
+      ])
+    })
+
     test.each([{ argv: ['-vs', 'x'] }, { argv: ['-v', 'x'] }])(
       '$argv does not give the positional argument to a boolean option',
       ({ argv }) => {
@@ -1115,7 +1154,7 @@ describe('short option group without shortGrouping', () => {
       }
     )
 
-    test('the tokens of allowCompatible are read the same way', () => {
+    test('-n=bar x with the allowCompatible tokens gives -n the rest of the group and keeps x', () => {
       const { values, positionals, error } = resolveArgs(
         args,
         parseArgs(['-n=bar', 'x'], { allowCompatible: true })
