@@ -366,6 +366,19 @@ describe('rest arguments after the option terminator', () => {
     expect(positionals).toEqual([])
     expect(rest).toEqual([''])
   })
+
+  test.each([
+    { argv: ['', '--', 'a'], positionals: [''], rest: ['a'] },
+    { argv: ['--'], positionals: [], rest: [] }
+  ])(
+    '$argv keeps the arguments before -- as positional arguments',
+    ({ argv, positionals, rest }) => {
+      const result = resolveArgs({}, parseArgs(argv))
+      expect(result.error).toBeUndefined()
+      expect(result.positionals).toEqual(positionals)
+      expect(result.rest).toEqual(rest)
+    }
+  )
 })
 
 describe('hidden metadata', () => {
