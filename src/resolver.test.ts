@@ -1014,24 +1014,39 @@ describe('number option without a value', () => {
    *
    * @param error - The aggregate error returned by `resolveArgs`
    * @param displayName - The expected display name of the option
+   * @param hint - The expected suggestion, when the next argument may be a value starting with `-`
    */
-  function expectMissingNumberValue(error: AggregateError | undefined, displayName: string) {
+  function expectMissingNumberValue(
+    error: AggregateError | undefined,
+    displayName: string,
+    hint?: { next: string; suggestion: string }
+  ) {
     expect(error?.errors.length).toBe(1)
     const resolveError = error?.errors[0] as ArgResolveError
     expect(resolveError).toBeInstanceOf(ArgResolveError)
     expect(resolveError.name).toBe('port')
     expect(resolveError.type).toBe('type')
-    expect(resolveError.code).toBe(ArgsValidationErrorKeys.invalidType)
-    expect(resolveError.message).toBe(`Optional argument ${displayName} should be 'number'`)
+    expect(resolveError.code).toBe(ArgsValidationErrorKeys.missingValue)
+    expect(resolveError.message).toBe(
+      `Optional argument ${displayName} requires a value${hint ? ` (to pass '${hint.next}' as its value, write '${hint.suggestion}')` : ''}`
+    )
     // no `actual`: there is no value, unlike an explicit empty value (`--port=`)
-    expect(resolveError.values).toEqual({ displayName, name: 'port', expected: 'number' })
-    expect(resolveError.values).not.toHaveProperty('actual')
+    expect(resolveError.values).toStrictEqual({
+      displayName,
+      name: 'port',
+      expected: 'number',
+      ...hint
+    })
   }
 
   test.each([
     { label: '--port', argv: ['--port'] },
     { label: '-p', argv: ['-p'] },
-    { label: '--port -5', argv: ['--port', '-5'] },
+    {
+      label: '--port -5',
+      argv: ['--port', '-5'],
+      hint: { next: '-5', suggestion: '--port=-5' }
+    },
     // grouped short options take the `shortGrouping` path, where `-p` gets no value either
     {
       label: '-pv with shortGrouping',
@@ -1045,9 +1060,9 @@ describe('number option without a value', () => {
       options: { shortGrouping: true },
       verbose: true
     }
-  ])('$label reports a type error', ({ argv, options, verbose }) => {
+  ])('$label reports a missing value', ({ argv, options, verbose, hint }) => {
     const { values, error, explicit } = resolveArgs(args, parseArgs(argv), options)
-    expectMissingNumberValue(error, "'--port' or '-p'")
+    expectMissingNumberValue(error, "'--port' or '-p'", hint)
     expect(values.port).toBeUndefined()
     expect(values.verbose).toBe(verbose)
     expect(explicit.port).toBe(true)
@@ -1066,7 +1081,8 @@ describe('number option without a value', () => {
     expect(error?.errors.length).toBe(1)
     const resolveError = error?.errors[0] as ArgResolveError
     expect(resolveError.name).toBe('server-port')
-    expect(resolveError.message).toBe("Optional argument '--server-port' should be 'number'")
+    expect(resolveError.code).toBe(ArgsValidationErrorKeys.missingValue)
+    expect(resolveError.message).toBe("Optional argument '--server-port' requires a value")
     expect(resolveError.values).toEqual({
       displayName: "'--server-port'",
       name: 'serverPort',
@@ -1118,7 +1134,7 @@ describe('number option without a value', () => {
     expect(values.port).toEqual([1])
   })
 
-  test('required reports only the missing option', () => {
+  test('a required option reports a missing value, not a required option', () => {
     const { values, error } = resolveArgs(
       {
         port: {
@@ -1128,8 +1144,7 @@ describe('number option without a value', () => {
       },
       parseArgs(['--port'])
     )
-    expect(error?.errors.length).toBe(1)
-    expect((error?.errors[0] as ArgResolveError).code).toBe(ArgsValidationErrorKeys.requiredOption)
+    expectMissingNumberValue(error, "'--port'")
     expect(values.port).toBeUndefined()
   })
 
@@ -1156,7 +1171,7 @@ describe('number option without a value', () => {
   test('a string option without a value reports the same kind of error', () => {
     const { error } = resolveArgs({ name: { type: 'string' } }, parseArgs(['--name']))
     const resolveError = error?.errors[0] as ArgResolveError
-    expect(resolveError.code).toBe(ArgsValidationErrorKeys.invalidType)
+    expect(resolveError.code).toBe(ArgsValidationErrorKeys.missingValue)
     expect(resolveError.values).toEqual({
       displayName: "'--name'",
       name: 'name',
@@ -1301,7 +1316,7 @@ describe('enum option', () => {
     expect(positionals).toEqual(['dev'])
   })
 
-  test('invalid default', () => {
+  test('option without a value', () => {
     const argv = ['dev', '--log']
     const tokens = parseArgs(argv)
     const { error } = resolveArgs(
@@ -1316,12 +1331,19 @@ describe('enum option', () => {
       tokens
     )
     expect(error?.errors.length).toBe(1)
-    expect((error?.errors[0] as ArgResolveError).message).toEqual(
-      `Optional argument '--log' or '-l' should be chosen from 'enum' ["debug", "info", "warn", "error"] values`
-    )
-    expect((error?.errors[0] as ArgResolveError).name).toEqual('log')
-    expect((error?.errors[0] as ArgResolveError).type).toEqual('type')
-    expect((error?.errors[0] as ArgResolveError).schema.type).toEqual('enum')
+    const resolveError = error?.errors[0] as ArgResolveError
+    expect(resolveError.code).toBe(ArgsValidationErrorKeys.missingValue)
+    expect(resolveError.message).toEqual(`Optional argument '--log' or '-l' requires a value`)
+    expect(resolveError.values).toStrictEqual({
+      displayName: "'--log' or '-l'",
+      name: 'log',
+      expected: 'enum',
+      choices: '"debug", "info", "warn", "error"',
+      choiceValues: ['debug', 'info', 'warn', 'error']
+    })
+    expect(resolveError.name).toEqual('log')
+    expect(resolveError.type).toEqual('type')
+    expect(resolveError.schema.type).toEqual('enum')
   })
 })
 
@@ -3363,49 +3385,532 @@ describe('boolean inline value', () => {
   })
 })
 
-describe('option with a parse function given without a value', () => {
-  /**
-   * Assert that the result reports one missing value, without an `actual` value.
-   *
-   * @param error - The aggregate error returned by `resolveArgs`
-   * @param code - The expected error code
-   * @param values - The expected interpolation values
-   */
-  function expectMissingValue(
-    error: AggregateError | undefined,
-    code: string,
-    values: Record<string, unknown>
-  ) {
-    expect(error?.errors.length).toBe(1)
-    const resolveError = error?.errors[0] as ArgResolveError
+/**
+ * Assert that the result reports the given options without a value, in order.
+ *
+ * @param error - The aggregate error returned by `resolveArgs`
+ * @param expected - The expected interpolation values of each error
+ */
+function expectMissingValueErrors(
+  error: AggregateError | undefined,
+  expected: Record<string, unknown>[]
+) {
+  expect(error?.errors.length).toBe(expected.length)
+  for (const [index, values] of expected.entries()) {
+    const resolveError = error?.errors[index] as ArgResolveError
     expect(resolveError).toBeInstanceOf(ArgResolveError)
     expect(resolveError.type).toBe('type')
-    expect(resolveError.code).toBe(code)
-    expect(resolveError.values).toEqual(values)
-    // there is no value, unlike an explicit empty value (`--x=`)
-    expect(resolveError.values).not.toHaveProperty('actual')
+    expect(resolveError.code).toBe('err:arg:missing-value')
+    // no `actual`, and the suggestion values only when there is a suggestion
+    expect(resolveError.values).toStrictEqual(values)
   }
+}
 
+/**
+ * Assert that the result reports one option without a value.
+ *
+ * @param error - The aggregate error returned by `resolveArgs`
+ * @param values - The expected interpolation values
+ */
+function expectMissingValueError(
+  error: AggregateError | undefined,
+  values: Record<string, unknown>
+) {
+  expectMissingValueErrors(error, [values])
+}
+
+describe('option given without a value', () => {
+  test.each([
+    {
+      label: 'string',
+      schema: { type: 'string' },
+      values: { displayName: "'--x'", name: 'x', expected: 'string' }
+    },
+    {
+      label: 'number',
+      schema: { type: 'number' },
+      values: { displayName: "'--x'", name: 'x', expected: 'number' }
+    },
+    {
+      label: 'custom',
+      schema: { type: 'custom', parse: (value: string) => value },
+      values: { displayName: "'--x'", name: 'x', expected: 'custom' }
+    },
+    {
+      label: 'custom with a metavar',
+      schema: { type: 'custom', metavar: 'date', parse: (value: string) => new Date(value) },
+      values: { displayName: "'--x'", name: 'x', expected: 'date' }
+    },
+    {
+      label: 'enum',
+      schema: { type: 'enum', choices: ['a', 'b'] },
+      values: {
+        displayName: "'--x'",
+        name: 'x',
+        expected: 'enum',
+        choices: '"a", "b"',
+        choiceValues: ['a', 'b']
+      }
+    },
+    {
+      label: 'enum without choices',
+      schema: { type: 'enum' },
+      values: { displayName: "'--x'", name: 'x', expected: 'enum', choices: '', choiceValues: [] }
+    },
+    {
+      label: 'string with a metavar and a parse function',
+      schema: { type: 'string', metavar: 'path', parse: (value: string) => value },
+      values: { displayName: "'--x'", name: 'x', expected: 'string' }
+    },
+    {
+      label: 'number with a metavar and a parse function',
+      schema: { type: 'number', metavar: 'port', parse: (value: string) => Number(value) },
+      values: { displayName: "'--x'", name: 'x', expected: 'number' }
+    }
+  ])('$label reports a missing value', ({ schema, values }) => {
+    const result = resolveArgs({ x: schema as ArgSchema }, parseArgs(['--x']))
+    expectMissingValueError(result.error, values)
+    expect(result.error?.errors[0].message).toBe("Optional argument '--x' requires a value")
+    expect(result.values.x).toBeUndefined()
+    expect(result.explicit.x).toBe(true)
+  })
+
+  test('a required option reports a missing value instead of a required option', () => {
+    const { values, error, explicit } = resolveArgs(
+      { x: { type: 'string', required: true } },
+      parseArgs(['--x'])
+    )
+    expectMissingValueError(error, { displayName: "'--x'", name: 'x', expected: 'string' })
+    expect(values.x).toBeUndefined()
+    expect(explicit.x).toBe(true)
+  })
+
+  test('a default is filled in', () => {
+    const { values, error } = resolveArgs(
+      { x: { type: 'string', default: 'd' } },
+      parseArgs(['--x'])
+    )
+    expectMissingValueError(error, { displayName: "'--x'", name: 'x', expected: 'string' })
+    expect(values.x).toBe('d')
+  })
+
+  test.each([
+    { label: 'last', argv: ['--x', 'a', '--x'] },
+    { label: 'first', argv: ['--x', '--x', 'a'] }
+  ])('multiple values keep the given ones when the $label one is missing', ({ argv }) => {
+    const { values, error } = resolveArgs(
+      { x: { type: 'custom', multiple: true, parse: (value: string) => value.toUpperCase() } },
+      parseArgs(argv)
+    )
+    expectMissingValueError(error, { displayName: "'--x'", name: 'x', expected: 'custom' })
+    expect(values.x).toEqual(['A'])
+  })
+
+  const shortArgs = {
+    x: {
+      type: 'string',
+      short: 'x'
+    },
+    verbose: {
+      type: 'boolean',
+      short: 'v'
+    }
+  } as const satisfies Args
+
+  test.each([
+    { label: '-x', argv: ['-x'] },
+    { label: '--x --verbose', argv: ['--x', '--verbose'], verbose: true },
+    { label: '--x -- rest', argv: ['--x', '--', 'rest'], rest: ['rest'] },
+    {
+      label: '-xv with shortGrouping',
+      argv: ['-xv'],
+      options: { shortGrouping: true },
+      verbose: true
+    },
+    { label: '-x=', argv: ['-x='] },
+    { label: "-x ''", argv: ['-x', ''] }
+  ])('$label reports a missing value', ({ argv, options, verbose, rest = [] }) => {
+    const result = resolveArgs(shortArgs, parseArgs(argv), options)
+    expectMissingValueError(result.error, {
+      displayName: "'--x' or '-x'",
+      name: 'x',
+      expected: 'string'
+    })
+    expect(result.error?.errors[0].message).toBe("Optional argument '--x' or '-x' requires a value")
+    expect(result.values.x).toBeUndefined()
+    expect(result.values.verbose).toBe(verbose)
+    expect(result.rest).toEqual(rest)
+  })
+
+  test('a lone - after an option is its value, not a missing value', () => {
+    const { values, error } = resolveArgs({ port: { type: 'number' } }, parseArgs(['--port', '-']))
+    expect(error?.errors.length).toBe(1)
+    const resolveError = error?.errors[0] as ArgResolveError
+    expect(resolveError.code).toBe(ArgsValidationErrorKeys.invalidType)
+    expect(resolveError.values.actual).toBe('-')
+    expect(values.port).toBeUndefined()
+  })
+
+  test('a required option given without a value takes part in conflicts', () => {
+    const { error } = resolveArgs(
+      {
+        a: { type: 'string', short: 'a', required: true, conflicts: 'b' },
+        b: { type: 'boolean' }
+      },
+      parseArgs(['-a', '--b'])
+    )
+    expect(error?.errors.map(error => (error as ArgResolveError).type)).toEqual([
+      'type',
+      'conflict'
+    ])
+    expect((error?.errors[0] as ArgResolveError).code).toBe(ArgsValidationErrorKeys.missingValue)
+    // the conflict names the option the way it was given
+    expect(error?.errors[1].message).toBe("Optional argument '-a' conflicts with '--b'")
+  })
+
+  test('an explicit empty value is not a missing value', () => {
+    for (const argv of [['--x='], ['--x', '']]) {
+      expect(resolveArgs({ x: { type: 'string' } }, parseArgs(argv)).error).toBeUndefined()
+      const required = resolveArgs({ x: { type: 'string', required: true } }, parseArgs(argv))
+      expect(required.error?.errors.map(error => (error as ArgResolveError).code)).toEqual([
+        ArgsValidationErrorKeys.requiredOption
+      ])
+    }
+  })
+
+  const booleanArgs = {
+    color: {
+      type: 'boolean',
+      negatable: true
+    },
+    flag: {
+      type: 'boolean',
+      required: true
+    }
+  } as const satisfies Args
+
+  test.each([
+    { label: '--color --flag', argv: ['--color', '--flag'], values: { color: true, flag: true } },
+    {
+      label: '--no-color --flag',
+      argv: ['--no-color', '--flag'],
+      values: { color: false, flag: true }
+    },
+    {
+      label: '--no-color -5 --flag',
+      argv: ['--no-color', '-5', '--flag'],
+      values: { color: false, flag: true }
+    }
+  ])('boolean options given as $label have no missing value', ({ argv, values }) => {
+    const result = resolveArgs(booleanArgs, parseArgs(argv))
+    expect(result.error).toBeUndefined()
+    expect(result.values).toEqual(values)
+  })
+
+  test('boolean options keep their errors for a value given with =', () => {
+    const codes = (argv: string[]) =>
+      resolveArgs(booleanArgs, parseArgs(argv)).error?.errors.map(
+        error => (error as ArgResolveError).code
+      )
+    expect(codes(['--flag', '--no-color=false'])).toEqual([ArgsValidationErrorKeys.unexpectedValue])
+    expect(codes(['--flag', '--color=maybe'])).toEqual([ArgsValidationErrorKeys.invalidType])
+  })
+})
+
+describe('option given without a value followed by an argument starting with -', () => {
+  const args = {
+    port: {
+      type: 'number',
+      short: 'p'
+    },
+    name: {
+      type: 'string',
+      short: 'n'
+    },
+    verbose: {
+      type: 'boolean',
+      short: 'v'
+    },
+    exclude: {
+      type: 'boolean',
+      short: 'e'
+    },
+    color: {
+      type: 'boolean',
+      negatable: true
+    },
+    maxCount: {
+      type: 'number',
+      toKebab: true
+    }
+  } as const satisfies Args
+
+  const port = { displayName: "'--port' or '-p'", name: 'port', expected: 'number' }
+  const name = { displayName: "'--name' or '-n'", name: 'name', expected: 'string' }
+
+  test.each([
+    { label: '--port -5', argv: ['--port', '-5'], values: port, next: '-5' },
+    { label: '-p -5', argv: ['-p', '-5'], values: port, next: '-5' },
+    {
+      label: '-vp -5 with shortGrouping',
+      argv: ['-vp', '-5'],
+      options: { shortGrouping: true },
+      values: port,
+      next: '-5'
+    },
+    { label: '--port -5.5', argv: ['--port', '-5.5'], values: port, next: '-5.5' },
+    { label: '--port -1e3', argv: ['--port', '-1e3'], values: port, next: '-1e3' },
+    { label: '--port -vx', argv: ['--port', '-vx'], values: port, next: '-vx' },
+    {
+      label: '--max-count -5',
+      argv: ['--max-count', '-5'],
+      values: { displayName: "'--max-count'", name: 'maxCount', expected: 'number' },
+      next: '-5',
+      option: 'max-count'
+    },
+    { label: '--name -x', argv: ['--name', '-x'], values: name, next: '-x' },
+    { label: '--name --foo', argv: ['--name', '--foo'], values: name, next: '--foo' },
+    { label: '--name --foo=bar', argv: ['--name', '--foo=bar'], values: name, next: '--foo=bar' },
+    { label: '--name --foo=', argv: ['--name', '--foo='], values: name, next: '--foo=' }
+  ])('$label suggests the long form', ({ argv, options, values, next, option }) => {
+    const suggestion = `--${option ?? values.name}=${next}`
+    const result = resolveArgs(args, parseArgs(argv), options)
+    expectMissingValueError(result.error, { ...values, next, suggestion })
+    expect(result.error?.errors[0].message).toBe(
+      `Optional argument ${values.displayName} requires a value (to pass '${next}' as its value, write '${suggestion}')`
+    )
+    expect(result.values).not.toHaveProperty(values.name)
+  })
+
+  test.each([
+    { label: '--port', argv: ['--port'], values: port },
+    { label: '--port --', argv: ['--port', '--'], values: port },
+    { label: '--port -v', argv: ['--port', '-v'], values: port },
+    { label: '--port --verbose', argv: ['--port', '--verbose'], values: port },
+    { label: '--port -ve', argv: ['--port', '-ve'], values: port },
+    { label: '--name --no-color', argv: ['--name', '--no-color'], values: name },
+    {
+      label: '-pv -5 with shortGrouping',
+      argv: ['-pv', '-5'],
+      options: { shortGrouping: true },
+      values: port
+    },
+    // a long option with an inline value comes before `-v` in the resolved order
+    {
+      label: '-pv --foo=bar with shortGrouping',
+      argv: ['-pv', '--foo=bar'],
+      options: { shortGrouping: true },
+      values: port
+    },
+    { label: '--name -x=1', argv: ['--name', '-x=1'], values: name },
+    { label: '--name --port=5', argv: ['--name', '--port=5'], values: name }
+  ])('$label suggests nothing', ({ argv, options, values }) => {
+    const result = resolveArgs(args, parseArgs(argv), options)
+    expectMissingValueError(result.error, values)
+    expect(result.error?.errors[0].message).toBe(
+      `Optional argument ${values.displayName} requires a value`
+    )
+    expect(result.values).not.toHaveProperty(values.name)
+  })
+
+  test('--name -p-5 suggests nothing for either option', () => {
+    const result = resolveArgs(args, parseArgs(['--name', '-p-5']))
+    // `-p-5` is split into `-p`, the option terminator and `-5`
+    expectMissingValueErrors(result.error, [port, name])
+    expect(result.rest).toEqual(['-5'])
+  })
+
+  test('only the last of a repeated short option in one argument gets a suggestion', () => {
+    const result = resolveArgs(args, parseArgs(['-pp', '-5']), { shortGrouping: true })
+    expectMissingValueErrors(result.error, [port, { ...port, next: '-5', suggestion: '--port=-5' }])
+    expect(result.values).not.toHaveProperty('port')
+  })
+
+  test('each occurrence of a multiple option is checked', () => {
+    const result = resolveArgs(
+      { tag: { type: 'string', multiple: true } },
+      parseArgs(['--tag', '-x', '--tag'])
+    )
+    const tag = { displayName: "'--tag'", name: 'tag', expected: 'string' }
+    expectMissingValueErrors(result.error, [{ ...tag, next: '-x', suggestion: '--tag=-x' }, tag])
+    expect(result.values.tag).toBeUndefined()
+  })
+
+  test('a required option gets a suggestion too', () => {
+    const result = resolveArgs(
+      { name: { type: 'string', required: true } },
+      parseArgs(['--name', '-x'])
+    )
+    expectMissingValueError(result.error, {
+      displayName: "'--name'",
+      name: 'name',
+      expected: 'string',
+      next: '-x',
+      suggestion: '--name=-x'
+    })
+    expect(result.error?.errors[0].message).toBe(
+      "Optional argument '--name' requires a value (to pass '-x' as its value, write '--name=-x')"
+    )
+    expect(result.explicit.name).toBe(true)
+  })
+
+  test('an enum keeps its choices next to the suggestion', () => {
+    const choices = ['debug', 'info']
+    const result = resolveArgs({ level: { type: 'enum', choices } }, parseArgs(['--level', '-d']))
+    expectMissingValueError(result.error, {
+      displayName: "'--level'",
+      name: 'level',
+      expected: 'enum',
+      choices: '"debug", "info"',
+      choiceValues: ['debug', 'info'],
+      next: '-d',
+      suggestion: '--level=-d'
+    })
+    // a copy, so changing it does not change the schema
+    expect((result.error?.errors[0] as ArgResolveError).values.choiceValues).not.toBe(choices)
+    expect(result.values.level).toBeUndefined()
+  })
+
+  test('a negated form counts as a defined option only for a negatable boolean', () => {
+    const missingName = { displayName: "'--name'", name: 'name', expected: 'string' }
+    const negatable = resolveArgs(
+      { name: { type: 'string' }, color: { type: 'boolean', negatable: true } },
+      parseArgs(['--name', '--no-color'])
+    )
+    expectMissingValueError(negatable.error, missingName)
+    expect(negatable.values.color).toBe(false)
+
+    const notNegatable = resolveArgs(
+      { name: { type: 'string' }, color: { type: 'boolean' } },
+      parseArgs(['--name', '--no-color'])
+    )
+    expectMissingValueError(notNegatable.error, {
+      ...missingName,
+      next: '--no-color',
+      suggestion: '--name=--no-color'
+    })
+    expect(notNegatable.values.color).toBeUndefined()
+  })
+
+  test.each([
+    { flag: '--no-cache', value: true },
+    { flag: '--no-no-cache', value: false }
+  ])('$flag of a boolean named no-cache is a defined option', ({ flag, value }) => {
+    const result = resolveArgs(
+      { name: { type: 'string' }, 'no-cache': { type: 'boolean', negatable: true } },
+      parseArgs(['--name', flag])
+    )
+    expectMissingValueError(result.error, {
+      displayName: "'--name'",
+      name: 'name',
+      expected: 'string'
+    })
+    expect(result.values['no-cache']).toBe(value)
+  })
+
+  test('a negated form with toKebab is a defined option', () => {
+    const result = resolveArgs(
+      { name: { type: 'string' }, dryRun: { type: 'boolean', negatable: true, toKebab: true } },
+      parseArgs(['--name', '--no-dry-run'])
+    )
+    expectMissingValueError(result.error, {
+      displayName: "'--name'",
+      name: 'name',
+      expected: 'string'
+    })
+    expect(result.values.dryRun).toBe(false)
+  })
+
+  test('defined option names follow the toKebab option of resolveArgs', () => {
+    const result = resolveArgs(
+      { name: { type: 'string' }, dryRun: { type: 'boolean' } },
+      parseArgs(['--name', '--dry-run']),
+      { toKebab: true }
+    )
+    expectMissingValueError(result.error, {
+      displayName: "'--name'",
+      name: 'name',
+      expected: 'string'
+    })
+    expect(result.values.dryRun).toBe(true)
+  })
+
+  test('a positional argument is not a defined option', () => {
+    const result = resolveArgs(
+      { name: { type: 'string' }, file: { type: 'positional', required: false } },
+      parseArgs(['--name', '--file'])
+    )
+    expectMissingValueError(result.error, {
+      displayName: "'--name'",
+      name: 'name',
+      expected: 'string',
+      next: '--file',
+      suggestion: '--name=--file'
+    })
+    expect(result.values.file).toBeUndefined()
+  })
+
+  test('a digit defined as a short option is not suggested as a value', () => {
+    const result = resolveArgs(
+      { port: { type: 'number' }, five: { type: 'boolean', short: '5' } },
+      parseArgs(['--port', '-5'])
+    )
+    expectMissingValueError(result.error, {
+      displayName: "'--port'",
+      name: 'port',
+      expected: 'number'
+    })
+    expect(result.values.five).toBe(true)
+  })
+
+  test.each([
+    { label: '--port=-5', argv: ['--port=-5'], values: { port: -5 } },
+    { label: '--name=-x', argv: ['--name=-x'], values: { name: '-x' } },
+    { label: '--max-count=-5', argv: ['--max-count=-5'], values: { maxCount: -5 } },
+    { label: '--name=--foo=bar', argv: ['--name=--foo=bar'], values: { name: '--foo=bar' } }
+  ])('the suggested $label passes the value', ({ argv, values }) => {
+    const result = resolveArgs(args, parseArgs(argv))
+    expect(result.error).toBeUndefined()
+    expect(result.values).toEqual(values)
+  })
+
+  test('a negated form is not taken for an option that takes a value', () => {
+    const result = resolveArgs({ name: { type: 'string' } }, parseArgs(['--no-name']))
+    expect(result.error).toBeUndefined()
+    expect(result.explicit.name).toBe(false)
+  })
+
+  test('an option whose name starts with no- takes a value', () => {
+    const proxyArgs = { 'no-proxy': { type: 'string' } } as const satisfies Args
+    const missing = resolveArgs(proxyArgs, parseArgs(['--no-proxy']))
+    expectMissingValueError(missing.error, {
+      displayName: "'--no-proxy'",
+      name: 'no-proxy',
+      expected: 'string'
+    })
+    const given = resolveArgs(proxyArgs, parseArgs(['--no-proxy', 'localhost']))
+    expect(given.values['no-proxy']).toBe('localhost')
+  })
+})
+
+describe('option with a parse function given without a value', () => {
   test.each([
     {
       label: 'string',
       schema: { type: 'string', parse: (value: string) => value.toUpperCase() },
-      code: ArgsValidationErrorKeys.invalidType,
-      message: "Optional argument '--x' should be 'string'",
+      message: "Optional argument '--x' requires a value",
       values: { displayName: "'--x'", name: 'x', expected: 'string' }
     },
     {
       label: 'number',
       schema: { type: 'number', parse: (value: string) => Number(value) },
-      code: ArgsValidationErrorKeys.invalidType,
-      message: "Optional argument '--x' should be 'number'",
+      message: "Optional argument '--x' requires a value",
       values: { displayName: "'--x'", name: 'x', expected: 'number' }
     },
     {
       label: 'enum',
       schema: { type: 'enum', choices: ['a', 'b'], parse: (value: string) => value },
-      code: ArgsValidationErrorKeys.invalidChoice,
-      message: `Optional argument '--x' should be chosen from 'enum' ["a", "b"] values`,
+      message: "Optional argument '--x' requires a value",
       values: {
         displayName: "'--x'",
         name: 'x',
@@ -3417,27 +3922,24 @@ describe('option with a parse function given without a value', () => {
     {
       label: 'custom (split)',
       schema: { type: 'custom', parse: (value: string) => value.split(',') },
-      code: ArgsValidationErrorKeys.invalidType,
-      message: "Optional argument '--x' should be 'custom'",
+      message: "Optional argument '--x' requires a value",
       values: { displayName: "'--x'", name: 'x', expected: 'custom' }
     },
     {
       label: 'custom (JSON.parse)',
       schema: { type: 'custom', parse: (value: string) => JSON.parse(value) as unknown },
-      code: ArgsValidationErrorKeys.invalidType,
-      message: "Optional argument '--x' should be 'custom'",
+      message: "Optional argument '--x' requires a value",
       values: { displayName: "'--x'", name: 'x', expected: 'custom' }
     },
     {
       label: 'custom with a metavar',
       schema: { type: 'custom', metavar: 'date', parse: (value: string) => new Date(value) },
-      code: ArgsValidationErrorKeys.invalidType,
-      message: "Optional argument '--x' should be 'date'",
+      message: "Optional argument '--x' requires a value",
       values: { displayName: "'--x'", name: 'x', expected: 'date' }
     }
-  ])('$label reports the missing value', ({ schema, code, message, values }) => {
+  ])('$label reports the missing value', ({ schema, message, values }) => {
     const result = resolveArgs({ x: schema as ArgSchema }, parseArgs(['--x']))
-    expectMissingValue(result.error, code, values)
+    expectMissingValueError(result.error, values)
     expect(result.error?.errors[0].message).toBe(message)
     expect(result.values.x).toBeUndefined()
     expect(result.explicit.x).toBe(true)
@@ -3466,11 +3968,7 @@ describe('option with a parse function given without a value', () => {
       },
       parseArgs(['--x'])
     )
-    expectMissingValue(str.error, ArgsValidationErrorKeys.invalidType, {
-      displayName: "'--x'",
-      name: 'x',
-      expected: 'string'
-    })
+    expectMissingValueError(str.error, { displayName: "'--x'", name: 'x', expected: 'string' })
     expect(str.values.x).toBe('d')
 
     const custom = resolveArgs(
@@ -3483,11 +3981,7 @@ describe('option with a parse function given without a value', () => {
       },
       parseArgs(['--x'])
     )
-    expectMissingValue(custom.error, ArgsValidationErrorKeys.invalidType, {
-      displayName: "'--x'",
-      name: 'x',
-      expected: 'custom'
-    })
+    expectMissingValueError(custom.error, { displayName: "'--x'", name: 'x', expected: 'custom' })
     expect(custom.values.x).toBe('dflt')
   })
 
@@ -3517,7 +4011,7 @@ describe('option with a parse function given without a value', () => {
     { label: "-x ''", argv: ['-x', ''] }
   ])('$label reports the missing value', ({ argv, options, verbose, rest = [] }) => {
     const result = resolveArgs(shortArgs, parseArgs(argv), options)
-    expectMissingValue(result.error, ArgsValidationErrorKeys.invalidType, {
+    expectMissingValueError(result.error, {
       displayName: "'--x' or '-x'",
       name: 'x',
       expected: 'string'
@@ -3555,7 +4049,7 @@ describe('option with a parse function given without a value', () => {
     expect(values.x).toEqual(['a', 'b'])
   })
 
-  test('required reports only the missing option', () => {
+  test('required reports a missing value, and an explicit empty value as required', () => {
     const received: string[] = []
     const args = {
       x: {
@@ -3567,7 +4061,10 @@ describe('option with a parse function given without a value', () => {
         }
       }
     } as const satisfies Args
-    for (const argv of [['--x'], ['--x='], ['--x', '']]) {
+    const missing = resolveArgs(args, parseArgs(['--x']))
+    expectMissingValueError(missing.error, { displayName: "'--x'", name: 'x', expected: 'string' })
+    expect(missing.values.x).toBeUndefined()
+    for (const argv of [['--x='], ['--x', '']]) {
       const { values, error } = resolveArgs(args, parseArgs(argv))
       expect(error?.errors.length).toBe(1)
       expect((error?.errors[0] as ArgResolveError).code).toBe(
@@ -3588,12 +4085,8 @@ describe('option with a parse function given without a value', () => {
         { x: { type, metavar, parse: (value: string) => value } },
         parseArgs(['--x'])
       )
-      expectMissingValue(error, ArgsValidationErrorKeys.invalidType, {
-        displayName: "'--x'",
-        name: 'x',
-        expected: type
-      })
-      expect(error?.errors[0].message).toBe(`Optional argument '--x' should be '${type}'`)
+      expectMissingValueError(error, { displayName: "'--x'", name: 'x', expected: type })
+      expect(error?.errors[0].message).toBe("Optional argument '--x' requires a value")
     }
   )
 
@@ -3605,11 +4098,7 @@ describe('option with a parse function given without a value', () => {
       { x: { type: 'custom', multiple: true, parse: (value: string) => value.toUpperCase() } },
       parseArgs(argv)
     )
-    expectMissingValue(error, ArgsValidationErrorKeys.invalidType, {
-      displayName: "'--x'",
-      name: 'x',
-      expected: 'custom'
-    })
+    expectMissingValueError(error, { displayName: "'--x'", name: 'x', expected: 'custom' })
     expect(values.x).toEqual(['A'])
   })
 
@@ -3627,11 +4116,7 @@ describe('option with a parse function given without a value', () => {
       },
       parseArgs(argv)
     )
-    expectMissingValue(error, ArgsValidationErrorKeys.invalidType, {
-      displayName: "'--x'",
-      name: 'x',
-      expected: 'custom'
-    })
+    expectMissingValueError(error, { displayName: "'--x'", name: 'x', expected: 'custom' })
     expect(values.x).toBe('A')
   })
 

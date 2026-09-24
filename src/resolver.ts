@@ -148,6 +148,10 @@ export interface ArgSchema {
    *
    * When `true`, the argument must be provided by the user.
    * If missing, an `ArgResolveError` with type 'required' will be thrown.
+   * An option that is given without a value is reported as `err:arg:missing-value`
+   * ({@link ArgsValidationErrorKeys}.missingValue) instead, because the option itself was given.
+   * An explicit empty value given with the long name, such as `--name=`, is still reported as
+   * required.
    *
    * For single-value positional arguments, omitting `required` keeps the argument
    * required for compatibility. Set `required: false` to make a positional argument
@@ -443,10 +447,9 @@ export interface ArgSchema {
    *
    * A `boolean` option calls `parse` with `'true'`, or `'false'` for the negated form. Other
    * options call it only with a value from the command line: when the option is given without a
-   * value, `parse` is not called and the missing value is reported as a validation error
-   * (`err:arg:required-option` when `required: true` is set, `err:arg:invalid-choice` for `enum`,
-   * `err:arg:invalid-type` otherwise). An explicit empty value given with the long name, such as
-   * `--name=`, is passed as `''` unless `required: true` is set.
+   * value, `parse` is not called and the missing value is reported as `err:arg:missing-value`
+   * ({@link ArgsValidationErrorKeys}.missingValue). An explicit empty value given with the long
+   * name, such as `--name=`, is passed as `''` unless `required: true` is set.
    *
    * @param value - Raw string value from command line
    * @returns Parsed value of any type
@@ -496,7 +499,8 @@ export const ArgsValidationErrorKeys = {
   invalidChoice: 'err:arg:invalid-choice',
   customParse: 'err:arg:custom-parse',
   unknownOption: 'err:arg:unknown-option',
-  unexpectedValue: 'err:arg:unexpected-value'
+  unexpectedValue: 'err:arg:unexpected-value',
+  missingValue: 'err:arg:missing-value'
 } as const
 
 /**
@@ -1111,10 +1115,15 @@ export function resolveArgs<A extends Args>(
         checkLongTokenName(arg, schema, token) ||
         (schema.short === token.name && token.rawName != undefined && isShortOption(token.rawName))
       ) {
-        const invalid = validateRequire(token, rawArg, arg, schema)
-        if (invalid) {
-          errors.push(invalid)
-          continue
+        // an option given without a value (not an empty one such as `--name=`) is a missing value,
+        // also when it is required: the option itself was given
+        const missing = schema.type !== 'boolean' && token.value === undefined
+        if (!missing) {
+          const invalid = validateRequire(token, rawArg, arg, schema)
+          if (invalid) {
+            errors.push(invalid)
+            continue
+          }
         }
 
         // mark as explicitly set when we find a matching token.
@@ -1127,7 +1136,17 @@ export function resolveArgs<A extends Args>(
         const actualInputName = isShortOption(rawName) ? `-${token.name}` : rawName
         actualInputNames.set(rawArg, actualInputName)
 
-        const [parsedValue, error] = parse(token, rawArg, arg, schema)
+        const [parsedValue, error] = missing
+          ? [
+              undefined,
+              createMissingValueError(
+                rawArg,
+                arg,
+                schema,
+                findOptionLikeNextArgument(tokens, optionTokens, i, argEntries, toKebab)
+              )
+            ]
+          : parse(token, rawArg, arg, schema)
         if (error) {
           errors.push(error)
         } else {
@@ -1179,6 +1198,18 @@ function isNegatedToken(token: ArgToken, option: string, schema: ArgSchema): boo
   return schema.type === 'boolean' && schema.negatable === true && token.name === `no-${option}`
 }
 
+/**
+ * Resolve the value of an option token that matches the schema.
+ *
+ * A token of a non-boolean option always has a value here: `resolveArgs()` reports an option
+ * given without a value before calling this function.
+ *
+ * @param token - The option token
+ * @param rawArg - The argument key in the schema
+ * @param option - The option name used on the command line
+ * @param schema - The argument schema
+ * @returns The resolved value, or a validation error
+ */
 function parse(
   token: ArgToken,
   rawArg: string,
@@ -1196,12 +1227,7 @@ function parse(
       }
       return parseSchemaValue(String(boolValue), rawArg, option, schema)
     }
-    // a missing value never reaches `parse`: it is reported the way the type's own branch below
-    // reports it, and a `default` is filled in afterwards as for the other types
-    if (typeof token.value !== 'string') {
-      return [undefined, createMissingValueError(rawArg, option, schema)]
-    }
-    return parseSchemaValue(token.value, rawArg, option, schema)
+    return parseSchemaValue(token.value!, rawArg, option, schema)
   }
   switch (schema.type) {
     case 'string': {
@@ -1214,7 +1240,8 @@ function parse(
       return resolveBooleanValue(token, rawArg, option, schema)
     }
     case 'number': {
-      // an option without a value has no `token.value`, like the `string` branch above
+      // `resolveArgs()` reports an option without a value before calling `parse()`, so the
+      // `typeof` check only narrows the type
       if (typeof token.value !== 'string' || !isNumeric(token.value)) {
         return [undefined, createTypeError(rawArg, option, schema, token.value)]
       }
@@ -1441,27 +1468,133 @@ function createTypeError(
 }
 
 /**
- * Create the error for an option with a `parse` function that is given without a value.
+ * Create the error for an option that is given without a value.
  *
- * The error is the one the type reports without a `parse` function: a choice error for `enum`
- * and a type error otherwise. A `custom` type has no built-in name, so its `metavar` (for example
- * `'integer'` for the `integer()` combinator) names what was expected.
+ * `expected` names what the option takes: its type, or for a `custom` type its `metavar` (for
+ * example `'integer'` for the `integer()` combinator). An `enum` also gets its choices. When the
+ * argument after the option may be a value that starts with `-`, the error suggests the long form
+ * with `=`, which is how such a value is passed.
  *
  * @param rawArg - The argument key in the schema
  * @param option - The option name used on the command line
  * @param schema - The argument schema
+ * @param next - The argument after the option, when it may be a value that starts with `-`
  * @returns The validation error
  */
 function createMissingValueError(
   rawArg: string,
   option: string,
-  schema: ArgSchema
+  schema: ArgSchema,
+  next: string | undefined
 ): ArgResolveError {
-  if (schema.type === 'enum') {
-    return createChoiceError(rawArg, option, schema, undefined)
+  const displayName = createOptionDisplayName(option, schema)
+  const suggestion = next === undefined ? undefined : `--${option}=${next}`
+  const hint =
+    suggestion === undefined ? '' : ` (to pass '${next}' as its value, write '${suggestion}')`
+  const choices = schema.choices ?? []
+  return new ArgResolveError(
+    `Optional argument ${displayName} requires a value${hint}`,
+    option,
+    'type',
+    schema,
+    {
+      code: ArgsValidationErrorKeys.missingValue,
+      values: {
+        displayName,
+        name: rawArg,
+        expected: schema.type === 'custom' ? (schema.metavar ?? schema.type) : schema.type,
+        ...(schema.type === 'enum'
+          ? { choices: formatChoices(choices), choiceValues: [...choices] }
+          : {}),
+        ...(next === undefined ? {} : { next, suggestion })
+      }
+    }
+  )
+}
+
+/**
+ * Find the argument right after an option that is given without a value, when it may be a value
+ * that starts with `-`.
+ *
+ * The option must end its own argument (with `shortGrouping`, `-pv` gives `-p` no value because of
+ * `-v`), and the next argument must be written as options that are not all defined, such as `-5`
+ * or `--foo`. The argument is rebuilt from its tokens, so a form that the tokens do not keep comes
+ * back in the form that has the same tokens: `-x=` comes back as `-x`.
+ *
+ * @param tokens - The tokens given to `resolveArgs()`
+ * @param optionTokens - The option tokens that `resolveArgs()` resolves
+ * @param position - The position of the option given without a value in `optionTokens`
+ * @param argEntries - The argument schemas
+ * @param toKebab - Whether every option name is converted to kebab-case
+ * @returns The next argument rebuilt from its tokens, or `undefined` when there is nothing to
+ * suggest
+ */
+function findOptionLikeNextArgument(
+  tokens: ArgToken[],
+  optionTokens: ArgToken[],
+  position: number,
+  argEntries: [string, ArgSchema][],
+  toKebab: boolean
+): string | undefined {
+  const token = optionTokens[position]
+  // `optionTokens` is not always in the order of the arguments: a long option with an inline value
+  // is added before a short option that still waits for its value. So look at every later token.
+  for (let i = position + 1; i < optionTokens.length; i++) {
+    if (optionTokens[i].index === token.index) {
+      return undefined
+    }
   }
-  const expected = schema.type === 'custom' ? (schema.metavar ?? schema.type) : schema.type
-  return createTypeError(rawArg, option, schema, undefined, expected)
+  const nextArg = tokens.filter(t => t.index === token.index + 1)
+  if (nextArg.length === 0 || nextArg.some(t => t.kind !== 'option' || t.rawName == null)) {
+    return undefined
+  }
+  let text: string
+  let known: boolean
+  if (nextArg.length === 1 && hasLongOptionPrefix(nextArg[0].rawName!)) {
+    const [option] = nextArg
+    text = option.inlineValue ? `${option.rawName}=${option.value}` : option.rawName!
+    known = createKnownOptionNames(argEntries, toKebab).long.has(option.name!)
+  } else if (
+    // tokens from `parseArgs()` never put a value on a short option, but other tokens may
+    nextArg.every(t => isShortOption(t.rawName!) && t.value === undefined)
+  ) {
+    text = `-${nextArg.map(t => t.name).join('')}`
+    const { short } = createKnownOptionNames(argEntries, toKebab)
+    known = nextArg.every(t => short.has(t.name!))
+  } else {
+    return undefined
+  }
+  return known ? undefined : text
+}
+
+/**
+ * Collect the names of the defined options: the long names, with the negated form of negatable
+ * booleans, and the short names.
+ *
+ * @param argEntries - The argument schemas
+ * @param toKebab - Whether every option name is converted to kebab-case
+ * @returns The long and short option names
+ */
+function createKnownOptionNames(
+  argEntries: [string, ArgSchema][],
+  toKebab: boolean
+): { long: Set<string>; short: Set<string> } {
+  const long = new Set<string>()
+  const short = new Set<string>()
+  for (const [rawArg, schema] of argEntries) {
+    if (schema.type === 'positional') {
+      continue
+    }
+    const name = toKebab || schema.toKebab ? kebabnize(rawArg) : rawArg
+    long.add(name)
+    if (schema.type === 'boolean' && schema.negatable === true) {
+      long.add(`no-${name}`)
+    }
+    if (schema.short) {
+      short.add(schema.short)
+    }
+  }
+  return { long, short }
 }
 
 function createUnexpectedValueError(

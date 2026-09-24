@@ -311,7 +311,13 @@ for (const cause of error?.errors ?? []) {
 }
 ```
 
-The resolver uses stable error codes for required options, required positionals, invalid types, invalid choices, custom parse failures, and values given to options that do not take one. The `values` object contains interpolation data such as `name`, `displayName`, `rawName`, `expected`, `actual`, `choices`, `choiceValues`, and `reason` depending on the error kind.
+The resolver uses stable error codes for required options, required positionals, options given without a value, invalid types, invalid choices, custom parse failures, and values given to options that do not take one. The `values` object contains interpolation data such as `name`, `displayName`, `rawName`, `expected`, `actual`, `choices`, `choiceValues`, `reason`, `next`, and `suggestion` depending on the error kind.
+
+An option that takes a value reports `ArgsValidationErrorKeys.missingValue` when it is given without one, including a required option. The tokens are made without the schema, as `node:util` `parseArgs` makes them without option definitions, so `--port -5` is read as `--port` followed by the option `-5`, and a value that starts with `-` has to be written as `--port=-5`. When the option ends its argument and the next argument is one long option or a group of short options, such as `-5`, `-5.5` or `--foo`, that are not all in the schema, the error has `next` (`'-5'`) and `suggestion` (`'--port=-5'`) in `values`, and the message suggests that form:
+
+```
+Optional argument '--port' requires a value (to pass '-5' as its value, write '--port=-5')
+```
 
 When a custom `parse` function throws, args-tokens wraps the failure as `ArgsValidationErrorKeys.customParse` and preserves the thrown value as `cause`. If the parser already throws an `ArgsValidationError`, it is reused without double wrapping, and missing `name`, `displayName`, and `actual` values are filled in. When that update fails, for example because its `values` object is frozen, the thrown error is wrapped like any other thrown value.
 
@@ -437,6 +443,8 @@ Hides the argument from generated help or usage output. This is renderer metadat
 #### `required` (optional)
 
 Marks the argument as required. When `true`, the argument must be provided or an `ArgResolveError` will be thrown.
+
+An option given without a value, such as `--input` with nothing after it, is reported as `ArgsValidationErrorKeys.missingValue` instead. An explicit empty value given with the long name, such as `--input=`, is still reported as required.
 
 Single-value positional arguments are required by default for compatibility. Set `required: false` to make a positional argument explicitly optional. When an optional positional argument appears before later required positional arguments, it consumes a value only when enough values remain for those required positional arguments.
 
