@@ -545,6 +545,16 @@ describe('choice combinator', () => {
       displayName: "'--level'"
     })
   })
+
+  test('choices are checked before a mapped parse', () => {
+    const args = { level: map(choice(['debug', 'info'] as const), value => value.length) }
+    expect(resolveArgs(args, parseArgs(['--level=info'])).values.level).toBe(4)
+    const { error } = resolveArgs(args, parseArgs(['--level=verbose']))
+    expect(error!.errors[0]).toBeInstanceOf(ArgResolveError)
+    expect((error!.errors[0] as ArgsValidationError).code).toBe(
+      ArgsValidationErrorKeys.invalidChoice
+    )
+  })
 })
 
 describe('custom combinator', () => {
