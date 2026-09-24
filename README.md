@@ -321,7 +321,7 @@ An option that takes a value reports `ArgsValidationErrorKeys.missingValue` when
 Optional argument '--port' requires a value (to pass '-5' as its value, write '--port=-5')
 ```
 
-The suggestion is left out when the option does not take that value: a `number` option takes only a numeric value, and an `enum` option with `choices` only one of them, so `--port -x` and `--level -x` get no suggestion. Other options with a `parse` function keep the suggestion, since checking the value would mean calling the function.
+`next`, `suggestion` and the hint in the message are given only when the option may take that value, as far as that can be told without calling a `parse` function: a `number` option gets them only for a numeric value, and an `enum` option with `choices` only for one of the choices, with or without a `parse` function. So `--port -x` gets no suggestion, and neither does `--level -x` for an `enum` option with `choices: ['debug', 'info']`. A `parse` function is not called for this, so a value that only the function rejects is still suggested, such as `-5` for `number({ min: 1 })` or `-x` for `integer()`.
 
 When a custom `parse` function throws, args-tokens wraps the failure as `ArgsValidationErrorKeys.customParse` and preserves the thrown value as `cause`. If the parser already throws an `ArgsValidationError`, it is reused without double wrapping, and missing `name`, `displayName`, and `actual` values are filled in. When that update fails, for example because its `values` object is frozen, the thrown error is wrapped like any other thrown value.
 
