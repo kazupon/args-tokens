@@ -1365,6 +1365,18 @@ describe('short option with an empty value', () => {
     expect(ab.values).toEqual({ beta: '' })
     expect(ab.positionals).toEqual(['x'])
   })
+
+  test.each([false, true])(
+    'a boolean option does not take an empty argument as its value (shortGrouping: %s)',
+    shortGrouping => {
+      const { values, positionals, error } = resolveArgs(args, parseArgs(['-v', '']), {
+        shortGrouping
+      })
+      expect(error).toBeUndefined()
+      expect(values).toEqual({ verbose: true })
+      expect(positionals).toEqual([''])
+    }
+  )
 })
 
 describe('number option without a value', () => {

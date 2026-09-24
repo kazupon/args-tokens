@@ -163,6 +163,17 @@ describe('short options', () => {
       })
       expect(parseArgs(args, { allowCompatible: true })).toEqual(tokens)
     })
+
+    test('allowCompatible keeps the node:util tokens of an empty value after =', () => {
+      const args = ['-n=', 'x']
+      const { tokens } = parseArgsNode({
+        allowPositionals: true,
+        strict: false,
+        args,
+        tokens: true
+      })
+      expect(parseArgs(args, { allowCompatible: true })).toEqual(tokens)
+    })
   })
 })
 
