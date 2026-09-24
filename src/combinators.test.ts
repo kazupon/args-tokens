@@ -20,7 +20,7 @@ import {
   withDefault
 } from './combinators.ts'
 import { parseArgs } from './parser.ts'
-import { ArgsValidationErrorKeys, resolveArgs } from './resolver.ts'
+import { ArgResolveError, ArgsValidationErrorKeys, resolveArgs } from './resolver.ts'
 
 import type { Args, ArgSchema, ArgsValidationError } from './resolver.ts'
 
@@ -528,7 +528,11 @@ describe('choice combinator', () => {
       tokens
     )
     expect(error).toBeDefined()
-    expect((error!.errors[0] as Error).message).toContain('one of')
+    // `choices` is checked before `parse`, so the error is the one of an enum option
+    expect(error!.errors[0]).toBeInstanceOf(ArgResolveError)
+    expect((error!.errors[0] as Error).message).toBe(
+      `Optional argument '--level' should be chosen from 'enum' ["debug", "info", "warn", "error"] values`
+    )
     expect((error!.errors[0] as ArgsValidationError).code).toBe(
       ArgsValidationErrorKeys.invalidChoice
     )
@@ -540,6 +544,30 @@ describe('choice combinator', () => {
       name: 'level',
       displayName: "'--level'"
     })
+  })
+
+  test('a positional choice keeps its own check', () => {
+    const { values, error } = resolveArgs(
+      { level: positional(choice(['debug', 'info'] as const)) },
+      parseArgs(['verbose'])
+    )
+    // a positional argument has no choices to check, so the error comes from `choice()` itself
+    expect(error!.errors[0]).not.toBeInstanceOf(ArgResolveError)
+    expect((error!.errors[0] as Error).message).toBe('Value must be one of: debug, info')
+    expect((error!.errors[0] as ArgsValidationError).code).toBe(
+      ArgsValidationErrorKeys.invalidChoice
+    )
+    expect(values.level).toBeUndefined()
+  })
+
+  test('choices are checked before a mapped parse', () => {
+    const args = { level: map(choice(['debug', 'info'] as const), value => value.length) }
+    expect(resolveArgs(args, parseArgs(['--level=info'])).values.level).toBe(4)
+    const { error } = resolveArgs(args, parseArgs(['--level=verbose']))
+    expect(error!.errors[0]).toBeInstanceOf(ArgResolveError)
+    expect((error!.errors[0] as ArgsValidationError).code).toBe(
+      ArgsValidationErrorKeys.invalidChoice
+    )
   })
 })
 

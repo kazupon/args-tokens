@@ -238,6 +238,9 @@ export interface ArgSchema {
    * Required when `type: 'enum'`. The argument value must be one of these choices,
    * otherwise an `ArgResolveError` with type 'type' will be thrown.
    *
+   * The value is checked before `parse` is called, so a `parse` function receives only one of
+   * these choices and can change it, for example to upper case.
+   *
    * Supports both mutable arrays and readonly arrays for type safety.
    *
    * @example
@@ -450,6 +453,11 @@ export interface ArgSchema {
    * value, `parse` is not called and the missing value is reported as `err:arg:missing-value`
    * ({@link ArgsValidationErrorKeys}.missingValue). An explicit empty value given with the long
    * name, such as `--name=`, is passed as `''` unless `required: true` is set.
+   *
+   * An `enum` option with `choices` calls it only with one of them. Any other value, an explicit
+   * empty one included, is reported as `err:arg:invalid-choice`
+   * ({@link ArgsValidationErrorKeys}.invalidChoice), except that a required option reports an
+   * explicit empty value as required.
    *
    * @param value - Raw string value from command line
    * @returns Parsed value of any type
@@ -1216,6 +1224,10 @@ function parse(
   option: string,
   schema: ArgSchema
 ): [unknown, Error | undefined] {
+  // `choices` limits the values given on the command line, whether or not `parse` changes them
+  if (schema.type === 'enum' && schema.choices && !schema.choices.includes(token.value!)) {
+    return [undefined, createChoiceError(rawArg, option, schema, token.value)]
+  }
   // When schema.parse is defined, use it directly (all types including boolean).
   if (typeof schema.parse === 'function') {
     if (schema.type === 'boolean') {
@@ -1248,9 +1260,6 @@ function parse(
       return [+token.value, undefined]
     }
     case 'enum': {
-      if (schema.choices && !schema.choices.includes(token.value!)) {
-        return [undefined, createChoiceError(rawArg, option, schema, token.value)]
-      }
       return [token.value || schema.default, undefined]
     }
     case 'custom': {

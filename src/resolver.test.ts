@@ -1347,6 +1347,256 @@ describe('enum option', () => {
   })
 })
 
+describe('enum option with a parse function', () => {
+  test.each([
+    { label: '--level=verbose', argv: ['--level=verbose'] },
+    { label: '--level verbose', argv: ['--level', 'verbose'] },
+    { label: '-l verbose', argv: ['-l', 'verbose'] }
+  ])('$label reports a value outside the choices without calling parse', ({ argv }) => {
+    const received: string[] = []
+    const { values, error } = resolveArgs(
+      {
+        level: {
+          type: 'enum',
+          short: 'l',
+          choices: ['debug', 'info'],
+          parse: (value: string) => {
+            received.push(value)
+            return value.toUpperCase()
+          }
+        }
+      },
+      parseArgs(argv)
+    )
+    expect(error?.errors.length).toBe(1)
+    const resolveError = error?.errors[0] as ArgResolveError
+    expect(resolveError).toBeInstanceOf(ArgResolveError)
+    expect(resolveError.type).toBe('type')
+    expect(resolveError.code).toBe(ArgsValidationErrorKeys.invalidChoice)
+    expect(resolveError.message).toBe(
+      `Optional argument '--level' or '-l' should be chosen from 'enum' ["debug", "info"] values`
+    )
+    expect(resolveError.values).toEqual({
+      displayName: "'--level' or '-l'",
+      name: 'level',
+      expected: 'enum',
+      choices: '"debug", "info"',
+      choiceValues: ['debug', 'info'],
+      actual: 'verbose'
+    })
+    expect(values.level).toBeUndefined()
+    expect(received).toEqual([])
+  })
+
+  test('multiple values keep the ones in the choices', () => {
+    const received: string[] = []
+    const { values, error } = resolveArgs(
+      {
+        level: {
+          type: 'enum',
+          multiple: true,
+          choices: ['debug', 'info'],
+          parse: (value: string) => {
+            received.push(value)
+            return value.toUpperCase()
+          }
+        }
+      },
+      parseArgs(['--level=debug', '--level=verbose'])
+    )
+    expect(error?.errors.length).toBe(1)
+    expect((error?.errors[0] as ArgResolveError).code).toBe(ArgsValidationErrorKeys.invalidChoice)
+    expect(values.level).toEqual(['DEBUG'])
+    expect(received).toEqual(['debug'])
+  })
+
+  test('a value outside the choices is reported before a parse function can throw', () => {
+    const { error } = resolveArgs(
+      {
+        config: {
+          type: 'enum',
+          choices: ['a', 'b'],
+          parse: (value: string) => JSON.parse(value) as unknown
+        }
+      },
+      parseArgs(['--config=zzz'])
+    )
+    expect(error?.errors.length).toBe(1)
+    const resolveError = error?.errors[0] as ArgResolveError
+    expect(resolveError.code).toBe(ArgsValidationErrorKeys.invalidChoice)
+    expect(resolveError.values.actual).toBe('zzz')
+  })
+
+  test('choices list the values given on the command line, not the parsed ones', () => {
+    const { values, error } = resolveArgs(
+      {
+        level: {
+          type: 'enum',
+          choices: ['DEBUG', 'INFO'],
+          parse: (value: string) => value.toUpperCase()
+        }
+      },
+      parseArgs(['--level=debug'])
+    )
+    expect(error?.errors.length).toBe(1)
+    expect((error?.errors[0] as ArgResolveError).code).toBe(ArgsValidationErrorKeys.invalidChoice)
+    expect(values.level).toBeUndefined()
+  })
+
+  test('a value in the choices goes through parse', () => {
+    const received: string[] = []
+    const { values, error } = resolveArgs(
+      {
+        level: {
+          type: 'enum',
+          choices: ['debug', 'info'],
+          parse: (value: string) => {
+            received.push(value)
+            return value.toUpperCase()
+          }
+        }
+      },
+      parseArgs(['--level=info'])
+    )
+    expect(error).toBeUndefined()
+    expect(values.level).toBe('INFO')
+    expect(received).toEqual(['info'])
+  })
+
+  test('parse can return a value that is not a string', () => {
+    const { values, error } = resolveArgs(
+      {
+        priority: {
+          type: 'enum',
+          choices: ['low', 'high'],
+          parse: (value: string) => (value === 'low' ? 0 : 1)
+        }
+      },
+      parseArgs(['--priority=high'])
+    )
+    expect(error).toBeUndefined()
+    expect(values.priority).toBe(1)
+  })
+
+  test('parse can still reject a value in the choices', () => {
+    const { error } = resolveArgs(
+      {
+        x: {
+          type: 'enum',
+          choices: ['a', 'b'],
+          parse: (value: string) => {
+            if (value === 'b') {
+              throw new Error('b is not supported yet')
+            }
+            return value
+          }
+        }
+      },
+      parseArgs(['--x=b'])
+    )
+    expect(error?.errors.length).toBe(1)
+    const validationError = error?.errors[0] as ArgsValidationError
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.customParse)
+    expect(validationError.values.reason).toBe('b is not supported yet')
+  })
+
+  test('an enum without choices passes any value to parse', () => {
+    const { values, error } = resolveArgs(
+      { level: { type: 'enum', parse: (value: string) => value.toUpperCase() } },
+      parseArgs(['--level=anything'])
+    )
+    expect(error).toBeUndefined()
+    expect(values.level).toBe('ANYTHING')
+  })
+
+  test('a default is filled in next to a value outside the choices', () => {
+    const { values, error } = resolveArgs(
+      {
+        level: {
+          type: 'enum',
+          choices: ['debug', 'info'],
+          default: 'debug',
+          parse: (value: string) => value.toUpperCase()
+        }
+      },
+      parseArgs(['--level=verbose'])
+    )
+    expect((error?.errors[0] as ArgResolveError).code).toBe(ArgsValidationErrorKeys.invalidChoice)
+    expect(values.level).toBe('debug')
+  })
+
+  test('an explicit empty value is checked against the choices too', () => {
+    const received: string[] = []
+    const level = {
+      type: 'enum',
+      choices: ['debug', 'info'],
+      parse: (value: string) => {
+        received.push(value)
+        return value
+      }
+    } as const
+    const { values, error } = resolveArgs({ level }, parseArgs(['--level=']))
+    expect(error?.errors.length).toBe(1)
+    const resolveError = error?.errors[0] as ArgResolveError
+    expect(resolveError.code).toBe(ArgsValidationErrorKeys.invalidChoice)
+    expect(resolveError.values.actual).toBe('')
+    expect(values.level).toBeUndefined()
+
+    // a default does not stand in for the explicit empty value, but is filled in next to the error
+    const withDefault = resolveArgs(
+      { level: { ...level, default: 'debug' } },
+      parseArgs(['--level='])
+    )
+    expect((withDefault.error?.errors[0] as ArgResolveError).code).toBe(
+      ArgsValidationErrorKeys.invalidChoice
+    )
+    expect(withDefault.values.level).toBe('debug')
+
+    // a required option reports an explicit empty value as required, before the choices
+    const required = resolveArgs({ level: { ...level, required: true } }, parseArgs(['--level=']))
+    expect((required.error?.errors[0] as ArgResolveError).code).toBe(
+      ArgsValidationErrorKeys.requiredOption
+    )
+    expect(received).toEqual([])
+  })
+
+  test('a default outside the choices is used as is', () => {
+    const { values, error } = resolveArgs(
+      {
+        level: {
+          type: 'enum',
+          choices: ['debug', 'info'],
+          default: 'foo',
+          parse: (value: string) => value.toUpperCase()
+        }
+      },
+      parseArgs([])
+    )
+    expect(error).toBeUndefined()
+    expect(values.level).toBe('foo')
+  })
+
+  test('choices are only checked for an enum option', () => {
+    const { values, error } = resolveArgs(
+      { x: { type: 'string', choices: ['a'] } },
+      parseArgs(['--x=b'])
+    )
+    expect(error).toBeUndefined()
+    expect(values.x).toBe('b')
+  })
+
+  test('an option without a value still reports a missing value', () => {
+    const { error } = resolveArgs(
+      {
+        level: { type: 'enum', choices: ['debug', 'info'], parse: (value: string) => value }
+      },
+      parseArgs(['--level'])
+    )
+    expect(error?.errors.length).toBe(1)
+    expect((error?.errors[0] as ArgResolveError).code).toBe(ArgsValidationErrorKeys.missingValue)
+  })
+})
+
 describe('positional arguments', () => {
   test('basic', () => {
     const argv = ['dev', '--help']
