@@ -1301,7 +1301,6 @@ describe('short option with an empty value', () => {
     }
   )
 
-  // a string option without a parse function turns an empty value into undefined (#632)
   const args = {
     verbose: {
       type: 'boolean',

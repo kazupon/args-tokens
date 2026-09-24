@@ -1257,7 +1257,7 @@ function parse(
     case 'string': {
       // prettier-ignore
       return typeof token.value === 'string'
-        ? [token.value || schema.default, undefined]
+        ? [token.value, undefined]
         : [undefined, createTypeError(rawArg, option, schema, token.value)]
     }
     case 'boolean': {
@@ -1272,7 +1272,7 @@ function parse(
       return [+token.value, undefined]
     }
     case 'enum': {
-      return [token.value || schema.default, undefined]
+      return [token.value, undefined]
     }
     case 'custom': {
       // When schema.parse is defined, it's handled by the priority check above.
