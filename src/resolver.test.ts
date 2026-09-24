@@ -3557,42 +3557,53 @@ describe('option with a parse function given without a value', () => {
 
   test('required reports only the missing option', () => {
     const received: string[] = []
-    const { values, error } = resolveArgs(
-      {
-        x: {
-          type: 'string',
-          required: true,
-          parse: (value: string) => {
-            received.push(value)
-            return value
-          }
+    const args = {
+      x: {
+        type: 'string',
+        required: true,
+        parse: (value: string) => {
+          received.push(value)
+          return value
         }
-      },
-      parseArgs(['--x'])
-    )
-    expect(error?.errors.length).toBe(1)
-    expect((error?.errors[0] as ArgResolveError).code).toBe(ArgsValidationErrorKeys.requiredOption)
-    expect(values.x).toBeUndefined()
+      }
+    } as const satisfies Args
+    for (const argv of [['--x'], ['--x='], ['--x', '']]) {
+      const { values, error } = resolveArgs(args, parseArgs(argv))
+      expect(error?.errors.length).toBe(1)
+      expect((error?.errors[0] as ArgResolveError).code).toBe(
+        ArgsValidationErrorKeys.requiredOption
+      )
+      expect(values.x).toBeUndefined()
+    }
     expect(received).toEqual([])
   })
 
-  test('a metavar names the expected value only for a custom type', () => {
-    const { error } = resolveArgs(
-      { x: { type: 'string', metavar: 'path', parse: (value: string) => value } },
-      parseArgs(['--x'])
-    )
-    expectMissingValue(error, ArgsValidationErrorKeys.invalidType, {
-      displayName: "'--x'",
-      name: 'x',
-      expected: 'string'
-    })
-    expect(error?.errors[0].message).toBe("Optional argument '--x' should be 'string'")
-  })
+  test.each([
+    { type: 'string', metavar: 'path' },
+    { type: 'number', metavar: 'port' }
+  ] as const)(
+    'a metavar does not name the expected value for a $type type',
+    ({ type, metavar }) => {
+      const { error } = resolveArgs(
+        { x: { type, metavar, parse: (value: string) => value } },
+        parseArgs(['--x'])
+      )
+      expectMissingValue(error, ArgsValidationErrorKeys.invalidType, {
+        displayName: "'--x'",
+        name: 'x',
+        expected: type
+      })
+      expect(error?.errors[0].message).toBe(`Optional argument '--x' should be '${type}'`)
+    }
+  )
 
-  test('multiple values keep the given ones and report the missing one', () => {
+  test.each([
+    { label: 'last', argv: ['--x', 'a', '--x'] },
+    { label: 'first', argv: ['--x', '--x', 'a'] }
+  ])('multiple values keep the given ones when the $label one is missing', ({ argv }) => {
     const { values, error } = resolveArgs(
       { x: { type: 'custom', multiple: true, parse: (value: string) => value.toUpperCase() } },
-      parseArgs(['--x', 'a', '--x'])
+      parseArgs(argv)
     )
     expectMissingValue(error, ArgsValidationErrorKeys.invalidType, {
       displayName: "'--x'",
@@ -3600,6 +3611,28 @@ describe('option with a parse function given without a value', () => {
       expected: 'custom'
     })
     expect(values.x).toEqual(['A'])
+  })
+
+  test.each([
+    { label: 'last', argv: ['--x', 'a', '--x'] },
+    { label: 'first', argv: ['--x', '--x', 'a'] }
+  ])('a single value keeps the given one when the $label one is missing', ({ argv }) => {
+    const { values, error } = resolveArgs(
+      {
+        x: {
+          type: 'custom',
+          parse: (value: string) => value.toUpperCase(),
+          default: 'dflt'
+        }
+      },
+      parseArgs(argv)
+    )
+    expectMissingValue(error, ArgsValidationErrorKeys.invalidType, {
+      displayName: "'--x'",
+      name: 'x',
+      expected: 'custom'
+    })
+    expect(values.x).toBe('A')
   })
 
   test('boolean and positional parse functions are unchanged', () => {
