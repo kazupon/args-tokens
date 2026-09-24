@@ -25,6 +25,19 @@ import { ArgsValidationErrorKeys, resolveArgs } from './resolver.ts'
 import type { Args, ArgSchema, ArgsValidationError } from './resolver.ts'
 
 describe('string combinator', () => {
+  test('option without a value', () => {
+    const { values, error } = resolveArgs({ name: string() }, parseArgs(['--name']))
+    expect(error!.errors.length).toBe(1)
+    const validationError = error!.errors[0] as ArgsValidationError
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.invalidType)
+    expect(validationError.values).toEqual({
+      displayName: "'--name'",
+      name: 'name',
+      expected: 'string'
+    })
+    expect(values.name).toBeUndefined()
+  })
+
   test('basic', () => {
     const argv = ['--name', 'hello']
     const tokens = parseArgs(argv)
@@ -177,6 +190,20 @@ describe('number combinator', () => {
 })
 
 describe('integer combinator', () => {
+  test('option without a value', () => {
+    const { values, error } = resolveArgs({ port: integer() }, parseArgs(['--port']))
+    expect(error!.errors.length).toBe(1)
+    const validationError = error!.errors[0] as ArgsValidationError
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.invalidType)
+    expect(validationError.message).toBe("Optional argument '--port' should be 'integer'")
+    expect(validationError.values).toEqual({
+      displayName: "'--port'",
+      name: 'port',
+      expected: 'integer'
+    })
+    expect(values.port).toBeUndefined()
+  })
+
   test('basic', () => {
     const argv = ['--count', '42']
     const tokens = parseArgs(argv)
@@ -238,6 +265,20 @@ describe('integer combinator', () => {
 })
 
 describe('float combinator', () => {
+  test('option without a value', () => {
+    const { values, error } = resolveArgs({ ratio: float() }, parseArgs(['--ratio']))
+    expect(error!.errors.length).toBe(1)
+    const validationError = error!.errors[0] as ArgsValidationError
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.invalidType)
+    expect(validationError.message).toBe("Optional argument '--ratio' should be 'float'")
+    expect(validationError.values).toEqual({
+      displayName: "'--ratio'",
+      name: 'ratio',
+      expected: 'float'
+    })
+    expect(values.ratio).toBeUndefined()
+  })
+
   test('basic', () => {
     const argv = ['--ratio', '0.75']
     const tokens = parseArgs(argv)
@@ -451,6 +492,21 @@ describe('positional combinator', () => {
 })
 
 describe('choice combinator', () => {
+  test('option without a value', () => {
+    const { values, error } = resolveArgs({ level: choice(['a', 'b']) }, parseArgs(['--level']))
+    expect(error!.errors.length).toBe(1)
+    const validationError = error!.errors[0] as ArgsValidationError
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.invalidChoice)
+    expect(validationError.values).toEqual({
+      displayName: "'--level'",
+      name: 'level',
+      expected: 'enum',
+      choices: '"a", "b"',
+      choiceValues: ['a', 'b']
+    })
+    expect(values.level).toBeUndefined()
+  })
+
   test('valid value', () => {
     const argv = ['--level', 'info']
     const tokens = parseArgs(argv)
@@ -485,6 +541,27 @@ describe('choice combinator', () => {
 })
 
 describe('custom combinator', () => {
+  test('option without a value', () => {
+    const plain = resolveArgs({ x: combinator({ parse: value => value }) }, parseArgs(['--x']))
+    expect(plain.error!.errors.length).toBe(1)
+    expect((plain.error!.errors[0] as ArgsValidationError).values).toEqual({
+      displayName: "'--x'",
+      name: 'x',
+      expected: 'custom'
+    })
+    expect(plain.values.x).toBeUndefined()
+
+    const date = resolveArgs(
+      { since: combinator({ parse: value => new Date(value), metavar: 'date' }) },
+      parseArgs(['--since'])
+    )
+    expect((date.error!.errors[0] as ArgsValidationError).values).toEqual({
+      displayName: "'--since'",
+      name: 'since',
+      expected: 'date'
+    })
+  })
+
   test('basic custom parse (Date)', () => {
     const date = combinator({
       parse: (value: string) => {
@@ -590,6 +667,16 @@ describe('custom combinator', () => {
 })
 
 describe('map combinator', () => {
+  test('option without a value uses the default as when it is omitted', () => {
+    const args = { port: map(withDefault(integer(), 8080), n => n * 2) }
+    const missing = resolveArgs(args, parseArgs(['--port']))
+    expect((missing.error!.errors[0] as ArgsValidationError).code).toBe(
+      ArgsValidationErrorKeys.invalidType
+    )
+    expect(missing.values.port).toBe(8080)
+    expect(resolveArgs(args, parseArgs([])).values.port).toBe(8080)
+  })
+
   test('transforms value', () => {
     const argv = ['--count', '5']
     const tokens = parseArgs(argv)
@@ -648,6 +735,16 @@ describe('map combinator', () => {
 })
 
 describe('withDefault combinator', () => {
+  test('option without a value reports it and uses the default', () => {
+    const { values, error } = resolveArgs(
+      { port: withDefault(integer(), 8080) },
+      parseArgs(['--port'])
+    )
+    expect(error!.errors.length).toBe(1)
+    expect((error!.errors[0] as ArgsValidationError).code).toBe(ArgsValidationErrorKeys.invalidType)
+    expect(values.port).toBe(8080)
+  })
+
   test('applies default', () => {
     const argv: string[] = []
     const tokens = parseArgs(argv)

@@ -12,7 +12,7 @@ import {
   resolveArgs
 } from './resolver.ts'
 
-import type { Args } from './resolver.ts'
+import type { Args, ArgSchema } from './resolver.ts'
 
 const args = {
   help: {
@@ -3356,6 +3356,171 @@ describe('boolean inline value', () => {
     const { values, error } = resolveArgs(args, parseArgs(['--no-color']))
     expect(error).toBeUndefined()
     expect(values.color).toBe(false)
+  })
+})
+
+describe('option with a parse function given without a value', () => {
+  /**
+   * Assert that the result reports one missing value, without an `actual` value.
+   *
+   * @param error - The aggregate error returned by `resolveArgs`
+   * @param code - The expected error code
+   * @param values - The expected interpolation values
+   */
+  function expectMissingValue(
+    error: AggregateError | undefined,
+    code: string,
+    values: Record<string, unknown>
+  ) {
+    expect(error?.errors.length).toBe(1)
+    const resolveError = error?.errors[0] as ArgResolveError
+    expect(resolveError).toBeInstanceOf(ArgResolveError)
+    expect(resolveError.type).toBe('type')
+    expect(resolveError.code).toBe(code)
+    expect(resolveError.values).toEqual(values)
+    // there is no value, unlike an explicit empty value (`--x=`)
+    expect(resolveError.values).not.toHaveProperty('actual')
+  }
+
+  test.each([
+    {
+      label: 'string',
+      schema: { type: 'string', parse: (value: string) => value.toUpperCase() },
+      code: ArgsValidationErrorKeys.invalidType,
+      message: "Optional argument '--x' should be 'string'",
+      values: { displayName: "'--x'", name: 'x', expected: 'string' }
+    },
+    {
+      label: 'number',
+      schema: { type: 'number', parse: (value: string) => Number(value) },
+      code: ArgsValidationErrorKeys.invalidType,
+      message: "Optional argument '--x' should be 'number'",
+      values: { displayName: "'--x'", name: 'x', expected: 'number' }
+    },
+    {
+      label: 'enum',
+      schema: { type: 'enum', choices: ['a', 'b'], parse: (value: string) => value },
+      code: ArgsValidationErrorKeys.invalidChoice,
+      message: `Optional argument '--x' should be chosen from 'enum' ["a", "b"] values`,
+      values: {
+        displayName: "'--x'",
+        name: 'x',
+        expected: 'enum',
+        choices: '"a", "b"',
+        choiceValues: ['a', 'b']
+      }
+    },
+    {
+      label: 'custom (split)',
+      schema: { type: 'custom', parse: (value: string) => value.split(',') },
+      code: ArgsValidationErrorKeys.invalidType,
+      message: "Optional argument '--x' should be 'custom'",
+      values: { displayName: "'--x'", name: 'x', expected: 'custom' }
+    },
+    {
+      label: 'custom (JSON.parse)',
+      schema: { type: 'custom', parse: (value: string) => JSON.parse(value) as unknown },
+      code: ArgsValidationErrorKeys.invalidType,
+      message: "Optional argument '--x' should be 'custom'",
+      values: { displayName: "'--x'", name: 'x', expected: 'custom' }
+    },
+    {
+      label: 'custom with a metavar',
+      schema: { type: 'custom', metavar: 'date', parse: (value: string) => new Date(value) },
+      code: ArgsValidationErrorKeys.invalidType,
+      message: "Optional argument '--x' should be 'date'",
+      values: { displayName: "'--x'", name: 'x', expected: 'date' }
+    }
+  ])('$label reports the missing value', ({ schema, code, message, values }) => {
+    const result = resolveArgs({ x: schema as ArgSchema }, parseArgs(['--x']))
+    expectMissingValue(result.error, code, values)
+    expect(result.error?.errors[0].message).toBe(message)
+    expect(result.values.x).toBeUndefined()
+    expect(result.explicit.x).toBe(true)
+  })
+
+  test('parse is not called, even with a default', () => {
+    const received: string[] = []
+    const parse = (value: string) => {
+      received.push(value)
+      return value
+    }
+    resolveArgs({ x: { type: 'custom', parse } }, parseArgs(['--x']))
+    resolveArgs({ x: { type: 'custom', parse, default: 'dflt' } }, parseArgs(['--x']))
+    resolveArgs({ x: { type: 'string', parse, default: 'd' } }, parseArgs(['--x']))
+    expect(received).toEqual([])
+  })
+
+  test('a default is filled in without going through parse', () => {
+    const str = resolveArgs(
+      {
+        x: {
+          type: 'string',
+          parse: (value: string) => `${value}!`,
+          default: 'd'
+        }
+      },
+      parseArgs(['--x'])
+    )
+    expectMissingValue(str.error, ArgsValidationErrorKeys.invalidType, {
+      displayName: "'--x'",
+      name: 'x',
+      expected: 'string'
+    })
+    expect(str.values.x).toBe('d')
+
+    const custom = resolveArgs(
+      {
+        x: {
+          type: 'custom',
+          parse: (value: string) => value.split(','),
+          default: 'dflt'
+        }
+      },
+      parseArgs(['--x'])
+    )
+    expectMissingValue(custom.error, ArgsValidationErrorKeys.invalidType, {
+      displayName: "'--x'",
+      name: 'x',
+      expected: 'custom'
+    })
+    expect(custom.values.x).toBe('dflt')
+  })
+
+  const shortArgs = {
+    x: {
+      type: 'string',
+      short: 'x',
+      parse: (value: string) => value
+    },
+    verbose: {
+      type: 'boolean',
+      short: 'v'
+    }
+  } as const satisfies Args
+
+  test.each([
+    { label: '-x', argv: ['-x'] },
+    { label: '--x --verbose', argv: ['--x', '--verbose'], verbose: true },
+    { label: '--x -- rest', argv: ['--x', '--', 'rest'], rest: ['rest'] },
+    {
+      label: '-xv with shortGrouping',
+      argv: ['-xv'],
+      options: { shortGrouping: true },
+      verbose: true
+    },
+    { label: '-x=', argv: ['-x='] },
+    { label: "-x ''", argv: ['-x', ''] }
+  ])('$label reports the missing value', ({ argv, options, verbose, rest = [] }) => {
+    const result = resolveArgs(shortArgs, parseArgs(argv), options)
+    expectMissingValue(result.error, ArgsValidationErrorKeys.invalidType, {
+      displayName: "'--x' or '-x'",
+      name: 'x',
+      expected: 'string'
+    })
+    expect(result.values.x).toBeUndefined()
+    expect(result.values.verbose).toBe(verbose)
+    expect(result.rest).toEqual(rest)
   })
 })
 
