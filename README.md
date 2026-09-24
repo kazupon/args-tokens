@@ -152,7 +152,7 @@ console.log(tokens)
 // ]
 ```
 
-When short options are written with `=` and a value, such as `-p=-5` or `-ab=-1`, the rest of the argument is the value of the last option, even when it starts with `-`: `-n=--` gives the value `--`, not the option terminator. `-p=` gives no value, and `allowCompatible: true` keeps the `node:util` tokens.
+When short options are written with `=` and a value, such as `-p=-5` or `-ab=-1`, the rest of the argument is the value of the last option, even when it starts with `-`: `-n=--` gives the value `--`, not the option terminator. `-p=` gives no value, and `allowCompatible: true` keeps the `node:util` tokens. `resolveArgs()` gives that value to the last option with `shortGrouping: true`. With `shortGrouping: false`, which is the default and what `parse()` uses, the other letters of the group are the value of its first option, as in `-p5`: `-ab=-1` gives `-a` the value `b=-1`.
 
 ## 💿 Installation
 
