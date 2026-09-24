@@ -3966,6 +3966,9 @@ describe('option given without a value followed by an argument starting with -',
     },
     { label: '--port -5.5', argv: ['--port', '-5.5'], values: port, next: '-5.5' },
     { label: '--port -1e3', argv: ['--port', '-1e3'], values: port, next: '-1e3' },
+    { label: '--port -.5', argv: ['--port', '-.5'], values: port, next: '-.5' },
+    // numeric in the same way as the value of a number option
+    { label: '--port -Infinity', argv: ['--port', '-Infinity'], values: port, next: '-Infinity' },
     {
       label: '--max-count -5',
       argv: ['--max-count', '-5'],
@@ -4114,6 +4117,73 @@ describe('option given without a value followed by an argument starting with -',
     expectMissingValueError(result.error, { displayName: "'--x'", name: 'x', expected: 'number' })
     expect(result.error?.errors[0].message).toBe("Optional argument '--x' requires a value")
     expect(result.values.x).toBeUndefined()
+  })
+
+  test('a number option with a parse function suggests a numeric value', () => {
+    const result = resolveArgs(
+      { x: { type: 'number', parse: (value: string) => Number(value) } },
+      parseArgs(['--x', '-5'])
+    )
+    expectMissingValueError(result.error, {
+      displayName: "'--x'",
+      name: 'x',
+      expected: 'number',
+      next: '-5',
+      suggestion: '--x=-5'
+    })
+    expect(result.error?.errors[0].message).toBe(
+      "Optional argument '--x' requires a value (to pass '-5' as its value, write '--x=-5')"
+    )
+  })
+
+  test('an enum without choices suggests any value', () => {
+    const result = resolveArgs({ mode: { type: 'enum' } }, parseArgs(['--mode', '-x']))
+    expectMissingValueError(result.error, {
+      displayName: "'--mode'",
+      name: 'mode',
+      expected: 'enum',
+      choices: '',
+      choiceValues: [],
+      next: '-x',
+      suggestion: '--mode=-x'
+    })
+    expect(result.error?.errors[0].message).toBe(
+      "Optional argument '--mode' requires a value (to pass '-x' as its value, write '--mode=-x')"
+    )
+  })
+
+  test('a custom option keeps the suggestion without calling parse', () => {
+    const received: string[] = []
+    const result = resolveArgs(
+      {
+        x: {
+          type: 'custom',
+          parse: (value: string) => {
+            received.push(value)
+            return value
+          }
+        }
+      },
+      parseArgs(['--x', '-x'])
+    )
+    expectMissingValueError(result.error, {
+      displayName: "'--x'",
+      name: 'x',
+      expected: 'custom',
+      next: '-x',
+      suggestion: '--x=-x'
+    })
+    // the value is not checked by calling parse
+    expect(received).toEqual([])
+  })
+
+  test('the suggested value of an enum passes as one of its choices', () => {
+    const { values, error } = resolveArgs(
+      { level: { type: 'enum', choices: ['-1', '0', '1'] } },
+      parseArgs(['--level=-1'])
+    )
+    expect(error).toBeUndefined()
+    expect(values.level).toBe('-1')
   })
 
   test('a negated form counts as a defined option only for a negatable boolean', () => {

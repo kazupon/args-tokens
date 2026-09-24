@@ -126,6 +126,19 @@ describe('number combinator', () => {
     expect(values.port).toBeUndefined()
   })
 
+  test('option followed by a negative number', () => {
+    const { error } = resolveArgs({ port: number() }, parseArgs(['--port', '-5']))
+    const validationError = error!.errors[0] as ArgsValidationError
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.missingValue)
+    expect(validationError.values).toStrictEqual({
+      displayName: "'--port'",
+      name: 'port',
+      expected: 'number',
+      next: '-5',
+      suggestion: '--port=-5'
+    })
+  })
+
   test('basic', () => {
     const argv = ['--port', '8080']
     const tokens = parseArgs(argv)
