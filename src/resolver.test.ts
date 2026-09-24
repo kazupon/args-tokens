@@ -997,6 +997,113 @@ describe('option group', () => {
   })
 })
 
+describe('short option group without shortGrouping', () => {
+  const args = {
+    verbose: {
+      type: 'boolean',
+      short: 'v'
+    },
+    silent: {
+      type: 'boolean',
+      short: 's'
+    },
+    name: {
+      type: 'string',
+      short: 'n'
+    },
+    port: {
+      type: 'number',
+      short: 'p'
+    },
+    define: {
+      type: 'string',
+      short: 'D',
+      multiple: true
+    }
+  } as const satisfies Args
+
+  const name = { displayName: "'--name' or '-n'", name: 'name', expected: 'string' }
+
+  describe('the value after =', () => {
+    test.each([
+      { argv: ['-nfoo=bar'], value: 'foo=bar' },
+      { argv: ['-nfoo=a=b'], value: 'foo=a=b' }
+    ])('$argv gives the first option the other letters and the value', ({ argv, value }) => {
+      const { values, error } = resolveArgs(args, parseArgs(argv))
+      expect(error).toBeUndefined()
+      expect(values.name).toBe(value)
+    })
+
+    test('-DDEBUG=1 -DLEVEL=2 main.c keeps the names of the definitions', () => {
+      const { values, positionals, error } = resolveArgs(
+        args,
+        parseArgs(['-DDEBUG=1', '-DLEVEL=2', 'main.c'])
+      )
+      expect(error).toBeUndefined()
+      expect(values.define).toEqual(['DEBUG=1', 'LEVEL=2'])
+      expect(positionals).toEqual(['main.c'])
+    })
+
+    test('-vs=false -n does not give s to -n', () => {
+      const { values, error } = resolveArgs(args, parseArgs(['-vs=false', '-n']))
+      const errors = error?.errors as ArgResolveError[] | undefined
+      expect(errors?.map(e => [e.code, e.values.name])).toEqual([
+        [ArgsValidationErrorKeys.invalidType, 'verbose'],
+        [ArgsValidationErrorKeys.missingValue, 'name']
+      ])
+      expect(errors?.[0].values.actual).toBe('s=false')
+      expect(values).toEqual({})
+    })
+
+    test('-np=5 -n does not give p to the second -n', () => {
+      const { values, error } = resolveArgs(args, parseArgs(['-np=5', '-n']))
+      expectMissingValueError(error, name)
+      expect(values.name).toBe('p=5')
+    })
+
+    test('-pv=5 gives -p the other letters and the value', () => {
+      const { values, error } = resolveArgs(args, parseArgs(['-pv=5']))
+      const errors = error?.errors as ArgResolveError[] | undefined
+      expect(errors?.map(e => e.code)).toEqual([ArgsValidationErrorKeys.invalidType])
+      expect(errors?.[0].values.actual).toBe('v=5')
+      expect(values.port).toBeUndefined()
+    })
+  })
+
+  describe('a positional argument after the group', () => {
+    test.each([
+      { argv: ['-p5', 'file.txt'], values: { port: 5 }, positionals: ['file.txt'] },
+      { argv: ['-nfoo', 'bar', '-p5'], values: { name: 'foo', port: 5 }, positionals: ['bar'] },
+      // `-x` is not defined
+      { argv: ['-xfoo', 'bar'], values: {}, positionals: ['bar'] },
+      { argv: ['-nfoo', ''], values: { name: 'foo' }, positionals: [''] }
+    ])('$argv keeps the positional argument', ({ argv, values, positionals }) => {
+      const result = resolveArgs(args, parseArgs(argv))
+      expect(result.error).toBeUndefined()
+      expect(result.values).toEqual(values)
+      expect(result.positionals).toEqual(positionals)
+    })
+
+    test('-nfoo bar -n does not give foo to the second -n', () => {
+      const { values, positionals, error } = resolveArgs(args, parseArgs(['-nfoo', 'bar', '-n']))
+      expectMissingValueError(error, name)
+      expect(values.name).toBe('foo')
+      expect(positionals).toEqual(['bar'])
+    })
+
+    test('the tokens of allowCompatible are read the same way', () => {
+      const { values, positionals, error } = resolveArgs(
+        args,
+        parseArgs(['-n=bar', 'x'], { allowCompatible: true })
+      )
+      expect(error).toBeUndefined()
+      // these tokens do not read `=` in a group, so `=bar` is the rest of the group
+      expect(values.name).toBe('=bar')
+      expect(positionals).toEqual(['x'])
+    })
+  })
+})
+
 describe('short option with a value after =', () => {
   const args = {
     port: {
