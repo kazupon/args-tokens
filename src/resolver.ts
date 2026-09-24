@@ -454,8 +454,10 @@ export interface ArgSchema {
    * ({@link ArgsValidationErrorKeys}.missingValue). An explicit empty value given with the long
    * name, such as `--name=`, is passed as `''` unless `required: true` is set.
    *
-   * An `enum` option calls it only with one of its `choices`; any other value is reported as
-   * `err:arg:invalid-choice` ({@link ArgsValidationErrorKeys}.invalidChoice).
+   * An `enum` option with `choices` calls it only with one of them. Any other value, an explicit
+   * empty one included, is reported as `err:arg:invalid-choice`
+   * ({@link ArgsValidationErrorKeys}.invalidChoice), except that a required option reports an
+   * explicit empty value as required.
    *
    * @param value - Raw string value from command line
    * @returns Parsed value of any type

@@ -598,7 +598,7 @@ Custom parsing function for `type: 'custom'` arguments. Required when `type: 'cu
 
 `parse` receives the value from the command line, or `'true'` / `'false'` for a `boolean` option. When an option other than `boolean` is given without a value, `parse` is not called and the missing value is reported as a validation error. An explicit empty value given with the long name, such as `--config=`, is passed as `''` unless `required: true` is set.
 
-An `enum` option passes only one of its `choices` to `parse`. Any other value is reported as `ArgsValidationErrorKeys.invalidChoice`. List the values users type in `choices`, and use `parse` to change them.
+An `enum` option with `choices` passes only one of them to `parse`. Any other value, an explicit empty one included, is reported as `ArgsValidationErrorKeys.invalidChoice`, except that a required option reports an explicit empty value as required. List the values users type in `choices`, and use `parse` to change them.
 
 <!-- eslint-skip -->
 
