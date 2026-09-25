@@ -55,6 +55,7 @@
  * @license MIT
  */
 
+import { PURE_PARSE } from './internal.ts'
 import { ArgsValidationError, ArgsValidationErrorKeys } from './resolver.ts'
 import { formatChoices } from './utils.ts'
 
@@ -116,15 +117,6 @@ function createInvalidChoiceError(
     }
   })
 }
-
-/**
- * Brand of a `parse` function that has no side effects, so that the resolver may call it with a
- * value that the option was not given, to check the value before suggesting it.
- *
- * The brand is looked up in the global symbol registry with `Symbol.for`, so it stays identical
- * across bundled copies of `args-tokens`, where the resolver may come from another copy.
- */
-const PURE_PARSE: unique symbol = Symbol.for('args-tokens.pureParse')
 
 /**
  * Mark the `parse` function of a schema as free of side effects, so that the resolver may call it

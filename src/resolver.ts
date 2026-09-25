@@ -9,6 +9,7 @@
  * @license MIT
  */
 
+import { PURE_PARSE } from './internal.ts'
 import { hasLongOptionPrefix, isShortOption } from './parser.ts'
 import { formatChoices, kebabnize } from './utils.ts'
 
@@ -1630,16 +1631,6 @@ function createKnownOptionNames(
   }
   return { long, short }
 }
-
-/**
- * Brand of a `parse` function that has no side effects, set by `string()`, `number()`,
- * `integer()`, `float()` and `choice()`, so that the resolver may call it with a value that the
- * option was not given.
- *
- * The brand is looked up in the global symbol registry with `Symbol.for`, so it stays identical
- * across bundled copies of `args-tokens`, where the combinators may come from another copy.
- */
-const PURE_PARSE: unique symbol = Symbol.for('args-tokens.pureParse')
 
 /**
  * Check whether the argument after an option given without a value may be suggested as its value.
