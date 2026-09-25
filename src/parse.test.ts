@@ -112,3 +112,60 @@ test('an empty argument after -- goes to rest', () => {
   expect(positionals).toEqual(['x'])
   expect(rest).toEqual(['', 'y'])
 })
+
+test('shortGrouping is passed to resolveArgs', () => {
+  const { values, positionals, error } = parse(['-vp', '5'], {
+    args: {
+      verbose: { type: 'boolean', short: 'v' },
+      port: { type: 'number', short: 'p' }
+    },
+    shortGrouping: true
+  })
+  expect(error).toBeUndefined()
+  expect(values).toEqual({ verbose: true, port: 5 })
+  expect(positionals).toEqual([])
+})
+
+test('skipPositional is passed to resolveArgs', () => {
+  const { values, positionals, error } = parse(['build', 'main.ts'], {
+    args: { file: { type: 'positional' } },
+    skipPositional: 0
+  })
+  expect(error).toBeUndefined()
+  expect(values.file).toBe('main.ts')
+  expect(positionals).toEqual(['build', 'main.ts'])
+})
+
+test('toKebab is passed to resolveArgs', () => {
+  const { values, error } = parse(['--dry-run'], {
+    args: { dryRun: { type: 'boolean' } },
+    toKebab: true
+  })
+  expect(error).toBeUndefined()
+  expect(values.dryRun).toBe(true)
+})
+
+test('allowCompatible is passed to parseArgs, and the other options to resolveArgs', () => {
+  const argv = ['sub', '-dv', '--log-level=2', 'a.txt', '-o-', 'x']
+  const { values, positionals, rest, tokens, error } = parse(argv, {
+    args: {
+      debug: { type: 'boolean', short: 'd' },
+      verbose: { type: 'boolean', short: 'v' },
+      logLevel: { type: 'number' },
+      output: { type: 'string', short: 'o' },
+      file: { type: 'positional' }
+    },
+    allowCompatible: true,
+    shortGrouping: true,
+    skipPositional: 0,
+    toKebab: true
+  })
+  // with allowCompatible, the `-` of `-o-` is the option terminator, as with `node:util`
+  expect(tokens).toEqual(parseArgs(argv, { allowCompatible: true }))
+  expect(values).toEqual({ debug: true, verbose: true, logLevel: 2, file: 'a.txt' })
+  expect(positionals).toEqual(['sub', 'a.txt'])
+  expect(rest).toEqual(['x'])
+  expect(error?.errors.map(e => (e as ArgsValidationError).code)).toEqual([
+    ArgsValidationErrorKeys.missingValue
+  ])
+})
