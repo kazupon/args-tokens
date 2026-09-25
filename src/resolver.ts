@@ -336,8 +336,13 @@ export interface ArgSchema {
   /**
    * Names of other options that conflict with this option.
    *
-   * When this option is used together with any of the conflicting options,
-   * an `ArgResolveError` with type 'conflict' will be thrown.
+   * When this option is used together with any of the conflicting options, the error is an
+   * `ArgResolveError` with type 'conflict' and the code `err:arg:conflict`
+   * ({@link ArgsValidationErrorKeys}.conflict). Its `values` has the `displayName` and `name` of
+   * the option whose `conflicts` names the other one, and the `conflictDisplayName` and
+   * `conflictName` of the other one. `displayName` and `conflictDisplayName` show each option as
+   * it was written, such as `'-p'`, and `name` and `conflictName` are the schema keys. When both
+   * options name each other, `name` is the one that comes first in the schema.
    *
    * Conflicts only need to be defined on one side - if option A defines a conflict
    * with option B, the conflict is automatically detected when both are used,
@@ -375,7 +380,7 @@ export interface ArgSchema {
    *     // No conflicts defined, but still cannot use with --summer
    *   }
    * }
-   * // Usage: --summer --autumn will throw error
+   * // Usage: --summer --autumn reports an error
    * // Error: "Optional argument '--summer' conflicts with '--autumn'"
    * ```
    *
@@ -514,7 +519,8 @@ export const ArgsValidationErrorKeys = {
   customParse: 'err:arg:custom-parse',
   unknownOption: 'err:arg:unknown-option',
   unexpectedValue: 'err:arg:unexpected-value',
-  missingValue: 'err:arg:missing-value'
+  missingValue: 'err:arg:missing-value',
+  conflict: 'err:arg:conflict'
 } as const
 
 /**
@@ -1810,6 +1816,39 @@ function createOptionDisplayName(option: string, schema: ArgSchema): string {
   return `'--${option}'${schema.short ? ` or '-${schema.short}'` : ''}`
 }
 
+/**
+ * Create the error for two options that conflict.
+ *
+ * Each option is shown as it was written, such as `'-p'` or `'--no-color'`, as in the message.
+ *
+ * @param rawArg - The argument key of the option whose `conflicts` names the other one
+ * @param schema - The argument schema of that option
+ * @param actualName - That option as it was written
+ * @param conflictingArg - The argument key of the other option
+ * @param conflictingActualName - The other option as it was written
+ * @returns The validation error
+ */
+function createConflictError(
+  rawArg: string,
+  schema: ArgSchema,
+  actualName: string,
+  conflictingArg: string,
+  conflictingActualName: string
+): ArgResolveError {
+  const displayName = `'${actualName}'`
+  const conflictDisplayName = `'${conflictingActualName}'`
+  return new ArgResolveError(
+    `Optional argument ${displayName} conflicts with ${conflictDisplayName}`,
+    rawArg,
+    'conflict',
+    schema,
+    {
+      code: ArgsValidationErrorKeys.conflict,
+      values: { displayName, name: rawArg, conflictDisplayName, conflictName: conflictingArg }
+    }
+  )
+}
+
 function checkConflicts<A extends Args>(
   args: A,
   explicit: ArgExplicitlyProvided<A>,
@@ -1843,8 +1882,9 @@ function checkConflicts<A extends Args>(
       const conflictingActualName =
         actualInputNames.get(conflictingArg) || `--${conflictingArgKebab}`
 
-      const message = `Optional argument '${optionActualName}' conflicts with '${conflictingActualName}'`
-      return [new ArgResolveError(message, rawArg, 'conflict', schema)]
+      return [
+        createConflictError(rawArg, schema, optionActualName, conflictingArg, conflictingActualName)
+      ]
     }
   }
 
