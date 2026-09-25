@@ -2258,6 +2258,7 @@ describe('positional arguments', () => {
       ArgsValidationErrorKeys.requiredPositional
     )
     expect((error?.errors[0] as ArgsValidationError).values).toEqual({
+      displayName: "'command'",
       name: 'command'
     })
   })
