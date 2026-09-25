@@ -94,7 +94,8 @@ export function parse<A extends Args>(
   const tokens = parseArgs(args, { allowCompatible })
   return Object.assign(
     Object.create(null),
-    resolveArgs<A>((_args as A) || DEFAULT_OPTIONS, tokens),
+    // the options of `resolveArgs()`, such as `shortGrouping`, are in `options` too
+    resolveArgs<A>((_args as A) || DEFAULT_OPTIONS, tokens, options),
     { tokens }
   ) as ParsedArgs<A>
 }
