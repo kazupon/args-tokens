@@ -12,11 +12,15 @@ import type { ArgExplicitlyProvided, Args, ArgValues, ResolveArgs } from './reso
 /**
  * Parse options for {@link parse} function.
  *
+ * The options of {@link parseArgs} and {@link resolveArgs} work as they do there:
+ * `parse(argv, { args, allowCompatible, shortGrouping })` gives what
+ * `resolveArgs(args, parseArgs(argv, { allowCompatible }), { shortGrouping })` gives.
+ *
  * @typeParam A - {@link Args | Arguments schema}, which is an object that defines the command line arguments.
  */
 export interface ParseOptions<A extends Args> extends ParserOptions, ResolveArgs {
   /**
-   * Command line arguments.
+   * {@link Args | Arguments schema}, which defines the command line arguments.
    */
   args?: A
 }

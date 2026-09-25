@@ -277,6 +277,8 @@ console.log('values:', values)
 console.log('positionals:', positionals)
 ```
 
+The options of `parseArgs` and `resolveArgs`, such as `allowCompatible`, `shortGrouping`, `skipPositional` and `toKebab`, can be given to `parse` too.
+
 ## Validation errors
 
 `resolveArgs` and `parse` return validation failures as an `AggregateError` in the `error` field. Each argument validation failure is an `ArgsValidationError`, which keeps the existing English `message` as a fallback and adds structured metadata for localization or custom rendering.
