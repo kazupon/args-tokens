@@ -478,6 +478,22 @@ test('ArgValues', () => {
     files?: string[]
     count?: number
   }>()
+
+  // a multiple argument with a default always has a value, which is an array
+  expectTypeOf<
+    ArgValues<{
+      tag: {
+        type: 'string'
+        multiple: true
+        default: 'latest'
+      }
+      files: {
+        type: 'positional'
+        multiple: true
+        default: 'index.js'
+      }
+    }>
+  >().toEqualTypeOf<{ tag: string[]; files: string[] }>()
 })
 
 test('ArgExplicitlyProvided', () => {

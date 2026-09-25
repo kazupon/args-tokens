@@ -3312,6 +3312,104 @@ describe('multiple values', () => {
       output: true
     })
   })
+
+  describe('a default', () => {
+    const args = {
+      tag: { type: 'string', multiple: true, default: 'latest' },
+      port: { type: 'number', short: 'p', multiple: true, default: 8080 },
+      files: { type: 'positional', multiple: true, default: 'index.js' }
+    } satisfies Args
+
+    test('is the only element of the array when no value is given', () => {
+      const { values, explicit, error } = resolveArgs(args, parseArgs([]))
+      expect(error).toBeUndefined()
+      expect(values).toEqual({ tag: ['latest'], port: [8080], files: ['index.js'] })
+      expect(explicit).toEqual({ tag: false, port: false, files: false })
+    })
+
+    test('is not used when values are given', () => {
+      const { values, error } = resolveArgs(
+        args,
+        parseArgs(['--tag', 'a', '--tag', 'b', '-p', '1', 'x.js', 'y.js'])
+      )
+      expect(error).toBeUndefined()
+      expect(values).toEqual({ tag: ['a', 'b'], port: [1], files: ['x.js', 'y.js'] })
+    })
+
+    test('is in an array when every value of an option is rejected', () => {
+      const { values, error } = resolveArgs(args, parseArgs(['--port', 'abc', '-p=x']))
+      expect(values.port).toEqual([8080])
+      expect(error?.errors.map(e => (e as ArgsValidationError).code)).toEqual([
+        ArgsValidationErrorKeys.invalidType,
+        ArgsValidationErrorKeys.invalidType
+      ])
+    })
+
+    test('is used when a positional argument leaves its values to a later one', () => {
+      const { values, error } = resolveArgs(
+        {
+          files: { type: 'positional', multiple: true, default: 'index.js' },
+          output: { type: 'positional' }
+        },
+        parseArgs(['out.js'])
+      )
+      expect(error).toBeUndefined()
+      expect(values).toEqual({ files: ['index.js'], output: 'out.js' })
+    })
+
+    test('is used when skipPositional leaves no value for a positional argument', () => {
+      const { values, error } = resolveArgs(args, parseArgs(['build']), { skipPositional: 0 })
+      expect(error).toBeUndefined()
+      expect(values).toEqual({ tag: ['latest'], port: [8080], files: ['index.js'] })
+    })
+
+    test('is not used by a required positional argument', () => {
+      const { values, error } = resolveArgs(
+        { files: { type: 'positional', multiple: true, required: true, default: 'index.js' } },
+        parseArgs([])
+      )
+      expect(values).toEqual({})
+      expect(error?.errors.map(e => (e as ArgsValidationError).code)).toEqual([
+        ArgsValidationErrorKeys.requiredPositional
+      ])
+    })
+
+    test('is not used when every value of a positional argument is rejected', () => {
+      const { values, error } = resolveArgs(
+        {
+          files: {
+            type: 'positional',
+            multiple: true,
+            default: 'index.js',
+            parse: (value: string) => {
+              if (value.endsWith('.ts')) {
+                throw new Error('not a JavaScript file')
+              }
+              return value
+            }
+          }
+        },
+        parseArgs(['a.ts', 'b.ts'])
+      )
+      expect(values).toEqual({ files: [] })
+      expect(error?.errors.map(e => (e as ArgsValidationError).code)).toEqual([
+        ArgsValidationErrorKeys.customParse,
+        ArgsValidationErrorKeys.customParse
+      ])
+    })
+
+    test('is in an array for an enum option and with a parse function', () => {
+      const { values, error } = resolveArgs(
+        {
+          level: { type: 'enum', choices: ['debug', 'info'], multiple: true, default: 'info' },
+          size: { type: 'custom', multiple: true, parse: Number, default: 1 }
+        },
+        parseArgs([])
+      )
+      expect(error).toBeUndefined()
+      expect(values).toEqual({ level: ['info'], size: [1] })
+    })
+  })
 })
 
 describe('options resolved in the order of the arguments', () => {

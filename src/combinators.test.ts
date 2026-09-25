@@ -1204,6 +1204,20 @@ describe('multiple combinator', () => {
     expect(a.values.items).toEqual(['a', 'b'])
     expect(b.values.items).toEqual(['a', 'b'])
   })
+
+  test('withDefault(multiple) and multiple(withDefault) give the default in an array', () => {
+    const defaultMultiple = withDefault(multiple(string()), 'latest')
+    const multipleDefault = multiple(withDefault(string(), 'latest'))
+
+    const a = resolveArgs({ tags: defaultMultiple }, parseArgs([]))
+    const b = resolveArgs({ tags: multipleDefault }, parseArgs([]))
+    expect(a.values.tags).toEqual(['latest'])
+    expect(b.values.tags).toEqual(['latest'])
+
+    const tokens = parseArgs(['--tags', 'a'])
+    expect(resolveArgs({ tags: defaultMultiple }, tokens).values.tags).toEqual(['a'])
+    expect(resolveArgs({ tags: multipleDefault }, tokens).values.tags).toEqual(['a'])
+  })
 })
 
 describe('required combinator', () => {
