@@ -450,7 +450,7 @@ Hides the argument from generated help or usage output. This is renderer metadat
 
 #### `required` (optional)
 
-Marks the argument as required. When `true`, the argument must be provided. When it is missing, the error is an `ArgResolveError` with `type: 'required'` and the code `ArgsValidationErrorKeys.requiredOption`, or `ArgsValidationErrorKeys.requiredPositional` for a positional argument.
+Marks the argument as required. When `true`, the argument must be provided. When it is missing, the error is an `ArgResolveError` with `type: 'required'` and the code `ArgsValidationErrorKeys.requiredOption`, or `ArgsValidationErrorKeys.requiredPositional` for a positional argument. Its `values` has the `displayName`, such as `"'--input'"` for an option and `"'source'"` for a positional argument, as in the message, and the `name`, which is the schema key.
 
 An option given without a value, such as `--input` with nothing after it, is reported as `ArgsValidationErrorKeys.missingValue` instead. An explicit empty value, such as `--input=`, or `-i ''` with the short name `i`, is still reported as required, but the option counts as given: it is `true` in the `explicit` result of `resolveArgs()` and `parse()`, and takes part in conflicts, as any other given option does.
 
