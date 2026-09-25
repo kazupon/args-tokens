@@ -1544,9 +1544,11 @@ function createMissingValueError(
  * that starts with `-`.
  *
  * The option must end its own argument (with `shortGrouping`, `-pv` gives `-p` no value because of
- * `-v`), and the next argument must be written as options that are not all defined, such as `-5`
- * or `--foo`. The argument is rebuilt from its tokens. Without `allowCompatible`, a short option
- * written with a value, such as `-x=1`, `-x=` or `-x-1`, has a value, and is not suggested.
+ * `-v`), and the next argument must be read as options that are not all defined, such as `-5` or
+ * `--foo`. Without `shortGrouping`, a group is read as its first letter, which takes the other
+ * letters as its value, so `-p5` is defined when `-p` is. The argument is rebuilt from its tokens.
+ * Without `allowCompatible`, a short option written with a value, such as `-x=1`, `-x=` or `-x-1`,
+ * has a value, and is not suggested.
  *
  * @param tokens - The tokens given to `resolveArgs()`
  * @param optionTokens - The option tokens that `resolveArgs()` resolves
@@ -1586,7 +1588,9 @@ function findOptionLikeNextArgument(
   ) {
     text = `-${nextArg.map(t => t.name).join('')}`
     const { short } = createKnownOptionNames(argEntries, toKebab)
-    known = nextArg.every(t => short.has(t.name!))
+    // the options that the next argument is read as: each letter with shortGrouping, and without it
+    // only the first letter, which takes the other letters as its value
+    known = optionTokens.every(t => t.index !== token.index + 1 || short.has(t.name!))
   } else {
     return undefined
   }
