@@ -12,11 +12,16 @@ import type { ArgExplicitlyProvided, Args, ArgValues, ResolveArgs } from './reso
 /**
  * Parse options for {@link parse} function.
  *
+ * The options of {@link parseArgs} and {@link resolveArgs} work as they do there:
+ * `parse(argv, { args, allowCompatible, shortGrouping })` gives the `tokens` of
+ * `parseArgs(argv, { allowCompatible })` and what `resolveArgs(args, tokens, { shortGrouping })`
+ * gives with them.
+ *
  * @typeParam A - {@link Args | Arguments schema}, which is an object that defines the command line arguments.
  */
 export interface ParseOptions<A extends Args> extends ParserOptions, ResolveArgs {
   /**
-   * Command line arguments.
+   * {@link Args | Arguments schema}, which defines the command line arguments.
    */
   args?: A
 }
@@ -94,7 +99,8 @@ export function parse<A extends Args>(
   const tokens = parseArgs(args, { allowCompatible })
   return Object.assign(
     Object.create(null),
-    resolveArgs<A>((_args as A) || DEFAULT_OPTIONS, tokens),
+    // the options of `resolveArgs()`, such as `shortGrouping`, are in `options` too
+    resolveArgs<A>((_args as A) || DEFAULT_OPTIONS, tokens, options),
     { tokens }
   ) as ParsedArgs<A>
 }

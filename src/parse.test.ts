@@ -112,3 +112,71 @@ test('an empty argument after -- goes to rest', () => {
   expect(positionals).toEqual(['x'])
   expect(rest).toEqual(['', 'y'])
 })
+
+test('shortGrouping is passed to resolveArgs', () => {
+  const { values, positionals, error } = parse(['-vp', '5'], {
+    args: {
+      verbose: { type: 'boolean', short: 'v' },
+      port: { type: 'number', short: 'p' }
+    },
+    shortGrouping: true
+  })
+  expect(error).toBeUndefined()
+  expect(values).toEqual({ verbose: true, port: 5 })
+  expect(positionals).toEqual([])
+})
+
+test('skipPositional is passed to resolveArgs', () => {
+  const schema = { file: { type: 'positional' } } as const satisfies Args
+  const { values, positionals, error } = parse(['build', 'main.ts'], {
+    args: schema,
+    skipPositional: 0
+  })
+  expect(error).toBeUndefined()
+  expect(values.file).toBe('main.ts')
+  expect(positionals).toEqual(['build', 'main.ts'])
+  // without skipPositional, the first positional argument is not skipped
+  expect(parse(['build', 'main.ts'], { args: schema }).values.file).toBe('build')
+})
+
+test('toKebab is passed to resolveArgs', () => {
+  const schema = { dryRun: { type: 'boolean' } } as const satisfies Args
+  const { values, error } = parse(['--dry-run'], { args: schema, toKebab: true })
+  expect(error).toBeUndefined()
+  expect(values.dryRun).toBe(true)
+  // without toKebab, only the name as it is written in the schema matches
+  expect(parse(['--dry-run'], { args: schema }).values.dryRun).toBeUndefined()
+  expect(parse(['--dryRun'], { args: schema }).values.dryRun).toBe(true)
+})
+
+test('the options are passed to resolveArgs without args too', () => {
+  // without args, parse() reads the default `help` (`-h`) and `version` (`-v`) options
+  const { values, error } = parse(['-hv'], { shortGrouping: true })
+  expect(error).toBeUndefined()
+  expect(values).toEqual({ help: true, version: true })
+})
+
+test('allowCompatible is passed to parseArgs, and the other options to resolveArgs', () => {
+  const argv = ['sub', '-dv', '--log-level=2', 'a.txt', '-o-', 'x']
+  const { values, positionals, rest, tokens, error } = parse(argv, {
+    args: {
+      debug: { type: 'boolean', short: 'd' },
+      verbose: { type: 'boolean', short: 'v' },
+      logLevel: { type: 'number' },
+      output: { type: 'string', short: 'o' },
+      file: { type: 'positional' }
+    },
+    allowCompatible: true,
+    shortGrouping: true,
+    skipPositional: 0,
+    toKebab: true
+  })
+  // with allowCompatible, the `-` of `-o-` is the option terminator, as with `node:util`
+  expect(tokens).toEqual(parseArgs(argv, { allowCompatible: true }))
+  expect(values).toEqual({ debug: true, verbose: true, logLevel: 2, file: 'a.txt' })
+  expect(positionals).toEqual(['sub', 'a.txt'])
+  expect(rest).toEqual(['x'])
+  expect(error?.errors.map(e => (e as ArgsValidationError).code)).toEqual([
+    ArgsValidationErrorKeys.missingValue
+  ])
+})
