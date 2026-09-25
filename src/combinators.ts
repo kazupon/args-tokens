@@ -217,8 +217,12 @@ export function string(opts?: StringOptions): CombinatorSchema<string> {
       return value
     }
   }
-  // `test` with a `g` or `y` pattern moves its `lastIndex`, so that `parse` has a side effect
-  return opts?.pattern?.global || opts?.pattern?.sticky ? schema : pureParse(schema)
+  // `test` with a `g` or `y` pattern moves its `lastIndex`, so that `parse` has a side effect.
+  // `parse` reads `opts.pattern` when it is called, so the brand is read from it at that time too
+  Object.defineProperty(schema.parse, PURE_PARSE, {
+    get: () => !opts?.pattern?.global && !opts?.pattern?.sticky
+  })
+  return schema
 }
 
 /**
