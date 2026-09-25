@@ -4679,7 +4679,11 @@ describe('option given without a value followed by an argument starting with -',
     { label: '--name -x=', argv: ['--name', '-x='], values: name },
     // the value after `=` is kept, so the argument is not rebuilt as `-x5`
     { label: '--name -x=-5', argv: ['--name', '-x=-5'], values: name },
-    { label: '--name --port=5', argv: ['--name', '--port=5'], values: name }
+    { label: '--name --port=5', argv: ['--name', '--port=5'], values: name },
+    // without shortGrouping, the first letter is the option and the other letters are its value,
+    // so the next argument is read as `-p` or `-v`, which are defined
+    { label: '-n -p5', argv: ['-n', '-p5'], values: name },
+    { label: '--name -vfoo', argv: ['--name', '-vfoo'], values: name }
   ])('$label suggests nothing', ({ argv, options, values }) => {
     const result = resolveArgs(args, parseArgs(argv), options)
     expectMissingValueError(result.error, values)
@@ -4695,6 +4699,13 @@ describe('option given without a value followed by an argument starting with -',
     expectMissingValueErrors(result.error, [name])
     expect(result.values.port).toBe(-5)
     expect(result.rest).toEqual([])
+  })
+
+  test('--name -p5 suggests nothing, as -p takes 5', () => {
+    const result = resolveArgs(args, parseArgs(['--name', '-p5']))
+    // without shortGrouping, `-p5` is `-p` with the value `5`, which `--name=-p5` would lose
+    expectMissingValueErrors(result.error, [name])
+    expect(result.values.port).toBe(5)
   })
 
   test('only the last of a repeated short option in one argument gets a suggestion', () => {
