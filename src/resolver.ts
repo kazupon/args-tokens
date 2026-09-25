@@ -339,15 +339,16 @@ export interface ArgSchema {
    * When this option is used together with any of the conflicting options, the error is an
    * `ArgResolveError` with type 'conflict' and the code `err:arg:conflict`
    * ({@link ArgsValidationErrorKeys}.conflict). Its `values` has the `displayName` and `name` of
-   * the option whose `conflicts` names the other one, and the `conflictDisplayName` and
-   * `conflictName` of the other one. `displayName` and `conflictDisplayName` show each option as
+   * the argument whose `conflicts` names the other one, and the `conflictDisplayName` and
+   * `conflictName` of the other one. `displayName` and `conflictDisplayName` show an option as
    * it was written, such as `'-p'`, and `name` and `conflictName` are the schema keys. When both
-   * options name each other, `name` is the one that comes first in the schema.
+   * name each other, `name` is the one that comes first in the schema.
    *
    * A positional argument can be on either side, such as `[file]` and `--stdin`. It conflicts when
-   * it is given, and it is shown by its name, such as `'file'`, as in its other errors. When it is
-   * the one whose `conflicts` names the other, the message starts with "Positional argument":
-   * `Positional argument 'file' conflicts with '--stdin'`.
+   * it is given, and it is shown by its name, such as `'file'` (in kebab-case with `toKebab`), as
+   * in its other errors. The message starts with the kind of the argument given as `name`:
+   * `Positional argument 'file' conflicts with '--stdin'` or
+   * `Optional argument '--stdin' conflicts with 'file'`.
    *
    * Conflicts only need to be defined on one side - if option A defines a conflict
    * with option B, the conflict is automatically detected when both are used,
@@ -1825,7 +1826,8 @@ function createOptionDisplayName(option: string, schema: ArgSchema): string {
  * Create the error for two arguments that conflict.
  *
  * An option is shown as it was written, such as `'-p'` or `'--no-color'`, and a positional argument
- * by its name, such as `'file'`, as in the message.
+ * by its name, such as `'file'`, as in the message. The message starts with "Positional argument"
+ * when `schema` is a positional argument, and with "Optional argument" otherwise.
  *
  * @param rawArg - The argument key of the argument whose `conflicts` names the other one
  * @param schema - The argument schema of that argument
