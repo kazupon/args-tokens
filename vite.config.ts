@@ -63,7 +63,7 @@ export default defineConfig({
     ignorePatterns: ['CHANGELOG.md', 'playground/**'],
     overrides: [
       {
-        // the API references generated from JSDoc keep the line breaks of its prose
+        // the API references keep the line breaks of the JSDoc prose, which 'never' would join
         files: ['docs/**/*.md'],
         options: { proseWrap: 'preserve' }
       }
