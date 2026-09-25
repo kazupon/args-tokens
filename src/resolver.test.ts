@@ -3752,8 +3752,13 @@ describe('conflicts', () => {
     expect(error?.errors[0]).toBeInstanceOf(ArgResolveError)
     expect(error?.errors[0]).toBeInstanceOf(ArgsValidationError)
     expect((error?.errors[0] as ArgResolveError).type).toBe('conflict')
-    expect((error?.errors[0] as ArgsValidationError).code).toBeUndefined()
-    expect((error?.errors[0] as ArgsValidationError).values).toEqual({})
+    expect((error?.errors[0] as ArgsValidationError).code).toBe('err:arg:conflict')
+    expect((error?.errors[0] as ArgsValidationError).values).toStrictEqual({
+      displayName: "'--summer'",
+      name: 'summer',
+      conflictDisplayName: "'--autumn'",
+      conflictName: 'autumn'
+    })
     expect((error?.errors[0] as ArgResolveError).message).toBe(
       "Optional argument '--summer' conflicts with '--autumn'"
     )
