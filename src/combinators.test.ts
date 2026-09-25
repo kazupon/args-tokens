@@ -1206,6 +1206,14 @@ describe('multiple combinator', () => {
   })
 })
 
+describe('multiple combinator with a default', () => {
+  test('the default is the only element of the array', () => {
+    const tags = withDefault(multiple(string()), 'latest')
+    expect(resolveArgs({ tags }, parseArgs([])).values.tags).toEqual(['latest'])
+    expect(resolveArgs({ tags }, parseArgs(['--tags', 'a'])).values.tags).toEqual(['a'])
+  })
+})
+
 describe('required combinator', () => {
   test('resolves value when provided', () => {
     const argv = ['--name', 'hello']
