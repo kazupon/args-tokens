@@ -285,6 +285,9 @@ export interface ArgSchema {
    * missing one: a `string` option without `parse` gets `''` instead of the default, unless it is
    * `required`.
    *
+   * The value of a `multiple` argument is an array, so its default becomes the only element of the
+   * array: `default: 'latest'` gives `['latest']`.
+   *
    * The default of an `enum` option with `choices` is checked when it would be used, that is, when
    * no value from the command line is used: one that is not one of the choices is reported as an
    * `ArgResolveError` with type 'type' and the code `err:arg:invalid-default`
@@ -293,9 +296,9 @@ export interface ArgSchema {
    * not be one of the choices, and it is not checked. `choice()` returns the value as is, so its
    * default is checked.
    *
-   * For single-value positional arguments, the default is used when the positional
-   * value is missing or when the value is preserved for later required positional
-   * arguments, unless `required: true` is set.
+   * For positional arguments, `multiple` ones included, the default is used when no value is left
+   * for the argument, that is, when the positional value is missing or when the values are
+   * preserved for later required positional arguments, unless `required: true` is set.
    *
    * @example
    * Default values by type:
@@ -1084,41 +1087,43 @@ export function resolveArgs<A extends Args>(
 
       if (schema.multiple) {
         const availablePositionals = Math.max(positionalTokens.length - positionalsCount, 0)
-        if (availablePositionals > 0) {
-          const requiredPositionals = getRequiredPositionalsAfter(rawArg)
-          const positionalsToConsume = Math.max(availablePositionals - requiredPositionals, 0)
-          if (positionalsToConsume > 0) {
-            const endPositionals = positionalsCount + positionalsToConsume
-            if (typeof schema.parse === 'function') {
-              const parsed: unknown[] = []
-              for (let i = positionalsCount; i < endPositionals; i++) {
-                const p = positionalTokens[i]
-                const [parsedValue, error] = parseSchemaValue(p.value!, rawArg, arg, schema)
-                if (error) {
-                  errors.push(error)
-                } else {
-                  parsed.push(parsedValue)
-                }
+        const positionalsToConsume =
+          availablePositionals > 0
+            ? Math.max(availablePositionals - getRequiredPositionalsAfter(rawArg), 0)
+            : 0
+        if (positionalsToConsume > 0) {
+          const endPositionals = positionalsCount + positionalsToConsume
+          if (typeof schema.parse === 'function') {
+            const parsed: unknown[] = []
+            for (let i = positionalsCount; i < endPositionals; i++) {
+              const p = positionalTokens[i]
+              const [parsedValue, error] = parseSchemaValue(p.value!, rawArg, arg, schema)
+              if (error) {
+                errors.push(error)
+              } else {
+                parsed.push(parsedValue)
               }
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(kazupon): Allow any type for resolving
-              ;(values as any)[rawArg] = parsed
-            } else {
-              const valuesArray: string[] = []
-              for (let i = positionalsCount; i < endPositionals; i++) {
-                valuesArray.push(positionalTokens[i].value!)
-              }
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(kazupon): Allow any type for resolving
-              ;(values as any)[rawArg] = valuesArray
             }
-            positionalsCount = endPositionals
-            // mark as explicitly set when positional arguments are provided.
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(sushichan044): Allow any type for resolving
-            ;(explicit as any)[rawArg] = true
-          } else if (schema.required) {
-            errors.push(createRequireError(rawArg, arg, schema))
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(kazupon): Allow any type for resolving
+            ;(values as any)[rawArg] = parsed
+          } else {
+            const valuesArray: string[] = []
+            for (let i = positionalsCount; i < endPositionals; i++) {
+              valuesArray.push(positionalTokens[i].value!)
+            }
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(kazupon): Allow any type for resolving
+            ;(values as any)[rawArg] = valuesArray
           }
+          positionalsCount = endPositionals
+          // mark as explicitly set when positional arguments are provided.
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(sushichan044): Allow any type for resolving
+          ;(explicit as any)[rawArg] = true
         } else if (schema.required) {
           errors.push(createRequireError(rawArg, arg, schema))
+        } else if (hasDefault(schema)) {
+          // no value is left for the argument, as for a single-value positional argument
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(kazupon): Allow any type for resolving
+          ;(values as any)[rawArg] = getDefaultValue(schema)
         }
       } else {
         const positional = positionalTokens[positionalsCount]
@@ -1236,7 +1241,7 @@ export function resolveArgs<A extends Args>(
       } else {
         // check if the default value is in values
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(kazupon): Allow any type for resolving
-        ;(values as any)[rawArg] = schema.default
+        ;(values as any)[rawArg] = getDefaultValue(schema)
       }
     }
   }
@@ -1421,6 +1426,20 @@ function resolveSinglePositionalValue(
 
 function hasDefault(schema: ArgSchema): boolean {
   return schema.default != null
+}
+
+/**
+ * Get the value that the default of an argument gives.
+ *
+ * The value of a `multiple` argument is an array, so its default becomes the only element of an
+ * array. A default that is an array already, which only untyped code can give, is used as is.
+ *
+ * @param schema - The argument schema
+ * @returns The value that the default gives
+ */
+function getDefaultValue(schema: ArgSchema): unknown {
+  const value = schema.default
+  return schema.multiple && !Array.isArray(value) ? [value] : value
 }
 
 /**
