@@ -4693,7 +4693,9 @@ describe('option given without a value followed by an argument starting with -',
     // without shortGrouping, the first letter is the option and the other letters are its value,
     // so the next argument is read as `-p` or `-v`, which are defined
     { label: '-n -p5', argv: ['-n', '-p5'], values: name },
-    { label: '--name -vfoo', argv: ['--name', '-vfoo'], values: name }
+    { label: '--name -vfoo', argv: ['--name', '-vfoo'], values: name },
+    // only the argument right after the option counts, not `-x` after it
+    { label: '--name -v -x', argv: ['--name', '-v', '-x'], values: name }
   ])('$label suggests nothing', ({ argv, options, values }) => {
     const result = resolveArgs(args, parseArgs(argv), options)
     expectMissingValueError(result.error, values)
@@ -4726,6 +4728,23 @@ describe('option given without a value followed by an argument starting with -',
       { ...name, next: '-p5', suggestion: '--name=-p5' }
     ])
     expect(result.values).not.toHaveProperty('port')
+  })
+
+  test('--name -p=5 with allowCompatible suggests nothing, as -p takes =5', () => {
+    // with allowCompatible, `-p=5` gives the letters `p`, `=` and `5`, as `node:util` does
+    const tokens = parseArgs(['--name', '-p=5'], { allowCompatible: true })
+    const result = resolveArgs(args, tokens)
+    expect(result.error?.errors.map(e => (e as ArgResolveError).code)).toEqual([
+      ArgsValidationErrorKeys.invalidType,
+      ArgsValidationErrorKeys.missingValue
+    ])
+    expect((result.error?.errors[1] as ArgResolveError).values).toStrictEqual(name)
+    // with shortGrouping, `=` and `5` are options that are not defined
+    const grouped = resolveArgs(args, tokens, { shortGrouping: true })
+    expectMissingValueErrors(grouped.error, [
+      port,
+      { ...name, next: '-p=5', suggestion: '--name=-p=5' }
+    ])
   })
 
   test('only the last of a repeated short option in one argument gets a suggestion', () => {
