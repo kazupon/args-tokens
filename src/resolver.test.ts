@@ -2085,6 +2085,72 @@ describe('enum option', () => {
         ArgsValidationErrorKeys.requiredOption
       ])
     })
+
+    test('is reported after a required option given an empty value', () => {
+      const { values, error } = resolveArgs(
+        { level: { ...level, required: true } },
+        parseArgs(['--level='])
+      )
+      expect(values).toEqual({})
+      expect(error?.errors.map(e => (e as ArgsValidationError).code)).toEqual([
+        ArgsValidationErrorKeys.requiredOption,
+        'err:arg:invalid-default'
+      ])
+    })
+
+    test('is reported for multiple values only when none of them is one of the choices', () => {
+      const schema = { level: { ...level, multiple: true } } satisfies Args
+      const rejected = resolveArgs(schema, parseArgs(['-l', 'x', '--level=y']))
+      expect(rejected.values).toEqual({})
+      expect(rejected.error?.errors.map(e => (e as ArgsValidationError).code)).toEqual([
+        ArgsValidationErrorKeys.invalidChoice,
+        ArgsValidationErrorKeys.invalidChoice,
+        'err:arg:invalid-default'
+      ])
+      const accepted = resolveArgs(schema, parseArgs(['-l', 'x', '--level=info']))
+      expect(accepted.values).toEqual({ level: ['info'] })
+      expect(accepted.error?.errors.map(e => (e as ArgsValidationError).code)).toEqual([
+        ArgsValidationErrorKeys.invalidChoice
+      ])
+    })
+
+    test('is not checked for a string option with choices', () => {
+      const { values, error } = resolveArgs(
+        { x: { type: 'string', choices: ['a'], default: 'b' } },
+        parseArgs([])
+      )
+      expect(error).toBeUndefined()
+      expect(values).toEqual({ x: 'b' })
+    })
+
+    test('is not checked with a parse function whose brand cannot be read', () => {
+      const { proxy, revoke } = Proxy.revocable((value: string) => value, {})
+      revoke()
+      const { values, error } = resolveArgs(
+        { x: { type: 'enum', choices: ['a'], default: 'z', parse: proxy } },
+        parseArgs([])
+      )
+      expect(error).toBeUndefined()
+      expect(values).toEqual({ x: 'z' })
+    })
+
+    test('is not checked when its type is not one that default allows', () => {
+      // untyped code can give such a default, which is used as before, without throwing
+      const { values, error } = resolveArgs(
+        {
+          big: { type: 'enum', choices: ['1'], default: 1n as unknown as number },
+          tags: {
+            type: 'enum',
+            choices: ['a'],
+            multiple: true,
+            default: ['a'] as unknown as string
+          }
+        },
+        parseArgs([])
+      )
+      expect(error).toBeUndefined()
+      expect(values).toEqual({ big: 1n, tags: ['a'] })
+    })
   })
 })
 
