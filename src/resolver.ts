@@ -469,8 +469,10 @@ export interface ArgSchema {
    *
    * `parse` is called synchronously, and what it returns becomes the value, so throw to reject a
    * value. An `async` function returns a promise, and the promise becomes the value as is: it is
-   * not awaited, and its rejection is not reported as an error. Await the value and handle the
-   * rejection yourself.
+   * not awaited, and its rejection is not reported as an error. Await the value, or each of its
+   * elements with `multiple` (for example with `Promise.all()`), and handle the rejection yourself:
+   * a rejection that nothing handles is an unhandled rejection, which ends a Node.js process by
+   * default.
    *
    * A `boolean` option calls `parse` with `'true'`, or `'false'` for the negated form. Other
    * options call it only with a value from the command line: when the option is given without a

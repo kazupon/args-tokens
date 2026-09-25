@@ -589,7 +589,7 @@ export interface CombinatorOptions<T> extends BaseOptions {
   /**
    * The parse function that converts a string to the desired type.
    *
-   * It is called synchronously, as {@link ArgSchema.parse} is: a promise that it returns becomes
+   * It is called synchronously, as {@link ArgSchema}.parse is: a promise that it returns becomes
    * the value as is, and its rejection is not reported as an error.
    *
    * @param value - The input string value.
