@@ -546,13 +546,13 @@ The value given on the command line is checked before `parse`, so `parse` receiv
 
 #### `default` (optional)
 
-Default value used when the argument is not provided. The type must match the argument's `type` property.
+Default value used when the argument is not provided. The type must match the argument's `type` property. The value of a `multiple` argument is an array, so its default becomes the only element of the array: `default: 'latest'` gives `['latest']`.
 
 The default is used as is. It does not go through `parse`, including when an option is given without a value. An explicit empty value, such as `--name=` or `-n ''`, is a value, not a missing one: a `string` option without `parse` gets `''` instead of the default, unless it is `required`.
 
 The default of an `enum` option with `choices` is checked when it would be used, that is, when no value from the command line is used: the option is not given, or its values are missing or rejected. A default that is not one of the choices is reported as an `ArgResolveError` with `type: 'type'` and the code `ArgsValidationErrorKeys.invalidDefault`, and is not used. Its `values` has the same keys as that of `ArgsValidationErrorKeys.invalidChoice`, with the default as `actual`. With a `parse` function of your own, or a `map()` transform, the default is a value that the function returns, which need not be one of the choices, and it is not checked. `choice()` returns the value as is, so its default is checked.
 
-For single-value positional arguments, the default is used when the positional value is missing or when the value is preserved for later required positional arguments, unless `required: true` is set.
+For positional arguments, `multiple` ones included, the default is used when no value is left for the argument, that is, when the positional value is missing or when the values are preserved for later required positional arguments, unless `required: true` is set.
 
 <!-- eslint-skip -->
 
