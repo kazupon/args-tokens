@@ -3942,6 +3942,22 @@ describe('conflicts', () => {
     expect(conflict.message).toBe("Positional argument 'src' conflicts with 'dst'")
   })
 
+  test('a conflict of positional arguments with toKebab shows both kebab-case names', () => {
+    const args = {
+      srcDir: { type: 'positional', required: false, toKebab: true, conflicts: 'dstDir' },
+      dstDir: { type: 'positional', required: false, toKebab: true }
+    } as const satisfies Args
+    const { error } = resolveArgs(args, parseArgs(['a', 'b']))
+    const conflict = error?.errors[0] as ArgResolveError
+    expect(conflict.values).toStrictEqual({
+      displayName: "'src-dir'",
+      name: 'srcDir',
+      conflictDisplayName: "'dst-dir'",
+      conflictName: 'dstDir'
+    })
+    expect(conflict.message).toBe("Positional argument 'src-dir' conflicts with 'dst-dir'")
+  })
+
   test('a conflict and a parse error of a positional argument show the same name', () => {
     const args = {
       port: {
