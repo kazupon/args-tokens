@@ -6,22 +6,25 @@
 Mark a combinator schema as required.
 
 The original schema is not modified.
+Other modifiers on `schema` (for example [multiple](/docs/combinators/functions/multiple.md)) are kept.
 
 ## Signature
 
 ```ts
-export function required<T>(schema: CombinatorSchema<T>): CombinatorSchema<T> & CombinatorRequired
+export function required<S extends CombinatorSchema<unknown>>(
+  schema: S
+): WithFlag<S, CombinatorRequired>
 ```
 
 ## Parameters
 
-| Name     | Type                                                                            | Description                 |
-| -------- | ------------------------------------------------------------------------------- | --------------------------- |
-| `schema` | [`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\> | The base combinator schema. |
+| Name     | Type | Description                 |
+| -------- | ---- | --------------------------- |
+| `schema` | `S`  | The base combinator schema. |
 
 ## Returns
 
-[`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\> & `CombinatorRequired` — A new schema with `required: true`.
+`WithFlag<S, CombinatorRequired>` — A copy of `schema` with `required: true`.
 
 ## Examples
 
@@ -33,4 +36,4 @@ const args = {
 
 ## Tags
 
-- `@typeParam` — T - The schema's parsed type.
+- `@typeParam` — S - The input combinator schema.

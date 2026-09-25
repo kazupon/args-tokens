@@ -14,6 +14,9 @@ export const ArgsValidationErrorKeys = {
   invalidType: 'err:arg:invalid-type',
   invalidChoice: 'err:arg:invalid-choice',
   customParse: 'err:arg:custom-parse',
-  unknownOption: 'err:arg:unknown-option'
+  unknownOption: 'err:arg:unknown-option',
+  unexpectedValue: 'err:arg:unexpected-value',
+  missingValue: 'err:arg:missing-value',
+  conflict: 'err:arg:conflict'
 } as const
 ```
