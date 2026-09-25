@@ -5977,6 +5977,24 @@ describe('schema.parse priority', () => {
     await expect(values.port).resolves.toBe(8080)
   })
 
+  test('a parse function that returns a rejected promise reports no error', async () => {
+    const { values, error } = resolveArgs(
+      {
+        port: {
+          type: 'custom',
+          parse: async (value: string) => {
+            throw new Error(`bad ${value}`)
+          }
+        }
+      },
+      parseArgs(['--port=8080'])
+    )
+    // the rejection is not reported as a validation error: it stays in the promise
+    expect(error).toBeUndefined()
+    expect(values.port).toBeInstanceOf(Promise)
+    await expect(values.port).rejects.toThrow('bad 8080')
+  })
+
   test('analyze phase: boolean followed by positional', () => {
     const argv = ['--verbose', 'foo', '--port', '8080']
     const tokens = parseArgs(argv)
