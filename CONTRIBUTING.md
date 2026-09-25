@@ -63,6 +63,10 @@ $ vp test
 
 # library build
 $ vp pack
+
+# regenerate the API references in docs/ from the public API and its JSDoc
+# (run it after changing them, and commit the result; the CI checks that docs/ is up to date)
+$ vp run build:docs
 ```
 
 There are some other scripts available in the `scripts` section of the `package.json` file.

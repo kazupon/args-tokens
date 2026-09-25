@@ -60,6 +60,13 @@ export default defineConfig({
   }),
   fmt: defineFmtConfig({
     printWidth: 100,
-    ignorePatterns: ['CHANGELOG.md', 'docs/**/*.md', 'playground/**']
+    ignorePatterns: ['CHANGELOG.md', 'playground/**'],
+    overrides: [
+      {
+        // the API references keep the line breaks of the JSDoc prose, which 'never' would join
+        files: ['docs/**/*.md'],
+        options: { proseWrap: 'preserve' }
+      }
+    ]
   })
 })

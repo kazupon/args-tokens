@@ -3,7 +3,6 @@
  * @license MIT
  */
 
-import { execFileSync } from 'node:child_process'
 import { mkdir, rm, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 
@@ -24,8 +23,6 @@ for (const [filePath, content] of Object.entries(files)) {
   await mkdir(path.dirname(outputPath), { recursive: true })
   await writeFile(outputPath, content)
 }
-
-formatGeneratedFiles(result.resolvedOptions.outDir)
 
 for (const diagnostic of result.diagnostics) {
   console.warn(diagnostic)
@@ -95,20 +92,4 @@ function removeModulesSection(content) {
   }
 
   return `${content.slice(0, sectionStart).trimEnd()}\n${content.slice(nextSectionStart)}`
-}
-
-function formatGeneratedFiles(outDir) {
-  const binaryName = process.platform === 'win32' ? 'oxfmt.cmd' : 'oxfmt'
-  const oxfmt = path.join(process.cwd(), 'node_modules', '.bin', binaryName)
-
-  execFileSync(
-    oxfmt,
-    [
-      outDir,
-      '--config',
-      './node_modules/@kazupon/prettier-config/index.json',
-      '--no-error-on-unmatched-pattern'
-    ],
-    { stdio: 'inherit' }
-  )
 }

@@ -46,6 +46,17 @@ jobs:
       - name: JSR dry-run
         run: vp run lint:jsr
 
+      - name: API references are up to date
+        run: |
+          vp run build:docs
+          changes="$(git status --porcelain --untracked-files=all -- docs)"
+          if [ -n "$changes" ]; then
+            echo "$changes"
+            git --no-pager diff --stat -- docs
+            echo '::error::docs/ is out of date. Run `vp run build:docs` and commit the result.'
+            exit 1
+          fi
+
   test:
     needs:
       - build

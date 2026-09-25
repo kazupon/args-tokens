@@ -6,6 +6,10 @@ The `message` remains the English fallback message. Renderers can use `code`
 and `values` to localize the error, falling back to `message` when localization
 is unavailable.
 
+Each instance carries a non-enumerable brand keyed by
+`Symbol.for('args-tokens.ArgsValidationError')`, which [isArgsValidationError](/docs/default/functions/isArgsValidationError.md)
+uses to recognize instances created by another bundled copy of `args-tokens`.
+
 ## Extends
 
 - `Error`

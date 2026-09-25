@@ -6,22 +6,25 @@
 Mark a combinator schema as accepting multiple values.
 
 The resolved value becomes an array. The original schema is not modified.
+Other modifiers on `schema` (for example [required](/docs/combinators/functions/required.md)) are kept.
 
 ## Signature
 
 ```ts
-export function multiple<T>(schema: CombinatorSchema<T>): CombinatorSchema<T> & CombinatorMultiple
+export function multiple<S extends CombinatorSchema<unknown>>(
+  schema: S
+): WithFlag<S, CombinatorMultiple>
 ```
 
 ## Parameters
 
-| Name     | Type                                                                            | Description                 |
-| -------- | ------------------------------------------------------------------------------- | --------------------------- |
-| `schema` | [`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\> | The base combinator schema. |
+| Name     | Type | Description                 |
+| -------- | ---- | --------------------------- |
+| `schema` | `S`  | The base combinator schema. |
 
 ## Returns
 
-[`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\> & `CombinatorMultiple` — A new schema with `multiple: true`.
+`WithFlag<S, CombinatorMultiple>` — A copy of `schema` with `multiple: true`.
 
 ## Examples
 
@@ -34,4 +37,4 @@ const args = {
 
 ## Tags
 
-- `@typeParam` — T - The schema's parsed type.
+- `@typeParam` — S - The input combinator schema.
