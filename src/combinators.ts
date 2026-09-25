@@ -695,12 +695,15 @@ type CombinatorWithDefault<T> = { default: T }
 /**
  * Set a default value on a combinator schema.
  *
- * The original schema is not modified.
+ * The original schema is not modified. The default must be a value of the schema's parsed type:
+ * `T` is inferred from `schema` only, so `withDefault(choice(['auto', 'always']), 'awlays')` is a
+ * type error instead of adding `'awlays'` to the type.
  *
  * @typeParam T - The schema's parsed type.
+ * @typeParam D - The type of the default value, which must be assignable to `T`.
  *
  * @param schema - The base combinator schema.
- * @param defaultValue - The default value.
+ * @param defaultValue - The default value, a value of the schema's parsed type.
  * @returns A new schema with the default value set.
  *
  * @example
@@ -713,9 +716,9 @@ type CombinatorWithDefault<T> = { default: T }
  * @experimental
  */
 // @__NO_SIDE_EFFECTS__
-export function withDefault<T extends string | boolean | number>(
+export function withDefault<T extends string | boolean | number, D extends T = T>(
   schema: CombinatorSchema<T>,
-  defaultValue: T
+  defaultValue: D
 ): CombinatorSchema<T> & CombinatorWithDefault<T> {
   return {
     ...schema,

@@ -117,6 +117,28 @@ test('withDefault type inference', () => {
 
   const boolDef = withDefault(boolean(), false)
   expectTypeOf<ExtractOptionValue<typeof boolDef>>().toEqualTypeOf<boolean>()
+
+  const choiceDef = withDefault(choice(['auto', 'always', 'never']), 'auto')
+  expectTypeOf<ExtractOptionValue<typeof choiceDef>>().toEqualTypeOf<'auto' | 'always' | 'never'>()
+  expectTypeOf(choiceDef.default).toEqualTypeOf<'auto' | 'always' | 'never'>()
+
+  // the default of a mapped schema is a mapped value
+  const mappedDef = withDefault(
+    map(choice(['debug', 'info']), v => v.toUpperCase()),
+    'INFO'
+  )
+  expectTypeOf<ExtractOptionValue<typeof mappedDef>>().toEqualTypeOf<string>()
+
+  const explicitDef = withDefault<number>(integer(), 8080)
+  expectTypeOf<ExtractOptionValue<typeof explicitDef>>().toEqualTypeOf<number>()
+})
+
+test('withDefault checks the default against the type of the schema', () => {
+  // @ts-expect-error -- 'awlays' is not one of the choices, and does not widen them
+  withDefault(choice(['auto', 'always', 'never']), 'awlays')
+
+  // @ts-expect-error -- a string is not a number
+  withDefault(integer(), '8080')
 })
 
 test('multiple type inference', () => {

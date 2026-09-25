@@ -1127,6 +1127,7 @@ describe('withDefault combinator', () => {
 
   test('a default of choice() outside its values is reported and not used', () => {
     const { values, error } = resolveArgs(
+      // @ts-expect-error -- the type rejects it, and the resolver reports it for JavaScript callers
       { color: withDefault(choice(['auto', 'always', 'never']), 'awlays') },
       parseArgs([])
     )
