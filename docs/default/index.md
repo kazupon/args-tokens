@@ -13,10 +13,10 @@ Main entry point of `args-tokens`.
 
 ## Classes
 
-| Class                                                               | Description                                                                                         |
-| ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| [ArgResolveError](/docs/default/classes/ArgResolveError.md)         | An error that occurs when resolving arguments. This error is thrown when the argument is not valid. |
-| [ArgsValidationError](/docs/default/classes/ArgsValidationError.md) | An error that contains structured metadata for argument validation failures.                        |
+| Class                                                               | Description                                                                  |
+| ------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| [ArgResolveError](/docs/default/classes/ArgResolveError.md)         | An error that occurs when resolving arguments.                               |
+| [ArgsValidationError](/docs/default/classes/ArgsValidationError.md) | An error that contains structured metadata for argument validation failures. |
 
 ## Interfaces
 
