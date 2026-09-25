@@ -147,8 +147,10 @@ export interface ArgSchema {
   /**
    * Marks the argument as required.
    *
-   * When `true`, the argument must be provided by the user.
-   * If missing, an `ArgResolveError` with type 'required' will be thrown.
+   * When `true`, the argument must be provided by the user. If it is missing, the error is an
+   * `ArgResolveError` with type 'required' and the code `err:arg:required-option`
+   * ({@link ArgsValidationErrorKeys}.requiredOption), or `err:arg:required-positional`
+   * ({@link ArgsValidationErrorKeys}.requiredPositional) for a positional argument.
    * An option that is given without a value is reported as `err:arg:missing-value`
    * ({@link ArgsValidationErrorKeys}.missingValue) instead, because the option itself was given.
    * An explicit empty value, such as `--name=` or `-n ''`, is still reported as required.
@@ -235,8 +237,9 @@ export interface ArgSchema {
   /**
    * Array of allowed string values for enum-type arguments.
    *
-   * Required when `type: 'enum'`. The argument value must be one of these choices,
-   * otherwise an `ArgResolveError` with type 'type' will be thrown.
+   * Required when `type: 'enum'`. The argument value must be one of these choices, otherwise the
+   * error is an `ArgResolveError` with type 'type' and the code `err:arg:invalid-choice`
+   * ({@link ArgsValidationErrorKeys}.invalidChoice).
    *
    * The value is checked before `parse` is called, so a `parse` function receives only one of
    * these choices and can change it, for example to upper case.
@@ -312,7 +315,8 @@ export interface ArgSchema {
    * When `true`, a property like `maxCount` becomes available as `--max-count`.
    * This allows [CAC](https://github.com/cacjs/cac) user-friendly property names while maintaining CLI conventions.
    *
-   * Can be overridden globally with `resolveArgs({ toKebab: true })`.
+   * The `toKebab` option of {@link resolveArgs} and `parse()` applies it to all arguments, as in
+   * `resolveArgs(args, tokens, { toKebab: true })`.
    *
    * Note: Only `true` is allowed (not `false`) to make intent explicit.
    *
@@ -1436,7 +1440,9 @@ export type ArgResolveErrorType = 'type' | 'required' | 'conflict'
 
 /**
  * An error that occurs when resolving arguments.
- * This error is thrown when the argument is not valid.
+ *
+ * It is not thrown: when an argument is not valid, {@link resolveArgs} returns it in the `errors`
+ * of the `AggregateError` in `error`, and so does `parse()`.
  */
 export class ArgResolveError extends ArgsValidationError {
   override name: string

@@ -45,7 +45,7 @@ export type ParsedArgs<A extends Args> = {
    */
   rest: string[]
   /**
-   * Validation errors, same as `errors` in {@link resolveArgs}.
+   * Validation errors, same as `error` in {@link resolveArgs}.
    */
   error: AggregateError | undefined
   /**

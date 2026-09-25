@@ -1,7 +1,9 @@
 # Class: ArgResolveError
 
 An error that occurs when resolving arguments.
-This error is thrown when the argument is not valid.
+
+It is not thrown: when an argument is not valid, [resolveArgs](/docs/default/functions/resolveArgs.md) returns it in the `errors`
+of the `AggregateError` in `error`, and so does `parse()`.
 
 ## Extends
 
