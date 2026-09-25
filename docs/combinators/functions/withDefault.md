@@ -5,23 +5,25 @@
 
 Set a default value on a combinator schema.
 
-The original schema is not modified.
+The original schema is not modified. The default must be a value of the schema's parsed type:
+`T` is inferred from `schema` only, so `withDefault(choice(['auto', 'always']), 'awlays')` is a
+type error instead of adding `'awlays'` to the type.
 
 ## Signature
 
 ```ts
-export function withDefault<T extends string | boolean | number>(
+export function withDefault<T extends string | boolean | number, D extends T = T>(
   schema: CombinatorSchema<T>,
-  defaultValue: T
+  defaultValue: D
 ): CombinatorSchema<T> & CombinatorWithDefault<T>
 ```
 
 ## Parameters
 
-| Name           | Type                                                                            | Description                 |
-| -------------- | ------------------------------------------------------------------------------- | --------------------------- |
-| `schema`       | [`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\> | The base combinator schema. |
-| `defaultValue` | `T`                                                                             | The default value.          |
+| Name           | Type                                                                            | Description                                             |
+| -------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| `schema`       | [`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\> | The base combinator schema.                             |
+| `defaultValue` | `D`                                                                             | The default value, a value of the schema's parsed type. |
 
 ## Returns
 
