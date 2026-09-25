@@ -4918,7 +4918,7 @@ describe('option given without a value followed by an argument starting with -',
     )
   })
 
-  test('a custom option keeps the suggestion without calling parse', () => {
+  test('a custom option gets no suggestion, and parse is not called', () => {
     const received: string[] = []
     const result = resolveArgs(
       {
@@ -4932,14 +4932,10 @@ describe('option given without a value followed by an argument starting with -',
       },
       parseArgs(['--x', '-x'])
     )
-    expectMissingValueError(result.error, {
-      displayName: "'--x'",
-      name: 'x',
-      expected: 'custom',
-      next: '-x',
-      suggestion: '--x=-x'
-    })
-    // the value is not checked by calling parse
+    // a parse function of its own may have side effects: it is not called to check the value, and
+    // without the check there is no suggestion
+    expectMissingValueError(result.error, { displayName: "'--x'", name: 'x', expected: 'custom' })
+    expect(result.error?.errors[0].message).toBe("Optional argument '--x' requires a value")
     expect(received).toEqual([])
   })
 

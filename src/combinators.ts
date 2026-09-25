@@ -117,6 +117,16 @@ function createInvalidChoiceError(
   })
 }
 
+/**
+ * Brand of a `parse` function that has no side effects, so that the resolver may call it with a
+ * value that the option was not given, to check the value before suggesting it.
+ */
+const PURE_PARSE: unique symbol = Symbol.for('args-tokens.pureParse')
+
+function pureParse<T>(parse: (value: string) => T): (value: string) => T {
+  return Object.defineProperty(parse, PURE_PARSE, { value: true })
+}
+
 // ------------------------------------------------------------------------------------------------
 // Base Combinators
 // ------------------------------------------------------------------------------------------------
@@ -189,7 +199,7 @@ export function string(opts?: StringOptions): CombinatorSchema<string> {
     ...(opts?.hidden != null ? { hidden: opts.hidden } : {}),
     ...(opts?.short != null ? { short: opts.short } : {}),
     ...(opts?.required != null ? { required: opts.required } : {}),
-    parse(value: string): string {
+    parse: pureParse((value: string): string => {
       if (opts?.minLength != null && value.length < opts.minLength) {
         throw new RangeError(`String must be at least ${opts.minLength} characters`)
       }
@@ -200,7 +210,7 @@ export function string(opts?: StringOptions): CombinatorSchema<string> {
         throw new Error(`String must match pattern ${opts.pattern}`)
       }
       return value
-    }
+    })
   }
 }
 
@@ -246,7 +256,7 @@ export function number(opts?: NumberOptions): CombinatorSchema<number> {
     ...(opts?.hidden != null ? { hidden: opts.hidden } : {}),
     ...(opts?.short != null ? { short: opts.short } : {}),
     ...(opts?.required != null ? { required: opts.required } : {}),
-    parse(value: string): number {
+    parse: pureParse((value: string): number => {
       const n = Number(value)
       if (value.trim() === '' || isNaN(n)) {
         throw createInvalidTypeError(`Expected a number, got '${value}'`, 'number', value)
@@ -258,7 +268,7 @@ export function number(opts?: NumberOptions): CombinatorSchema<number> {
         throw new RangeError(`Number must be <= ${opts.max}, got ${n}`)
       }
       return n
-    }
+    })
   }
 }
 
@@ -304,7 +314,7 @@ export function integer(opts?: IntegerOptions): CombinatorSchema<number> {
     ...(opts?.hidden != null ? { hidden: opts.hidden } : {}),
     ...(opts?.short != null ? { short: opts.short } : {}),
     ...(opts?.required != null ? { required: opts.required } : {}),
-    parse(value: string): number {
+    parse: pureParse((value: string): number => {
       if (!/^-?\d+$/.test(value)) {
         throw createInvalidTypeError(`Expected an integer, got '${value}'`, 'integer', value)
       }
@@ -319,7 +329,7 @@ export function integer(opts?: IntegerOptions): CombinatorSchema<number> {
         throw new RangeError(`Integer must be <= ${opts.max}, got ${n}`)
       }
       return n
-    }
+    })
   }
 }
 
@@ -365,7 +375,7 @@ export function float(opts?: FloatOptions): CombinatorSchema<number> {
     ...(opts?.hidden != null ? { hidden: opts.hidden } : {}),
     ...(opts?.short != null ? { short: opts.short } : {}),
     ...(opts?.required != null ? { required: opts.required } : {}),
-    parse(value: string): number {
+    parse: pureParse((value: string): number => {
       const trimmed = value.trim()
       if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i.test(trimmed)) {
         throw createInvalidTypeError(`Expected a finite float, got '${value}'`, 'float', value)
@@ -381,7 +391,7 @@ export function float(opts?: FloatOptions): CombinatorSchema<number> {
         throw new RangeError(`Float must be <= ${opts.max}, got ${n}`)
       }
       return n
-    }
+    })
   }
 }
 
@@ -544,12 +554,12 @@ export function choice<const T extends readonly string[]>(
     ...(opts?.hidden != null ? { hidden: opts.hidden } : {}),
     ...(opts?.short != null ? { short: opts.short } : {}),
     ...(opts?.required != null ? { required: opts.required } : {}),
-    parse(value: string): T[number] {
+    parse: pureParse((value: string): T[number] => {
       if (!(values as readonly string[]).includes(value)) {
         throw createInvalidChoiceError(`Value must be one of: ${values.join(', ')}`, values, value)
       }
       return value
-    }
+    })
   }
 }
 

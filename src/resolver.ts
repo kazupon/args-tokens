@@ -452,8 +452,11 @@ export interface ArgSchema {
    * A `boolean` option calls `parse` with `'true'`, or `'false'` for the negated form. Other
    * options call it only with a value from the command line: when the option is given without a
    * value, `parse` is not called and the missing value is reported as `err:arg:missing-value`
-   * ({@link ArgsValidationErrorKeys}.missingValue). An explicit empty value, such as `--name=` or
-   * `-n=`, is passed as `''` unless `required: true` is set.
+   * ({@link ArgsValidationErrorKeys}.missingValue). Nor is it called to decide whether the error
+   * suggests the argument after such an option as its value (`--port=-5` for `--port -5`): only
+   * the `parse` functions of the built-in combinators, which have no side effects, are used for
+   * that. An explicit empty value, such as `--name=` or `-n=`, is passed as `''` unless
+   * `required: true` is set.
    *
    * An `enum` option with `choices` calls it only with one of them. Any other value, an explicit
    * empty one included, is reported as `err:arg:invalid-choice`
@@ -1497,7 +1500,7 @@ function createTypeError(
  *
  * `expected` names what the option takes: its type, or for a `custom` type its `metavar` (for
  * example `'integer'` for the `integer()` combinator). An `enum` also gets its choices. When the
- * argument after the option may be a value that starts with `-`, and the option may take it (see
+ * argument after the option may be a value that starts with `-`, and the option takes it (see
  * `acceptsSuggestedValue()`), the error suggests the long form with `=`, which passes such a value in
  * every mode of the tokenizer.
  *
@@ -1628,25 +1631,47 @@ function createKnownOptionNames(
 }
 
 /**
- * Check whether an option may take the argument after it as its value, before suggesting it.
+ * Brand of a `parse` function that has no side effects, set by the built-in combinators, so that
+ * the resolver may call it with a value that the option was not given.
+ */
+const PURE_PARSE: unique symbol = Symbol.for('args-tokens.pureParse')
+
+/**
+ * Check whether an option is known to take the argument after it as its value before suggesting it.
  *
- * Only what can be checked without calling a `parse` function is checked: the value of a `number`
- * option must be numeric, as the error expects a number, and the value of an `enum` option with
- * `choices` must be one of them, which is checked before any `parse` function. A value that only a
- * `parse` function rejects is not found, such as `-5` for `number({ min: 1 })`.
+ * The value of a `number` option must be numeric, as the error expects a number, and the value of
+ * an `enum` option with `choices` must be one of them, which is checked before any `parse`
+ * function. A `parse` function that the built-in combinators mark as free of side effects
+ * (`PURE_PARSE`) is then called with the value, and must not throw. Any other `parse` function may
+ * have side effects, so it is not called: the option is taken to reject the value unless its type
+ * or `choices` decided above.
  *
  * @param schema - The argument schema
  * @param value - The argument after the option
- * @returns `false` when the option is known to reject the value, otherwise `true`
+ * @returns Whether the option is known to take the value
  */
 function acceptsSuggestedValue(schema: ArgSchema, value: string): boolean {
-  if (schema.type === 'number') {
-    return isNumeric(value)
+  if (schema.type === 'number' && !isNumeric(value)) {
+    return false
   }
-  if (schema.type === 'enum' && schema.choices) {
-    return schema.choices.includes(value)
+  if (schema.type === 'enum' && schema.choices && !schema.choices.includes(value)) {
+    return false
   }
-  return true
+  const { parse } = schema
+  if (typeof parse !== 'function') {
+    return true
+  }
+  if ((parse as { [PURE_PARSE]?: boolean })[PURE_PARSE] === true) {
+    try {
+      parse(value)
+    } catch {
+      return false
+    }
+    return true
+  }
+  // a `parse` function that may have side effects is not called: the type and `choices` decide for
+  // a `number` and an `enum` with `choices`, and any other option gets no suggestion
+  return schema.type === 'number' || (schema.type === 'enum' && schema.choices !== undefined)
 }
 
 function createUnexpectedValueError(
