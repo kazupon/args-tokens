@@ -139,6 +139,19 @@ test('withDefault checks the default against the type of the schema', () => {
 
   // @ts-expect-error -- a string is not a number
   withDefault(integer(), '8080')
+
+  // a default typed wider than the choices, such as one read from an environment variable
+  const env: string = 'auto'
+  // @ts-expect-error -- a string is not one of the choices
+  withDefault(choice(['auto', 'always', 'never']), env)
+
+  // the error is at the default, and the type of the value stays the type of the schema
+  const typo = withDefault(
+    choice(['auto', 'always', 'never']),
+    // @ts-expect-error -- 'awlays' is not one of the choices
+    'awlays'
+  )
+  expectTypeOf<ExtractOptionValue<typeof typo>>().toEqualTypeOf<'auto' | 'always' | 'never'>()
 })
 
 test('multiple type inference', () => {
