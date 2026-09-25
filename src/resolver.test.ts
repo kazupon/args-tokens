@@ -3759,6 +3759,86 @@ describe('conflicts', () => {
     )
   })
 
+  test.each([
+    {
+      label: '-s -a',
+      argv: ['-s', '-a'],
+      values: { displayName: "'-s'", conflictDisplayName: "'-a'" }
+    },
+    {
+      label: '--summer -a',
+      argv: ['--summer', '-a'],
+      values: { displayName: "'--summer'", conflictDisplayName: "'-a'" }
+    },
+    {
+      label: '-s --autumn',
+      argv: ['-s', '--autumn'],
+      values: { displayName: "'-s'", conflictDisplayName: "'--autumn'" }
+    }
+  ])('a conflict of $label has its code and the options as written', ({ argv, values }) => {
+    const args = {
+      summer: { type: 'boolean', short: 's', conflicts: 'autumn' },
+      autumn: { type: 'boolean', short: 'a' }
+    } as const satisfies Args
+    const { error } = resolveArgs(args, parseArgs(argv))
+    const conflict = error?.errors[0] as ArgResolveError
+    expect(conflict.type).toBe('conflict')
+    expect(conflict.code).toBe('err:arg:conflict')
+    expect(conflict.values).toStrictEqual({ ...values, name: 'summer', conflictName: 'autumn' })
+    // the message is made from the same names
+    expect(conflict.message).toBe(
+      `Optional argument ${values.displayName} conflicts with ${values.conflictDisplayName}`
+    )
+  })
+
+  test('a conflict names the option whose conflicts lists the other, whatever the order', () => {
+    const args = {
+      summer: { type: 'boolean', conflicts: 'autumn' },
+      autumn: { type: 'boolean' }
+    } as const satisfies Args
+    const { error } = resolveArgs(args, parseArgs(['--autumn', '--summer']))
+    const conflict = error?.errors[0] as ArgResolveError
+    expect(conflict.values).toStrictEqual({
+      displayName: "'--summer'",
+      name: 'summer',
+      conflictDisplayName: "'--autumn'",
+      conflictName: 'autumn'
+    })
+    expect(conflict.message).toBe("Optional argument '--summer' conflicts with '--autumn'")
+  })
+
+  test('a conflict of kebab-case options has the schema keys as its names', () => {
+    const args = {
+      summerSeason: { type: 'boolean', conflicts: 'autumnSeason', toKebab: true },
+      autumnSeason: { type: 'boolean', toKebab: true }
+    } as const satisfies Args
+    const { error } = resolveArgs(args, parseArgs(['--summer-season', '--autumn-season']))
+    const conflict = error?.errors[0] as ArgResolveError
+    expect(conflict.code).toBe('err:arg:conflict')
+    expect(conflict.values).toStrictEqual({
+      displayName: "'--summer-season'",
+      name: 'summerSeason',
+      conflictDisplayName: "'--autumn-season'",
+      conflictName: 'autumnSeason'
+    })
+  })
+
+  test('a conflict of a negated option shows the negated form', () => {
+    const args = {
+      color: { type: 'boolean', negatable: true, conflicts: 'format' },
+      format: { type: 'string' }
+    } as const satisfies Args
+    const { error } = resolveArgs(args, parseArgs(['--no-color', '--format=json']))
+    const conflict = error?.errors[0] as ArgResolveError
+    expect(conflict.code).toBe('err:arg:conflict')
+    expect(conflict.values).toStrictEqual({
+      displayName: "'--no-color'",
+      name: 'color',
+      conflictDisplayName: "'--format'",
+      conflictName: 'format'
+    })
+  })
+
   test('detects conflict with one-way conflict definition', () => {
     const args = {
       summer: {
