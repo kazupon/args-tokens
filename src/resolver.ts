@@ -452,10 +452,11 @@ export interface ArgSchema {
    * A `boolean` option calls `parse` with `'true'`, or `'false'` for the negated form. Other
    * options call it only with a value from the command line: when the option is given without a
    * value, `parse` is not called and the missing value is reported as `err:arg:missing-value`
-   * ({@link ArgsValidationErrorKeys}.missingValue). Nor is it called to decide whether the error
-   * suggests the argument after such an option as its value (`--port=-5` for `--port -5`): only
-   * the `parse` functions of the built-in combinators, which have no side effects, are used for
-   * that. An explicit empty value, such as `--name=` or `-n=`, is passed as `''` unless
+   * ({@link ArgsValidationErrorKeys}.missingValue). When that error may suggest the argument after
+   * the option as its value, such as `--port=-5` for `--port -5`, a `parse` function of your own
+   * is not called to check it either: only the `parse` functions of `string()`, `number()`,
+   * `integer()`, `float()` and `choice()`, which have no side effects, are called for that.
+   * An explicit empty value, such as `--name=` or `-n=`, is passed as `''` unless
    * `required: true` is set.
    *
    * An `enum` option with `choices` calls it only with one of them. Any other value, an explicit
