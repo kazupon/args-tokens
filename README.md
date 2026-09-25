@@ -772,7 +772,7 @@ const { values } = resolveArgs(schema, tokens)
 - `hidden(schema)` — Hide from generated help or usage output
 - `required(schema)` — Mark as required (error if not provided)
 - `unrequired(schema)` — Mark as not required (override `required: true`, or make a positional optional)
-- `withDefault(schema, defaultValue)` — Set a default value
+- `withDefault(schema, defaultValue)` — Set a default value of the schema's type
 - `multiple(schema)` — Accept multiple values (resolves to array)
 - `map(schema, transform)` — Transform the parsed value
 
