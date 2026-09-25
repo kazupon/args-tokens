@@ -938,7 +938,8 @@ export function resolveArgs<A extends Args>(
       }
     } else if (token.kind === 'option') {
       if (token.rawName) {
-        if (hasLongOptionPrefix(token.rawName)) {
+        // `--==` and `--=x=y` give a long option with an empty name, whose raw name is `--`
+        if (token.rawName.startsWith('--')) {
           // check if previous long or short option is not resolved, before this one is added
           applyLongOptionValue()
           applyShortOptionValue()
@@ -1575,7 +1576,7 @@ function findOptionLikeNextArgument(
   }
   let text: string
   let known: boolean
-  if (nextArg.length === 1 && hasLongOptionPrefix(nextArg[0].rawName!)) {
+  if (nextArg.length === 1 && nextArg[0].rawName!.startsWith('--')) {
     const [option] = nextArg
     text = option.inlineValue ? `${option.rawName}=${option.value}` : option.rawName!
     known = createKnownOptionNames(argEntries, toKebab).long.has(option.name!)
