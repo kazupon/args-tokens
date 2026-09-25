@@ -153,8 +153,9 @@ export interface ArgSchema {
    * ({@link ArgsValidationErrorKeys}.requiredPositional) for a positional argument.
    * An option that is given without a value is reported as `err:arg:missing-value`
    * ({@link ArgsValidationErrorKeys}.missingValue) instead, because the option itself was given.
-   * An explicit empty value, such as `--name=` or `-n ''`, is still reported as required. It
-   * still counts as given: the argument is `true` in `explicit`, and its conflicts are reported.
+   * An explicit empty value, such as `--name=` or `-n ''`, is still reported as required, but the
+   * option counts as given: it is `true` in `explicit` and takes part in conflicts, as any other
+   * given option does.
    *
    * For single-value positional arguments, omitting `required` keeps the argument
    * required for compatibility. Set `required: false` to make a positional argument
