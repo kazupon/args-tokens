@@ -467,6 +467,11 @@ export interface ArgSchema {
    *
    * The function's return type becomes the resolved argument type.
    *
+   * `parse` is called synchronously, and what it returns becomes the value, so throw to reject a
+   * value. An `async` function returns a promise, and the promise becomes the value as is: it is
+   * not awaited, and its rejection is not reported as an error. Await the value and handle the
+   * rejection yourself.
+   *
    * A `boolean` option calls `parse` with `'true'`, or `'false'` for the negated form. Other
    * options call it only with a value from the command line: when the option is given without a
    * value, `parse` is not called and the missing value is reported as `err:arg:missing-value`
