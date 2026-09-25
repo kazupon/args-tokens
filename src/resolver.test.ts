@@ -4939,6 +4939,60 @@ describe('option given without a value followed by an argument starting with -',
     expect(received).toEqual([])
   })
 
+  test('a number option with a parse function is checked by its type only', () => {
+    const received: string[] = []
+    const parse = (value: string) => {
+      received.push(value)
+      return Number(value)
+    }
+    const numeric = resolveArgs({ x: { type: 'number', parse } }, parseArgs(['--x', '-5']))
+    expectMissingValueError(numeric.error, {
+      displayName: "'--x'",
+      name: 'x',
+      expected: 'number',
+      next: '-5',
+      suggestion: '--x=-5'
+    })
+    const other = resolveArgs({ x: { type: 'number', parse } }, parseArgs(['--x', '-x']))
+    expectMissingValueError(other.error, { displayName: "'--x'", name: 'x', expected: 'number' })
+    // a parse function of its own may have side effects, so the type decides alone
+    expect(received).toEqual([])
+  })
+
+  test('an enum with choices and a parse function is checked by its choices only', () => {
+    const received: string[] = []
+    const parse = (value: string) => {
+      received.push(value)
+      return value
+    }
+    const choices = ['-1', '0', '1']
+    const one = resolveArgs(
+      { level: { type: 'enum', choices, parse } },
+      parseArgs(['--level', '-1'])
+    )
+    expectMissingValueError(one.error, {
+      displayName: "'--level'",
+      name: 'level',
+      expected: 'enum',
+      choices: '"-1", "0", "1"',
+      choiceValues: choices,
+      next: '-1',
+      suggestion: '--level=-1'
+    })
+    const other = resolveArgs(
+      { level: { type: 'enum', choices, parse } },
+      parseArgs(['--level', '-x'])
+    )
+    expectMissingValueError(other.error, {
+      displayName: "'--level'",
+      name: 'level',
+      expected: 'enum',
+      choices: '"-1", "0", "1"',
+      choiceValues: choices
+    })
+    expect(received).toEqual([])
+  })
+
   test('a string option with a parse function gets no suggestion, and parse is not called', () => {
     const received: string[] = []
     const result = resolveArgs(
