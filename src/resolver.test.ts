@@ -4767,6 +4767,62 @@ describe('option given without a value', () => {
     }
   })
 
+  test('a required option with an explicit empty value counts as given', () => {
+    for (const argv of [['--x='], ['--x', '']]) {
+      const { values, explicit, error } = resolveArgs(
+        { x: { type: 'string', required: true } },
+        parseArgs(argv)
+      )
+      expect(explicit.x).toBe(true)
+      expect(values.x).toBeUndefined()
+      expect(error?.errors.map(error => (error as ArgResolveError).code)).toEqual([
+        ArgsValidationErrorKeys.requiredOption
+      ])
+    }
+  })
+
+  test.each([
+    { label: '--name=', argv: ['--name=', '--anon'], displayName: "'--name'" },
+    { label: "--name ''", argv: ['--name', '', '--anon'], displayName: "'--name'" },
+    { label: '-n=', argv: ['-n=', '--anon'], displayName: "'-n'" },
+    { label: "-n ''", argv: ['-n', '', '--anon'], displayName: "'-n'" }
+  ])('a required option given $label takes part in conflicts', ({ argv, displayName }) => {
+    const { explicit, error } = resolveArgs(
+      {
+        name: { type: 'string', short: 'n', required: true, conflicts: 'anon' },
+        anon: { type: 'boolean' }
+      },
+      parseArgs(argv)
+    )
+    expect(explicit.name).toBe(true)
+    expect(error?.errors.map(error => (error as ArgResolveError).code)).toEqual([
+      ArgsValidationErrorKeys.requiredOption,
+      ArgsValidationErrorKeys.conflict
+    ])
+    // the conflict names the option the way it was given
+    expect((error?.errors[1] as ArgResolveError).values).toStrictEqual({
+      displayName,
+      name: 'name',
+      conflictDisplayName: "'--anon'",
+      conflictName: 'anon'
+    })
+  })
+
+  test('an option that names a required option given an empty value conflicts with it', () => {
+    const { error } = resolveArgs(
+      {
+        anon: { type: 'boolean', conflicts: 'name' },
+        name: { type: 'string', required: true }
+      },
+      parseArgs(['--anon', '--name='])
+    )
+    expect(error?.errors.map(error => (error as ArgResolveError).code)).toEqual([
+      ArgsValidationErrorKeys.requiredOption,
+      ArgsValidationErrorKeys.conflict
+    ])
+    expect(error?.errors[1].message).toBe("Optional argument '--anon' conflicts with '--name'")
+  })
+
   const booleanArgs = {
     color: {
       type: 'boolean',
