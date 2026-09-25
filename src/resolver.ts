@@ -297,8 +297,9 @@ export interface ArgSchema {
    * default is checked.
    *
    * For positional arguments, `multiple` ones included, the default is used when no value is left
-   * for the argument, that is, when the positional value is missing or when the values are
-   * preserved for later required positional arguments, unless `required: true` is set.
+   * for the argument: when the positional values run out, or when the remaining ones are preserved
+   * for later required positional arguments. With `required: true`, the default is not used, and
+   * the argument is reported as required instead.
    *
    * @example
    * Default values by type:
