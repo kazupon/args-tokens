@@ -277,7 +277,7 @@ export interface ArgSchema {
    * - `string` type: string default
    * - `boolean` type: boolean default
    * - `number` type: number default
-   * - `enum` type: must be one of the `choices` values
+   * - `enum` type: one of the `choices` values, or a value that a `parse` of your own returns
    * - `positional`/`custom` type: string, boolean, or number default
    *
    * The default is used as is and never goes through `parse`, including when an option is given
@@ -285,9 +285,10 @@ export interface ArgSchema {
    * missing one: a `string` option without `parse` gets `''` instead of the default, unless it is
    * `required`.
    *
-   * The default of an `enum` option with `choices` is checked when it would be used: one that is
-   * not one of the choices is reported as `err:arg:invalid-default`
-   * ({@link ArgsValidationErrorKeys}.invalidDefault) and is not used. With a `parse` function of
+   * The default of an `enum` option with `choices` is checked when it would be used, that is, when
+   * no value from the command line is used: one that is not one of the choices is reported as an
+   * `ArgResolveError` with type 'type' and the code `err:arg:invalid-default`
+   * ({@link ArgsValidationErrorKeys}.invalidDefault), and is not used. With a `parse` function of
    * your own, or a `map()` transform, the default is a value that the function returns, which need
    * not be one of the choices, and it is not checked. `choice()` returns the value as is, so its
    * default is checked.
