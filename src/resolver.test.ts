@@ -5024,6 +5024,74 @@ describe('option given without a value followed by an argument starting with -',
   })
 })
 
+describe('long option with an empty name', () => {
+  // `--==` and `--=x=y` give a long option with an empty name, whose raw name is `--`
+  const args = {
+    def: {
+      type: 'string',
+      short: 'd'
+    },
+    file: {
+      type: 'positional',
+      required: false
+    }
+  } as const satisfies Args
+
+  const def = { displayName: "'--def' or '-d'", name: 'def', expected: 'string' }
+
+  test.each([
+    { label: '--def --== x', argv: ['--def', '--==', 'x'], shortGrouping: false },
+    { label: '--def --=x=y x', argv: ['--def', '--=x=y', 'x'], shortGrouping: false },
+    { label: '-d --== x', argv: ['-d', '--==', 'x'], shortGrouping: false },
+    { label: '--def --== x', argv: ['--def', '--==', 'x'], shortGrouping: true },
+    { label: '-d --== x', argv: ['-d', '--==', 'x'], shortGrouping: true },
+    // the rest of a `-=` group is read again as an argument, which gives the same token
+    { label: '--def -=--=a=b x', argv: ['--def', '-=--=a=b', 'x'], shortGrouping: false },
+    { label: '-d -=--== x', argv: ['-d', '-=--==', 'x'], shortGrouping: true }
+  ])(
+    '$label finishes the option before it (shortGrouping: $shortGrouping)',
+    ({ argv, shortGrouping }) => {
+      const { values, positionals, error } = resolveArgs(args, parseArgs(argv), { shortGrouping })
+      // `--def` does not take `x`, as with `--def --foo=x x`
+      expect(error?.errors.map(e => (e as ArgResolveError).code)).toEqual([
+        ArgsValidationErrorKeys.missingValue
+      ])
+      expect(values).toEqual({ file: 'x' })
+      expect(positionals).toEqual(['x'])
+    }
+  )
+
+  test.each([
+    { label: '--def --==', argv: ['--def', '--=='], next: '--==' },
+    { label: '--def --=x=y', argv: ['--def', '--=x=y'], next: '--=x=y' }
+  ])(
+    '$label suggests the long form, as for a long option that is not defined',
+    ({ argv, next }) => {
+      const { values, error } = resolveArgs(args, parseArgs(argv))
+      const suggestion = `--def=${next}`
+      expectMissingValueError(error, { ...def, next, suggestion })
+      expect(error?.errors[0].message).toBe(
+        `Optional argument '--def' or '-d' requires a value (to pass '${next}' as its value, write '${suggestion}')`
+      )
+      expect(values).toEqual({})
+    }
+  )
+
+  test('--== x sets no option and keeps x as a positional argument', () => {
+    const { values, positionals, explicit, error } = resolveArgs(args, parseArgs(['--==', 'x']))
+    expect(error).toBeUndefined()
+    expect(values).toEqual({ file: 'x' })
+    expect(positionals).toEqual(['x'])
+    expect(explicit).toEqual({ def: false, file: true })
+  })
+
+  test('the suggested --def=--== passes the value', () => {
+    const { values, error } = resolveArgs(args, parseArgs(['--def=--==']))
+    expect(error).toBeUndefined()
+    expect(values).toEqual({ def: '--==' })
+  })
+})
+
 describe('option with a parse function given without a value', () => {
   test.each([
     {
