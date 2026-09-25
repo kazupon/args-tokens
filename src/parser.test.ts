@@ -1,6 +1,6 @@
 import { parseArgs as parseArgsNode } from 'node:util'
 import { describe, expect, test } from 'vite-plus/test'
-import { parseArgs } from './parser.ts'
+import { hasLongOptionPrefix, parseArgs } from './parser.ts'
 
 describe('short options', () => {
   test.each(['-foo', '-xJAPAN', '-foo 1'])('%s', argv => {
@@ -270,7 +270,8 @@ describe('long options', () => {
 })
 
 describe('long option with an empty name', () => {
-  test.each(['--==', '--=x=y', '--== x'])('%s gives the node:util tokens', argv => {
+  // `--=` and `--=x`, with no other `=`, are long options named `=` and `=x`
+  test.each(['--==', '--=x=y', '--== x', '--=', '--=x'])('%s gives the node:util tokens', argv => {
     const args = argv.split(' ')
     const { tokens } = parseArgsNode({
       allowPositionals: true,
@@ -286,6 +287,17 @@ describe('long option with an empty name', () => {
     expect(parseArgs(['--=x=y'])).toEqual([
       { kind: 'option', name: '', rawName: '--', index: 0, value: 'x=y', inlineValue: true }
     ])
+  })
+
+  test('-=--== gives it too, as the rest of a -= group is read again', () => {
+    expect(parseArgs(['-=--=='])).toEqual([
+      { kind: 'option', name: '', rawName: '--', index: 0, value: '=', inlineValue: true }
+    ])
+  })
+
+  test('hasLongOptionPrefix() stays false for --, the option terminator', () => {
+    expect(hasLongOptionPrefix('--')).toBe(false)
+    expect(hasLongOptionPrefix('--=')).toBe(true)
   })
 })
 

@@ -5044,7 +5044,10 @@ describe('long option with an empty name', () => {
     { label: '--def --=x=y x', argv: ['--def', '--=x=y', 'x'], shortGrouping: false },
     { label: '-d --== x', argv: ['-d', '--==', 'x'], shortGrouping: false },
     { label: '--def --== x', argv: ['--def', '--==', 'x'], shortGrouping: true },
-    { label: '-d --== x', argv: ['-d', '--==', 'x'], shortGrouping: true }
+    { label: '-d --== x', argv: ['-d', '--==', 'x'], shortGrouping: true },
+    // the rest of a `-=` group is read again as an argument, which gives the same token
+    { label: '--def -=--=a=b x', argv: ['--def', '-=--=a=b', 'x'], shortGrouping: false },
+    { label: '-d -=--== x', argv: ['-d', '-=--==', 'x'], shortGrouping: true }
   ])(
     '$label finishes the option before it (shortGrouping: $shortGrouping)',
     ({ argv, shortGrouping }) => {
@@ -5074,7 +5077,7 @@ describe('long option with an empty name', () => {
     }
   )
 
-  test('it matches no argument', () => {
+  test('--== x sets no option and keeps x as a positional argument', () => {
     const { values, positionals, explicit, error } = resolveArgs(args, parseArgs(['--==', 'x']))
     expect(error).toBeUndefined()
     expect(values).toEqual({ file: 'x' })
