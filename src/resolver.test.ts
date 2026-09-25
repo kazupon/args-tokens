@@ -2282,6 +2282,12 @@ describe('positional arguments', () => {
       values: { displayName: "'input-file'", name: 'inputFile' }
     },
     {
+      label: 'positional argument with its own toKebab',
+      args: { inputFile: { type: 'positional', toKebab: true } },
+      options: {},
+      values: { displayName: "'input-file'", name: 'inputFile' }
+    },
+    {
       label: 'multiple positional arguments',
       args: { files: { type: 'positional', multiple: true, required: true } },
       options: {},
