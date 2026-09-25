@@ -17,10 +17,10 @@ export interface CombinatorOptions<T> extends BaseOptions
 
 ## Properties
 
-| Name                   | Type                   | Description                                                                                                                                                                                                                                                                 |
-| ---------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `metavar` _(optional)_ | `string`               | Display name hint for help text generation. **Default:** `'custom'`                                                                                                                                                                                                         |
-| `parse`                | `(value: string) => T` | The parse function that converts a string to the desired type. It is called synchronously, as [ArgSchema.parse](/docs/default/interfaces/ArgSchema.md#property-parse) is: a promise that it returns becomes the value as is, and its rejection is not reported as an error. |
+| Name                   | Type                   | Description                                                                                                                                                                                                                                                  |
+| ---------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `metavar` _(optional)_ | `string`               | Display name hint for help text generation. **Default:** `'custom'`                                                                                                                                                                                          |
+| `parse`                | `(value: string) => T` | The parse function that converts a string to the desired type. It is called synchronously, as [ArgSchema](/docs/default/interfaces/ArgSchema.md).parse is: a promise that it returns becomes the value as is, and its rejection is not reported as an error. |
 
 ### parse Parameters
 
