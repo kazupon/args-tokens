@@ -277,7 +277,7 @@ console.log('values:', values)
 console.log('positionals:', positionals)
 ```
 
-The options of `parseArgs` and `resolveArgs`, such as `allowCompatible`, `shortGrouping`, `skipPositional` and `toKebab`, can be given to `parse` too.
+`parse` also takes the options of `parseArgs` and `resolveArgs`, such as `allowCompatible`, `shortGrouping`, `skipPositional` and `toKebab`, and they work as they do there.
 
 ## Validation errors
 
