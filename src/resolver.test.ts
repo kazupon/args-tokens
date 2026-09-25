@@ -3357,6 +3357,12 @@ describe('multiple values', () => {
       expect(values).toEqual({ files: ['index.js'], output: 'out.js' })
     })
 
+    test('is used when skipPositional leaves no value for a positional argument', () => {
+      const { values, error } = resolveArgs(args, parseArgs(['build']), { skipPositional: 0 })
+      expect(error).toBeUndefined()
+      expect(values).toEqual({ tag: ['latest'], port: [8080], files: ['index.js'] })
+    })
+
     test('is not used by a required positional argument', () => {
       const { values, error } = resolveArgs(
         { files: { type: 'positional', multiple: true, required: true, default: 'index.js' } },
@@ -3365,6 +3371,30 @@ describe('multiple values', () => {
       expect(values).toEqual({})
       expect(error?.errors.map(e => (e as ArgsValidationError).code)).toEqual([
         ArgsValidationErrorKeys.requiredPositional
+      ])
+    })
+
+    test('is not used when every value of a positional argument is rejected', () => {
+      const { values, error } = resolveArgs(
+        {
+          files: {
+            type: 'positional',
+            multiple: true,
+            default: 'index.js',
+            parse: (value: string) => {
+              if (value.endsWith('.ts')) {
+                throw new Error('not a JavaScript file')
+              }
+              return value
+            }
+          }
+        },
+        parseArgs(['a.ts', 'b.ts'])
+      )
+      expect(values).toEqual({ files: [] })
+      expect(error?.errors.map(e => (e as ArgsValidationError).code)).toEqual([
+        ArgsValidationErrorKeys.customParse,
+        ArgsValidationErrorKeys.customParse
       ])
     })
 
