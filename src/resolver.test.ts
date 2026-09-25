@@ -5060,6 +5060,31 @@ describe('option given without a value followed by an argument starting with -',
     expect(received).toEqual(['-x', '-5'])
   })
 
+  test('a parse function that inherits the brand is not called to check the value', () => {
+    const received: string[] = []
+    const parse = (value: string) => {
+      received.push(value)
+      return value
+    }
+    const marked = Object.defineProperty(() => 0, Symbol.for('args-tokens.pureParse'), {
+      value: true
+    })
+    Object.setPrototypeOf(parse, marked)
+    const result = resolveArgs({ x: { type: 'custom', parse } }, parseArgs(['--x', '-y']))
+    // only an own brand counts, as for `isArgsValidationError()`
+    expectMissingValueError(result.error, { displayName: "'--x'", name: 'x', expected: 'custom' })
+    expect(received).toEqual([])
+  })
+
+  test('a parse function whose brand cannot be read gets no suggestion', () => {
+    const { proxy, revoke } = Proxy.revocable((value: string) => value, {})
+    revoke()
+    // reading a property of a revoked proxy throws, and `resolveArgs()` does not throw
+    const result = resolveArgs({ x: { type: 'custom', parse: proxy } }, parseArgs(['--x', '-y']))
+    expectMissingValueError(result.error, { displayName: "'--x'", name: 'x', expected: 'custom' })
+    expect(result.error?.errors[0].message).toBe("Optional argument '--x' requires a value")
+  })
+
   test('the suggested value of an enum passes as one of its choices', () => {
     const { values, error } = resolveArgs(
       { level: { type: 'enum', choices: ['-1', '0', '1'] } },

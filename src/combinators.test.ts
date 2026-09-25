@@ -85,6 +85,26 @@ describe('string combinator', () => {
     expect(values.slug).toBeUndefined()
   })
 
+  test.each([
+    { flag: 'g', pattern: /^-?[a-z]+$/g },
+    { flag: 'y', pattern: /-?[a-z]+/y }
+  ])('a pattern with the $flag flag is not tested to check the suggestion', ({ pattern }) => {
+    const { values, error } = resolveArgs(
+      { tag: multiple(string({ pattern })) },
+      parseArgs(['--tag', '-x', '--tag', 'ab'])
+    )
+    // `test` with such a pattern moves its `lastIndex`, so testing `-x` would make `ab` fail
+    expect(values.tag).toEqual(['ab'])
+    expect(error!.errors.length).toBe(1)
+    const validationError = error!.errors[0] as ArgsValidationError
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.missingValue)
+    expect(validationError.values).toStrictEqual({
+      displayName: "'--tag'",
+      name: 'tag',
+      expected: 'string'
+    })
+  })
+
   test('basic', () => {
     const argv = ['--name', 'hello']
     const tokens = parseArgs(argv)
@@ -1272,6 +1292,13 @@ describe('integration', () => {
     expect(values.verbose).toBe(true)
     expect(values.mode).toBe('prod')
     expect(positionals).toEqual(['dev'])
+  })
+
+  test('the parse functions of the base combinators keep their name', () => {
+    // they are marked for the missing-value suggestion, and stay methods named `parse`
+    for (const schema of [string(), number(), integer(), float(), choice(['a'])]) {
+      expect(schema.parse.name).toBe('parse')
+    }
   })
 
   test('full round-trip with modifiers', () => {
