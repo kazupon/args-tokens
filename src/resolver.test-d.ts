@@ -24,6 +24,9 @@ test('ArgsValidationErrorCode', () => {
     typeof ArgsValidationErrorKeys.missingValue
   >().toEqualTypeOf<'err:arg:missing-value'>()
   expectTypeOf<typeof ArgsValidationErrorKeys.conflict>().toEqualTypeOf<'err:arg:conflict'>()
+  expectTypeOf<
+    typeof ArgsValidationErrorKeys.invalidDefault
+  >().toEqualTypeOf<'err:arg:invalid-default'>()
 })
 
 test('isArgsValidationError', () => {

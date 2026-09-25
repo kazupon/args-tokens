@@ -1125,6 +1125,39 @@ describe('withDefault combinator', () => {
     expect(values.port).toBe(8080)
   })
 
+  test('a default of choice() outside its values is reported and not used', () => {
+    const { values, error } = resolveArgs(
+      { color: withDefault(choice(['auto', 'always', 'never']), 'awlays') },
+      parseArgs([])
+    )
+    expect(values).toEqual({})
+    expect(error?.errors.length).toBe(1)
+    const validationError = error?.errors[0] as ArgsValidationError
+    expect(validationError.code).toBe('err:arg:invalid-default')
+    expect(validationError.values).toStrictEqual({
+      displayName: "'--color'",
+      name: 'color',
+      expected: 'enum',
+      choices: '"auto", "always", "never"',
+      choiceValues: ['auto', 'always', 'never'],
+      actual: 'awlays'
+    })
+  })
+
+  test('a default of a mapped choice() is a mapped value and is not checked', () => {
+    const { values, error } = resolveArgs(
+      {
+        level: withDefault(
+          map(choice(['debug', 'info']), value => value.toUpperCase()),
+          'INFO'
+        )
+      },
+      parseArgs([])
+    )
+    expect(error).toBeUndefined()
+    expect(values).toEqual({ level: 'INFO' })
+  })
+
   test('immutability', () => {
     const base = integer()
     const withDef = withDefault(base, 42)
