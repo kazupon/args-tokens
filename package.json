@@ -82,7 +82,7 @@
     "bench:positionals": "node --expose-gc bench/positionals.js",
     "bench:vitest": "vp test bench --run",
     "build": "vp pack",
-    "build:docs": "node scripts/generate-docs.mjs",
+    "build:docs": "node scripts/generate-docs.mjs && vp fmt docs",
     "check": "vp check && knip && deno check src",
     "fix": "vp check --fix",
     "lint:jsr": "jsr publish --config jsr.json --dry-run --allow-dirty",
