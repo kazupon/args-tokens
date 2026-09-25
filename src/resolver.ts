@@ -151,8 +151,9 @@ export interface ArgSchema {
    * `ArgResolveError` with type 'required' and the code `err:arg:required-option`
    * ({@link ArgsValidationErrorKeys}.requiredOption), or `err:arg:required-positional`
    * ({@link ArgsValidationErrorKeys}.requiredPositional) for a positional argument. Its
-   * `values` has the `displayName`, such as `'--name'` for an option and `'file'` for a
-   * positional argument, as in the message, and the `name`, which is the schema key.
+   * `values` has the `displayName` as in the message, such as `'--name'` for an option
+   * (`'--name' or '-n'` with the short name `n`) and `'file'` for a positional argument, and
+   * the `name`, which is the schema key.
    * An option that is given without a value is reported as `err:arg:missing-value`
    * ({@link ArgsValidationErrorKeys}.missingValue) instead, because the option itself was given.
    * An explicit empty value, such as `--name=` or `-n ''`, is still reported as required, but the
