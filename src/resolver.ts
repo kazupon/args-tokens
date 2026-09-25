@@ -344,6 +344,11 @@ export interface ArgSchema {
    * it was written, such as `'-p'`, and `name` and `conflictName` are the schema keys. When both
    * options name each other, `name` is the one that comes first in the schema.
    *
+   * A positional argument can be on either side, such as `[file]` and `--stdin`. It conflicts when
+   * it is given, and it is shown by its name, such as `'file'`, as in its other errors. When it is
+   * the one whose `conflicts` names the other, the message starts with "Positional argument":
+   * `Positional argument 'file' conflicts with '--stdin'`.
+   *
    * Conflicts only need to be defined on one side - if option A defines a conflict
    * with option B, the conflict is automatically detected when both are used,
    * regardless of whether B also defines a conflict with A.
@@ -1817,15 +1822,17 @@ function createOptionDisplayName(option: string, schema: ArgSchema): string {
 }
 
 /**
- * Create the error for two options that conflict.
+ * Create the error for two arguments that conflict.
  *
- * Each option is shown as it was written, such as `'-p'` or `'--no-color'`, as in the message.
+ * An option is shown as it was written, such as `'-p'` or `'--no-color'`, and a positional argument
+ * by its name, such as `'file'`, as in the message.
  *
- * @param rawArg - The argument key of the option whose `conflicts` names the other one
- * @param schema - The argument schema of that option
- * @param actualName - That option as it was written
- * @param conflictingArg - The argument key of the other option
- * @param conflictingActualName - The other option as it was written
+ * @param rawArg - The argument key of the argument whose `conflicts` names the other one
+ * @param schema - The argument schema of that argument
+ * @param actualName - That option as it was written, or the name of that positional argument
+ * @param conflictingArg - The argument key of the other argument
+ * @param conflictingActualName - The other option as it was written, or the name of the other
+ * positional argument
  * @returns The validation error
  */
 function createConflictError(
@@ -1837,8 +1844,9 @@ function createConflictError(
 ): ArgResolveError {
   const displayName = `'${actualName}'`
   const conflictDisplayName = `'${conflictingActualName}'`
+  const kind = schema.type === 'positional' ? 'Positional' : 'Optional'
   return new ArgResolveError(
-    `Optional argument ${displayName} conflicts with ${conflictDisplayName}`,
+    `${kind} argument ${displayName} conflicts with ${conflictDisplayName}`,
     rawArg,
     'conflict',
     schema,
@@ -1873,14 +1881,18 @@ function checkConflicts<A extends Args>(
         continue
       }
 
-      // use the actual input name that was used, fallback to long form
+      // an option is shown as it was written, falling back to the long form, and a positional
+      // argument by its name, as in its other errors
       const arg = toKebab || schema.toKebab ? kebabnize(rawArg) : rawArg
       const conflictingArgKebab =
         toKebab || args[conflictingArg]?.toKebab ? kebabnize(conflictingArg) : conflictingArg
 
-      const optionActualName = actualInputNames.get(rawArg) || `--${arg}`
+      const optionActualName =
+        schema.type === 'positional' ? arg : actualInputNames.get(rawArg) || `--${arg}`
       const conflictingActualName =
-        actualInputNames.get(conflictingArg) || `--${conflictingArgKebab}`
+        args[conflictingArg]?.type === 'positional'
+          ? conflictingArgKebab
+          : actualInputNames.get(conflictingArg) || `--${conflictingArgKebab}`
 
       return [
         createConflictError(rawArg, schema, optionActualName, conflictingArg, conflictingActualName)
