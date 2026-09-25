@@ -9,6 +9,7 @@
  * @license MIT
  */
 
+import { PURE_PARSE } from './internal.ts'
 import { hasLongOptionPrefix, isShortOption } from './parser.ts'
 import { formatChoices, kebabnize } from './utils.ts'
 
@@ -452,8 +453,12 @@ export interface ArgSchema {
    * A `boolean` option calls `parse` with `'true'`, or `'false'` for the negated form. Other
    * options call it only with a value from the command line: when the option is given without a
    * value, `parse` is not called and the missing value is reported as `err:arg:missing-value`
-   * ({@link ArgsValidationErrorKeys}.missingValue). An explicit empty value, such as `--name=` or
-   * `-n=`, is passed as `''` unless `required: true` is set.
+   * ({@link ArgsValidationErrorKeys}.missingValue). When that error may suggest the argument after
+   * the option as its value, such as `--port=-5` for `--port -5`, a `parse` function of your own
+   * is not called to check it either: only the `parse` functions of `string()`, `number()`,
+   * `integer()`, `float()` and `choice()`, which have no side effects, are called for that.
+   * An explicit empty value, such as `--name=` or `-n=`, is passed as `''` unless
+   * `required: true` is set.
    *
    * An `enum` option with `choices` calls it only with one of them. Any other value, an explicit
    * empty one included, is reported as `err:arg:invalid-choice`
@@ -1628,25 +1633,44 @@ function createKnownOptionNames(
 }
 
 /**
- * Check whether an option may take the argument after it as its value, before suggesting it.
+ * Check whether the argument after an option given without a value may be suggested as its value.
  *
- * Only what can be checked without calling a `parse` function is checked: the value of a `number`
- * option must be numeric, as the error expects a number, and the value of an `enum` option with
- * `choices` must be one of them, which is checked before any `parse` function. A value that only a
- * `parse` function rejects is not found, such as `-5` for `number({ min: 1 })`.
+ * The value of a `number` option must be numeric, as the error expects a number, and the value of
+ * an `enum` option with `choices` must be one of them, which is checked before any `parse`
+ * function. A `parse` function with its own {@link PURE_PARSE} brand is then called with the
+ * value, which must not throw. Any other `parse` function may have side effects, so it is not
+ * called: a `number` option or an `enum` option with `choices` is then checked only as above, and
+ * any other option is not suggested.
  *
  * @param schema - The argument schema
  * @param value - The argument after the option
- * @returns `false` when the option is known to reject the value, otherwise `true`
+ * @returns Whether the value may be suggested
  */
 function acceptsSuggestedValue(schema: ArgSchema, value: string): boolean {
-  if (schema.type === 'number') {
-    return isNumeric(value)
+  if (schema.type === 'number' && !isNumeric(value)) {
+    return false
   }
-  if (schema.type === 'enum' && schema.choices) {
-    return schema.choices.includes(value)
+  if (schema.type === 'enum' && schema.choices && !schema.choices.includes(value)) {
+    return false
   }
-  return true
+  const { parse } = schema
+  if (typeof parse !== 'function') {
+    return true
+  }
+  try {
+    // accept only an own brand, as `isArgsValidationError()` does, and read it in `try`, as a proxy
+    // may throw
+    if (
+      !Object.hasOwn(parse, PURE_PARSE) ||
+      (parse as { [PURE_PARSE]?: unknown })[PURE_PARSE] !== true
+    ) {
+      return schema.type === 'number' || (schema.type === 'enum' && schema.choices !== undefined)
+    }
+    parse(value)
+    return true
+  } catch {
+    return false
+  }
 }
 
 function createUnexpectedValueError(

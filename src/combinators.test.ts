@@ -38,6 +38,88 @@ describe('string combinator', () => {
     expect(values.name).toBeUndefined()
   })
 
+  test('option followed by an argument starting with -', () => {
+    const { error } = resolveArgs({ name: string() }, parseArgs(['--name', '-x']))
+    const validationError = error!.errors[0] as ArgsValidationError
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.missingValue)
+    // the parse function accepts any string, so `--name=-x` is suggested
+    expect(validationError.values).toStrictEqual({
+      displayName: "'--name'",
+      name: 'name',
+      expected: 'string',
+      next: '-x',
+      suggestion: '--name=-x'
+    })
+    expect(validationError.message).toBe(
+      "Optional argument '--name' requires a value (to pass '-x' as its value, write '--name=-x')"
+    )
+  })
+
+  test('option followed by an argument within the maximum length', () => {
+    const { error } = resolveArgs({ name: string({ maxLength: 3 }) }, parseArgs(['--name', '-x']))
+    const validationError = error!.errors[0] as ArgsValidationError
+    expect(validationError.values).toStrictEqual({
+      displayName: "'--name'",
+      name: 'name',
+      expected: 'string',
+      next: '-x',
+      suggestion: '--name=-x'
+    })
+  })
+
+  test('option followed by an argument that does not match the pattern', () => {
+    const { values, error } = resolveArgs(
+      { slug: string({ pattern: /^[a-z]+$/ }) },
+      parseArgs(['--slug', '-x'])
+    )
+    expect(error!.errors.length).toBe(1)
+    const validationError = error!.errors[0] as ArgsValidationError
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.missingValue)
+    // no suggestion to write `--slug=-x`, which the parse function rejects
+    expect(validationError.values).toStrictEqual({
+      displayName: "'--slug'",
+      name: 'slug',
+      expected: 'string'
+    })
+    expect(validationError.message).toBe("Optional argument '--slug' requires a value")
+    expect(values.slug).toBeUndefined()
+  })
+
+  test.each([
+    { flag: 'g', pattern: /^-?[a-z]+$/g },
+    { flag: 'y', pattern: /-?[a-z]+/y }
+  ])('a pattern with the $flag flag is not tested to check the suggestion', ({ pattern }) => {
+    const { values, error } = resolveArgs(
+      { tag: multiple(string({ pattern })) },
+      parseArgs(['--tag', '-x', '--tag', 'ab'])
+    )
+    // `test` with such a pattern moves its `lastIndex`, so testing `-x` would make `ab` fail
+    expect(values.tag).toEqual(['ab'])
+    expect(error!.errors.length).toBe(1)
+    const validationError = error!.errors[0] as ArgsValidationError
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.missingValue)
+    expect(validationError.values).toStrictEqual({
+      displayName: "'--tag'",
+      name: 'tag',
+      expected: 'string'
+    })
+  })
+
+  test('a pattern changed later to one with the g flag is not tested', () => {
+    const opts: { pattern: RegExp } = { pattern: /^-?[a-z]+$/ }
+    const tag = multiple(string(opts))
+    // `parse` reads `opts.pattern` when it is called, so the brand has to follow it too
+    opts.pattern = /^-?[a-z]+$/g
+    const { values, error } = resolveArgs({ tag }, parseArgs(['--tag', '-x', '--tag', 'ab']))
+    expect(values.tag).toEqual(['ab'])
+    expect(error!.errors.length).toBe(1)
+    expect((error!.errors[0] as ArgsValidationError).values).toStrictEqual({
+      displayName: "'--tag'",
+      name: 'tag',
+      expected: 'string'
+    })
+  })
+
   test('basic', () => {
     const argv = ['--name', 'hello']
     const tokens = parseArgs(argv)
@@ -125,6 +207,19 @@ describe('number combinator', () => {
     })
     expect(validationError.message).toBe("Optional argument '--port' requires a value")
     expect(values.port).toBeUndefined()
+  })
+
+  test('option followed by a negative number outside its range', () => {
+    const { error } = resolveArgs({ port: number({ min: 1 }) }, parseArgs(['--port', '-5']))
+    const validationError = error!.errors[0] as ArgsValidationError
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.missingValue)
+    // `-5` is a number, but the parse function rejects it
+    expect(validationError.values).toStrictEqual({
+      displayName: "'--port'",
+      name: 'port',
+      expected: 'number'
+    })
+    expect(validationError.message).toBe("Optional argument '--port' requires a value")
   })
 
   test('option followed by a negative number', () => {
@@ -238,6 +333,66 @@ describe('integer combinator', () => {
     expect(values.port).toBeUndefined()
   })
 
+  test('option followed by a negative integer', () => {
+    const { error } = resolveArgs({ port: integer() }, parseArgs(['--port', '-5']))
+    const validationError = error!.errors[0] as ArgsValidationError
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.missingValue)
+    // the parse function accepts `-5`, so `--port=-5` is suggested
+    expect(validationError.values).toStrictEqual({
+      displayName: "'--port'",
+      name: 'port',
+      expected: 'integer',
+      next: '-5',
+      suggestion: '--port=-5'
+    })
+    expect(validationError.message).toBe(
+      "Optional argument '--port' requires a value (to pass '-5' as its value, write '--port=-5')"
+    )
+  })
+
+  test('option followed by an argument that is not an integer', () => {
+    const { values, error } = resolveArgs({ port: integer() }, parseArgs(['--port', '-x']))
+    expect(error!.errors.length).toBe(1)
+    const validationError = error!.errors[0] as ArgsValidationError
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.missingValue)
+    // no suggestion to write `--port=-x`, which the parse function rejects
+    expect(validationError.values).toStrictEqual({
+      displayName: "'--port'",
+      name: 'port',
+      expected: 'integer'
+    })
+    expect(validationError.message).toBe("Optional argument '--port' requires a value")
+    expect(values.port).toBeUndefined()
+  })
+
+  test('option followed by a negative float, which is not an integer', () => {
+    const { error } = resolveArgs({ port: integer() }, parseArgs(['--port', '-5.5']))
+    const validationError = error!.errors[0] as ArgsValidationError
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.missingValue)
+    expect(validationError.values).toStrictEqual({
+      displayName: "'--port'",
+      name: 'port',
+      expected: 'integer'
+    })
+    expect(validationError.message).toBe("Optional argument '--port' requires a value")
+  })
+
+  test('option followed by a negative integer outside its range', () => {
+    const { error } = resolveArgs(
+      { port: integer({ min: 0, max: 10 }) },
+      parseArgs(['--port', '-5'])
+    )
+    const validationError = error!.errors[0] as ArgsValidationError
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.missingValue)
+    // `-5` is an integer, but the parse function rejects it
+    expect(validationError.values).toStrictEqual({
+      displayName: "'--port'",
+      name: 'port',
+      expected: 'integer'
+    })
+    expect(validationError.message).toBe("Optional argument '--port' requires a value")
+  })
+
   test('basic', () => {
     const argv = ['--count', '42']
     const tokens = parseArgs(argv)
@@ -310,6 +465,34 @@ describe('float combinator', () => {
       name: 'ratio',
       expected: 'float'
     })
+    expect(values.ratio).toBeUndefined()
+  })
+
+  test('option followed by a negative float', () => {
+    const { error } = resolveArgs({ ratio: float() }, parseArgs(['--ratio', '-.5']))
+    const validationError = error!.errors[0] as ArgsValidationError
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.missingValue)
+    expect(validationError.values).toStrictEqual({
+      displayName: "'--ratio'",
+      name: 'ratio',
+      expected: 'float',
+      next: '-.5',
+      suggestion: '--ratio=-.5'
+    })
+  })
+
+  test('option followed by a negative infinity', () => {
+    const { values, error } = resolveArgs({ ratio: float() }, parseArgs(['--ratio', '-Infinity']))
+    expect(error!.errors.length).toBe(1)
+    const validationError = error!.errors[0] as ArgsValidationError
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.missingValue)
+    // no suggestion to write `--ratio=-Infinity`, which the parse function rejects
+    expect(validationError.values).toStrictEqual({
+      displayName: "'--ratio'",
+      name: 'ratio',
+      expected: 'float'
+    })
+    expect(validationError.message).toBe("Optional argument '--ratio' requires a value")
     expect(values.ratio).toBeUndefined()
   })
 
@@ -668,6 +851,32 @@ describe('custom combinator', () => {
     })
   })
 
+  test('an argument starting with - gets no suggestion, and parse is not called', () => {
+    const received: string[] = []
+    const { error } = resolveArgs(
+      {
+        x: combinator({
+          parse: value => {
+            received.push(value)
+            return value
+          }
+        })
+      },
+      parseArgs(['--x', '-5'])
+    )
+    const validationError = error!.errors[0] as ArgsValidationError
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.missingValue)
+    // a parse function of your own may have side effects: it is not called to check `-5`, and
+    // without the check there is no suggestion
+    expect(validationError.values).toStrictEqual({
+      displayName: "'--x'",
+      name: 'x',
+      expected: 'custom'
+    })
+    expect(validationError.message).toBe("Optional argument '--x' requires a value")
+    expect(received).toEqual([])
+  })
+
   test('basic custom parse (Date)', () => {
     const date = combinator({
       parse: (value: string) => {
@@ -783,6 +992,48 @@ describe('map combinator', () => {
     expect(resolveArgs(args, parseArgs([])).values.port).toBe(8080)
   })
 
+  test('an argument starting with - gets no suggestion, and the transform is not called', () => {
+    const received: number[] = []
+    const { error } = resolveArgs(
+      {
+        count: map(integer(), n => {
+          received.push(n)
+          return n * 2
+        })
+      },
+      parseArgs(['--count', '-5'])
+    )
+    const validationError = error!.errors[0] as ArgsValidationError
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.missingValue)
+    // the transform is a function of your own, so the mapped parse function is not called to check
+    // `-5`, and without the check there is no suggestion
+    expect(validationError.values).toStrictEqual({
+      displayName: "'--count'",
+      name: 'count',
+      expected: 'integer'
+    })
+    expect(validationError.message).toBe("Optional argument '--count' requires a value")
+    expect(received).toEqual([])
+  })
+
+  test('a mapped number option is checked by its type only', () => {
+    const { error } = resolveArgs(
+      { port: map(number({ min: 1 }), n => n) },
+      parseArgs(['--port', '-5'])
+    )
+    const validationError = error!.errors[0] as ArgsValidationError
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.missingValue)
+    // the mapped parse function is not called, so `-5` is suggested as a number, although
+    // `number({ min: 1 })` rejects it
+    expect(validationError.values).toStrictEqual({
+      displayName: "'--port'",
+      name: 'port',
+      expected: 'number',
+      next: '-5',
+      suggestion: '--port=-5'
+    })
+  })
+
   test('transforms value', () => {
     const argv = ['--count', '5']
     const tokens = parseArgs(argv)
@@ -853,6 +1104,20 @@ describe('withDefault combinator', () => {
     expect(values.port).toBe(8080)
   })
 
+  test('option followed by a negative integer keeps the suggestion of the base combinator', () => {
+    const { error } = resolveArgs({ port: withDefault(integer(), 1) }, parseArgs(['--port', '-5']))
+    const validationError = error!.errors[0] as ArgsValidationError
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.missingValue)
+    // the modifier keeps the parse function of `integer()`, which is used to check `-5`
+    expect(validationError.values).toStrictEqual({
+      displayName: "'--port'",
+      name: 'port',
+      expected: 'integer',
+      next: '-5',
+      suggestion: '--port=-5'
+    })
+  })
+
   test('applies default', () => {
     const argv: string[] = []
     const tokens = parseArgs(argv)
@@ -874,6 +1139,19 @@ describe('multiple combinator', () => {
     const tokens = parseArgs(argv)
     const { values } = resolveArgs({ tag: multiple(string()) }, tokens)
     expect(values.tag).toEqual(['foo', 'bar'])
+  })
+
+  test('option followed by a negative integer keeps the suggestion of the base combinator', () => {
+    const { error } = resolveArgs({ count: multiple(integer()) }, parseArgs(['--count', '-5']))
+    const validationError = error!.errors[0] as ArgsValidationError
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.missingValue)
+    expect(validationError.values).toStrictEqual({
+      displayName: "'--count'",
+      name: 'count',
+      expected: 'integer',
+      next: '-5',
+      suggestion: '--count=-5'
+    })
   })
 
   test('required(multiple) and multiple(required) keep both flags and resolve arrays', () => {
@@ -903,6 +1181,19 @@ describe('required combinator', () => {
     expect(values.name).toBe('hello')
   })
 
+  test('option followed by a negative integer keeps the suggestion of the base combinator', () => {
+    const { error } = resolveArgs({ port: required(integer()) }, parseArgs(['--port', '-5']))
+    const validationError = error!.errors[0] as ArgsValidationError
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.missingValue)
+    expect(validationError.values).toStrictEqual({
+      displayName: "'--port'",
+      name: 'port',
+      expected: 'integer',
+      next: '-5',
+      suggestion: '--port=-5'
+    })
+  })
+
   test('errors when value is missing', () => {
     const argv: string[] = []
     const tokens = parseArgs(argv)
@@ -924,6 +1215,24 @@ describe('short combinator', () => {
     const tokens = parseArgs(argv)
     const { values } = resolveArgs({ verbose: short(boolean(), 'v') }, tokens)
     expect(values.verbose).toBe(true)
+  })
+
+  test('short alias keeps the check of the base combinator for the suggestion', () => {
+    const args = { count: short(integer(), 'c') }
+    const negative = resolveArgs(args, parseArgs(['-c', '-5']))
+    expect((negative.error!.errors[0] as ArgsValidationError).values).toStrictEqual({
+      displayName: "'--count' or '-c'",
+      name: 'count',
+      expected: 'integer',
+      next: '-5',
+      suggestion: '--count=-5'
+    })
+    const other = resolveArgs(args, parseArgs(['-c', '-x']))
+    expect((other.error!.errors[0] as ArgsValidationError).values).toStrictEqual({
+      displayName: "'--count' or '-c'",
+      name: 'count',
+      expected: 'integer'
+    })
   })
 
   test('resolves value via long name', () => {
@@ -1047,6 +1356,13 @@ describe('integration', () => {
     expect(values.verbose).toBe(true)
     expect(values.mode).toBe('prod')
     expect(positionals).toEqual(['dev'])
+  })
+
+  test('the parse functions of the base combinators keep their name', () => {
+    // they are marked for the missing-value suggestion, and stay methods named `parse`
+    for (const schema of [string(), number(), integer(), float(), choice(['a'])]) {
+      expect(schema.parse.name).toBe('parse')
+    }
   })
 
   test('full round-trip with modifiers', () => {

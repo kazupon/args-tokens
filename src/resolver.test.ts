@@ -4918,7 +4918,7 @@ describe('option given without a value followed by an argument starting with -',
     )
   })
 
-  test('a custom option keeps the suggestion without calling parse', () => {
+  test('a custom option gets no suggestion, and parse is not called', () => {
     const received: string[] = []
     const result = resolveArgs(
       {
@@ -4932,15 +4932,157 @@ describe('option given without a value followed by an argument starting with -',
       },
       parseArgs(['--x', '-x'])
     )
+    // a parse function of its own may have side effects: it is not called to check the value, and
+    // without the check there is no suggestion
+    expectMissingValueError(result.error, { displayName: "'--x'", name: 'x', expected: 'custom' })
+    expect(result.error?.errors[0].message).toBe("Optional argument '--x' requires a value")
+    expect(received).toEqual([])
+  })
+
+  test('a number option with a parse function is checked by its type only', () => {
+    const received: string[] = []
+    const parse = (value: string) => {
+      received.push(value)
+      return Number(value)
+    }
+    const numeric = resolveArgs({ x: { type: 'number', parse } }, parseArgs(['--x', '-5']))
+    expectMissingValueError(numeric.error, {
+      displayName: "'--x'",
+      name: 'x',
+      expected: 'number',
+      next: '-5',
+      suggestion: '--x=-5'
+    })
+    const other = resolveArgs({ x: { type: 'number', parse } }, parseArgs(['--x', '-x']))
+    expectMissingValueError(other.error, { displayName: "'--x'", name: 'x', expected: 'number' })
+    // a parse function of its own may have side effects, so the type decides alone
+    expect(received).toEqual([])
+  })
+
+  test('an enum with choices and a parse function is checked by its choices only', () => {
+    const received: string[] = []
+    const parse = (value: string) => {
+      received.push(value)
+      return value
+    }
+    const choices = ['-1', '0', '1']
+    const one = resolveArgs(
+      { level: { type: 'enum', choices, parse } },
+      parseArgs(['--level', '-1'])
+    )
+    expectMissingValueError(one.error, {
+      displayName: "'--level'",
+      name: 'level',
+      expected: 'enum',
+      choices: '"-1", "0", "1"',
+      choiceValues: choices,
+      next: '-1',
+      suggestion: '--level=-1'
+    })
+    const other = resolveArgs(
+      { level: { type: 'enum', choices, parse } },
+      parseArgs(['--level', '-x'])
+    )
+    expectMissingValueError(other.error, {
+      displayName: "'--level'",
+      name: 'level',
+      expected: 'enum',
+      choices: '"-1", "0", "1"',
+      choiceValues: choices
+    })
+    expect(received).toEqual([])
+  })
+
+  test('a string option with a parse function gets no suggestion, and parse is not called', () => {
+    const received: string[] = []
+    const result = resolveArgs(
+      {
+        name: {
+          type: 'string',
+          parse: (value: string) => {
+            received.push(value)
+            return value.toUpperCase()
+          }
+        }
+      },
+      parseArgs(['--name', '-x'])
+    )
     expectMissingValueError(result.error, {
+      displayName: "'--name'",
+      name: 'name',
+      expected: 'string'
+    })
+    expect(result.error?.errors[0].message).toBe("Optional argument '--name' requires a value")
+    expect(received).toEqual([])
+  })
+
+  test('an enum without choices with a parse function gets no suggestion', () => {
+    const result = resolveArgs(
+      { mode: { type: 'enum', parse: (value: string) => value } },
+      parseArgs(['--mode', '-x'])
+    )
+    expectMissingValueError(result.error, {
+      displayName: "'--mode'",
+      name: 'mode',
+      expected: 'enum',
+      choices: '',
+      choiceValues: []
+    })
+    expect(result.error?.errors[0].message).toBe("Optional argument '--mode' requires a value")
+  })
+
+  test('a parse function marked as free of side effects is called to check the value', () => {
+    const received: string[] = []
+    // the built-in combinators mark their parse functions this way
+    const parse = Object.defineProperty(
+      (value: string) => {
+        received.push(value)
+        if (!/^-?\d+$/.test(value)) {
+          throw new Error('digits only')
+        }
+        return Number(value)
+      },
+      Symbol.for('args-tokens.pureParse'),
+      { value: true }
+    )
+    const rejected = resolveArgs({ x: { type: 'custom', parse } }, parseArgs(['--x', '-x']))
+    expectMissingValueError(rejected.error, { displayName: "'--x'", name: 'x', expected: 'custom' })
+    expect(rejected.error?.errors[0].message).toBe("Optional argument '--x' requires a value")
+    const accepted = resolveArgs({ x: { type: 'custom', parse } }, parseArgs(['--x', '-5']))
+    expectMissingValueError(accepted.error, {
       displayName: "'--x'",
       name: 'x',
       expected: 'custom',
-      next: '-x',
-      suggestion: '--x=-x'
+      next: '-5',
+      suggestion: '--x=-5'
     })
-    // the value is not checked by calling parse
+    expect(accepted.values).not.toHaveProperty('x')
+    expect(received).toEqual(['-x', '-5'])
+  })
+
+  test('a parse function that inherits the brand is not called to check the value', () => {
+    const received: string[] = []
+    const parse = (value: string) => {
+      received.push(value)
+      return value
+    }
+    const marked = Object.defineProperty(() => 0, Symbol.for('args-tokens.pureParse'), {
+      value: true
+    })
+    Object.setPrototypeOf(parse, marked)
+    const result = resolveArgs({ x: { type: 'custom', parse } }, parseArgs(['--x', '-y']))
+    // only an own brand counts, as for `isArgsValidationError()`
+    expectMissingValueError(result.error, { displayName: "'--x'", name: 'x', expected: 'custom' })
     expect(received).toEqual([])
+  })
+
+  test('a parse function whose brand cannot be read gets no suggestion', () => {
+    const { proxy, revoke } = Proxy.revocable((value: string) => value, {})
+    revoke()
+    // reading a property of a revoked proxy throws, and `resolveArgs()` does not throw
+    const result = resolveArgs({ x: { type: 'custom', parse: proxy } }, parseArgs(['--x', '-y']))
+    expectMissingValueError(result.error, { displayName: "'--x'", name: 'x', expected: 'custom' })
+    expect(result.error?.errors[0].message).toBe("Optional argument '--x' requires a value")
   })
 
   test('the suggested value of an enum passes as one of its choices', () => {

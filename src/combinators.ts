@@ -55,6 +55,7 @@
  * @license MIT
  */
 
+import { PURE_PARSE } from './internal.ts'
 import { ArgsValidationError, ArgsValidationErrorKeys } from './resolver.ts'
 import { formatChoices } from './utils.ts'
 
@@ -115,6 +116,20 @@ function createInvalidChoiceError(
       actual
     }
   })
+}
+
+/**
+ * Mark the `parse` function of a schema as free of side effects, so that the resolver may call it
+ * to check a value before suggesting it.
+ *
+ * @typeParam S - The schema type.
+ *
+ * @param schema - A schema whose `parse` function has no side effects.
+ * @returns The same schema.
+ */
+function pureParse<S extends Combinator<unknown>>(schema: S): S {
+  Object.defineProperty(schema.parse, PURE_PARSE, { value: true })
+  return schema
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -182,7 +197,7 @@ export interface StringOptions extends BaseOptions {
  */
 // @__NO_SIDE_EFFECTS__
 export function string(opts?: StringOptions): CombinatorSchema<string> {
-  return {
+  const schema: CombinatorSchema<string> = {
     type: 'string',
     metavar: 'string',
     ...(opts?.description != null ? { description: opts.description } : {}),
@@ -202,6 +217,12 @@ export function string(opts?: StringOptions): CombinatorSchema<string> {
       return value
     }
   }
+  // `test` with a `g` or `y` pattern moves its `lastIndex`, so that `parse` has a side effect.
+  // `parse` reads `opts.pattern` when it is called, so the brand is read from it at that time too
+  Object.defineProperty(schema.parse, PURE_PARSE, {
+    get: () => !opts?.pattern?.global && !opts?.pattern?.sticky
+  })
+  return schema
 }
 
 /**
@@ -239,7 +260,7 @@ export interface NumberOptions extends BaseOptions {
  */
 // @__NO_SIDE_EFFECTS__
 export function number(opts?: NumberOptions): CombinatorSchema<number> {
-  return {
+  return pureParse({
     type: 'number',
     metavar: 'number',
     ...(opts?.description != null ? { description: opts.description } : {}),
@@ -259,7 +280,7 @@ export function number(opts?: NumberOptions): CombinatorSchema<number> {
       }
       return n
     }
-  }
+  })
 }
 
 /**
@@ -297,7 +318,7 @@ export interface IntegerOptions extends BaseOptions {
  */
 // @__NO_SIDE_EFFECTS__
 export function integer(opts?: IntegerOptions): CombinatorSchema<number> {
-  return {
+  return pureParse({
     type: 'custom',
     metavar: 'integer',
     ...(opts?.description != null ? { description: opts.description } : {}),
@@ -320,7 +341,7 @@ export function integer(opts?: IntegerOptions): CombinatorSchema<number> {
       }
       return n
     }
-  }
+  })
 }
 
 /**
@@ -358,7 +379,7 @@ export interface FloatOptions extends BaseOptions {
  */
 // @__NO_SIDE_EFFECTS__
 export function float(opts?: FloatOptions): CombinatorSchema<number> {
-  return {
+  return pureParse({
     type: 'custom',
     metavar: 'float',
     ...(opts?.description != null ? { description: opts.description } : {}),
@@ -382,7 +403,7 @@ export function float(opts?: FloatOptions): CombinatorSchema<number> {
       }
       return n
     }
-  }
+  })
 }
 
 /**
@@ -536,7 +557,7 @@ export function choice<const T extends readonly string[]>(
   values: T,
   opts?: BaseOptions
 ): CombinatorSchema<T[number]> {
-  return {
+  return pureParse({
     type: 'enum',
     metavar: values.join('|'),
     choices: values,
@@ -550,7 +571,7 @@ export function choice<const T extends readonly string[]>(
       }
       return value
     }
-  }
+  })
 }
 
 // ------------------------------------------------------------------------------------------------
