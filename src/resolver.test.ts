@@ -3812,6 +3812,23 @@ describe('conflicts', () => {
     expect(conflict.message).toBe("Optional argument '--summer' conflicts with '--autumn'")
   })
 
+  test('a conflict that both options list names the first one in the schema', () => {
+    const args = {
+      summer: { type: 'boolean', conflicts: 'autumn' },
+      autumn: { type: 'boolean', conflicts: 'summer' }
+    } as const satisfies Args
+    // the order of the schema decides, not the order of the argv
+    const { error } = resolveArgs(args, parseArgs(['--autumn', '--summer']))
+    const conflict = error?.errors[0] as ArgResolveError
+    expect(conflict.values).toStrictEqual({
+      displayName: "'--summer'",
+      name: 'summer',
+      conflictDisplayName: "'--autumn'",
+      conflictName: 'autumn'
+    })
+    expect(conflict.message).toBe("Optional argument '--summer' conflicts with '--autumn'")
+  })
+
   test('a conflict of kebab-case options has the schema keys as its names', () => {
     const args = {
       summerSeason: { type: 'boolean', conflicts: 'autumnSeason', toKebab: true },
