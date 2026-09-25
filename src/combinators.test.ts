@@ -1001,6 +1001,24 @@ describe('map combinator', () => {
     expect(received).toEqual([])
   })
 
+  test('a mapped number option is checked by its type only', () => {
+    const { error } = resolveArgs(
+      { port: map(number({ min: 1 }), n => n) },
+      parseArgs(['--port', '-5'])
+    )
+    const validationError = error!.errors[0] as ArgsValidationError
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.missingValue)
+    // the mapped parse function is not called, so `-5` is suggested as a number, although
+    // `number({ min: 1 })` rejects it
+    expect(validationError.values).toStrictEqual({
+      displayName: "'--port'",
+      name: 'port',
+      expected: 'number',
+      next: '-5',
+      suggestion: '--port=-5'
+    })
+  })
+
   test('transforms value', () => {
     const argv = ['--count', '5']
     const tokens = parseArgs(argv)
@@ -1108,6 +1126,19 @@ describe('multiple combinator', () => {
     expect(values.tag).toEqual(['foo', 'bar'])
   })
 
+  test('option followed by a negative integer keeps the suggestion of the base combinator', () => {
+    const { error } = resolveArgs({ count: multiple(integer()) }, parseArgs(['--count', '-5']))
+    const validationError = error!.errors[0] as ArgsValidationError
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.missingValue)
+    expect(validationError.values).toStrictEqual({
+      displayName: "'--count'",
+      name: 'count',
+      expected: 'integer',
+      next: '-5',
+      suggestion: '--count=-5'
+    })
+  })
+
   test('required(multiple) and multiple(required) keep both flags and resolve arrays', () => {
     const requiredMultiple = required(multiple(string()))
     const multipleRequired = multiple(required(string()))
@@ -1169,6 +1200,24 @@ describe('short combinator', () => {
     const tokens = parseArgs(argv)
     const { values } = resolveArgs({ verbose: short(boolean(), 'v') }, tokens)
     expect(values.verbose).toBe(true)
+  })
+
+  test('short alias keeps the check of the base combinator for the suggestion', () => {
+    const args = { count: short(integer(), 'c') }
+    const negative = resolveArgs(args, parseArgs(['-c', '-5']))
+    expect((negative.error!.errors[0] as ArgsValidationError).values).toStrictEqual({
+      displayName: "'--count' or '-c'",
+      name: 'count',
+      expected: 'integer',
+      next: '-5',
+      suggestion: '--count=-5'
+    })
+    const other = resolveArgs(args, parseArgs(['-c', '-x']))
+    expect((other.error!.errors[0] as ArgsValidationError).values).toStrictEqual({
+      displayName: "'--count' or '-c'",
+      name: 'count',
+      expected: 'integer'
+    })
   })
 
   test('resolves value via long name', () => {
