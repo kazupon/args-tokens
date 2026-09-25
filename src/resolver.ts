@@ -1428,15 +1428,22 @@ function hasDefault(schema: ArgSchema): boolean {
  * The default does not go through `parse`, so with a `parse` function of your own, or a `map()`
  * transform, it is a value that the function returns, which need not be one of the choices, and it
  * is not checked. The `parse` function of `choice()` returns the value as is, so its default is
- * checked: it is the only `enum` schema whose `parse` has the {@link PURE_PARSE} brand.
+ * checked: among the schemas that the combinators make, it is the only `enum` schema whose `parse`
+ * has the {@link PURE_PARSE} brand. An `enum` schema written by hand with another branded `parse`
+ * would be checked too.
+ *
+ * Only a string, number or boolean default, as the type of `default` allows, is checked against an
+ * array of choices. Anything else, which only untyped code can give, is used as before.
  *
  * @param schema - The argument schema
  * @returns Whether the default is not one of the choices
  */
 function hasDefaultOutsideChoices(schema: ArgSchema): boolean {
+  const defaultType = typeof schema.default
   if (
     schema.type !== 'enum' ||
-    schema.choices === undefined ||
+    !Array.isArray(schema.choices) ||
+    (defaultType !== 'string' && defaultType !== 'number' && defaultType !== 'boolean') ||
     (schema.choices as readonly unknown[]).includes(schema.default)
   ) {
     return false
@@ -1826,8 +1833,11 @@ function createDefaultChoiceError(
 ): ArgResolveError {
   const choices = schema.choices ?? []
   const displayName = createOptionDisplayName(option, schema)
+  // a string in quotes, as `formatChoices()` shows the choices; a number or boolean as is
+  const actual =
+    typeof schema.default === 'string' ? JSON.stringify(schema.default) : String(schema.default)
   return new ArgResolveError(
-    `Optional argument ${displayName} has the default ${JSON.stringify(schema.default)}, ` +
+    `Optional argument ${displayName} has the default ${actual}, ` +
       `which is not one of '${schema.type}' [${formatChoices(choices)}] values`,
     option,
     'type',
