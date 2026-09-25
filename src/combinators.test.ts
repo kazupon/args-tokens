@@ -105,6 +105,21 @@ describe('string combinator', () => {
     })
   })
 
+  test('a pattern changed later to one with the g flag is not tested', () => {
+    const opts: { pattern: RegExp } = { pattern: /^-?[a-z]+$/ }
+    const tag = multiple(string(opts))
+    // `parse` reads `opts.pattern` when it is called, so the brand has to follow it too
+    opts.pattern = /^-?[a-z]+$/g
+    const { values, error } = resolveArgs({ tag }, parseArgs(['--tag', '-x', '--tag', 'ab']))
+    expect(values.tag).toEqual(['ab'])
+    expect(error!.errors.length).toBe(1)
+    expect((error!.errors[0] as ArgsValidationError).values).toStrictEqual({
+      displayName: "'--tag'",
+      name: 'tag',
+      expected: 'string'
+    })
+  })
+
   test('basic', () => {
     const argv = ['--name', 'hello']
     const tokens = parseArgs(argv)
