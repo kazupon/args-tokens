@@ -5073,6 +5073,20 @@ describe('long option with an empty name', () => {
       expect(values).toEqual({})
     }
   )
+
+  test('it matches no argument', () => {
+    const { values, positionals, explicit, error } = resolveArgs(args, parseArgs(['--==', 'x']))
+    expect(error).toBeUndefined()
+    expect(values).toEqual({ file: 'x' })
+    expect(positionals).toEqual(['x'])
+    expect(explicit).toEqual({ def: false, file: true })
+  })
+
+  test('the suggested --def=--== passes the value', () => {
+    const { values, error } = resolveArgs(args, parseArgs(['--def=--==']))
+    expect(error).toBeUndefined()
+    expect(values).toEqual({ def: '--==' })
+  })
 })
 
 describe('option with a parse function given without a value', () => {

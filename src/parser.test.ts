@@ -269,6 +269,26 @@ describe('long options', () => {
   )
 })
 
+describe('long option with an empty name', () => {
+  test.each(['--==', '--=x=y', '--== x'])('%s gives the node:util tokens', argv => {
+    const args = argv.split(' ')
+    const { tokens } = parseArgsNode({
+      allowPositionals: true,
+      strict: false,
+      args,
+      tokens: true
+    })
+    expect(parseArgs(args)).toEqual(tokens)
+    expect(parseArgs(args, { allowCompatible: true })).toEqual(tokens)
+  })
+
+  test('the name is empty and the raw name is --', () => {
+    expect(parseArgs(['--=x=y'])).toEqual([
+      { kind: 'option', name: '', rawName: '--', index: 0, value: 'x=y', inlineValue: true }
+    ])
+  })
+})
+
 test('long option followed by value containing "--" (e.g. --custom-property)', () => {
   const args = ['--foo', 'include double hyphen e.g. --custom-property']
   const { tokens: expectTokens } = parseArgsNode({
