@@ -1161,10 +1161,6 @@ export function resolveArgs<A extends Args>(
         checkLongTokenName(arg, schema, token) ||
         (schema.short === token.name && token.rawName != undefined && isShortOption(token.rawName))
       ) {
-        // an option given without a value (not an empty one such as `--name=`) is a missing value,
-        // also when it is required: the option itself was given
-        const missing = schema.type !== 'boolean' && token.value === undefined
-
         // mark as explicitly set when we find a matching token, even if its value is rejected below
         // keyof explicit is generic and cannot be indexed for settings value.
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(kazupon): Allow any type for resolving
@@ -1175,6 +1171,9 @@ export function resolveArgs<A extends Args>(
         const actualInputName = isShortOption(rawName) ? `-${token.name}` : rawName
         actualInputNames.set(rawArg, actualInputName)
 
+        // an option given without a value (not an empty one such as `--name=`) is a missing value,
+        // also when it is required: the option itself was given
+        const missing = schema.type !== 'boolean' && token.value === undefined
         if (!missing) {
           const invalid = validateRequire(token, rawArg, arg, schema)
           if (invalid) {
