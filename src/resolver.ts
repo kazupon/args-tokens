@@ -153,7 +153,8 @@ export interface ArgSchema {
    * ({@link ArgsValidationErrorKeys}.requiredPositional) for a positional argument.
    * An option that is given without a value is reported as `err:arg:missing-value`
    * ({@link ArgsValidationErrorKeys}.missingValue) instead, because the option itself was given.
-   * An explicit empty value, such as `--name=` or `-n ''`, is still reported as required.
+   * An explicit empty value, such as `--name=` or `-n ''`, is still reported as required. It
+   * still counts as given: the argument is `true` in `explicit`, and its conflicts are reported.
    *
    * For single-value positional arguments, omitting `required` keeps the argument
    * required for compatibility. Set `required: false` to make a positional argument
@@ -1163,15 +1164,8 @@ export function resolveArgs<A extends Args>(
         // an option given without a value (not an empty one such as `--name=`) is a missing value,
         // also when it is required: the option itself was given
         const missing = schema.type !== 'boolean' && token.value === undefined
-        if (!missing) {
-          const invalid = validateRequire(token, rawArg, arg, schema)
-          if (invalid) {
-            errors.push(invalid)
-            continue
-          }
-        }
 
-        // mark as explicitly set when we find a matching token.
+        // mark as explicitly set when we find a matching token, even if its value is rejected below
         // keyof explicit is generic and cannot be indexed for settings value.
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(kazupon): Allow any type for resolving
         ;(explicit as any)[rawArg] = true
@@ -1180,6 +1174,14 @@ export function resolveArgs<A extends Args>(
         const rawName = token.rawName!
         const actualInputName = isShortOption(rawName) ? `-${token.name}` : rawName
         actualInputNames.set(rawArg, actualInputName)
+
+        if (!missing) {
+          const invalid = validateRequire(token, rawArg, arg, schema)
+          if (invalid) {
+            errors.push(invalid)
+            continue
+          }
+        }
 
         const [parsedValue, error] = missing
           ? [
