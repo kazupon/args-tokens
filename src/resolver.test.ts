@@ -1959,6 +1959,133 @@ describe('enum option', () => {
     expect(resolveError.type).toEqual('type')
     expect(resolveError.schema.type).toEqual('enum')
   })
+
+  describe('a default outside the choices', () => {
+    const level = {
+      type: 'enum',
+      short: 'l',
+      choices: ['debug', 'info'],
+      default: 'verbose'
+    } satisfies ArgSchema
+
+    test.each<{ label: string; argv: string[]; codes: string[] }>([
+      {
+        label: 'the option is not given',
+        argv: [],
+        codes: ['err:arg:invalid-default']
+      },
+      {
+        label: 'the option is given without a value',
+        argv: ['--level'],
+        codes: [ArgsValidationErrorKeys.missingValue, 'err:arg:invalid-default']
+      },
+      {
+        label: 'the value is not one of the choices',
+        argv: ['--level=verbose'],
+        codes: [ArgsValidationErrorKeys.invalidChoice, 'err:arg:invalid-default']
+      },
+      {
+        label: 'the value is empty',
+        argv: ['-l='],
+        codes: [ArgsValidationErrorKeys.invalidChoice, 'err:arg:invalid-default']
+      }
+    ])('is reported and not used when $label', ({ argv, codes }) => {
+      const { values, error } = resolveArgs({ level }, parseArgs(argv))
+      expect(error?.errors.map(e => (e as ArgsValidationError).code)).toEqual(codes)
+      expect(values).toEqual({})
+      const resolveError = error?.errors.at(-1) as ArgResolveError
+      expect(resolveError).toBeInstanceOf(ArgResolveError)
+      expect(resolveError.message).toBe(
+        `Optional argument '--level' or '-l' has the default "verbose", ` +
+          `which is not one of 'enum' ["debug", "info"] values`
+      )
+      expect(resolveError.values).toStrictEqual({
+        displayName: "'--level' or '-l'",
+        name: 'level',
+        expected: 'enum',
+        choices: '"debug", "info"',
+        choiceValues: ['debug', 'info'],
+        actual: 'verbose'
+      })
+      expect(resolveError.name).toBe('level')
+      expect(resolveError.type).toBe('type')
+      expect(resolveError.schema).toBe(level)
+    })
+
+    test('is not checked when one of the choices is given', () => {
+      const { values, error } = resolveArgs({ level }, parseArgs(['-l', 'debug']))
+      expect(error).toBeUndefined()
+      expect(values).toEqual({ level: 'debug' })
+    })
+
+    test('is shown by the name on the command line', () => {
+      const { values, error } = resolveArgs(
+        { logLevel: { type: 'enum', choices: ['debug', 'info'], default: 'verbose' } },
+        parseArgs([]),
+        { toKebab: true }
+      )
+      expect(values).toEqual({})
+      expect(error?.errors.length).toBe(1)
+      const resolveError = error?.errors[0] as ArgResolveError
+      expect(resolveError.code).toBe('err:arg:invalid-default')
+      expect(resolveError.message).toBe(
+        `Optional argument '--log-level' has the default "verbose", ` +
+          `which is not one of 'enum' ["debug", "info"] values`
+      )
+      expect(resolveError.values).toStrictEqual({
+        displayName: "'--log-level'",
+        name: 'logLevel',
+        expected: 'enum',
+        choices: '"debug", "info"',
+        choiceValues: ['debug', 'info'],
+        actual: 'verbose'
+      })
+    })
+
+    test('is reported with a default that is not a string', () => {
+      const { values, error } = resolveArgs(
+        { level: { type: 'enum', choices: ['1', '2'], default: 1 } },
+        parseArgs([])
+      )
+      expect(values).toEqual({})
+      expect(error?.errors.length).toBe(1)
+      const resolveError = error?.errors[0] as ArgResolveError
+      expect(resolveError.code).toBe('err:arg:invalid-default')
+      expect(resolveError.message).toBe(
+        `Optional argument '--level' has the default 1, ` +
+          `which is not one of 'enum' ["1", "2"] values`
+      )
+      expect(resolveError.values.actual).toBe(1)
+    })
+
+    test('is reported for an option that takes multiple values', () => {
+      const { values, error } = resolveArgs(
+        { level: { type: 'enum', choices: ['debug', 'info'], multiple: true, default: 'verbose' } },
+        parseArgs([])
+      )
+      expect(values).toEqual({})
+      expect(error?.errors.map(e => (e as ArgsValidationError).code)).toEqual([
+        'err:arg:invalid-default'
+      ])
+    })
+
+    test('is not checked without choices', () => {
+      const { values, error } = resolveArgs(
+        { level: { type: 'enum', default: 'verbose' } },
+        parseArgs([])
+      )
+      expect(error).toBeUndefined()
+      expect(values).toEqual({ level: 'verbose' })
+    })
+
+    test('is not used by a required option', () => {
+      const { values, error } = resolveArgs({ level: { ...level, required: true } }, parseArgs([]))
+      expect(values).toEqual({})
+      expect(error?.errors.map(e => (e as ArgsValidationError).code)).toEqual([
+        ArgsValidationErrorKeys.requiredOption
+      ])
+    })
+  })
 })
 
 describe('enum option with a parse function', () => {
