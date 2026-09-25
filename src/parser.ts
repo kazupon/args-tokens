@@ -308,10 +308,11 @@ function isLongOptionAndValue(arg: string) {
 }
 
 /**
- * Check if `arg` is a long option prefix (e.g. `--`).
+ * Check if `arg` starts with the long option prefix `--` and has more after it, such as `--foo`.
+ * The option terminator `--` alone does not.
  *
  * @param arg - An argument to check
- * @returns Whether `arg` is a long option prefix.
+ * @returns Whether `arg` has the long option prefix and more after it.
  */
 export function hasLongOptionPrefix(arg: string): boolean {
   return arg.startsWith(LONG_OPTION_PREFIX) && arg.length > 2

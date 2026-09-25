@@ -450,7 +450,7 @@ Hides the argument from generated help or usage output. This is renderer metadat
 
 #### `required` (optional)
 
-Marks the argument as required. When `true`, the argument must be provided or an `ArgResolveError` will be thrown.
+Marks the argument as required. When `true`, the argument must be provided. When it is missing, the error is an `ArgResolveError` with `type: 'required'` and the code `ArgsValidationErrorKeys.requiredOption`, or `ArgsValidationErrorKeys.requiredPositional` for a positional argument.
 
 An option given without a value, such as `--input` with nothing after it, is reported as `ArgsValidationErrorKeys.missingValue` instead. An explicit empty value, such as `--input=`, or `-i ''` with the short name `i`, is still reported as required.
 
