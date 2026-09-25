@@ -2262,6 +2262,42 @@ describe('positional arguments', () => {
     })
   })
 
+  test.each<{
+    label: string
+    args: Args
+    options: { toKebab?: boolean }
+    values: { displayName: string; name: string }
+  }>([
+    {
+      label: 'a positional argument',
+      args: { file: { type: 'positional' } },
+      options: {},
+      values: { displayName: "'file'", name: 'file' }
+    },
+    {
+      label: 'a kebab-case positional argument',
+      args: { inputFile: { type: 'positional' } },
+      options: { toKebab: true },
+      values: { displayName: "'input-file'", name: 'inputFile' }
+    },
+    {
+      label: 'multiple positional arguments',
+      args: { files: { type: 'positional', multiple: true, required: true } },
+      options: {},
+      values: { displayName: "'files'", name: 'files' }
+    }
+  ])(
+    'a missing $label has the name of the message as its displayName',
+    ({ args, options, values }) => {
+      const { error } = resolveArgs(args, parseArgs([]), options)
+      const required = error?.errors[0] as ArgResolveError
+      expect(required.code).toBe(ArgsValidationErrorKeys.requiredPositional)
+      expect(required.values).toStrictEqual(values)
+      // the message is made from the same name
+      expect(required.message).toBe(`Positional argument ${values.displayName} is required`)
+    }
+  )
+
   test('missing optional single positional', () => {
     const argv = ['--help']
     const tokens = parseArgs(argv)
