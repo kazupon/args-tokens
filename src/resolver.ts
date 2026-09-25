@@ -1500,7 +1500,7 @@ function createTypeError(
  *
  * `expected` names what the option takes: its type, or for a `custom` type its `metavar` (for
  * example `'integer'` for the `integer()` combinator). An `enum` also gets its choices. When the
- * argument after the option may be a value that starts with `-`, and the option takes it (see
+ * argument after the option may be a value that starts with `-`, and the option may take it (see
  * `acceptsSuggestedValue()`), the error suggests the long form with `=`, which passes such a value in
  * every mode of the tokenizer.
  *
@@ -1631,24 +1631,28 @@ function createKnownOptionNames(
 }
 
 /**
- * Brand of a `parse` function that has no side effects, set by the built-in combinators, so that
- * the resolver may call it with a value that the option was not given.
+ * Brand of a `parse` function that has no side effects, set by `string()`, `number()`,
+ * `integer()`, `float()` and `choice()`, so that the resolver may call it with a value that the
+ * option was not given.
+ *
+ * The brand is looked up in the global symbol registry with `Symbol.for`, so it stays identical
+ * across bundled copies of `args-tokens`, where the combinators may come from another copy.
  */
 const PURE_PARSE: unique symbol = Symbol.for('args-tokens.pureParse')
 
 /**
- * Check whether an option is known to take the argument after it as its value before suggesting it.
+ * Check whether the argument after an option given without a value may be suggested as its value.
  *
  * The value of a `number` option must be numeric, as the error expects a number, and the value of
  * an `enum` option with `choices` must be one of them, which is checked before any `parse`
- * function. A `parse` function that the built-in combinators mark as free of side effects
- * (`PURE_PARSE`) is then called with the value, and must not throw. Any other `parse` function may
- * have side effects, so it is not called: the option is taken to reject the value unless its type
- * or `choices` decided above.
+ * function. A `parse` function with its own {@link PURE_PARSE} brand is then called with the
+ * value, which must not throw. Any other `parse` function may have side effects, so it is not
+ * called: a `number` option or an `enum` option with `choices` is then checked only as above, and
+ * any other option is not suggested.
  *
  * @param schema - The argument schema
  * @param value - The argument after the option
- * @returns Whether the option is known to take the value
+ * @returns Whether the value may be suggested
  */
 function acceptsSuggestedValue(schema: ArgSchema, value: string): boolean {
   if (schema.type === 'number' && !isNumeric(value)) {
@@ -1661,17 +1665,20 @@ function acceptsSuggestedValue(schema: ArgSchema, value: string): boolean {
   if (typeof parse !== 'function') {
     return true
   }
-  if ((parse as { [PURE_PARSE]?: boolean })[PURE_PARSE] === true) {
-    try {
-      parse(value)
-    } catch {
-      return false
+  try {
+    // accept only an own brand, as `isArgsValidationError()` does, and read it in `try`, as a proxy
+    // may throw
+    if (
+      !Object.hasOwn(parse, PURE_PARSE) ||
+      (parse as { [PURE_PARSE]?: unknown })[PURE_PARSE] !== true
+    ) {
+      return schema.type === 'number' || (schema.type === 'enum' && schema.choices !== undefined)
     }
+    parse(value)
     return true
+  } catch {
+    return false
   }
-  // a `parse` function that may have side effects is not called: the type and `choices` decide for
-  // a `number` and an `enum` with `choices`, and any other option gets no suggestion
-  return schema.type === 'number' || (schema.type === 'enum' && schema.choices !== undefined)
 }
 
 function createUnexpectedValueError(
