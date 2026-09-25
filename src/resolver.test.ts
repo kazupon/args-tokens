@@ -3861,6 +3861,135 @@ describe('conflicts', () => {
     })
   })
 
+  test('a conflict of a positional argument shows it by its name', () => {
+    const args = {
+      file: { type: 'positional', required: false, conflicts: 'stdin' },
+      stdin: { type: 'boolean' }
+    } as const satisfies Args
+    const { error } = resolveArgs(args, parseArgs(['a.txt', '--stdin']))
+    const conflict = error?.errors[0] as ArgResolveError
+    expect(conflict.code).toBe('err:arg:conflict')
+    expect(conflict.values).toStrictEqual({
+      displayName: "'file'",
+      name: 'file',
+      conflictDisplayName: "'--stdin'",
+      conflictName: 'stdin'
+    })
+    expect(conflict.message).toBe("Positional argument 'file' conflicts with '--stdin'")
+  })
+
+  test('a conflict of an option with a positional argument shows the latter by its name', () => {
+    const args = {
+      stdin: { type: 'boolean', conflicts: 'file' },
+      file: { type: 'positional', required: false }
+    } as const satisfies Args
+    const { error } = resolveArgs(args, parseArgs(['--stdin', 'a.txt']))
+    const conflict = error?.errors[0] as ArgResolveError
+    expect(conflict.values).toStrictEqual({
+      displayName: "'--stdin'",
+      name: 'stdin',
+      conflictDisplayName: "'file'",
+      conflictName: 'file'
+    })
+    expect(conflict.message).toBe("Optional argument '--stdin' conflicts with 'file'")
+  })
+
+  test('a conflict of a positional argument with toKebab shows its kebab-case name', () => {
+    const args = {
+      inputFile: { type: 'positional', required: false, conflicts: 'stdin' },
+      stdin: { type: 'boolean' }
+    } as const satisfies Args
+    const { error } = resolveArgs(args, parseArgs(['a.txt', '--stdin']), { toKebab: true })
+    const conflict = error?.errors[0] as ArgResolveError
+    expect(conflict.values).toStrictEqual({
+      displayName: "'input-file'",
+      name: 'inputFile',
+      conflictDisplayName: "'--stdin'",
+      conflictName: 'stdin'
+    })
+    expect(conflict.message).toBe("Positional argument 'input-file' conflicts with '--stdin'")
+  })
+
+  test('a conflict of a multiple positional argument with a short option', () => {
+    const args = {
+      files: { type: 'positional', multiple: true, conflicts: 'stdin' },
+      stdin: { type: 'boolean', short: 'i' }
+    } as const satisfies Args
+    const { error } = resolveArgs(args, parseArgs(['a', 'b', '-i']))
+    const conflict = error?.errors[0] as ArgResolveError
+    expect(conflict.values).toStrictEqual({
+      displayName: "'files'",
+      name: 'files',
+      conflictDisplayName: "'-i'",
+      conflictName: 'stdin'
+    })
+    expect(conflict.message).toBe("Positional argument 'files' conflicts with '-i'")
+  })
+
+  test('a conflict between positional arguments shows both by their names', () => {
+    const args = {
+      src: { type: 'positional', required: false, conflicts: 'dst' },
+      dst: { type: 'positional', required: false }
+    } as const satisfies Args
+    const { error } = resolveArgs(args, parseArgs(['a', 'b']))
+    const conflict = error?.errors[0] as ArgResolveError
+    expect(conflict.values).toStrictEqual({
+      displayName: "'src'",
+      name: 'src',
+      conflictDisplayName: "'dst'",
+      conflictName: 'dst'
+    })
+    expect(conflict.message).toBe("Positional argument 'src' conflicts with 'dst'")
+  })
+
+  test('a conflict of positional arguments with toKebab shows both kebab-case names', () => {
+    const args = {
+      srcDir: { type: 'positional', required: false, toKebab: true, conflicts: 'dstDir' },
+      dstDir: { type: 'positional', required: false, toKebab: true }
+    } as const satisfies Args
+    const { error } = resolveArgs(args, parseArgs(['a', 'b']))
+    const conflict = error?.errors[0] as ArgResolveError
+    expect(conflict.values).toStrictEqual({
+      displayName: "'src-dir'",
+      name: 'srcDir',
+      conflictDisplayName: "'dst-dir'",
+      conflictName: 'dstDir'
+    })
+    expect(conflict.message).toBe("Positional argument 'src-dir' conflicts with 'dst-dir'")
+  })
+
+  test('a conflict and a parse error of a positional argument show the same name', () => {
+    const args = {
+      port: {
+        type: 'positional',
+        required: false,
+        conflicts: 'socket',
+        parse: (value: string) => {
+          if (!/^\d+$/.test(value)) {
+            throw new Error('not a number')
+          }
+          return Number(value)
+        }
+      },
+      socket: { type: 'string' }
+    } as const satisfies Args
+    const { error } = resolveArgs(args, parseArgs(['x', '--socket', 's']))
+    const errors = (error?.errors ?? []) as ArgsValidationError[]
+    expect(errors.map(e => e.code)).toStrictEqual(['err:arg:custom-parse', 'err:arg:conflict'])
+    expect(errors.map(e => e.values.displayName)).toStrictEqual(["'port'", "'port'"])
+  })
+
+  test('a positional argument that is not given does not conflict, even with a default', () => {
+    const args = {
+      file: { type: 'positional', required: false, default: 'in.txt', conflicts: 'stdin' },
+      stdin: { type: 'boolean' }
+    } as const satisfies Args
+    const { values, error } = resolveArgs(args, parseArgs(['--stdin']))
+    expect(error).toBeUndefined()
+    expect(values.file).toBe('in.txt')
+    expect(values.stdin).toBe(true)
+  })
+
   test('detects conflict with one-way conflict definition', () => {
     const args = {
       summer: {
