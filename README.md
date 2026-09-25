@@ -604,6 +604,8 @@ Converts the argument name from camelCase to kebab-case for CLI usage. A propert
 
 Custom parsing function for `type: 'custom'` arguments. Required when `type: 'custom'`. Should throw an Error if parsing fails.
 
+`parse` is called synchronously, and what it returns becomes the value, so throw to reject a value. An `async` function returns a promise, and the promise becomes the value as is: `resolveArgs()` and `parse()` do not await it, and do not report its rejection as a validation error. Await the value, or each of its elements with `multiple` (for example with `Promise.all()`), and handle the rejection yourself: a rejection that nothing handles is an unhandled rejection, which ends a Node.js process by default.
+
 `parse` receives the value from the command line, or `'true'` / `'false'` for a `boolean` option. When an option other than `boolean` is given without a value, `parse` is not called and the missing value is reported as a validation error. An explicit empty value, such as `--config=`, or `-c=` with the short name `c`, is passed as `''` unless `required: true` is set.
 
 An `enum` option with `choices` passes only one of them to `parse`. Any other value, an explicit empty one included, is reported as `ArgsValidationErrorKeys.invalidChoice`, except that a required option reports an explicit empty value as required. List the values users type in `choices`, and use `parse` to change them.
