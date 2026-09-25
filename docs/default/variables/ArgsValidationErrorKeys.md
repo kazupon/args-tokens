@@ -17,6 +17,7 @@ export const ArgsValidationErrorKeys = {
   unknownOption: 'err:arg:unknown-option',
   unexpectedValue: 'err:arg:unexpected-value',
   missingValue: 'err:arg:missing-value',
-  conflict: 'err:arg:conflict'
+  conflict: 'err:arg:conflict',
+  invalidDefault: 'err:arg:invalid-default'
 } as const
 ```
