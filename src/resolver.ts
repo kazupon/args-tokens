@@ -285,6 +285,13 @@ export interface ArgSchema {
    * missing one: a `string` option without `parse` gets `''` instead of the default, unless it is
    * `required`.
    *
+   * The default of an `enum` option with `choices` is checked when it would be used: one that is
+   * not one of the choices is reported as `err:arg:invalid-default`
+   * ({@link ArgsValidationErrorKeys}.invalidDefault) and is not used. With a `parse` function of
+   * your own, or a `map()` transform, the default is a value that the function returns, which need
+   * not be one of the choices, and it is not checked. `choice()` returns the value as is, so its
+   * default is checked.
+   *
    * For single-value positional arguments, the default is used when the positional
    * value is missing or when the value is preserved for later required positional
    * arguments, unless `required: true` is set.
@@ -542,7 +549,8 @@ export const ArgsValidationErrorKeys = {
   unknownOption: 'err:arg:unknown-option',
   unexpectedValue: 'err:arg:unexpected-value',
   missingValue: 'err:arg:missing-value',
-  conflict: 'err:arg:conflict'
+  conflict: 'err:arg:conflict',
+  invalidDefault: 'err:arg:invalid-default'
 } as const
 
 /**
@@ -1221,9 +1229,14 @@ export function resolveArgs<A extends Args>(
     }
 
     if (values[rawArg] == null && schema.default != null) {
-      // check if the default value is in values
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(kazupon): Allow any type for resolving
-      ;(values as any)[rawArg] = schema.default
+      if (hasDefaultOutsideChoices(schema)) {
+        // a mistake in the schema: report the default instead of using it
+        errors.push(createDefaultChoiceError(rawArg, arg, schema))
+      } else {
+        // check if the default value is in values
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(kazupon): Allow any type for resolving
+        ;(values as any)[rawArg] = schema.default
+      }
     }
   }
 
@@ -1407,6 +1420,36 @@ function resolveSinglePositionalValue(
 
 function hasDefault(schema: ArgSchema): boolean {
   return schema.default != null
+}
+
+/**
+ * Check whether the default of an `enum` option is not one of its `choices`.
+ *
+ * The default does not go through `parse`, so with a `parse` function of your own, or a `map()`
+ * transform, it is a value that the function returns, which need not be one of the choices, and it
+ * is not checked. The `parse` function of `choice()` returns the value as is, so its default is
+ * checked: it is the only `enum` schema whose `parse` has the {@link PURE_PARSE} brand.
+ *
+ * @param schema - The argument schema
+ * @returns Whether the default is not one of the choices
+ */
+function hasDefaultOutsideChoices(schema: ArgSchema): boolean {
+  if (
+    schema.type !== 'enum' ||
+    schema.choices === undefined ||
+    (schema.choices as readonly unknown[]).includes(schema.default)
+  ) {
+    return false
+  }
+  const { parse } = schema
+  if (typeof parse !== 'function') {
+    return true
+  }
+  try {
+    return hasPureParseBrand(parse)
+  } catch {
+    return false
+  }
 }
 
 function shouldRequireMissingSinglePositional(schema: ArgSchema): boolean {
@@ -1688,12 +1731,8 @@ function acceptsSuggestedValue(schema: ArgSchema, value: string): boolean {
     return true
   }
   try {
-    // accept only an own brand, as `isArgsValidationError()` does, and read it in `try`, as a proxy
-    // may throw
-    if (
-      !Object.hasOwn(parse, PURE_PARSE) ||
-      (parse as { [PURE_PARSE]?: unknown })[PURE_PARSE] !== true
-    ) {
+    // read the brand in `try`, as a proxy may throw
+    if (!hasPureParseBrand(parse)) {
       return schema.type === 'number' || (schema.type === 'enum' && schema.choices !== undefined)
     }
     parse(value)
@@ -1701,6 +1740,21 @@ function acceptsSuggestedValue(schema: ArgSchema, value: string): boolean {
   } catch {
     return false
   }
+}
+
+/**
+ * Check whether a `parse` function has its own {@link PURE_PARSE} brand.
+ *
+ * Only an own brand counts, as for `isArgsValidationError()`. Reading it may throw, for example for
+ * a revoked proxy, so call this function in `try`.
+ *
+ * @param parse - The `parse` function of a schema
+ * @returns Whether the function has no side effects
+ */
+function hasPureParseBrand(parse: (value: string) => unknown): boolean {
+  return (
+    Object.hasOwn(parse, PURE_PARSE) && (parse as { [PURE_PARSE]?: unknown })[PURE_PARSE] === true
+  )
 }
 
 function createUnexpectedValueError(
@@ -1749,6 +1803,44 @@ function createChoiceError(
         choices: formatChoices(choices),
         choiceValues: [...choices],
         ...(actual != null ? { actual } : {})
+      }
+    }
+  )
+}
+
+/**
+ * Create the error for the default of an `enum` option that is not one of its `choices`.
+ *
+ * Its `values` have the same keys as those of `err:arg:invalid-choice`, with the default as
+ * `actual`.
+ *
+ * @param rawArg - The argument key in the schema
+ * @param option - The option name used on the command line
+ * @param schema - The argument schema
+ * @returns The error
+ */
+function createDefaultChoiceError(
+  rawArg: string,
+  option: string,
+  schema: ArgSchema
+): ArgResolveError {
+  const choices = schema.choices ?? []
+  const displayName = createOptionDisplayName(option, schema)
+  return new ArgResolveError(
+    `Optional argument ${displayName} has the default ${JSON.stringify(schema.default)}, ` +
+      `which is not one of '${schema.type}' [${formatChoices(choices)}] values`,
+    option,
+    'type',
+    schema,
+    {
+      code: ArgsValidationErrorKeys.invalidDefault,
+      values: {
+        displayName,
+        name: rawArg,
+        expected: schema.type,
+        choices: formatChoices(choices),
+        choiceValues: [...choices],
+        actual: schema.default
       }
     }
   )

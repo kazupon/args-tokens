@@ -1939,7 +1939,7 @@ describe('enum option', () => {
           type: 'enum',
           short: 'l',
           choices: ['debug', 'info', 'warn', 'error'],
-          default: 'foo'
+          default: 'info'
         }
       },
       tokens
