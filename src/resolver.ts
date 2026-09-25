@@ -340,7 +340,9 @@ export interface ArgSchema {
    * `ArgResolveError` with type 'conflict' and the code `err:arg:conflict`
    * ({@link ArgsValidationErrorKeys}.conflict). Its `values` has the `displayName` and `name` of
    * the option whose `conflicts` names the other one, and the `conflictDisplayName` and
-   * `conflictName` of the other one, with each option written as it was given, such as `'-p'`.
+   * `conflictName` of the other one. `displayName` and `conflictDisplayName` show each option as
+   * it was written, such as `'-p'`, and `name` and `conflictName` are the schema keys. When both
+   * options name each other, `name` is the one that comes first in the schema.
    *
    * Conflicts only need to be defined on one side - if option A defines a conflict
    * with option B, the conflict is automatically detected when both are used,
