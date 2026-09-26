@@ -31,16 +31,16 @@ Create an `ArgResolveError` instance.
 
 #### Parameters
 
-| Name              | Type                                                                                                                                                             | Description                                              |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
-| `message`         | `string`                                                                                                                                                         | the error message                                        |
-| `name`            | `string`                                                                                                                                                         | the name of the argument                                 |
-| `type`            | [`ArgResolveErrorType`](/docs/default/type-aliases/ArgResolveErrorType.md)                                                                                       | the type of the error: 'type', 'required', or 'conflict' |
-| `schema`          | [`ArgSchema`](/docs/default/interfaces/ArgSchema.md)                                                                                                             | the argument schema that caused the error                |
-| `options`         | { `code`?: [`ArgsValidationErrorCode`](/docs/default/type-aliases/ArgsValidationErrorCode.md); `values`?: `Record`\<`string`, `unknown`\>; `cause`?: `unknown` } | structured validation metadata _(optional, default: {})_ |
-| `options.code?`   | [`ArgsValidationErrorCode`](/docs/default/type-aliases/ArgsValidationErrorCode.md)                                                                               | _optional_                                               |
-| `options.values?` | `Record<string, unknown>`                                                                                                                                        | _optional_                                               |
-| `options.cause?`  | `unknown`                                                                                                                                                        | _optional_                                               |
+| Name              | Type                                                                                                                                                             | Description                                                                |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `message`         | `string`                                                                                                                                                         | the error message                                                          |
+| `name`            | `string`                                                                                                                                                         | the name of the argument on the command line, in kebab-case with `toKebab` |
+| `type`            | [`ArgResolveErrorType`](/docs/default/type-aliases/ArgResolveErrorType.md)                                                                                       | the type of the error: 'type', 'required', or 'conflict'                   |
+| `schema`          | [`ArgSchema`](/docs/default/interfaces/ArgSchema.md)                                                                                                             | the argument schema that caused the error                                  |
+| `options`         | { `code`?: [`ArgsValidationErrorCode`](/docs/default/type-aliases/ArgsValidationErrorCode.md); `values`?: `Record`\<`string`, `unknown`\>; `cause`?: `unknown` } | structured validation metadata _(optional, default: {})_                   |
+| `options.code?`   | [`ArgsValidationErrorCode`](/docs/default/type-aliases/ArgsValidationErrorCode.md)                                                                               | _optional_                                                                 |
+| `options.values?` | `Record<string, unknown>`                                                                                                                                        | _optional_                                                                 |
+| `options.cause?`  | `unknown`                                                                                                                                                        | _optional_                                                                 |
 
 #### Returns
 
@@ -48,8 +48,8 @@ Create an `ArgResolveError` instance.
 
 ## Properties
 
-| Name     | Type                                                                       | Description |
-| -------- | -------------------------------------------------------------------------- | ----------- |
-| `name`   | `string`                                                                   |             |
-| `schema` | [`ArgSchema`](/docs/default/interfaces/ArgSchema.md)                       |             |
-| `type`   | [`ArgResolveErrorType`](/docs/default/type-aliases/ArgResolveErrorType.md) |             |
+| Name     | Type                                                                       | Description                                                                                                                                                                                                                                                                                                                                           |
+| -------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`   | `string`                                                                   | The name of the argument on the command line, without dashes: the schema key, in kebab-case with `toKebab`, such as `input-file` for `inputFile`, whether the option is given in the long form, as a short option or in the negated form. For a conflict, it is the argument whose `conflicts` names the other one. `values.name` has the schema key. |
+| `schema` | [`ArgSchema`](/docs/default/interfaces/ArgSchema.md)                       |                                                                                                                                                                                                                                                                                                                                                       |
+| `type`   | [`ArgResolveErrorType`](/docs/default/type-aliases/ArgResolveErrorType.md) |                                                                                                                                                                                                                                                                                                                                                       |
