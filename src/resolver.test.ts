@@ -4087,13 +4087,41 @@ describe('explicit provision detection', () => {
         }
       } as const satisfies Args
 
-      const { values, explicit, error } = resolveArgs(schema, parseArgs(['abc']))
+      const argv = ['abc']
+      const tokens = parseArgs(argv)
+      const { values, explicit, error } = resolveArgs(schema, tokens)
 
       expect(error?.errors.map(e => (e as ArgsValidationError).code)).toEqual([
         ArgsValidationErrorKeys.customParse
       ])
       expect(values.count).toBeUndefined()
       expect(explicit.count).toBe(true)
+    })
+
+    test('values provided but all rejected by parse for multiple: true', () => {
+      const schema = {
+        files: {
+          type: 'positional',
+          multiple: true,
+          parse: (value: string) => {
+            if (!value.endsWith('.js')) {
+              throw new TypeError(`not a JavaScript file: ${value}`)
+            }
+            return value
+          }
+        }
+      } as const satisfies Args
+
+      const argv = ['a.ts', 'b.ts']
+      const tokens = parseArgs(argv)
+      const { values, explicit, error } = resolveArgs(schema, tokens)
+
+      expect(error?.errors.map(e => (e as ArgsValidationError).code)).toEqual([
+        ArgsValidationErrorKeys.customParse,
+        ArgsValidationErrorKeys.customParse
+      ])
+      expect(values.files).toEqual([])
+      expect(explicit.files).toBe(true)
     })
   })
 
