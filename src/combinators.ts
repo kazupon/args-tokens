@@ -1114,7 +1114,8 @@ type CombinatorShort<S extends string> = { short: S }
  * The original schema is not modified.
  * Other modifiers on `schema` (for example {@link multiple}) are kept.
  *
- * @typeParam T - The schema's parsed type.
+ * @typeParam T - The schema's parsed type, when type arguments are given explicitly. It is not
+ *   inferred, so that `schema` can be a union of schemas of different types.
  * @typeParam A - The short alias string literal type.
  * @typeParam S - The input combinator schema, inferred from `schema`. Its other modifiers are kept.
  *   If type arguments are given explicitly without `S`, `S` is `CombinatorSchema<T>`, and the type
@@ -1136,7 +1137,7 @@ type CombinatorShort<S extends string> = { short: S }
  */
 // @__NO_SIDE_EFFECTS__
 export function short<T, A extends string, S extends CombinatorSchema<T> = CombinatorSchema<T>>(
-  schema: S & CombinatorSchema<T>,
+  schema: S,
   alias: A
 ): WithFlag<S, CombinatorShort<A>> {
   return {
@@ -1156,7 +1157,8 @@ type CombinatorDescribe<D extends string> = { description: D }
  * The original schema is not modified.
  * Other modifiers on `schema` (for example {@link required}) are kept.
  *
- * @typeParam T - The schema's parsed type.
+ * @typeParam T - The schema's parsed type, when type arguments are given explicitly. It is not
+ *   inferred, so that `schema` can be a union of schemas of different types.
  * @typeParam D - The description string literal type.
  * @typeParam S - The input combinator schema, inferred from `schema`. Its other modifiers are kept.
  *   If type arguments are given explicitly without `S`, `S` is `CombinatorSchema<T>`, and the type
@@ -1177,7 +1179,7 @@ type CombinatorDescribe<D extends string> = { description: D }
  */
 // @__NO_SIDE_EFFECTS__
 export function describe<T, D extends string, S extends CombinatorSchema<T> = CombinatorSchema<T>>(
-  schema: S & CombinatorSchema<T>,
+  schema: S,
   text: D
 ): WithFlag<S, CombinatorDescribe<D>> {
   return {

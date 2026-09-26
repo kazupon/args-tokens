@@ -640,3 +640,29 @@ test('a schema typed as any still fits any combinator schema after a modifier', 
   const acceptsStrings = (schema: CombinatorSchema<string>) => schema
   acceptsStrings(short(legacy, 'x'))
 })
+
+test('short() and describe() take a union of schemas of different types', () => {
+  const strict = Math.random() > 0.5
+  const port = strict ? integer({ min: 1 }) : string()
+  const args = {
+    a: short(port, 'p'),
+    b: describe(port, 'Port'),
+    c: short(required(port), 'r'),
+    d: describe(short(strict ? choice(['debug', 'info'] as const) : boolean(), 'l'), 'Level')
+  }
+  expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{
+    a?: string | number
+    b?: string | number
+    c: string | number
+    d?: 'debug' | 'info' | boolean
+  }>()
+
+  // @ts-expect-error -- map() takes one parsed type, and the schemas of the union parse to two
+  map(port, v => String(v))
+  // @ts-expect-error -- so does withDefault()
+  withDefault(port, 'x')
+  // a type that covers both schemas of the union works with them
+  const annotated: CombinatorSchema<string | number> = port
+  const covered = { m: map(annotated, v => String(v)), w: withDefault(annotated, 'x') }
+  expectTypeOf<ArgValues<typeof covered>>().toEqualTypeOf<{ m?: string; w: string | number }>()
+})
