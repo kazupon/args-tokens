@@ -59,13 +59,17 @@ export interface ArgSchema {
   /**
    * Type of the argument value.
    *
-   * - `'string'`: Text value (default if not specified)
+   * - `'string'`: Text value
    * - `'boolean'`: `true`/`false` flag (can be negatable with `--no-` prefix). `--flag=true` and
    *   `--flag=false` set the value explicitly; any other value after `=` is a type error
    * - `'number'`: Numeric value (parsed as integer or float)
    * - `'enum'`: One of predefined string values (requires `choices` property)
    * - `'positional'`: Non-option argument by position
    * - `'custom'`: Custom parsing with user-defined `parse` function
+   *
+   * Any other `type`, or no `type`, is a mistake that only untyped code can make: if the argument
+   * has no `parse` function, {@link resolveArgs} and `parse()` throw an `Error`, whether or not the
+   * argument is given.
    *
    * @example
    * Different argument types:
@@ -478,8 +482,10 @@ export interface ArgSchema {
   /**
    * Custom parsing function for `type: 'custom'` arguments.
    *
-   * Required when `type: 'custom'`. Receives the raw string value and must
-   * return the parsed result. Should throw an Error (or subclass) if parsing fails.
+   * Required when `type: 'custom'`: if it is missing or not a function, {@link resolveArgs} and
+   * `parse()` throw a `TypeError`, whether or not the argument is given. The function receives the
+   * raw string value and must return the parsed result. It should throw an Error (or subclass) if
+   * parsing fails.
    *
    * The function's return type becomes the resolved argument type.
    *
@@ -820,6 +826,15 @@ export interface ResolveArgs {
 
 const SKIP_POSITIONAL_DEFAULT = -1
 
+const ARG_TYPES: ReadonlySet<string> = new Set([
+  'string',
+  'boolean',
+  'number',
+  'enum',
+  'positional',
+  'custom'
+])
+
 /**
  * Tracks which arguments were explicitly provided by the user.
  *
@@ -893,6 +908,21 @@ export function resolveArgs<A extends Args>(
   const optionTokens: ArgToken[] = []
   const positionalTokens: ArgToken[] = []
   const argEntries = Object.entries(args)
+
+  // mistakes in the schema: report them before resolving any argument, whether or not it is given
+  for (const [rawArg, schema] of argEntries) {
+    // an argument with a `parse` function is resolved by it, whatever its type
+    if (typeof schema.parse === 'function') {
+      continue
+    }
+    const arg = getOptionName(rawArg, schema)
+    if (schema.type === 'custom') {
+      throw new TypeError(`argument '${arg}' should have a 'parse' function`)
+    }
+    if (!ARG_TYPES.has(schema.type)) {
+      throw new Error(`Unsupported argument type '${schema.type}' for option '${arg}'`)
+    }
+  }
 
   let currentLongOption: ArgToken | undefined
   let currentShortOption: ArgToken | undefined
@@ -1341,11 +1371,13 @@ function parse(
       return [token.value, undefined]
     }
     case 'custom': {
-      // When schema.parse is defined, it's handled by the priority check above.
-      // This branch is only reached if schema.parse is missing.
+      // When schema.parse is defined, it's handled by the priority check above. Without it,
+      // `resolveArgs()` throws before resolving any argument, so this is only a guard.
       throw new TypeError(`argument '${option}' should have a 'parse' function`)
     }
     default: {
+      // `resolveArgs()` throws for an unsupported type without `parse` before resolving any
+      // argument, so this is only a guard
       throw new Error(`Unsupported argument type '${schema.type}' for option '${option}'`)
     }
   }

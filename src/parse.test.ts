@@ -180,3 +180,12 @@ test('allowCompatible is passed to parseArgs, and the other options to resolveAr
     ArgsValidationErrorKeys.missingValue
   ])
 })
+
+test('a custom argument without parse throws, whether or not it is given', () => {
+  const args = { config: { type: 'custom' } } satisfies Args
+
+  expect(() => parse([], { args })).toThrow("argument 'config' should have a 'parse' function")
+  expect(() => parse(['--config={}'], { args })).toThrow(
+    "argument 'config' should have a 'parse' function"
+  )
+})

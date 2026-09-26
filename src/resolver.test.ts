@@ -6557,4 +6557,138 @@ describe('schema.parse priority', () => {
   })
 })
 
+describe('a mistake in the schema', () => {
+  test.each([{ argv: [] }, { argv: ['--configFile={}'] }])(
+    'a custom argument without parse throws with $argv',
+    ({ argv }) => {
+      // `parse` is missing, for example after refactoring
+      const args = { configFile: { type: 'custom', description: 'JSON config' } } satisfies Args
+
+      expect(() => resolveArgs(args, parseArgs(argv))).toThrow(TypeError)
+      expect(() => resolveArgs(args, parseArgs(argv))).toThrow(
+        "argument 'configFile' should have a 'parse' function"
+      )
+    }
+  )
+
+  test('a custom argument without parse is named as on the command line', () => {
+    const args = { configFile: { type: 'custom' } } satisfies Args
+
+    expect(() => resolveArgs(args, parseArgs([]), { toKebab: true })).toThrow(
+      "argument 'config-file' should have a 'parse' function"
+    )
+  })
+
+  test.each([{ argv: [] }, { argv: ['--size=1'] }])(
+    'an unsupported type throws with $argv',
+    ({ argv }) => {
+      // only untyped code can give such a type
+      const args = { size: { type: 'integer' } } as unknown as Args
+
+      expect(() => resolveArgs(args, parseArgs(argv))).toThrow(
+        "Unsupported argument type 'integer' for option 'size'"
+      )
+    }
+  )
+
+  test.each([
+    {
+      label: 'an unsupported type',
+      schema: { type: 'integer', parse: Number },
+      argv: ['--size=1'],
+      values: { size: 1 }
+    },
+    {
+      label: 'an unsupported type',
+      schema: { type: 'integer', parse: Number },
+      argv: [],
+      values: {}
+    },
+    { label: 'no type', schema: { parse: Number }, argv: ['--size', '1'], values: { size: 1 } },
+    { label: 'no type', schema: { parse: Number, default: 8 }, argv: [], values: { size: 8 } }
+  ])('$label with a parse function is resolved by it with $argv', ({ schema, argv, values }) => {
+    // as before, `parse` takes precedence over `type`
+    const args = { size: schema } as unknown as Args
+
+    const { values: actual, error } = resolveArgs(args, parseArgs(argv))
+    expect(actual).toEqual(values)
+    expect(error).toBeUndefined()
+  })
+
+  test('no parse function is called when the schema has a mistake', () => {
+    const parse = vi.fn<(value: string) => string>(value => value)
+    const args = {
+      name: { type: 'custom', parse },
+      file: { type: 'positional', parse },
+      config: { type: 'custom' }
+    } satisfies Args
+
+    expect(() => resolveArgs(args, parseArgs(['--name=x', 'a.txt']))).toThrow(
+      "argument 'config' should have a 'parse' function"
+    )
+    expect(parse).not.toHaveBeenCalled()
+  })
+
+  test.each([
+    { label: 'required, not given', schema: { type: 'custom', required: true }, argv: [] },
+    { label: 'with a default, not given', schema: { type: 'custom', default: 'x' }, argv: [] },
+    { label: 'multiple, not given', schema: { type: 'custom', multiple: true }, argv: [] },
+    { label: 'given without a value', schema: { type: 'custom', short: 'c' }, argv: ['--config'] },
+    { label: 'given as -c without a value', schema: { type: 'custom', short: 'c' }, argv: ['-c'] },
+    {
+      label: 'with a parse that is not a function',
+      schema: { type: 'custom', parse: 'x' },
+      argv: []
+    }
+  ])('a custom argument without parse throws: $label', ({ schema, argv }) => {
+    const args = { config: schema } as unknown as Args
+
+    expect(() => resolveArgs(args, parseArgs(argv))).toThrow(TypeError)
+    expect(() => resolveArgs(args, parseArgs(argv))).toThrow(
+      "argument 'config' should have a 'parse' function"
+    )
+  })
+
+  test.each([
+    { label: 'no type', schema: {}, argv: [], type: 'undefined' },
+    { label: 'no type', schema: {}, argv: ['--size-limit=1'], type: 'undefined' },
+    {
+      label: 'a multiple argument of an unsupported type',
+      schema: { type: 'integer', multiple: true },
+      argv: [],
+      type: 'integer'
+    },
+    {
+      label: 'a multiple argument of an unsupported type',
+      schema: { type: 'integer', multiple: true },
+      argv: ['--size-limit=1'],
+      type: 'integer'
+    }
+  ])('$label throws an Error named as on the command line with $argv', ({ schema, argv, type }) => {
+    const args = { sizeLimit: schema } as unknown as Args
+
+    expect(() => resolveArgs(args, parseArgs(argv), { toKebab: true })).toThrow(
+      `Unsupported argument type '${type}' for option 'size-limit'`
+    )
+    // an `Error`, not a `TypeError`, as before
+    expect(() => resolveArgs(args, parseArgs(argv), { toKebab: true })).not.toThrow(TypeError)
+  })
+
+  test('a custom argument without parse is named with its own toKebab', () => {
+    const args = { configFile: { type: 'custom', toKebab: true } } satisfies Args
+
+    expect(() => resolveArgs(args, parseArgs([]))).toThrow(
+      "argument 'config-file' should have a 'parse' function"
+    )
+  })
+
+  test('an unsupported type with a parse that is not a function throws', () => {
+    const args = { size: { type: 'integer', parse: 'x' } } as unknown as Args
+
+    expect(() => resolveArgs(args, parseArgs([]))).toThrow(
+      "Unsupported argument type 'integer' for option 'size'"
+    )
+  })
+})
+
 /* oxlint-enable no-unsafe-optional-chaining */
