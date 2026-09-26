@@ -10,8 +10,9 @@ The original schema is not modified.
 Other modifiers on `schema` (for example [multiple](/docs/combinators/functions/multiple.md)) are kept, and `transform` is applied
 to each value of a `multiple` schema.
 
-A default set on `schema` is kept as is: it does not go through `transform`. Set the default
-after `map()`, with a transformed value.
+A default set on `schema` is kept, but it does not go through `transform`: when it is used, the
+value is the default as is, although it is typed as `U`. Set the default after `map()`, with a
+transformed value.
 
 ## Signature
 
