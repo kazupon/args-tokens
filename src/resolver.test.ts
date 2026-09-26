@@ -6557,4 +6557,39 @@ describe('schema.parse priority', () => {
   })
 })
 
+describe('a mistake in the schema', () => {
+  test.each([{ argv: [] }, { argv: ['--configFile={}'] }])(
+    'a custom argument without parse throws with $argv',
+    ({ argv }) => {
+      // `parse` is missing, for example after refactoring
+      const args = { configFile: { type: 'custom', description: 'JSON config' } } satisfies Args
+
+      expect(() => resolveArgs(args, parseArgs(argv))).toThrow(TypeError)
+      expect(() => resolveArgs(args, parseArgs(argv))).toThrow(
+        "argument 'configFile' should have a 'parse' function"
+      )
+    }
+  )
+
+  test('a custom argument without parse is named as on the command line', () => {
+    const args = { configFile: { type: 'custom' } } satisfies Args
+
+    expect(() => resolveArgs(args, parseArgs([]), { toKebab: true })).toThrow(
+      "argument 'config-file' should have a 'parse' function"
+    )
+  })
+
+  test.each([{ argv: [] }, { argv: ['--size=1'] }])(
+    'an unsupported type throws with $argv',
+    ({ argv }) => {
+      // only untyped code can give such a type
+      const args = { size: { type: 'integer' } } as unknown as Args
+
+      expect(() => resolveArgs(args, parseArgs(argv))).toThrow(
+        "Unsupported argument type 'integer' for option 'size'"
+      )
+    }
+  )
+})
+
 /* oxlint-enable no-unsafe-optional-chaining */
