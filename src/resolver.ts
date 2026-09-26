@@ -1569,6 +1569,13 @@ export type ArgResolveErrorType = 'type' | 'required' | 'conflict'
  * of the `AggregateError` in `error`, and so does `parse()`.
  */
 export class ArgResolveError extends ArgsValidationError {
+  /**
+   * The name of the argument on the command line, without the leading dashes: the schema key, in
+   * kebab-case with `toKebab`, such as `input-file` for `inputFile`, whether the option is given in
+   * the long form, as a short option or in the negated form. For a conflict, it is the name of the
+   * argument whose `conflicts` names the other one (the first in the schema when both name each
+   * other). `values.name` has the schema key.
+   */
   override name: string
   schema: ArgSchema
   type: ArgResolveErrorType
@@ -1576,7 +1583,7 @@ export class ArgResolveError extends ArgsValidationError {
    * Create an `ArgResolveError` instance.
    *
    * @param message - the error message
-   * @param name - the name of the argument
+   * @param name - the name of the argument on the command line, in kebab-case with `toKebab`
    * @param type - the type of the error: 'type', 'required', or 'conflict'
    * @param schema - the argument schema that caused the error
    * @param options - structured validation metadata
@@ -2012,6 +2019,7 @@ function createOptionDisplayName(option: string, schema: ArgSchema): string {
  * when `schema` is a positional argument, and with "Optional argument" otherwise.
  *
  * @param rawArg - The argument key of the argument whose `conflicts` names the other one
+ * @param option - The name of that argument used on the command line
  * @param schema - The argument schema of that argument
  * @param actualName - That option as it was written, or the name of that positional argument
  * @param conflictingArg - The argument key of the other argument
@@ -2021,6 +2029,7 @@ function createOptionDisplayName(option: string, schema: ArgSchema): string {
  */
 function createConflictError(
   rawArg: string,
+  option: string,
   schema: ArgSchema,
   actualName: string,
   conflictingArg: string,
@@ -2031,7 +2040,7 @@ function createConflictError(
   const kind = schema.type === 'positional' ? 'Positional' : 'Optional'
   return new ArgResolveError(
     `${kind} argument ${displayName} conflicts with ${conflictDisplayName}`,
-    rawArg,
+    option,
     'conflict',
     schema,
     {
@@ -2079,7 +2088,14 @@ function checkConflicts<A extends Args>(
           : actualInputNames.get(conflictingArg) || `--${conflictingArgKebab}`
 
       return [
-        createConflictError(rawArg, schema, optionActualName, conflictingArg, conflictingActualName)
+        createConflictError(
+          rawArg,
+          arg,
+          schema,
+          optionActualName,
+          conflictingArg,
+          conflictingActualName
+        )
       ]
     }
   }
