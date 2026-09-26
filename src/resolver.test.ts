@@ -6673,6 +6673,22 @@ describe('a mistake in the schema', () => {
     // an `Error`, not a `TypeError`, as before
     expect(() => resolveArgs(args, parseArgs(argv), { toKebab: true })).not.toThrow(TypeError)
   })
+
+  test('a custom argument without parse is named with its own toKebab', () => {
+    const args = { configFile: { type: 'custom', toKebab: true } } satisfies Args
+
+    expect(() => resolveArgs(args, parseArgs([]))).toThrow(
+      "argument 'config-file' should have a 'parse' function"
+    )
+  })
+
+  test('an unsupported type with a parse that is not a function throws', () => {
+    const args = { size: { type: 'integer', parse: 'x' } } as unknown as Args
+
+    expect(() => resolveArgs(args, parseArgs([]))).toThrow(
+      "Unsupported argument type 'integer' for option 'size'"
+    )
+  })
 })
 
 /* oxlint-enable no-unsafe-optional-chaining */
