@@ -659,13 +659,15 @@ export function combinator<T>(config: CombinatorOptions<T>): CombinatorSchema<T>
  * Other modifiers on `schema` (for example {@link multiple}) are kept, and `transform` is applied
  * to each value of a `multiple` schema.
  *
- * A default set on `schema` is kept as is: it does not go through `transform`. Set the default
- * after `map()`, with a transformed value.
+ * A default set on `schema` is kept, but it does not go through `transform`: when it is used, the
+ * value is the default as is, although it is typed as `U`. Set the default after `map()`, with a
+ * transformed value.
  *
  * @typeParam T - The input schema's parsed type.
  * @typeParam U - The transformed type.
  * @typeParam S - The input combinator schema, inferred from `schema`. Its other modifiers are kept.
- *   With explicit type arguments, it is `CombinatorSchema<T>`, which keeps none of them.
+ *   If type arguments are given explicitly without `S`, `S` is `CombinatorSchema<T>`, and the type
+ *   of the result lacks the other modifiers, although the returned object has them.
  *
  * @param schema - The base combinator schema.
  * @param transform - The transformation function.
@@ -711,7 +713,8 @@ type CombinatorWithDefault<T> = { default: T }
  * @typeParam T - The schema's parsed type.
  * @typeParam D - The type of the default value, which must be assignable to `T`.
  * @typeParam S - The input combinator schema, inferred from `schema`. Its other modifiers are kept.
- *   With explicit type arguments, it is `CombinatorSchema<T>`, which keeps none of them.
+ *   If type arguments are given explicitly without `S`, `S` is `CombinatorSchema<T>`, and the type
+ *   of the result lacks the other modifiers, although the returned object has them.
  *
  * @param schema - The base combinator schema.
  * @param defaultValue - The default value, a value of the schema's parsed type.
@@ -832,7 +835,8 @@ type CombinatorShort<S extends string> = { short: S }
  * @typeParam T - The schema's parsed type.
  * @typeParam A - The short alias string literal type.
  * @typeParam S - The input combinator schema, inferred from `schema`. Its other modifiers are kept.
- *   With explicit type arguments, it is `CombinatorSchema<T>`, which keeps none of them.
+ *   If type arguments are given explicitly without `S`, `S` is `CombinatorSchema<T>`, and the type
+ *   of the result lacks the other modifiers, although the returned object has them.
  *
  * @param schema - The base combinator schema.
  * @param alias - Single character short alias.
@@ -873,7 +877,8 @@ type CombinatorDescribe<D extends string> = { description: D }
  * @typeParam T - The schema's parsed type.
  * @typeParam D - The description string literal type.
  * @typeParam S - The input combinator schema, inferred from `schema`. Its other modifiers are kept.
- *   With explicit type arguments, it is `CombinatorSchema<T>`, which keeps none of them.
+ *   If type arguments are given explicitly without `S`, `S` is `CombinatorSchema<T>`, and the type
+ *   of the result lacks the other modifiers, although the returned object has them.
  *
  * @param schema - The base combinator schema.
  * @param text - Human-readable description.
