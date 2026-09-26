@@ -369,12 +369,14 @@ The `ArgSchema` interface defines the configuration for command-line arguments. 
 
 Type of the argument value:
 
-- `'string'`: Text value (default if not specified)
+- `'string'`: Text value
 - `'boolean'`: True/false flag (can be negatable with `--no-` prefix). `--flag=true` and `--flag=false` set the value explicitly; any other value after `=` is an error
 - `'number'`: Numeric value (parsed as integer or float)
 - `'enum'`: One of predefined string values (requires `choices` property)
 - `'positional'`: Non-option argument by position
 - `'custom'`: Custom parsing with user-defined `parse` function
+
+Any other type, a missing one included, which only untyped code can give, makes `resolveArgs()` and `parse()` throw an `Error`, whether or not the argument is given.
 
 <!-- eslint-skip -->
 
@@ -606,7 +608,7 @@ Converts the argument name from camelCase to kebab-case for CLI usage. A propert
 
 #### `parse` (optional)
 
-Custom parsing function for `type: 'custom'` arguments. Required when `type: 'custom'`. Should throw an Error if parsing fails.
+Custom parsing function for `type: 'custom'` arguments. Required when `type: 'custom'`: without it, `resolveArgs()` and `parse()` throw a `TypeError`, whether or not the argument is given. Should throw an Error if parsing fails.
 
 `parse` is called synchronously, and what it returns becomes the value, even `undefined` or `null`, so throw to reject a value. An `async` function returns a promise, and the promise becomes the value as is: `resolveArgs()` and `parse()` do not await it, and do not report its rejection as a validation error. Await the value, or each of its elements with `multiple` (for example with `Promise.all()`), and handle the rejection yourself: a rejection that nothing handles is an unhandled rejection, which ends a Node.js process by default.
 
