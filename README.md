@@ -820,8 +820,8 @@ const json = combinator({
   metavar: 'json'
 })
 
-// Day of the week of a date, 0 for Sunday
-const weekday = map(date, d => d.getDay())
+// Day of the week of a date in UTC, 0 for Sunday
+const weekday = map(date, d => d.getUTCDay())
 
 // Compose with modifier combinators
 const schema = {
