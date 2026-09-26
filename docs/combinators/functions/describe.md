@@ -6,26 +6,27 @@
 Set a description on a combinator schema for help text generation.
 
 The original schema is not modified.
+Other modifiers on `schema` (for example [required](/docs/combinators/functions/required.md)) are kept.
 
 ## Signature
 
 ```ts
-export function describe<T, D extends string>(
-  schema: CombinatorSchema<T>,
+export function describe<T, D extends string, S extends CombinatorSchema<T> = CombinatorSchema<T>>(
+  schema: S & CombinatorSchema<T>,
   text: D
-): CombinatorSchema<T> & CombinatorDescribe<D>
+): WithFlag<S, CombinatorDescribe<D>>
 ```
 
 ## Parameters
 
-| Name     | Type                                                                            | Description                 |
-| -------- | ------------------------------------------------------------------------------- | --------------------------- |
-| `schema` | [`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\> | The base combinator schema. |
-| `text`   | `D`                                                                             | Human-readable description. |
+| Name     | Type                                                                                  | Description                 |
+| -------- | ------------------------------------------------------------------------------------- | --------------------------- |
+| `schema` | `S` & [`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\> | The base combinator schema. |
+| `text`   | `D`                                                                                   | Human-readable description. |
 
 ## Returns
 
-[`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\> & `CombinatorDescribe`\<`D`\> — A new schema with the description set.
+`WithFlag<S, CombinatorDescribe<D>>` — A new schema with the description set.
 
 ## Examples
 

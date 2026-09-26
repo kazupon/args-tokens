@@ -7,26 +7,31 @@ Transform the output of a combinator schema.
 
 Creates a new schema that applies `transform` to the result of `schema.parse`.
 The original schema is not modified.
+Other modifiers on `schema` (for example [multiple](/docs/combinators/functions/multiple.md)) are kept, and `transform` is applied
+to each value of a `multiple` schema.
+
+A default set on `schema` is kept as is: it does not go through `transform`. Set the default
+after `map()`, with a transformed value.
 
 ## Signature
 
 ```ts
-export function map<T, U>(
-  schema: CombinatorSchema<T>,
+export function map<T, U, S extends CombinatorSchema<T> = CombinatorSchema<T>>(
+  schema: S & CombinatorSchema<T>,
   transform: (value: T) => U
-): CombinatorSchema<U>
+): WithFlag<S, Combinator<U>>
 ```
 
 ## Parameters
 
-| Name        | Type                                                                            | Description                  |
-| ----------- | ------------------------------------------------------------------------------- | ---------------------------- |
-| `schema`    | [`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\> | The base combinator schema.  |
-| `transform` | `(value: T) => U`                                                               | The transformation function. |
+| Name        | Type                                                                                  | Description                  |
+| ----------- | ------------------------------------------------------------------------------------- | ---------------------------- |
+| `schema`    | `S` & [`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\> | The base combinator schema.  |
+| `transform` | `(value: T) => U`                                                                     | The transformation function. |
 
 ## Returns
 
-[`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`U`\> — A new combinator schema that resolves to the transformed type.
+`WithFlag`\<`S`, [`Combinator`](/docs/combinators/type-aliases/Combinator.md)\<`U`\>\> — A new combinator schema that resolves to the transformed type.
 
 ## Examples
 
