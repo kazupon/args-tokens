@@ -6590,6 +6590,30 @@ describe('a mistake in the schema', () => {
       )
     }
   )
+
+  test.each([
+    {
+      label: 'an unsupported type',
+      schema: { type: 'integer', parse: Number },
+      argv: ['--size=1'],
+      values: { size: 1 }
+    },
+    {
+      label: 'an unsupported type',
+      schema: { type: 'integer', parse: Number },
+      argv: [],
+      values: {}
+    },
+    { label: 'no type', schema: { parse: Number }, argv: ['--size', '1'], values: { size: 1 } },
+    { label: 'no type', schema: { parse: Number, default: 8 }, argv: [], values: { size: 8 } }
+  ])('$label with a parse function is resolved by it with $argv', ({ schema, argv, values }) => {
+    // as before, `parse` takes precedence over `type`
+    const args = { size: schema } as unknown as Args
+
+    const { values: actual, error } = resolveArgs(args, parseArgs(argv))
+    expect(actual).toEqual(values)
+    expect(error).toBeUndefined()
+  })
 })
 
 /* oxlint-enable no-unsafe-optional-chaining */

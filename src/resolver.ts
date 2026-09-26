@@ -67,8 +67,9 @@ export interface ArgSchema {
    * - `'positional'`: Non-option argument by position
    * - `'custom'`: Custom parsing with user-defined `parse` function
    *
-   * Any other type, a missing one included, which only untyped code can give, makes `resolveArgs()`
-   * and `parse()` throw an `Error`, whether or not the argument is given.
+   * Any other `type`, or no `type`, is a mistake that only untyped code can make: if the argument
+   * has no `parse` function, {@link resolveArgs} and `parse()` throw an `Error`, whether or not the
+   * argument is given.
    *
    * @example
    * Different argument types:
@@ -1092,8 +1093,9 @@ export function resolveArgs<A extends Args>(
   for (const [rawArg, schema] of argEntries) {
     const arg = getOptionName(rawArg, schema)
 
-    // mistakes in the schema: report them whether or not the argument is given
-    if (!ARG_TYPES.has(schema.type)) {
+    // mistakes in the schema: report them whether or not the argument is given. An argument with a
+    // `parse` function is resolved by it, whatever its type
+    if (!ARG_TYPES.has(schema.type) && typeof schema.parse !== 'function') {
       throw new Error(`Unsupported argument type '${schema.type}' for option '${arg}'`)
     }
     if (schema.type === 'custom' && typeof schema.parse !== 'function') {
