@@ -55,7 +55,8 @@ export type ParsedArgs<A extends Args> = {
   /**
    * Explicit provision status, same as `explicit` in {@link resolveArgs}.
    *
-   * Indicates which arguments were explicitly provided vs using default values.
+   * Indicates which arguments were given on the command line, even if their values are rejected.
+   * See {@link ArgExplicitlyProvided}.
    */
   explicit: ArgExplicitlyProvided<A>
 }
