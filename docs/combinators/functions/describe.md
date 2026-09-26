@@ -12,17 +12,17 @@ Other modifiers on `schema` (for example [required](/docs/combinators/functions/
 
 ```ts
 export function describe<T, D extends string, S extends CombinatorSchema<T> = CombinatorSchema<T>>(
-  schema: S & CombinatorSchema<T>,
+  schema: S,
   text: D
 ): WithFlag<S, CombinatorDescribe<D>>
 ```
 
 ## Parameters
 
-| Name     | Type                                                                                  | Description                 |
-| -------- | ------------------------------------------------------------------------------------- | --------------------------- |
-| `schema` | `S` & [`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\> | The base combinator schema. |
-| `text`   | `D`                                                                                   | Human-readable description. |
+| Name     | Type | Description                 |
+| -------- | ---- | --------------------------- |
+| `schema` | `S`  | The base combinator schema. |
+| `text`   | `D`  | Human-readable description. |
 
 ## Returns
 
@@ -38,4 +38,4 @@ const args = {
 
 ## Tags
 
-- `@typeParam` — T - The schema's parsed type.
+- `@typeParam` — T - The schema's parsed type, when type arguments are given explicitly. It is not inferred, so that `schema` can be a union of schemas of different types.

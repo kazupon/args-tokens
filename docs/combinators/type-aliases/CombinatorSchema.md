@@ -5,8 +5,8 @@
 
 A schema produced by combinator factory functions.
 Any [ArgSchema](/docs/default/interfaces/ArgSchema.md) whose parse function returns `T` qualifies. The `parse` of
-[ArgSchema](/docs/default/interfaces/ArgSchema.md), which returns `any`, is left out, so that a schema of one type is not a schema
-of another: `integer()` is not a `CombinatorSchema<string>`.
+[ArgSchema](/docs/default/interfaces/ArgSchema.md), which returns `any`, is left out, so that a schema fits only where the values
+that it parses do: `integer()` is not a `CombinatorSchema<string>`.
 
 ## Signature
 

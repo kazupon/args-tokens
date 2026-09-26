@@ -12,17 +12,17 @@ Other modifiers on `schema` (for example [multiple](/docs/combinators/functions/
 
 ```ts
 export function short<T, A extends string, S extends CombinatorSchema<T> = CombinatorSchema<T>>(
-  schema: S & CombinatorSchema<T>,
+  schema: S,
   alias: A
 ): WithFlag<S, CombinatorShort<A>>
 ```
 
 ## Parameters
 
-| Name     | Type                                                                                  | Description                   |
-| -------- | ------------------------------------------------------------------------------------- | ----------------------------- |
-| `schema` | `S` & [`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\> | The base combinator schema.   |
-| `alias`  | `A`                                                                                   | Single character short alias. |
+| Name     | Type | Description                   |
+| -------- | ---- | ----------------------------- |
+| `schema` | `S`  | The base combinator schema.   |
+| `alias`  | `A`  | Single character short alias. |
 
 ## Returns
 
@@ -39,4 +39,4 @@ const args = {
 
 ## Tags
 
-- `@typeParam` — T - The schema's parsed type.
+- `@typeParam` — T - The schema's parsed type, when type arguments are given explicitly. It is not inferred, so that `schema` can be a union of schemas of different types.
