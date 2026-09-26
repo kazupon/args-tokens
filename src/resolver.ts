@@ -59,13 +59,16 @@ export interface ArgSchema {
   /**
    * Type of the argument value.
    *
-   * - `'string'`: Text value (default if not specified)
+   * - `'string'`: Text value
    * - `'boolean'`: `true`/`false` flag (can be negatable with `--no-` prefix). `--flag=true` and
    *   `--flag=false` set the value explicitly; any other value after `=` is a type error
    * - `'number'`: Numeric value (parsed as integer or float)
    * - `'enum'`: One of predefined string values (requires `choices` property)
    * - `'positional'`: Non-option argument by position
    * - `'custom'`: Custom parsing with user-defined `parse` function
+   *
+   * Any other type, a missing one included, which only untyped code can give, makes `resolveArgs()`
+   * and `parse()` throw an `Error`, whether or not the argument is given.
    *
    * @example
    * Different argument types:
@@ -478,8 +481,9 @@ export interface ArgSchema {
   /**
    * Custom parsing function for `type: 'custom'` arguments.
    *
-   * Required when `type: 'custom'`. Receives the raw string value and must
-   * return the parsed result. Should throw an Error (or subclass) if parsing fails.
+   * Required when `type: 'custom'`: without it, `resolveArgs()` and `parse()` throw a `TypeError`,
+   * whether or not the argument is given. Receives the raw string value and must return the parsed
+   * result. Should throw an Error (or subclass) if parsing fails.
    *
    * The function's return type becomes the resolved argument type.
    *
@@ -820,6 +824,15 @@ export interface ResolveArgs {
 
 const SKIP_POSITIONAL_DEFAULT = -1
 
+const ARG_TYPES: ReadonlySet<string> = new Set([
+  'string',
+  'boolean',
+  'number',
+  'enum',
+  'positional',
+  'custom'
+])
+
 /**
  * Tracks which arguments were explicitly provided by the user.
  *
@@ -1078,6 +1091,14 @@ export function resolveArgs<A extends Args>(
   let positionalsCount = 0
   for (const [rawArg, schema] of argEntries) {
     const arg = getOptionName(rawArg, schema)
+
+    // mistakes in the schema: report them whether or not the argument is given
+    if (!ARG_TYPES.has(schema.type)) {
+      throw new Error(`Unsupported argument type '${schema.type}' for option '${arg}'`)
+    }
+    if (schema.type === 'custom' && typeof schema.parse !== 'function') {
+      throw new TypeError(`argument '${arg}' should have a 'parse' function`)
+    }
 
     // initialize explicit state for all options.
     // keyof explicit is generic and cannot be indexed for settings value.
