@@ -12,18 +12,20 @@ to the parse function based on the presence or negation of the flag, or on an ex
 ## Signature
 
 ```ts
-export function boolean(opts?: BooleanOptions): CombinatorSchema<boolean>
+export function boolean<O extends BooleanOptions = {}>(
+  opts?: O
+): WithRequiredOption<CombinatorSchema<boolean>, O>
 ```
 
 ## Parameters
 
-| Name   | Type                                                               | Description                   |
-| ------ | ------------------------------------------------------------------ | ----------------------------- |
-| `opts` | [`BooleanOptions`](/docs/combinators/interfaces/BooleanOptions.md) | Boolean options. _(optional)_ |
+| Name   | Type | Description                   |
+| ------ | ---- | ----------------------------- |
+| `opts` | `O`  | Boolean options. _(optional)_ |
 
 ## Returns
 
-[`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`boolean`\> — A combinator schema for boolean flags.
+`WithRequiredOption`\<[`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`boolean`\>, `O`\> — A combinator schema for boolean flags.
 
 ## Examples
 
@@ -33,3 +35,7 @@ const args = {
 }
 // Usage: --color (true), --no-color (false)
 ```
+
+## Tags
+
+- `@typeParam` — O - The type of the options, whose literal `required` the schema keeps.

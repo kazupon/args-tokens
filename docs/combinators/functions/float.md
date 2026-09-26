@@ -10,18 +10,20 @@ Rejects `NaN` and `Infinity` values.
 ## Signature
 
 ```ts
-export function float(opts?: FloatOptions): CombinatorSchema<number>
+export function float<O extends FloatOptions = {}>(
+  opts?: O
+): WithRequiredOption<CombinatorSchema<number>, O>
 ```
 
 ## Parameters
 
-| Name   | Type                                                           | Description                 |
-| ------ | -------------------------------------------------------------- | --------------------------- |
-| `opts` | [`FloatOptions`](/docs/combinators/interfaces/FloatOptions.md) | Range options. _(optional)_ |
+| Name   | Type | Description                 |
+| ------ | ---- | --------------------------- |
+| `opts` | `O`  | Range options. _(optional)_ |
 
 ## Returns
 
-[`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`number`\> — A combinator schema that resolves to number (float).
+`WithRequiredOption`\<[`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`number`\>, `O`\> — A combinator schema that resolves to number (float).
 
 ## Examples
 
@@ -30,3 +32,7 @@ const args = {
   ratio: float({ min: 0, max: 1 })
 }
 ```
+
+## Tags
+
+- `@typeParam` — O - The type of the options, whose literal `required` the schema keeps.

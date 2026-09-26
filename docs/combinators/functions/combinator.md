@@ -14,18 +14,20 @@ The returned schema has `type: 'custom'`.
 ## Signature
 
 ```ts
-export function combinator<T>(config: CombinatorOptions<T>): CombinatorSchema<T>
+export function combinator<T, C extends CombinatorOptions<T> = CombinatorOptions<T>>(
+  config: C & CombinatorOptions<T>
+): WithRequiredOption<CombinatorSchema<T>, C>
 ```
 
 ## Parameters
 
-| Name     | Type                                                                            | Description                                               |
-| -------- | ------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| `config` | [`CombinatorOptions`](/docs/combinators/interfaces/CombinatorOptions.md)\<`T`\> | Configuration with a parse function and optional metavar. |
+| Name     | Type                                                                                  | Description                                               |
+| -------- | ------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| `config` | `C` & [`CombinatorOptions`](/docs/combinators/interfaces/CombinatorOptions.md)\<`T`\> | Configuration with a parse function and optional metavar. |
 
 ## Returns
 
-[`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\> — A combinator schema that resolves to the parse function's return type.
+`WithRequiredOption`\<[`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\>, `C`\> — A combinator schema that resolves to the parse function's return type.
 
 ## Examples
 

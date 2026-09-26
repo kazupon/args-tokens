@@ -10,18 +10,20 @@ Only accepts integer values (no decimals).
 ## Signature
 
 ```ts
-export function integer(opts?: IntegerOptions): CombinatorSchema<number>
+export function integer<O extends IntegerOptions = {}>(
+  opts?: O
+): WithRequiredOption<CombinatorSchema<number>, O>
 ```
 
 ## Parameters
 
-| Name   | Type                                                               | Description                 |
-| ------ | ------------------------------------------------------------------ | --------------------------- |
-| `opts` | [`IntegerOptions`](/docs/combinators/interfaces/IntegerOptions.md) | Range options. _(optional)_ |
+| Name   | Type | Description                 |
+| ------ | ---- | --------------------------- |
+| `opts` | `O`  | Range options. _(optional)_ |
 
 ## Returns
 
-[`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`number`\> — A combinator schema that resolves to number (integer).
+`WithRequiredOption`\<[`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`number`\>, `O`\> — A combinator schema that resolves to number (integer).
 
 ## Examples
 
@@ -30,3 +32,7 @@ const args = {
   retries: integer({ min: 0, max: 10 })
 }
 ```
+
+## Tags
+
+- `@typeParam` — O - The type of the options, whose literal `required` the schema keeps.

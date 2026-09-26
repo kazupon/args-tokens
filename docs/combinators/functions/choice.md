@@ -10,22 +10,22 @@ Uses `const T` generic to infer literal union types from the values array.
 ## Signature
 
 ```ts
-export function choice<const T extends readonly string[]>(
+export function choice<const T extends readonly string[], O extends BaseOptions = {}>(
   values: T,
-  opts?: BaseOptions
-): CombinatorSchema<T[number]>
+  opts?: O
+): WithRequiredOption<CombinatorSchema<T[number]>, O>
 ```
 
 ## Parameters
 
-| Name     | Type                                                         | Description                                                 |
-| -------- | ------------------------------------------------------------ | ----------------------------------------------------------- |
-| `values` | `T`                                                          | Allowed values.                                             |
-| `opts`   | [`BaseOptions`](/docs/combinators/interfaces/BaseOptions.md) | Common options (description, short, required). _(optional)_ |
+| Name     | Type | Description                                                 |
+| -------- | ---- | ----------------------------------------------------------- |
+| `values` | `T`  | Allowed values.                                             |
+| `opts`   | `O`  | Common options (description, short, required). _(optional)_ |
 
 ## Returns
 
-[`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\[`number`\]\> — A combinator schema that resolves to a union of the allowed values.
+`WithRequiredOption`\<[`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\[`number`\]\>, `O`\> — A combinator schema that resolves to a union of the allowed values.
 
 ## Examples
 

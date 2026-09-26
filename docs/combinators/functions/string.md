@@ -8,18 +8,20 @@ Create a string argument schema with optional validation.
 ## Signature
 
 ```ts
-export function string(opts?: StringOptions): CombinatorSchema<string>
+export function string<O extends StringOptions = {}>(
+  opts?: O
+): WithRequiredOption<CombinatorSchema<string>, O>
 ```
 
 ## Parameters
 
-| Name   | Type                                                             | Description                      |
-| ------ | ---------------------------------------------------------------- | -------------------------------- |
-| `opts` | [`StringOptions`](/docs/combinators/interfaces/StringOptions.md) | Validation options. _(optional)_ |
+| Name   | Type | Description                      |
+| ------ | ---- | -------------------------------- |
+| `opts` | `O`  | Validation options. _(optional)_ |
 
 ## Returns
 
-[`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`string`\> — A combinator schema that resolves to string.
+`WithRequiredOption`\<[`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`string`\>, `O`\> — A combinator schema that resolves to string.
 
 ## Examples
 
@@ -28,3 +30,7 @@ const args = {
   name: string({ minLength: 1, maxLength: 50 })
 }
 ```
+
+## Tags
+
+- `@typeParam` — O - The type of the options, whose literal `required` the schema keeps.

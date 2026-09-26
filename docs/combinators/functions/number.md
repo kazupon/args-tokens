@@ -10,18 +10,20 @@ Accepts any numeric value (integer or float).
 ## Signature
 
 ```ts
-export function number(opts?: NumberOptions): CombinatorSchema<number>
+export function number<O extends NumberOptions = {}>(
+  opts?: O
+): WithRequiredOption<CombinatorSchema<number>, O>
 ```
 
 ## Parameters
 
-| Name   | Type                                                             | Description                 |
-| ------ | ---------------------------------------------------------------- | --------------------------- |
-| `opts` | [`NumberOptions`](/docs/combinators/interfaces/NumberOptions.md) | Range options. _(optional)_ |
+| Name   | Type | Description                 |
+| ------ | ---- | --------------------------- |
+| `opts` | `O`  | Range options. _(optional)_ |
 
 ## Returns
 
-[`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`number`\> — A combinator schema that resolves to number.
+`WithRequiredOption`\<[`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`number`\>, `O`\> — A combinator schema that resolves to number.
 
 ## Examples
 
@@ -30,3 +32,7 @@ const args = {
   timeout: number({ min: 0, max: 30000 })
 }
 ```
+
+## Tags
+
+- `@typeParam` — O - The type of the options, whose literal `required` the schema keeps.
