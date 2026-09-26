@@ -47,8 +47,8 @@ const args = {
 ## Call Signature
 
 ```ts
-export function positional<const R extends boolean | undefined = boolean | undefined>(
-  parser?: BaseOptions & { required?: R }
+export function positional<const R extends boolean>(
+  parser: BaseOptions & { required: R }
 ): WithRequiredOption<ArgSchema & ArgSchemaPositionalType, R>
 ```
 
@@ -64,9 +64,9 @@ With `required: false` in the options, the positional argument is optional, in i
 
 ### Parameters
 
-| Name     | Type                                                                                                                           | Description                                                        |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
-| `parser` | [`BaseOptions`](/docs/combinators/interfaces/BaseOptions.md) & { [`required`](/docs/combinators/functions/required.md)?: `R` } | Optional base options (description, short, required). _(optional)_ |
+| Name     | Type                                                                                                                          | Description                                  |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| `parser` | [`BaseOptions`](/docs/combinators/interfaces/BaseOptions.md) & { [`required`](/docs/combinators/functions/required.md): `R` } | Base options (description, short, required). |
 
 ### Returns
 
@@ -85,3 +85,37 @@ const args = {
 ### Tags
 
 - `@typeParam` — R - The type of `required` in the options, which the positional argument keeps when it is `true` or `false`.
+
+## Call Signature
+
+```ts
+export function positional(parser?: BaseOptions): ArgSchema & ArgSchemaPositionalType
+```
+
+> [!WARNING]
+> This API is experimental and may change in future versions.
+
+Create a positional argument schema.
+
+Without a parser, resolves to string.
+With a parser (e.g., `positional(integer())`), resolves to the parser's return type.
+
+### Parameters
+
+| Name     | Type                                                         | Description                                                        |
+| -------- | ------------------------------------------------------------ | ------------------------------------------------------------------ |
+| `parser` | [`BaseOptions`](/docs/combinators/interfaces/BaseOptions.md) | Optional base options (description, short, required). _(optional)_ |
+
+### Returns
+
+[`ArgSchema`](/docs/default/interfaces/ArgSchema.md) & `ArgSchemaPositionalType` — A positional argument schema resolving to string.
+
+### Examples
+
+```ts
+const args = {
+  command: positional(), // resolves to string
+  port: positional(integer()), // resolves to number
+  query: unrequired(positional()) // optional positional
+}
+```
