@@ -131,6 +131,11 @@ test('withDefault type inference', () => {
 
   const explicitDef = withDefault<number>(integer(), 8080)
   expectTypeOf<ExtractOptionValue<typeof explicitDef>>().toEqualTypeOf<number>()
+
+  // an explicit type argument widens the type, for a default typed wider than the choices
+  const env: string = 'auto'
+  const wideDef = withDefault<string>(choice(['auto', 'always', 'never']), env)
+  expectTypeOf<ExtractOptionValue<typeof wideDef>>().toEqualTypeOf<string>()
 })
 
 test('short, describe and map accept explicit type arguments', () => {
@@ -381,7 +386,7 @@ test('short, describe, withDefault and map keep the modifiers applied before the
   expectTypeOf(args.source.type).toEqualTypeOf<'positional'>()
 })
 
-test('the order of the modifiers does not change the value types', () => {
+test('short, describe and withDefault give the same value types in either order', () => {
   const before = {
     tags: short(multiple(string()), 't'),
     port: short(withDefault(integer(), 8080), 'p'),
@@ -402,8 +407,18 @@ test('withDefault checks the default of a schema with other modifiers', () => {
   // @ts-expect-error -- the default of a multiple schema is one value, not an array
   withDefault(multiple(string()), ['a'])
 
-  // @ts-expect-error -- a string is not a number
-  withDefault(short(integer(), 'p'), '8080')
+  // the error is at the default
+  withDefault(
+    short(integer(), 'p'),
+    // @ts-expect-error -- a string is not a number
+    '8080'
+  )
+})
+
+test('map keeps a default set before it, typed as before the transform', () => {
+  const mappedAfterDefault = map(withDefault(integer(), 8080), n => String(n))
+  expectTypeOf(mappedAfterDefault.default).toEqualTypeOf<number>()
+  expectTypeOf<ArgValues<{ port: typeof mappedAfterDefault }>>().toEqualTypeOf<{ port: string }>()
 })
 
 test('the modifiers keep a schema typed as any an argument schema', () => {
