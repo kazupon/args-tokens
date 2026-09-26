@@ -524,3 +524,23 @@ test('unknown options of positional() and the base combinators are type errors',
   // @ts-expect-error -- 'metavr' is not an option of combinator()
   combinator({ parse: Number, metavr: 'number' })
 })
+
+test('positional keeps only the properties that it copies from its parser', () => {
+  const schema = positional(short(hidden(integer()), 'p'))
+  expectTypeOf(schema).not.toHaveProperty('short')
+  expectTypeOf(schema).not.toHaveProperty('choices')
+  expectTypeOf(schema.hidden).toEqualTypeOf<true>()
+  expectTypeOf(positional(integer()).metavar).toEqualTypeOf<string | undefined>()
+})
+
+test('positional reads a parser of type any as CombinatorSchema<unknown>', () => {
+  const parser = integer() as any
+  const args = { value: describe(positional(parser), 'Value') }
+  expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{ value: unknown }>()
+})
+
+test('a required option of type boolean leaves the value optional', () => {
+  const flag = Math.random() > 0.5
+  const args = { size: integer({ required: flag }) }
+  expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{ size?: number }>()
+})

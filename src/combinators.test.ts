@@ -7,6 +7,7 @@ import {
   describe as describeCombinator,
   extend,
   float,
+  hidden,
   integer,
   map,
   merge,
@@ -706,6 +707,32 @@ describe('positional combinator', () => {
     )
     expect(values.nums).toEqual([1, 2, 3])
   })
+
+  test('keeps multiple of its parser', () => {
+    const schema = positional(multiple(integer()))
+    expect(schema.multiple).toBe(true)
+    const { values, error } = resolveArgs({ ids: schema }, parseArgs(['1', '2']))
+    expect(error).toBeUndefined()
+    expect(values.ids).toEqual([1, 2])
+  })
+
+  test('is optional with multiple of its parser, as multiple(positional()) is', () => {
+    const { values, error } = resolveArgs({ ids: positional(multiple(integer())) }, parseArgs([]))
+    expect(error).toBeUndefined()
+    expect(values.ids).toBeUndefined()
+  })
+
+  test('copies only the properties that its type keeps', () => {
+    const schema = positional(describeCombinator(short(hidden(multiple(integer())), 'p'), 'IDs'))
+    expect(Object.keys(schema).sort()).toEqual([
+      'description',
+      'hidden',
+      'metavar',
+      'multiple',
+      'parse',
+      'type'
+    ])
+  })
 })
 
 describe('choice combinator', () => {
@@ -796,14 +823,6 @@ describe('choice combinator', () => {
       name: 'level',
       displayName: "'--level'"
     })
-  })
-
-  test('keeps multiple of its parser', () => {
-    const schema = positional(multiple(integer()))
-    expect(schema.multiple).toBe(true)
-    const { values, error } = resolveArgs({ ids: schema }, parseArgs(['1', '2']))
-    expect(error).toBeUndefined()
-    expect(values.ids).toEqual([1, 2])
   })
 
   test('a positional choice keeps its own check', () => {
