@@ -161,6 +161,15 @@ export interface BaseOptions {
 }
 
 /**
+ * The schema `S` with the literal type of `required` in the options `O`: `required: true` types the
+ * value as present, and `required: false` makes a positional argument optional. `S` stays as is
+ * when the options have no literal `required`.
+ */
+type WithRequiredOption<S, O> = O extends { required: infer R extends boolean }
+  ? WithFlag<S, { required: R }>
+  : S
+
+/**
  * Options for the {@link string} combinator.
  *
  * @experimental
@@ -460,12 +469,43 @@ export function boolean(opts?: BooleanOptions): CombinatorSchema<boolean> {
 type ArgSchemaPositionalType = { type: 'positional' }
 
 /**
+ * The properties of a parser that {@link positional} keeps.
+ */
+type PositionalParserKey =
+  | 'parse'
+  | 'metavar'
+  | 'description'
+  | 'hidden'
+  | 'required'
+  | 'default'
+  | 'multiple'
+
+/**
+ * The positional argument schema that {@link positional} returns for a parser: the properties it
+ * keeps, with their types, as `type: 'positional'`. A parser of type `any` is read as
+ * `CombinatorSchema<unknown>`.
+ */
+type PositionalWithParser<S> = {
+  [
+    K in keyof (0 extends 1 & S ? CombinatorSchema<unknown> : S) as K extends PositionalParserKey
+      ? K
+      : never
+  ]: (0 extends 1 & S ? CombinatorSchema<unknown> : S)[K]
+} & ArgSchemaPositionalType
+
+/**
  * Create a positional argument schema.
  *
  * Without a parser, resolves to string.
  * With a parser (e.g., `positional(integer())`), resolves to the parser's return type.
  *
+ * The positional argument keeps `required`, `default` and `multiple` of the parser, with their
+ * types: `positional(unrequired(integer()))` is optional, and `positional(multiple(integer()))`
+ * resolves to an array, as `multiple(positional(integer()))` does.
+ *
  * @typeParam T - The parser's resolved type.
+ * @typeParam S - The type of the parser, whose `required`, `default`, `multiple`, `description`,
+ * `hidden` and `metavar` the positional argument keeps.
  *
  * @param parser - The parser combinator schema.
  * @returns A positional argument schema resolving to the parser's type.
@@ -481,15 +521,19 @@ type ArgSchemaPositionalType = { type: 'positional' }
  *
  * @experimental
  */
-export function positional<T>(
-  parser: CombinatorSchema<T>
-): CombinatorSchema<T> & ArgSchemaPositionalType
+export function positional<T, S extends CombinatorSchema<T> = CombinatorSchema<T>>(
+  parser: S & CombinatorSchema<T>
+): PositionalWithParser<S>
 
 /**
  * Create a positional argument schema.
  *
  * Without a parser, resolves to string.
  * With a parser (e.g., `positional(integer())`), resolves to the parser's return type.
+ *
+ * With `required: false` in the options, the positional argument is optional, in its type too.
+ *
+ * @typeParam O - The type of the options, whose literal `required` the positional argument keeps.
  *
  * @param parser - Optional base options (description, short, required).
  * @returns A positional argument schema resolving to string.
@@ -505,7 +549,9 @@ export function positional<T>(
  *
  * @experimental
  */
-export function positional(parser?: BaseOptions): ArgSchema & ArgSchemaPositionalType
+export function positional<O extends BaseOptions = {}>(
+  parser?: O
+): WithRequiredOption<ArgSchema & ArgSchemaPositionalType, O>
 // @__NO_SIDE_EFFECTS__
 export function positional<T>(
   parser?: CombinatorSchema<T> | BaseOptions
@@ -518,7 +564,8 @@ export function positional<T>(
       ...(parser.description != null ? { description: parser.description } : {}),
       ...(parser.hidden != null ? { hidden: parser.hidden } : {}),
       ...(parser.required != null ? { required: parser.required } : {}),
-      ...(parser.default != null ? { default: parser.default } : {})
+      ...(parser.default != null ? { default: parser.default } : {}),
+      ...(parser.multiple != null ? { multiple: parser.multiple } : {})
     }
   }
   const opts = parser

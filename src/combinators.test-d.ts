@@ -448,3 +448,27 @@ test('unrequired overrides required type', () => {
   expectTypeOf(composed.required).toEqualTypeOf<false>()
   expectTypeOf<ExtractOptionValue<typeof composed>>().toEqualTypeOf<string>()
 })
+
+test('positional keeps required, default and multiple of its options and parser', () => {
+  const args = {
+    input: positional({ required: false }),
+    count: positional(unrequired(integer())),
+    ids: positional(multiple(integer())),
+    names: positional(required(multiple(string()))),
+    level: positional(unrequired(withDefault(integer(), 1))),
+    source: positional(describe(integer(), 'Source'))
+  }
+  expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{
+    input?: string
+    count?: number
+    ids?: number[]
+    names: string[]
+    level: number
+    source: number
+  }>()
+  expectTypeOf(args.source.description).toEqualTypeOf<'Source'>()
+  expectTypeOf(args.ids.multiple).toEqualTypeOf<true>()
+  // an explicit type argument still gives the value type
+  const explicit = positional<number>(integer())
+  expectTypeOf<ExtractOptionValue<typeof explicit>>().toEqualTypeOf<number>()
+})
