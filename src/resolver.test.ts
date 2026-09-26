@@ -4349,6 +4349,13 @@ describe('conflicts', () => {
       name: 'input-file'
     },
     {
+      label: 'an option given in the negated form',
+      schema: { type: 'boolean', negatable: true, conflicts: 'stdin' },
+      argv: ['--no-input-file', '--stdin'],
+      options: { toKebab: true },
+      name: 'input-file'
+    },
+    {
       label: 'an option with its own toKebab',
       schema: { type: 'string', toKebab: true, conflicts: 'stdin' },
       argv: ['--input-file=a.txt', '--stdin'],
@@ -4380,6 +4387,18 @@ describe('conflicts', () => {
       expect(conflict.values.name).toBe('inputFile')
     }
   )
+
+  test('a conflict error does not take the toKebab of the other argument', () => {
+    const args = {
+      inputFile: { type: 'string', conflicts: 'useStdin' },
+      useStdin: { type: 'boolean', toKebab: true }
+    } as const satisfies Args
+    const { error } = resolveArgs(args, parseArgs(['--inputFile=a.txt', '--use-stdin']))
+    const conflict = error?.errors[0] as ArgResolveError
+    expect(conflict.type).toBe('conflict')
+    expect(conflict.name).toBe('inputFile')
+    expect(conflict.values.name).toBe('inputFile')
+  })
 
   test('a conflict of a negated option shows the negated form', () => {
     const args = {
