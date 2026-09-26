@@ -746,3 +746,14 @@ test('the modifiers take positional() without a parser', () => {
   }>()
   expectTypeOf(positional().parse).toEqualTypeOf<(value: string) => string>()
 })
+
+test('the modifiers keep the properties of positional() without a parser', () => {
+  const entry = withDefault(positional({ description: 'Entry', hidden: true }), 'main.ts')
+  expectTypeOf(entry.description).toEqualTypeOf<string | undefined>()
+  expectTypeOf(entry.hidden).toEqualTypeOf<boolean | undefined>()
+  const length = map(positional({ description: 'Entry' }), value => value.length)
+  expectTypeOf(length.description).toEqualTypeOf<string | undefined>()
+  expectTypeOf(positional(positional({ description: 'Entry' })).description).toEqualTypeOf<
+    string | undefined
+  >()
+})

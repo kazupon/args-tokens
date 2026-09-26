@@ -699,7 +699,7 @@ export function positional<T, S extends CombinatorSchema<T> = CombinatorSchema<T
  */
 export function positional<const R extends boolean>(
   parser: BaseOptions & { required: R }
-): WithRequiredOption<CombinatorSchema<string> & ArgSchemaPositionalType, R>
+): WithRequiredOption<Omit<CombinatorSchema<string>, 'type'> & ArgSchemaPositionalType, R>
 
 /**
  * Create a positional argument schema.
@@ -725,7 +725,9 @@ export function positional<const R extends boolean>(
  *
  * @experimental
  */
-export function positional(parser?: BaseOptions): CombinatorSchema<string> & ArgSchemaPositionalType
+export function positional(
+  parser?: BaseOptions
+): Omit<CombinatorSchema<string>, 'type'> & ArgSchemaPositionalType
 // @__NO_SIDE_EFFECTS__
 export function positional<T>(
   parser?: CombinatorSchema<T> | BaseOptions
