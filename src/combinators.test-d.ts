@@ -657,7 +657,7 @@ test('short() and describe() take a union of schemas of different types', () => 
     d?: 'debug' | 'info' | boolean
   }>()
 
-  // @ts-expect-error -- map() takes one parsed type, and the schemas of the union parse to two
+  // @ts-expect-error -- map() infers the parsed type from one schema of the union only
   map(port, v => String(v))
   // @ts-expect-error -- so does withDefault()
   withDefault(port, 'x')
@@ -691,14 +691,38 @@ test('each combinator schema fits only where the values that it parses do', () =
   acceptsNumbers(combinator({ parse: JSON.parse }))
 
   const registry: Record<string, CombinatorSchema<unknown>> = { port: integer() }
-  // @ts-expect-error -- a CombinatorSchema<unknown> can parse to anything, so it has no default
+  // @ts-expect-error -- CombinatorSchema<unknown> may parse to anything and cannot take a default
   withDefault(registry.port, 8080)
   const anyRegistry: Record<string, CombinatorSchema<any>> = { port: integer() }
   withDefault(anyRegistry.port, 8080)
 
-  // a parse function typed as any, such as one from an untyped module, parses to unknown
+  // combinator() with a parse function typed as any (from an untyped module) parses to unknown
   const untyped: any = Number
   // @ts-expect-error -- combinator() infers unknown from a parse function typed as any
   withDefault(combinator({ parse: untyped }), 8080)
   withDefault(combinator<number>({ parse: untyped }), 8080)
+})
+
+test('a modifier on a schema typed by a type parameter fits where the type parameter does', () => {
+  const withPortDefault = <S extends CombinatorSchema<number>>(schema: S) =>
+    withDefault(required(schema), 8080)
+  const doubled = <S extends CombinatorSchema<number>>(schema: S) =>
+    map(short(schema, 'd'), (n: number) => n * 2)
+  const asNumbers = <S extends CombinatorSchema<number>>(schema: S): CombinatorSchema<number> =>
+    short(schema, 'c')
+  const args = {
+    port: withPortDefault(integer()),
+    twice: doubled(integer()),
+    count: asNumbers(integer())
+  }
+  expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{
+    port: number
+    twice?: number
+    count?: number
+  }>()
+
+  const asStrings = <S extends CombinatorSchema<number>>(schema: S): CombinatorSchema<string> =>
+    // @ts-expect-error -- S parses to numbers, not strings
+    required(schema)
+  expectTypeOf(asStrings).toBeFunction()
 })
