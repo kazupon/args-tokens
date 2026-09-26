@@ -666,3 +666,33 @@ test('short() and describe() take a union of schemas of different types', () => 
   const covered = { m: map(annotated, v => String(v)), w: withDefault(annotated, 'x') }
   expectTypeOf<ArgValues<typeof covered>>().toEqualTypeOf<{ m?: string; w: string | number }>()
 })
+
+test('each combinator schema fits only where the values that it parses do', () => {
+  const acceptsStrings = (schema: CombinatorSchema<string>) => schema
+  const acceptsNumbers = (schema: CombinatorSchema<number>) => schema
+  // @ts-expect-error -- number() parses to a number
+  acceptsStrings(number())
+  // @ts-expect-error -- float() parses to a number
+  acceptsStrings(float())
+  // @ts-expect-error -- boolean() parses to a boolean
+  acceptsStrings(boolean())
+  // @ts-expect-error -- choice() parses to one of its strings
+  acceptsNumbers(choice(['a', 'b']))
+  // @ts-expect-error -- combinator() parses to what its parse returns
+  acceptsStrings(combinator({ parse: Number }))
+  // @ts-expect-error -- the modifiers keep the type that parse returns
+  acceptsStrings(short(withDefault(integer(), 1), 'p'))
+  // @ts-expect-error -- so does hidden()
+  acceptsStrings(hidden(integer()))
+  // @ts-expect-error -- so does positional()
+  acceptsStrings(positional(integer()))
+  // a parse that returns any still fits any combinator schema
+  acceptsStrings(combinator({ parse: JSON.parse }))
+  acceptsNumbers(combinator({ parse: JSON.parse }))
+
+  const registry: Record<string, CombinatorSchema<unknown>> = { port: integer() }
+  // @ts-expect-error -- a CombinatorSchema<unknown> can parse to anything, so it has no default
+  withDefault(registry.port, 8080)
+  const anyRegistry: Record<string, CombinatorSchema<any>> = { port: integer() }
+  withDefault(anyRegistry.port, 8080)
+})
