@@ -12,8 +12,8 @@
 
 /**
  * Brand of a `parse` function that has no side effects, set by `string()`, `number()`,
- * `integer()`, `float()` and `choice()`, so that the resolver may call it with a value that the
- * option was not given, to check the value before suggesting it.
+ * `integer()`, `float()`, `choice()` and `positional()` without a parser, so that the resolver may
+ * call it with a value that the option was not given, to check the value before suggesting it.
  *
  * The brand is looked up in the global symbol registry with `Symbol.for`, so it stays identical
  * across bundled copies of `args-tokens`, where the resolver and the combinators may come from

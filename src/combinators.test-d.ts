@@ -726,3 +726,34 @@ test('a modifier on a schema typed by a type parameter fits where the type param
     required(schema)
   expectTypeOf(asStrings).toBeFunction()
 })
+
+test('the modifiers take positional() without a parser', () => {
+  const args = {
+    entry: required(positional({ description: 'Entry file to serve' })),
+    input: describe(positional(), 'Input file'),
+    output: withDefault(positional(), 'dist'),
+    length: map(positional(), value => value.length),
+    target: withDefault(positional({ required: false }), 'out'),
+    files: multiple(positional())
+  }
+  expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{
+    entry: string
+    input: string
+    output: string
+    length: number
+    target: string
+    files?: string[]
+  }>()
+  expectTypeOf(positional().parse).toEqualTypeOf<(value: string) => string>()
+})
+
+test('the modifiers keep the properties of positional() without a parser', () => {
+  const entry = withDefault(positional({ description: 'Entry', hidden: true }), 'main.ts')
+  expectTypeOf(entry.description).toEqualTypeOf<string | undefined>()
+  expectTypeOf(entry.hidden).toEqualTypeOf<boolean | undefined>()
+  const length = map(positional({ description: 'Entry' }), value => value.length)
+  expectTypeOf(length.description).toEqualTypeOf<string | undefined>()
+  expectTypeOf(positional(positional({ description: 'Entry' })).description).toEqualTypeOf<
+    string | undefined
+  >()
+})
