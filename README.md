@@ -769,7 +769,7 @@ const { values } = resolveArgs(schema, tokens)
 - `unrequired(positional())` — Explicitly optional positional argument
 - `choice(values)` — Enum-like with literal type inference
 
-A `required` of `true` or `false` in the options is kept in the type: `integer({ required: true })` types the value as present, as `required(integer())` does, and `positional({ required: false })` and `positional(integer({ required: false }))` are optional. `positional(multiple(integer()))` resolves to an array, as `multiple(positional(integer()))` does.
+A literal `required: true` or `required: false` in the options is kept in the type: `integer({ required: true })` types the value as present, as `required(integer())` does, and `positional({ required: false })` and `positional(integer({ required: false }))` are optional. `positional(multiple(integer()))` resolves to an array, as `multiple(positional(integer()))` does.
 
 #### Modifier Combinators
 
