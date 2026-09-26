@@ -504,6 +504,39 @@ test('a base combinator keeps the literal type of its required option', () => {
   expectTypeOf<ArgValues<typeof dynamic>>().toEqualTypeOf<{ size?: number }>()
 })
 
+test('a base combinator keeps a literal required option inside other combinators', () => {
+  const args = {
+    name: positional(string({ required: false })),
+    ratio: positional(number({ required: false })),
+    scale: positional(float({ required: false })),
+    force: short(boolean({ required: true }), 'f'),
+    level: positional(choice(['debug', 'info'] as const, { required: false })),
+    config: positional(combinator({ parse: Number, required: false })),
+    query: hidden(positional({ required: false }))
+  }
+  expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{
+    name?: string
+    ratio?: number
+    scale?: number
+    force: boolean
+    level?: 'debug' | 'info'
+    config?: number
+    query?: string
+  }>()
+})
+
+test('choice() and combinator() still take explicit type arguments', () => {
+  const args = {
+    level: choice<readonly ['debug', 'info']>(['debug', 'info'], { required: true }),
+    config: combinator<number>({ parse: Number })
+  }
+  // with explicit type arguments, the literal required is not kept
+  expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{
+    level?: 'debug' | 'info'
+    config?: number
+  }>()
+})
+
 test('unknown options of positional() and the base combinators are type errors', () => {
   // @ts-expect-error -- 'mx' is not an option of integer()
   integer({ min: 1, mx: 10 })
