@@ -101,6 +101,12 @@ export type CombinatorSchema<T> = Omit<ArgSchema, 'parse'> & Combinator<T>
  */
 type UntypedCombinatorSchema = ArgSchema & Combinator<unknown>
 
+/**
+ * The type that a combinator schema `S` parses to, for each schema of a union:
+ * `string | number` for `CombinatorSchema<string> | CombinatorSchema<number>`.
+ */
+type ParsedType<S> = S extends Combinator<infer T> ? T : never
+
 function createInvalidTypeError(
   message: string,
   expected: string,
@@ -959,6 +965,9 @@ export function combinator<T>(config: CombinatorOptions<T>): CombinatorSchema<T>
  * value is the default as is, although it is typed as `U`. Set the default after `map()`, with a
  * transformed value.
  *
+ * A union of schemas of different types, such as `strict ? integer() : string()`, matches the
+ * other overload, whose `transform` takes a value of any of their types.
+ *
  * @typeParam T - The input schema's parsed type.
  * @typeParam U - The transformed type.
  * @typeParam S - The input combinator schema, inferred from `schema`. Its other modifiers are kept.
@@ -978,11 +987,54 @@ export function combinator<T>(config: CombinatorOptions<T>): CombinatorSchema<T>
  *
  * @experimental
  */
-// @__NO_SIDE_EFFECTS__
 export function map<T, U, S extends CombinatorSchema<T> = CombinatorSchema<T>>(
   schema: S & CombinatorSchema<T>,
   transform: (value: T) => U
-): WithFlag<S, Combinator<U>> {
+): WithFlag<S, Combinator<U>>
+
+/**
+ * Transform the output of a union of combinator schemas of different types, such as
+ * `strict ? integer() : string()`.
+ *
+ * Creates a new schema that applies `transform` to the result of `schema.parse`, which is a value
+ * of any of their types: a number or a string for `strict ? integer() : string()`.
+ * The original schema is not modified.
+ * Other modifiers on `schema` (for example {@link multiple}) are kept, and `transform` is applied
+ * to each value of a `multiple` schema.
+ *
+ * A default set on `schema` is kept, but it does not go through `transform`: when it is used, the
+ * value is the default as is, although it is typed as `U`. Set the default after `map()`, with a
+ * transformed value.
+ *
+ * @typeParam S - The input combinator schema, inferred from `schema`: a union of schemas of
+ *   different types. Its other modifiers are kept.
+ * @typeParam U - The transformed type.
+ *
+ * @param schema - The base combinator schema.
+ * @param transform - The transformation function, which takes a value of any of the types that the
+ *   schemas of the union parse to.
+ * @returns A new combinator schema that resolves to the transformed type.
+ *
+ * @example
+ * ```ts
+ * const strict = process.argv.includes('--strict')
+ * const args = {
+ *   // `value` is a number or a string
+ *   label: map(strict ? integer({ min: 0 }) : string(), value => `timeout: ${value}`)
+ * }
+ * ```
+ *
+ * @experimental
+ */
+export function map<S extends CombinatorSchema<unknown>, U>(
+  schema: S,
+  transform: (value: ParsedType<S>) => U
+): WithFlag<S, Combinator<U>>
+// @__NO_SIDE_EFFECTS__
+export function map<T, U>(
+  schema: CombinatorSchema<T>,
+  transform: (value: T) => U
+): CombinatorSchema<U> {
   const baseParse: (value: string) => T = schema.parse
   return {
     ...schema,
@@ -1009,6 +1061,9 @@ type CombinatorWithDefault<T> = { default: T }
  * Other modifiers on `schema` (for example {@link multiple}) are kept. The default of a `multiple`
  * schema is one value of the parsed type, which becomes the only element of the array.
  *
+ * A union of schemas of different types, such as `strict ? integer() : string()`, matches the
+ * other overload, whose default may be a value of any of their types.
+ *
  * @typeParam T - The schema's parsed type.
  * @typeParam D - The type of the default value, which must be assignable to `T`.
  * @typeParam S - The input combinator schema, inferred from `schema`. Its other modifiers are kept.
@@ -1028,12 +1083,51 @@ type CombinatorWithDefault<T> = { default: T }
  *
  * @experimental
  */
-// @__NO_SIDE_EFFECTS__
 export function withDefault<
   T extends string | boolean | number,
   D extends T = T,
   S extends CombinatorSchema<T> = CombinatorSchema<T>
->(schema: S & CombinatorSchema<T>, defaultValue: D): WithFlag<S, CombinatorWithDefault<T>> {
+>(schema: S & CombinatorSchema<T>, defaultValue: D): WithFlag<S, CombinatorWithDefault<T>>
+
+/**
+ * Set a default value on a union of combinator schemas of different types, such as
+ * `strict ? integer() : string()`.
+ *
+ * The original schema is not modified. The default must be a value of one of the types that the
+ * schemas of the union parse to: a number or a string for `strict ? integer() : string()`. They
+ * must parse to a string, number or boolean, since the default can only be one of them and does
+ * not go through `parse`. A schema typed as `any` matches the other overload instead.
+ * Other modifiers on `schema` (for example {@link multiple}) are kept. The default of a `multiple`
+ * schema is one value, which becomes the only element of the array.
+ *
+ * @typeParam S - The input combinator schema, inferred from `schema`: a union of schemas of
+ *   different types. Its other modifiers are kept.
+ *
+ * @param schema - The base combinator schema.
+ * @param defaultValue - The default value, a value of one of the types that the schemas of the
+ *   union parse to.
+ * @returns A new schema with the default value set.
+ *
+ * @example
+ * ```ts
+ * const strict = process.argv.includes('--strict')
+ * const args = {
+ *   timeout: withDefault(strict ? integer({ min: 0 }) : string(), 'none')
+ * }
+ * // typeof values.timeout === number | string
+ * ```
+ *
+ * @experimental
+ */
+export function withDefault<S extends CombinatorSchema<string | boolean | number>>(
+  schema: S,
+  defaultValue: unknown extends ParsedType<S> ? never : ParsedType<S>
+): WithFlag<S, CombinatorWithDefault<ParsedType<S>>>
+// @__NO_SIDE_EFFECTS__
+export function withDefault<T extends string | boolean | number>(
+  schema: CombinatorSchema<T>,
+  defaultValue: T
+): CombinatorSchema<T> & CombinatorWithDefault<T> {
   return {
     ...schema,
     default: defaultValue
