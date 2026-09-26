@@ -90,6 +90,13 @@ export type Combinator<T> = {
  */
 export type CombinatorSchema<T> = Omit<ArgSchema, 'parse'> & Combinator<T>
 
+/**
+ * How the modifiers and {@link positional} read a schema typed as `any`: its `parse` returns
+ * `unknown`, and the `parse` of {@link ArgSchema}, which returns `any`, is kept, so that the result
+ * still fits any {@link CombinatorSchema}, as the schema typed as `any` does.
+ */
+type UntypedCombinatorSchema = ArgSchema & Combinator<unknown>
+
 function createInvalidTypeError(
   message: string,
   expected: string,
@@ -613,14 +620,14 @@ type PositionalParserKey =
 /**
  * The positional argument schema that {@link positional} returns for a parser: the properties it
  * keeps, with their types, as `type: 'positional'`. A parser of type `any` is read as
- * `CombinatorSchema<unknown>`.
+ * {@link UntypedCombinatorSchema}.
  */
 type PositionalWithParser<S> = {
   [
-    K in keyof (0 extends 1 & S ? CombinatorSchema<unknown> : S) as K extends PositionalParserKey
+    K in keyof (0 extends 1 & S ? UntypedCombinatorSchema : S) as K extends PositionalParserKey
       ? K
       : never
-  ]: (0 extends 1 & S ? CombinatorSchema<unknown> : S)[K]
+  ]: (0 extends 1 & S ? UntypedCombinatorSchema : S)[K]
 } & ArgSchemaPositionalType
 
 /**
@@ -1020,10 +1027,11 @@ export function withDefault<
  *
  * Omits the keys of `F` from `S` first, so that what `F` sets replaces what `S` has, instead of
  * making an intersection with it (`'A' & 'B'`, that is `never`, for a description set twice).
- * A schema typed as `any`, such as one from untyped code, is taken as `CombinatorSchema<unknown>`,
- * so that the result is still an argument schema.
+ * A schema typed as `any`, such as one from untyped code, is taken as
+ * {@link UntypedCombinatorSchema}, so that the result is still an argument schema, and still fits
+ * any {@link CombinatorSchema}.
  */
-type WithFlag<S, F> = Omit<0 extends 1 & S ? CombinatorSchema<unknown> : S, keyof F> & F
+type WithFlag<S, F> = Omit<0 extends 1 & S ? UntypedCombinatorSchema : S, keyof F> & F
 
 /**
  * Options for the {@link multiple} combinator.

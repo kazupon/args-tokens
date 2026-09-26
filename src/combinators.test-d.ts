@@ -618,3 +618,25 @@ test('a combinator schema is typed by what its parse function returns', () => {
   // calling the parse function of a combinator schema gives what it parses to
   expectTypeOf(integer().parse('1')).toEqualTypeOf<number>()
 })
+
+test('a schema typed as any still fits any combinator schema after a modifier', () => {
+  const legacy = string() as any
+  const args = {
+    s: withDefault(short(legacy, 'x'), 1),
+    d: withDefault(describe(legacy, 'D'), 'a'),
+    r: withDefault(required(legacy), true),
+    mu: withDefault(multiple(legacy), 'a'),
+    p: withDefault(positional(legacy), 'a'),
+    m: map(short(legacy, 'x'), (v: string) => v.length)
+  }
+  expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{
+    s: unknown
+    d: unknown
+    r: unknown
+    mu: unknown[]
+    p: unknown
+    m?: number
+  }>()
+  const acceptsStrings = (schema: CombinatorSchema<string>) => schema
+  acceptsStrings(short(legacy, 'x'))
+})
