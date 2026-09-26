@@ -548,7 +548,7 @@ The value given on the command line is checked before `parse`, so `parse` receiv
 
 Default value used when the argument is not provided. The type must match the argument's `type` property.
 
-The default is used as is. It does not go through `parse`, including when an option is given without a value. An explicit empty value, such as `--name=` or `-n ''`, is a value, not a missing one: a `string` option without `parse` gets `''` instead of the default, unless it is `required`. What `parse` returns is a value too, `undefined` and `null` included, and the default does not replace it.
+The default is used as is. It does not go through `parse`, including when an option is given without a value. An explicit empty value, such as `--name=` or `-n ''`, is a value, not a missing one: a `string` option without `parse` gets `''` instead of the default, unless it is `required`. What `parse` returns is a value too, even `undefined` or `null`, and the default does not replace it.
 
 The value of a `multiple` argument is an array, so its default becomes the only element of the array: `default: 'latest'` gives `['latest']`.
 
