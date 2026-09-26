@@ -6614,6 +6614,20 @@ describe('a mistake in the schema', () => {
     expect(actual).toEqual(values)
     expect(error).toBeUndefined()
   })
+
+  test('no parse function is called when the schema has a mistake', () => {
+    const parse = vi.fn<(value: string) => string>(value => value)
+    const args = {
+      name: { type: 'custom', parse },
+      file: { type: 'positional', parse },
+      config: { type: 'custom' }
+    } satisfies Args
+
+    expect(() => resolveArgs(args, parseArgs(['--name=x', 'a.txt']))).toThrow(
+      "argument 'config' should have a 'parse' function"
+    )
+    expect(parse).not.toHaveBeenCalled()
+  })
 })
 
 /* oxlint-enable no-unsafe-optional-chaining */

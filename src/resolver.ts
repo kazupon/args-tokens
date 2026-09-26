@@ -908,6 +908,21 @@ export function resolveArgs<A extends Args>(
   const positionalTokens: ArgToken[] = []
   const argEntries = Object.entries(args)
 
+  // mistakes in the schema: report them before resolving any argument, whether or not it is given
+  for (const [rawArg, schema] of argEntries) {
+    // an argument with a `parse` function is resolved by it, whatever its type
+    if (typeof schema.parse === 'function') {
+      continue
+    }
+    const arg = getOptionName(rawArg, schema)
+    if (schema.type === 'custom') {
+      throw new TypeError(`argument '${arg}' should have a 'parse' function`)
+    }
+    if (!ARG_TYPES.has(schema.type)) {
+      throw new Error(`Unsupported argument type '${schema.type}' for option '${arg}'`)
+    }
+  }
+
   let currentLongOption: ArgToken | undefined
   let currentShortOption: ArgToken | undefined
   const expandableShortOptions: ArgToken[] = []
@@ -1092,15 +1107,6 @@ export function resolveArgs<A extends Args>(
   let positionalsCount = 0
   for (const [rawArg, schema] of argEntries) {
     const arg = getOptionName(rawArg, schema)
-
-    // mistakes in the schema: report them whether or not the argument is given. An argument with a
-    // `parse` function is resolved by it, whatever its type
-    if (!ARG_TYPES.has(schema.type) && typeof schema.parse !== 'function') {
-      throw new Error(`Unsupported argument type '${schema.type}' for option '${arg}'`)
-    }
-    if (schema.type === 'custom' && typeof schema.parse !== 'function') {
-      throw new TypeError(`argument '${arg}' should have a 'parse' function`)
-    }
 
     // initialize explicit state for all options.
     // keyof explicit is generic and cannot be indexed for settings value.
@@ -1364,11 +1370,13 @@ function parse(
       return [token.value, undefined]
     }
     case 'custom': {
-      // When schema.parse is defined, it's handled by the priority check above.
-      // This branch is only reached if schema.parse is missing.
+      // When schema.parse is defined, it's handled by the priority check above. Without it,
+      // `resolveArgs()` throws before resolving any argument, so this is only a guard.
       throw new TypeError(`argument '${option}' should have a 'parse' function`)
     }
     default: {
+      // `resolveArgs()` throws for an unsupported type without `parse` before resolving any
+      // argument, so this is only a guard
       throw new Error(`Unsupported argument type '${schema.type}' for option '${option}'`)
     }
   }
