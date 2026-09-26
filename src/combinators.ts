@@ -80,13 +80,26 @@ export type Combinator<T> = {
 
 /**
  * A schema produced by combinator factory functions.
- * Any {@link ArgSchema} with a parse function qualifies.
+ * Any {@link ArgSchema} whose parse function returns `T` qualifies. The `parse` of
+ * {@link ArgSchema}, which returns `any`, is left out, so that a schema fits only where the values
+ * that it parses do: `integer()` is not a `CombinatorSchema<string>`.
  *
  * @typeParam T - The parsed value type.
  *
  * @experimental
  */
-export type CombinatorSchema<T> = ArgSchema & Combinator<T>
+export type CombinatorSchema<T> = Omit<ArgSchema, 'parse'> & Combinator<T>
+
+/**
+ * How {@link short}, {@link describe}, {@link withDefault}, {@link required}, {@link multiple} and
+ * {@link positional} read a schema typed as `any`: its value is typed `unknown`, and the `parse` of
+ * {@link ArgSchema}, which returns `any`, is kept, so that the result still fits any
+ * {@link CombinatorSchema}, as the schema typed as `any` does.
+ *
+ * For a schema typed by a type parameter `S`, the result is checked as both this type and `S`, so
+ * it fits where `S` does.
+ */
+type UntypedCombinatorSchema = ArgSchema & Combinator<unknown>
 
 function createInvalidTypeError(
   message: string,
@@ -611,14 +624,14 @@ type PositionalParserKey =
 /**
  * The positional argument schema that {@link positional} returns for a parser: the properties it
  * keeps, with their types, as `type: 'positional'`. A parser of type `any` is read as
- * `CombinatorSchema<unknown>`.
+ * {@link UntypedCombinatorSchema}.
  */
 type PositionalWithParser<S> = {
   [
-    K in keyof (0 extends 1 & S ? CombinatorSchema<unknown> : S) as K extends PositionalParserKey
+    K in keyof (0 extends 1 & S ? UntypedCombinatorSchema : S) as K extends PositionalParserKey
       ? K
       : never
-  ]: (0 extends 1 & S ? CombinatorSchema<unknown> : S)[K]
+  ]: (0 extends 1 & S ? UntypedCombinatorSchema : S)[K]
 } & ArgSchemaPositionalType
 
 /**
@@ -977,7 +990,8 @@ type CombinatorWithDefault<T> = { default: T }
  * `T` is inferred from `schema` only, so `withDefault(choice(['auto', 'always']), 'awlays')` is a
  * type error instead of adding `'awlays'` to the type. The schema must parse to a string, number or
  * boolean, since the default can only be one of them and does not go through `parse`: a schema that
- * parses to another type, such as a `Date`, cannot have a default.
+ * parses to another type, such as a `Date`, or whose `parse` can return `null` or `undefined`,
+ * cannot have a default, and giving it one is a type error.
  * Other modifiers on `schema` (for example {@link multiple}) are kept. The default of a `multiple`
  * schema is one value of the parsed type, which becomes the only element of the array.
  *
@@ -1017,10 +1031,11 @@ export function withDefault<
  *
  * Omits the keys of `F` from `S` first, so that what `F` sets replaces what `S` has, instead of
  * making an intersection with it (`'A' & 'B'`, that is `never`, for a description set twice).
- * A schema typed as `any`, such as one from untyped code, is taken as `CombinatorSchema<unknown>`,
- * so that the result is still an argument schema.
+ * A schema typed as `any`, such as one from untyped code, is taken as
+ * {@link UntypedCombinatorSchema}, so that the result is still an argument schema, and still fits
+ * any {@link CombinatorSchema}, unless `F` sets `parse`, as {@link map} does.
  */
-type WithFlag<S, F> = Omit<0 extends 1 & S ? CombinatorSchema<unknown> : S, keyof F> & F
+type WithFlag<S, F> = Omit<0 extends 1 & S ? UntypedCombinatorSchema : S, keyof F> & F
 
 /**
  * Options for the {@link multiple} combinator.
@@ -1103,7 +1118,8 @@ type CombinatorShort<S extends string> = { short: S }
  * The original schema is not modified.
  * Other modifiers on `schema` (for example {@link multiple}) are kept.
  *
- * @typeParam T - The schema's parsed type.
+ * @typeParam T - The schema's parsed type, when type arguments are given explicitly. It is not
+ *   inferred, so that `schema` can be a union of schemas of different types.
  * @typeParam A - The short alias string literal type.
  * @typeParam S - The input combinator schema, inferred from `schema`. Its other modifiers are kept.
  *   If type arguments are given explicitly without `S`, `S` is `CombinatorSchema<T>`, and the type
@@ -1125,7 +1141,7 @@ type CombinatorShort<S extends string> = { short: S }
  */
 // @__NO_SIDE_EFFECTS__
 export function short<T, A extends string, S extends CombinatorSchema<T> = CombinatorSchema<T>>(
-  schema: S & CombinatorSchema<T>,
+  schema: S,
   alias: A
 ): WithFlag<S, CombinatorShort<A>> {
   return {
@@ -1145,7 +1161,8 @@ type CombinatorDescribe<D extends string> = { description: D }
  * The original schema is not modified.
  * Other modifiers on `schema` (for example {@link required}) are kept.
  *
- * @typeParam T - The schema's parsed type.
+ * @typeParam T - The schema's parsed type, when type arguments are given explicitly. It is not
+ *   inferred, so that `schema` can be a union of schemas of different types.
  * @typeParam D - The description string literal type.
  * @typeParam S - The input combinator schema, inferred from `schema`. Its other modifiers are kept.
  *   If type arguments are given explicitly without `S`, `S` is `CombinatorSchema<T>`, and the type
@@ -1166,7 +1183,7 @@ type CombinatorDescribe<D extends string> = { description: D }
  */
 // @__NO_SIDE_EFFECTS__
 export function describe<T, D extends string, S extends CombinatorSchema<T> = CombinatorSchema<T>>(
-  schema: S & CombinatorSchema<T>,
+  schema: S,
   text: D
 ): WithFlag<S, CombinatorDescribe<D>> {
   return {

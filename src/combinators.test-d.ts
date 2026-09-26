@@ -21,6 +21,7 @@ import {
   withDefault
 } from './combinators.ts'
 
+import type { CombinatorSchema } from './combinators.ts'
 import type { ArgValues, ExtractOptionValue } from './resolver.ts'
 
 test('base combinator type inference', () => {
@@ -595,4 +596,133 @@ test('a required option that the options have only in some cases leaves the valu
     name?: string
     user?: string
   }>()
+})
+
+test('a combinator schema is typed by what its parse function returns', () => {
+  const acceptsStrings = (schema: CombinatorSchema<string>) => schema
+  // @ts-expect-error -- integer() parses to a number, not a string
+  acceptsStrings(integer())
+  acceptsStrings(string())
+
+  // @ts-expect-error -- the transform takes the number that integer() parses to
+  map(integer(), (n: string) => n.toUpperCase())
+
+  // @ts-expect-error -- parse can return null, which cannot be a default
+  withDefault(combinator({ parse: (v: string) => (v === 'none' ? null : v) }), 'auto')
+
+  const date = combinator({ parse: (value: string) => new Date(value) })
+  // @ts-expect-error -- a schema that parses to a Date cannot have a default
+  withDefault(date, '2024-12-31')
+  expectTypeOf<ExtractOptionValue<typeof date>>().toEqualTypeOf<Date>()
+
+  // calling the parse function of a combinator schema gives what it parses to
+  expectTypeOf(integer().parse('1')).toEqualTypeOf<number>()
+})
+
+test('a schema typed as any still fits any combinator schema after a modifier', () => {
+  const legacy = string() as any
+  const args = {
+    s: withDefault(short(legacy, 'x'), 1),
+    d: withDefault(describe(legacy, 'D'), 'a'),
+    r: withDefault(required(legacy), true),
+    mu: withDefault(multiple(legacy), 'a'),
+    p: withDefault(positional(legacy), 'a'),
+    m: map(short(legacy, 'x'), (v: string) => v.length)
+  }
+  expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{
+    s: unknown
+    d: unknown
+    r: unknown
+    mu: unknown[]
+    p: unknown
+    m?: number
+  }>()
+  const acceptsStrings = (schema: CombinatorSchema<string>) => schema
+  acceptsStrings(short(legacy, 'x'))
+})
+
+test('short() and describe() take a union of schemas of different types', () => {
+  const strict = Math.random() > 0.5
+  const port = strict ? integer({ min: 1 }) : string()
+  const args = {
+    a: short(port, 'p'),
+    b: describe(port, 'Port'),
+    c: short(required(port), 'r'),
+    d: describe(short(strict ? choice(['debug', 'info'] as const) : boolean(), 'l'), 'Level')
+  }
+  expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{
+    a?: string | number
+    b?: string | number
+    c: string | number
+    d?: 'debug' | 'info' | boolean
+  }>()
+
+  // @ts-expect-error -- map() infers the parsed type from one schema of the union only
+  map(port, v => String(v))
+  // @ts-expect-error -- so does withDefault()
+  withDefault(port, 'x')
+  // a type that covers both schemas of the union works with them
+  const annotated: CombinatorSchema<string | number> = port
+  const covered = { m: map(annotated, v => String(v)), w: withDefault(annotated, 'x') }
+  expectTypeOf<ArgValues<typeof covered>>().toEqualTypeOf<{ m?: string; w: string | number }>()
+})
+
+test('each combinator schema fits only where the values that it parses do', () => {
+  const acceptsStrings = (schema: CombinatorSchema<string>) => schema
+  const acceptsNumbers = (schema: CombinatorSchema<number>) => schema
+  // @ts-expect-error -- number() parses to a number
+  acceptsStrings(number())
+  // @ts-expect-error -- float() parses to a number
+  acceptsStrings(float())
+  // @ts-expect-error -- boolean() parses to a boolean
+  acceptsStrings(boolean())
+  // @ts-expect-error -- choice() parses to one of its strings
+  acceptsNumbers(choice(['a', 'b']))
+  // @ts-expect-error -- combinator() parses to what its parse returns
+  acceptsStrings(combinator({ parse: Number }))
+  // @ts-expect-error -- the modifiers keep the type that parse returns
+  acceptsStrings(short(withDefault(integer(), 1), 'p'))
+  // @ts-expect-error -- so does hidden()
+  acceptsStrings(hidden(integer()))
+  // @ts-expect-error -- so does positional()
+  acceptsStrings(positional(integer()))
+  // a parse that returns any still fits any combinator schema
+  acceptsStrings(combinator({ parse: JSON.parse }))
+  acceptsNumbers(combinator({ parse: JSON.parse }))
+
+  const registry: Record<string, CombinatorSchema<unknown>> = { port: integer() }
+  // @ts-expect-error -- CombinatorSchema<unknown> may parse to anything and cannot take a default
+  withDefault(registry.port, 8080)
+  const anyRegistry: Record<string, CombinatorSchema<any>> = { port: integer() }
+  withDefault(anyRegistry.port, 8080)
+
+  // combinator() with a parse function typed as any (from an untyped module) parses to unknown
+  const untyped: any = Number
+  // @ts-expect-error -- combinator() infers unknown from a parse function typed as any
+  withDefault(combinator({ parse: untyped }), 8080)
+  withDefault(combinator<number>({ parse: untyped }), 8080)
+})
+
+test('a modifier on a schema typed by a type parameter fits where the type parameter does', () => {
+  const withPortDefault = <S extends CombinatorSchema<number>>(schema: S) =>
+    withDefault(required(schema), 8080)
+  const doubled = <S extends CombinatorSchema<number>>(schema: S) =>
+    map(short(schema, 'd'), (n: number) => n * 2)
+  const asNumbers = <S extends CombinatorSchema<number>>(schema: S): CombinatorSchema<number> =>
+    short(schema, 'c')
+  const args = {
+    port: withPortDefault(integer()),
+    twice: doubled(integer()),
+    count: asNumbers(integer())
+  }
+  expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{
+    port: number
+    twice?: number
+    count?: number
+  }>()
+
+  const asStrings = <S extends CombinatorSchema<number>>(schema: S): CombinatorSchema<string> =>
+    // @ts-expect-error -- S parses to numbers, not strings
+    required(schema)
+  expectTypeOf(asStrings).toBeFunction()
 })

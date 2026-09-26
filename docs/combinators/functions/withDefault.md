@@ -9,7 +9,8 @@ The original schema is not modified. The default must be a value of the schema's
 `T` is inferred from `schema` only, so `withDefault(choice(['auto', 'always']), 'awlays')` is a
 type error instead of adding `'awlays'` to the type. The schema must parse to a string, number or
 boolean, since the default can only be one of them and does not go through `parse`: a schema that
-parses to another type, such as a `Date`, cannot have a default.
+parses to another type, such as a `Date`, or whose `parse` can return `null` or `undefined`,
+cannot have a default, and giving it one is a type error.
 Other modifiers on `schema` (for example [multiple](/docs/combinators/functions/multiple.md)) are kept. The default of a `multiple`
 schema is one value of the parsed type, which becomes the only element of the array.
 
