@@ -49,7 +49,7 @@ const args = {
 ```ts
 export function positional<const R extends boolean>(
   parser: BaseOptions & { required: R }
-): WithRequiredOption<CombinatorSchema<string> & ArgSchemaPositionalType, R>
+): WithRequiredOption<Omit<CombinatorSchema<string>, 'type'> & ArgSchemaPositionalType, R>
 ```
 
 > [!WARNING]
@@ -74,7 +74,7 @@ With `required: false` in the options, the positional argument is optional, in i
 
 ### Returns
 
-`WithRequiredOption`\<[`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`string`\> & `ArgSchemaPositionalType`, `R`\> — A positional argument schema resolving to string.
+`WithRequiredOption`\<`Omit`\<[`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`string`\>, 'type'\> & `ArgSchemaPositionalType`, `R`\> — A positional argument schema resolving to string.
 
 ### Examples
 
@@ -93,7 +93,9 @@ const args = {
 ## Call Signature
 
 ```ts
-export function positional(parser?: BaseOptions): CombinatorSchema<string> & ArgSchemaPositionalType
+export function positional(
+  parser?: BaseOptions
+): Omit<CombinatorSchema<string>, 'type'> & ArgSchemaPositionalType
 ```
 
 > [!WARNING]
@@ -116,7 +118,7 @@ collects the values as strings.
 
 ### Returns
 
-[`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`string`\> & `ArgSchemaPositionalType` — A positional argument schema resolving to string.
+`Omit`\<[`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`string`\>, 'type'\> & `ArgSchemaPositionalType` — A positional argument schema resolving to string.
 
 ### Examples
 
