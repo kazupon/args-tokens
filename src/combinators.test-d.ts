@@ -577,3 +577,22 @@ test('a required option of type boolean leaves the value optional', () => {
   const args = { size: integer({ required: flag }) }
   expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{ size?: number }>()
 })
+
+test('a required option that the options have only in some cases leaves the value optional', () => {
+  const strict = Math.random() > 0.5
+  const maybe: { required?: true } = {}
+  const args = {
+    port: integer(strict ? { required: true } : {}),
+    retries: integer({ min: 0, ...(strict ? { required: true } : {}) }),
+    host: string({ description: 'Host', ...(strict && { required: true }) }),
+    name: string({ required: strict || undefined }),
+    user: string(maybe)
+  }
+  expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{
+    port?: number
+    retries?: number
+    host?: string
+    name?: string
+    user?: string
+  }>()
+})

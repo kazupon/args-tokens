@@ -158,21 +158,18 @@ export interface BaseOptions {
    * Mark as required.
    *
    * A literal `true` or `false` is kept in the type of the schema: `true` types the value as
-   * present, as {@link required} does, and `false` makes a positional argument optional.
+   * present, as {@link required} does, and `false` makes a positional argument optional. A
+   * `required` of type `boolean`, or one that the options have only in some cases, such as
+   * `strict ? { required: true } : {}`, is not kept.
    */
   required?: boolean
 }
 
 /**
  * The schema `S` with the literal type `R` of `required` in the options: `true` types the value as
- * present, and `false` makes a positional argument optional. `S` stays as is when `R` is not `true`
- * or `false`, such as when the options have no `required` or a `boolean` one.
+ * present, and `false` makes a positional argument optional. `S` stays as is when `R` is `boolean`.
  */
-type WithRequiredOption<S, R> = [R] extends [boolean]
-  ? boolean extends R
-    ? S
-    : WithFlag<S, { required: R }>
-  : S
+type WithRequiredOption<S, R extends boolean> = boolean extends R ? S : WithFlag<S, { required: R }>
 
 /**
  * Options for the {@link string} combinator.
@@ -212,9 +209,26 @@ export interface StringOptions extends BaseOptions {
  *
  * @experimental
  */
-export function string<const R extends boolean | undefined = boolean | undefined>(
-  opts?: StringOptions & { required?: R }
+export function string<const R extends boolean>(
+  opts: StringOptions & { required: R }
 ): WithRequiredOption<CombinatorSchema<string>, R>
+
+/**
+ * Create a string argument schema with optional validation.
+ *
+ * @param opts - Validation options.
+ * @returns A combinator schema that resolves to string.
+ *
+ * @example
+ * ```ts
+ * const args = {
+ *   name: string({ minLength: 1, maxLength: 50 })
+ * }
+ * ```
+ *
+ * @experimental
+ */
+export function string(opts?: StringOptions): CombinatorSchema<string>
 // @__NO_SIDE_EFFECTS__
 export function string(opts?: StringOptions): CombinatorSchema<string> {
   const schema: CombinatorSchema<string> = {
@@ -281,9 +295,28 @@ export interface NumberOptions extends BaseOptions {
  *
  * @experimental
  */
-export function number<const R extends boolean | undefined = boolean | undefined>(
-  opts?: NumberOptions & { required?: R }
+export function number<const R extends boolean>(
+  opts: NumberOptions & { required: R }
 ): WithRequiredOption<CombinatorSchema<number>, R>
+
+/**
+ * Create a number argument schema with optional range validation.
+ *
+ * Accepts any numeric value (integer or float).
+ *
+ * @param opts - Range options.
+ * @returns A combinator schema that resolves to number.
+ *
+ * @example
+ * ```ts
+ * const args = {
+ *   timeout: number({ min: 0, max: 30000 })
+ * }
+ * ```
+ *
+ * @experimental
+ */
+export function number(opts?: NumberOptions): CombinatorSchema<number>
 // @__NO_SIDE_EFFECTS__
 export function number(opts?: NumberOptions): CombinatorSchema<number> {
   return pureParse({
@@ -345,9 +378,28 @@ export interface IntegerOptions extends BaseOptions {
  *
  * @experimental
  */
-export function integer<const R extends boolean | undefined = boolean | undefined>(
-  opts?: IntegerOptions & { required?: R }
+export function integer<const R extends boolean>(
+  opts: IntegerOptions & { required: R }
 ): WithRequiredOption<CombinatorSchema<number>, R>
+
+/**
+ * Create an integer argument schema with optional range validation.
+ *
+ * Only accepts integer values (no decimals).
+ *
+ * @param opts - Range options.
+ * @returns A combinator schema that resolves to number (integer).
+ *
+ * @example
+ * ```ts
+ * const args = {
+ *   retries: integer({ min: 0, max: 10 })
+ * }
+ * ```
+ *
+ * @experimental
+ */
+export function integer(opts?: IntegerOptions): CombinatorSchema<number>
 // @__NO_SIDE_EFFECTS__
 export function integer(opts?: IntegerOptions): CombinatorSchema<number> {
   return pureParse({
@@ -412,9 +464,28 @@ export interface FloatOptions extends BaseOptions {
  *
  * @experimental
  */
-export function float<const R extends boolean | undefined = boolean | undefined>(
-  opts?: FloatOptions & { required?: R }
+export function float<const R extends boolean>(
+  opts: FloatOptions & { required: R }
 ): WithRequiredOption<CombinatorSchema<number>, R>
+
+/**
+ * Create a floating-point argument schema with optional range validation.
+ *
+ * Rejects `NaN` and `Infinity` values.
+ *
+ * @param opts - Range options.
+ * @returns A combinator schema that resolves to number (float).
+ *
+ * @example
+ * ```ts
+ * const args = {
+ *   ratio: float({ min: 0, max: 1 })
+ * }
+ * ```
+ *
+ * @experimental
+ */
+export function float(opts?: FloatOptions): CombinatorSchema<number>
 // @__NO_SIDE_EFFECTS__
 export function float(opts?: FloatOptions): CombinatorSchema<number> {
   return pureParse({
@@ -479,9 +550,31 @@ export interface BooleanOptions extends BaseOptions {
  *
  * @experimental
  */
-export function boolean<const R extends boolean | undefined = boolean | undefined>(
-  opts?: BooleanOptions & { required?: R }
+export function boolean<const R extends boolean>(
+  opts: BooleanOptions & { required: R }
 ): WithRequiredOption<CombinatorSchema<boolean>, R>
+
+/**
+ * Create a boolean argument schema.
+ *
+ * Boolean arguments are existence-based. The resolver passes `"true"` or `"false"`
+ * to the parse function based on the presence or negation of the flag, or on an explicit
+ * `=true` / `=false` value. Other inline values are rejected before the parse function is called.
+ *
+ * @param opts - Boolean options.
+ * @returns A combinator schema for boolean flags.
+ *
+ * @example
+ * ```ts
+ * const args = {
+ *   color: boolean({ negatable: true })
+ * }
+ * // Usage: --color (true), --no-color (false)
+ * ```
+ *
+ * @experimental
+ */
+export function boolean(opts?: BooleanOptions): CombinatorSchema<boolean>
 // @__NO_SIDE_EFFECTS__
 export function boolean(opts?: BooleanOptions): CombinatorSchema<boolean> {
   return {
@@ -573,6 +666,30 @@ export function positional<T, S extends CombinatorSchema<T> = CombinatorSchema<T
  * @typeParam R - The type of `required` in the options, which the positional argument keeps when it
  *   is `true` or `false`.
  *
+ * @param parser - Base options (description, short, required).
+ * @returns A positional argument schema resolving to string.
+ *
+ * @example
+ * ```ts
+ * const args = {
+ *   command: positional(),           // resolves to string
+ *   port: positional(integer()),     // resolves to number
+ *   query: unrequired(positional())  // optional positional
+ * }
+ * ```
+ *
+ * @experimental
+ */
+export function positional<const R extends boolean>(
+  parser: BaseOptions & { required: R }
+): WithRequiredOption<ArgSchema & ArgSchemaPositionalType, R>
+
+/**
+ * Create a positional argument schema.
+ *
+ * Without a parser, resolves to string.
+ * With a parser (e.g., `positional(integer())`), resolves to the parser's return type.
+ *
  * @param parser - Optional base options (description, short, required).
  * @returns A positional argument schema resolving to string.
  *
@@ -587,9 +704,7 @@ export function positional<T, S extends CombinatorSchema<T> = CombinatorSchema<T
  *
  * @experimental
  */
-export function positional<const R extends boolean | undefined = boolean | undefined>(
-  parser?: BaseOptions & { required?: R }
-): WithRequiredOption<ArgSchema & ArgSchemaPositionalType, R>
+export function positional(parser?: BaseOptions): ArgSchema & ArgSchemaPositionalType
 // @__NO_SIDE_EFFECTS__
 export function positional<T>(
   parser?: CombinatorSchema<T> | BaseOptions
@@ -639,13 +754,36 @@ export function positional<T>(
  *
  * @experimental
  */
-export function choice<
-  const T extends readonly string[],
-  const R extends boolean | undefined = boolean | undefined
->(
+export function choice<const T extends readonly string[], const R extends boolean>(
   values: T,
-  opts?: BaseOptions & { required?: R }
+  opts: BaseOptions & { required: R }
 ): WithRequiredOption<CombinatorSchema<T[number]>, R>
+
+/**
+ * Create an enum-like argument schema with literal type inference.
+ *
+ * Uses `const T` generic to infer literal union types from the values array.
+ *
+ * @typeParam T - The readonly array of allowed string values.
+ *
+ * @param values - Allowed values.
+ * @param opts - Common options (description, short, required).
+ * @returns A combinator schema that resolves to a union of the allowed values.
+ *
+ * @example
+ * ```ts
+ * const args = {
+ *   level: choice(['debug', 'info', 'warn', 'error'] as const)
+ * }
+ * // typeof values.level === 'debug' | 'info' | 'warn' | 'error'
+ * ```
+ *
+ * @experimental
+ */
+export function choice<const T extends readonly string[]>(
+  values: T,
+  opts?: BaseOptions
+): CombinatorSchema<T[number]>
 // @__NO_SIDE_EFFECTS__
 export function choice<const T extends readonly string[]>(
   values: T,
@@ -730,9 +868,41 @@ export interface CombinatorOptions<T> extends BaseOptions {
  *
  * @experimental
  */
-export function combinator<T, const R extends boolean | undefined = boolean | undefined>(
-  config: CombinatorOptions<T> & { required?: R }
+export function combinator<T, const R extends boolean>(
+  config: CombinatorOptions<T> & { required: R }
 ): WithRequiredOption<CombinatorSchema<T>, R>
+
+/**
+ * Create a custom argument schema with a user-defined parse function.
+ *
+ * This is the most general custom combinator. Use it when none of the built-in
+ * base combinators ({@link string}, {@link number}, {@link integer},
+ * {@link float}, {@link boolean}, {@link choice}) fit your needs.
+ *
+ * The returned schema has `type: 'custom'`.
+ *
+ * @typeParam T - The parsed value type.
+ *
+ * @param config - Configuration with a parse function and optional metavar.
+ * @returns A combinator schema that resolves to the parse function's return type.
+ *
+ * @example
+ * ```ts
+ * const date = combinator({
+ *   parse: (value) => {
+ *     const d = new Date(value)
+ *     if (isNaN(d.getTime())) {
+ *       throw new Error('Invalid date format')
+ *     }
+ *     return d
+ *   },
+ *   metavar: 'date'
+ * })
+ * ```
+ *
+ * @experimental
+ */
+export function combinator<T>(config: CombinatorOptions<T>): CombinatorSchema<T>
 // @__NO_SIDE_EFFECTS__
 export function combinator<T>(config: CombinatorOptions<T>): CombinatorSchema<T> {
   return {
