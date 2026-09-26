@@ -164,10 +164,11 @@ export interface ArgSchema {
    * option counts as given: it is `true` in `explicit` and takes part in conflicts, as any other
    * given option does.
    *
-   * For single-value positional arguments, omitting `required` keeps the argument
-   * required for compatibility. Set `required: false` to make a positional argument
-   * optional. Optional positional arguments leave enough input values for later
-   * required positional arguments before consuming a value.
+   * For single-value positional arguments, omitting `required` keeps the argument required for
+   * compatibility, unless it has a `default`, which makes it optional. A `multiple` positional
+   * argument is optional unless `required: true` is set. Set `required: false` to make a positional
+   * argument optional. Optional positional arguments leave enough input values for later required
+   * positional arguments before consuming a value.
    *
    * @example
    * Required arguments:

@@ -456,7 +456,7 @@ Marks the argument as required. When `true`, the argument must be provided. When
 
 An option given without a value, such as `--input` with nothing after it, is reported as `ArgsValidationErrorKeys.missingValue` instead. An explicit empty value, such as `--input=`, or `-i ''` with the short name `i`, is still reported as required, but the option counts as given: it is `true` in the `explicit` result of `resolveArgs()` and `parse()`, and takes part in conflicts, as any other given option does.
 
-Single-value positional arguments are required by default for compatibility. Set `required: false` to make a positional argument explicitly optional. When an optional positional argument appears before later required positional arguments, it consumes a value only when enough values remain for those required positional arguments.
+Single-value positional arguments are required by default for compatibility, unless they have a `default`, which makes them optional. A `multiple` positional argument is optional unless `required: true` is set. Set `required: false` to make a positional argument explicitly optional. When an optional positional argument appears before later required positional arguments, it consumes a value only when enough values remain for those required positional arguments.
 
 <!-- eslint-skip -->
 
