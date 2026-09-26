@@ -81,8 +81,8 @@ export type Combinator<T> = {
 /**
  * A schema produced by combinator factory functions.
  * Any {@link ArgSchema} whose parse function returns `T` qualifies. The `parse` of
- * {@link ArgSchema}, which returns `any`, is left out, so that a schema of one type is not a schema
- * of another: `integer()` is not a `CombinatorSchema<string>`.
+ * {@link ArgSchema}, which returns `any`, is left out, so that a schema fits only where the values
+ * that it parses do: `integer()` is not a `CombinatorSchema<string>`.
  *
  * @typeParam T - The parsed value type.
  *
@@ -986,8 +986,8 @@ type CombinatorWithDefault<T> = { default: T }
  * `T` is inferred from `schema` only, so `withDefault(choice(['auto', 'always']), 'awlays')` is a
  * type error instead of adding `'awlays'` to the type. The schema must parse to a string, number or
  * boolean, since the default can only be one of them and does not go through `parse`: a schema that
- * parses to another type, such as a `Date`, or that can return `null` or `undefined`, cannot have a
- * default, and giving it one is a type error.
+ * parses to another type, such as a `Date`, or whose `parse` can return `null` or `undefined`,
+ * cannot have a default, and giving it one is a type error.
  * Other modifiers on `schema` (for example {@link multiple}) are kept. The default of a `multiple`
  * schema is one value of the parsed type, which becomes the only element of the array.
  *
