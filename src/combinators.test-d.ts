@@ -406,6 +406,28 @@ test('withDefault checks the default of a schema with other modifiers', () => {
   withDefault(short(integer(), 'p'), '8080')
 })
 
+test('the modifiers keep a schema typed as any an argument schema', () => {
+  const legacy = string() as any
+  const args = {
+    name: required(string()),
+    s: short(legacy, 'x'),
+    d: describe(legacy, 'D'),
+    w: withDefault(legacy, 1),
+    m: map(legacy, (v: unknown) => String(v)),
+    mu: multiple(legacy),
+    r: required(legacy)
+  }
+  expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{
+    name: string
+    s?: unknown
+    d?: unknown
+    w: unknown
+    m?: string
+    mu?: unknown[]
+    r: unknown
+  }>()
+})
+
 test('unrequired overrides required type', () => {
   const composed = unrequired(required(string()))
   expectTypeOf(composed.required).toEqualTypeOf<false>()

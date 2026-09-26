@@ -739,12 +739,14 @@ export function withDefault<
 }
 
 /**
- * Overlay a flag onto a combinator schema without dropping other modifiers.
+ * Overlay the properties of `F` onto a combinator schema without dropping its other properties.
  *
- * Omits the flag keys from `S` first so optional `ArgSchema` fields
- * (`multiple?: true`, `required?: boolean`) cannot stay as unions.
+ * Omits the keys of `F` from `S` first, so that what `F` sets replaces what `S` has, instead of
+ * making an intersection with it (`'A' & 'B'`, that is `never`, for a description set twice).
+ * A schema typed as `any`, such as one from untyped code, is taken as `CombinatorSchema<unknown>`,
+ * so that the result is still an argument schema.
  */
-type WithFlag<S, F> = Omit<S, keyof F> & F
+type WithFlag<S, F> = Omit<0 extends 1 & S ? CombinatorSchema<unknown> : S, keyof F> & F
 
 /**
  * Options for the {@link multiple} combinator.
