@@ -3969,6 +3969,19 @@ describe('explicit provision detection', () => {
       expect(values.port).toBe(8080)
       expect(explicit.port).toBe(false)
     })
+
+    test('value provided but rejected, and the default fills in', () => {
+      const argv = ['dev', '--port', 'abc']
+
+      const tokens = parseArgs(argv)
+      const { values, explicit, error } = resolveArgs(schema, tokens)
+
+      expect(error?.errors.map(e => (e as ArgsValidationError).code)).toEqual([
+        ArgsValidationErrorKeys.invalidType
+      ])
+      expect(values.port).toBe(8080)
+      expect(explicit.port).toBe(true)
+    })
   })
 
   describe('one positional argument', () => {
@@ -4059,6 +4072,56 @@ describe('explicit provision detection', () => {
       const { explicit } = resolveArgs(schema, tokens)
 
       expect(explicit.files).toBe(false)
+    })
+
+    test('value provided but rejected by parse', () => {
+      const schema = {
+        count: {
+          type: 'positional',
+          parse: (value: string) => {
+            if (Number.isNaN(Number(value))) {
+              throw new TypeError(`not a number: ${value}`)
+            }
+            return Number(value)
+          }
+        }
+      } as const satisfies Args
+
+      const argv = ['abc']
+      const tokens = parseArgs(argv)
+      const { values, explicit, error } = resolveArgs(schema, tokens)
+
+      expect(error?.errors.map(e => (e as ArgsValidationError).code)).toEqual([
+        ArgsValidationErrorKeys.customParse
+      ])
+      expect(values.count).toBeUndefined()
+      expect(explicit.count).toBe(true)
+    })
+
+    test('values provided but all rejected by parse for multiple: true', () => {
+      const schema = {
+        files: {
+          type: 'positional',
+          multiple: true,
+          parse: (value: string) => {
+            if (!value.endsWith('.js')) {
+              throw new TypeError(`not a JavaScript file: ${value}`)
+            }
+            return value
+          }
+        }
+      } as const satisfies Args
+
+      const argv = ['a.ts', 'b.ts']
+      const tokens = parseArgs(argv)
+      const { values, explicit, error } = resolveArgs(schema, tokens)
+
+      expect(error?.errors.map(e => (e as ArgsValidationError).code)).toEqual([
+        ArgsValidationErrorKeys.customParse,
+        ArgsValidationErrorKeys.customParse
+      ])
+      expect(values.files).toEqual([])
+      expect(explicit.files).toBe(true)
     })
   })
 
