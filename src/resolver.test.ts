@@ -6628,6 +6628,51 @@ describe('a mistake in the schema', () => {
     )
     expect(parse).not.toHaveBeenCalled()
   })
+
+  test.each([
+    { label: 'required, not given', schema: { type: 'custom', required: true }, argv: [] },
+    { label: 'with a default, not given', schema: { type: 'custom', default: 'x' }, argv: [] },
+    { label: 'multiple, not given', schema: { type: 'custom', multiple: true }, argv: [] },
+    { label: 'given without a value', schema: { type: 'custom', short: 'c' }, argv: ['--config'] },
+    { label: 'given as -c without a value', schema: { type: 'custom', short: 'c' }, argv: ['-c'] },
+    {
+      label: 'with a parse that is not a function',
+      schema: { type: 'custom', parse: 'x' },
+      argv: []
+    }
+  ])('a custom argument without parse throws: $label', ({ schema, argv }) => {
+    const args = { config: schema } as unknown as Args
+
+    expect(() => resolveArgs(args, parseArgs(argv))).toThrow(TypeError)
+    expect(() => resolveArgs(args, parseArgs(argv))).toThrow(
+      "argument 'config' should have a 'parse' function"
+    )
+  })
+
+  test.each([
+    { label: 'no type', schema: {}, argv: [], type: 'undefined' },
+    { label: 'no type', schema: {}, argv: ['--size-limit=1'], type: 'undefined' },
+    {
+      label: 'a multiple argument of an unsupported type',
+      schema: { type: 'integer', multiple: true },
+      argv: [],
+      type: 'integer'
+    },
+    {
+      label: 'a multiple argument of an unsupported type',
+      schema: { type: 'integer', multiple: true },
+      argv: ['--size-limit=1'],
+      type: 'integer'
+    }
+  ])('$label throws an Error named as on the command line with $argv', ({ schema, argv, type }) => {
+    const args = { sizeLimit: schema } as unknown as Args
+
+    expect(() => resolveArgs(args, parseArgs(argv), { toKebab: true })).toThrow(
+      `Unsupported argument type '${type}' for option 'size-limit'`
+    )
+    // an `Error`, not a `TypeError`, as before
+    expect(() => resolveArgs(args, parseArgs(argv), { toKebab: true })).not.toThrow(TypeError)
+  })
 })
 
 /* oxlint-enable no-unsafe-optional-chaining */
