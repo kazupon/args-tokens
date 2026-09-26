@@ -706,7 +706,9 @@ type CombinatorWithDefault<T> = { default: T }
  *
  * The original schema is not modified. The default must be a value of the schema's parsed type:
  * `T` is inferred from `schema` only, so `withDefault(choice(['auto', 'always']), 'awlays')` is a
- * type error instead of adding `'awlays'` to the type.
+ * type error instead of adding `'awlays'` to the type. The parsed type must be a string, number or
+ * boolean, since the default is one of them and does not go through `parse`: a schema that parses
+ * to another type, such as a `Date`, cannot have a default.
  * Other modifiers on `schema` (for example {@link multiple}) are kept. The default of a `multiple`
  * schema is one value of the parsed type, which becomes the only element of the array.
  *

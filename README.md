@@ -774,7 +774,7 @@ const { values } = resolveArgs(schema, tokens)
 - `hidden(schema)` — Hide from generated help or usage output
 - `required(schema)` — Mark as required (error if not provided)
 - `unrequired(schema)` — Mark as not required (override `required: true`, or make a positional optional)
-- `withDefault(schema, defaultValue)` — Set a default value of the schema's type
+- `withDefault(schema, defaultValue)` — Set a default value of the schema's type, which must be a string, number or boolean
 - `multiple(schema)` — Accept multiple values (resolves to array)
 - `map(schema, transform)` — Transform the parsed value
 
@@ -820,13 +820,16 @@ const json = combinator({
   metavar: 'json'
 })
 
+// Day of the week of a date, 0 for Sunday
+const weekday = map(date, d => d.getDay())
+
 // Compose with modifier combinators
 const schema = {
   since: required(date), // --since 2024-01-15 (required)
-  until: withDefault(date, new Date()), // --until 2024-12-31 (optional with default)
+  until: date, // --until 2024-12-31 (optional)
   config: short(json, 'c'), // -c '{"key":"value"}' or --config '...'
   timestamps: multiple(date), // --timestamps 2024-01-01 --timestamps 2024-06-01
-  days: map(date, d => d.getDay()) // --days 2024-01-15 → 1 (Monday)
+  days: withDefault(weekday, 0) // --days 2024-01-15 → 1 (Monday), 0 without it
 }
 
 const tokens = parseArgs(['--since', '2024-01-15', '--days', '2024-01-15'])
