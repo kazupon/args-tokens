@@ -798,6 +798,14 @@ describe('choice combinator', () => {
     })
   })
 
+  test('keeps multiple of its parser', () => {
+    const schema = positional(multiple(integer()))
+    expect(schema.multiple).toBe(true)
+    const { values, error } = resolveArgs({ ids: schema }, parseArgs(['1', '2']))
+    expect(error).toBeUndefined()
+    expect(values.ids).toEqual([1, 2])
+  })
+
   test('a positional choice keeps its own check', () => {
     const { values, error } = resolveArgs(
       { level: positional(choice(['debug', 'info'] as const)) },
