@@ -674,6 +674,10 @@ export function positional<T, S extends CombinatorSchema<T> = CombinatorSchema<T
  * Without a parser, resolves to string.
  * With a parser (e.g., `positional(integer())`), resolves to the parser's return type.
  *
+ * Without a parser, the schema has a `parse` function that returns the value as is, so that the
+ * modifiers, such as {@link multiple} and {@link withDefault}, take it: `multiple(positional())`
+ * collects the values as strings.
+ *
  * With `required: false` in the options, the positional argument is optional, in its type too.
  *
  * @typeParam R - The type of `required` in the options, which the positional argument keeps when it
@@ -695,13 +699,17 @@ export function positional<T, S extends CombinatorSchema<T> = CombinatorSchema<T
  */
 export function positional<const R extends boolean>(
   parser: BaseOptions & { required: R }
-): WithRequiredOption<ArgSchema & ArgSchemaPositionalType, R>
+): WithRequiredOption<CombinatorSchema<string> & ArgSchemaPositionalType, R>
 
 /**
  * Create a positional argument schema.
  *
  * Without a parser, resolves to string.
  * With a parser (e.g., `positional(integer())`), resolves to the parser's return type.
+ *
+ * Without a parser, the schema has a `parse` function that returns the value as is, so that the
+ * modifiers, such as {@link multiple} and {@link withDefault}, take it: `multiple(positional())`
+ * collects the values as strings.
  *
  * @param parser - Optional base options (description, short, required).
  * @returns A positional argument schema resolving to string.
@@ -717,7 +725,7 @@ export function positional<const R extends boolean>(
  *
  * @experimental
  */
-export function positional(parser?: BaseOptions): ArgSchema & ArgSchemaPositionalType
+export function positional(parser?: BaseOptions): CombinatorSchema<string> & ArgSchemaPositionalType
 // @__NO_SIDE_EFFECTS__
 export function positional<T>(
   parser?: CombinatorSchema<T> | BaseOptions
@@ -735,13 +743,17 @@ export function positional<T>(
     }
   }
   const opts = parser
-  return {
+  const schema: CombinatorSchema<string> & ArgSchemaPositionalType = {
     type: 'positional',
     ...(opts?.description != null ? { description: opts.description } : {}),
     ...(opts?.hidden != null ? { hidden: opts.hidden } : {}),
     ...(opts?.short != null ? { short: opts.short } : {}),
-    ...(opts?.required != null ? { required: opts.required } : {})
+    ...(opts?.required != null ? { required: opts.required } : {}),
+    parse(value: string): string {
+      return value
+    }
   }
+  return pureParse(schema)
 }
 
 /**

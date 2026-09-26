@@ -733,6 +733,39 @@ describe('positional combinator', () => {
       'type'
     ])
   })
+
+  test('without a parser, has a parse function that returns the value as is', () => {
+    expect(positional().parse(' a b ')).toBe(' a b ')
+    expect(positional({ required: false }).parse('')).toBe('')
+  })
+
+  test('without a parser, works with the modifiers', () => {
+    const { values, error } = resolveArgs(
+      {
+        entry: required(positional({ description: 'Entry file to serve' })),
+        length: map(positional(), value => value.length),
+        output: withDefault(positional({ required: false }), 'dist'),
+        files: multiple(positional())
+      },
+      parseArgs(['main.ts', 'abcd', 'out', 'a.txt', 'b.txt'])
+    )
+    expect(error).toBeUndefined()
+    expect(values).toEqual({
+      entry: 'main.ts',
+      length: 4,
+      output: 'out',
+      files: ['a.txt', 'b.txt']
+    })
+  })
+
+  test('without a parser, uses the default of withDefault() when no value is left', () => {
+    const { values, error } = resolveArgs(
+      { entry: positional(), output: withDefault(positional({ required: false }), 'dist') },
+      parseArgs(['main.ts'])
+    )
+    expect(error).toBeUndefined()
+    expect(values).toEqual({ entry: 'main.ts', output: 'dist' })
+  })
 })
 
 describe('choice combinator', () => {
