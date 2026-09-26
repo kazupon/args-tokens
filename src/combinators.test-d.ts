@@ -695,4 +695,10 @@ test('each combinator schema fits only where the values that it parses do', () =
   withDefault(registry.port, 8080)
   const anyRegistry: Record<string, CombinatorSchema<any>> = { port: integer() }
   withDefault(anyRegistry.port, 8080)
+
+  // a parse function typed as any, such as one from an untyped module, parses to unknown
+  const untyped: any = Number
+  // @ts-expect-error -- combinator() infers unknown from a parse function typed as any
+  withDefault(combinator({ parse: untyped }), 8080)
+  withDefault(combinator<number>({ parse: untyped }), 8080)
 })
