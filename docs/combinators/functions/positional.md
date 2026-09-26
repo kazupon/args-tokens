@@ -49,7 +49,7 @@ const args = {
 ```ts
 export function positional<const R extends boolean>(
   parser: BaseOptions & { required: R }
-): WithRequiredOption<ArgSchema & ArgSchemaPositionalType, R>
+): WithRequiredOption<CombinatorSchema<string> & ArgSchemaPositionalType, R>
 ```
 
 > [!WARNING]
@@ -59,6 +59,10 @@ Create a positional argument schema.
 
 Without a parser, resolves to string.
 With a parser (e.g., `positional(integer())`), resolves to the parser's return type.
+
+Without a parser, the schema has a `parse` function that returns the value as is, so that the
+modifiers, such as [multiple](/docs/combinators/functions/multiple.md) and [withDefault](/docs/combinators/functions/withDefault.md), take it: `multiple(positional())`
+collects the values as strings.
 
 With `required: false` in the options, the positional argument is optional, in its type too.
 
@@ -70,7 +74,7 @@ With `required: false` in the options, the positional argument is optional, in i
 
 ### Returns
 
-`WithRequiredOption`\<[`ArgSchema`](/docs/default/interfaces/ArgSchema.md) & `ArgSchemaPositionalType`, `R`\> — A positional argument schema resolving to string.
+`WithRequiredOption`\<[`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`string`\> & `ArgSchemaPositionalType`, `R`\> — A positional argument schema resolving to string.
 
 ### Examples
 
@@ -89,7 +93,7 @@ const args = {
 ## Call Signature
 
 ```ts
-export function positional(parser?: BaseOptions): ArgSchema & ArgSchemaPositionalType
+export function positional(parser?: BaseOptions): CombinatorSchema<string> & ArgSchemaPositionalType
 ```
 
 > [!WARNING]
@@ -100,6 +104,10 @@ Create a positional argument schema.
 Without a parser, resolves to string.
 With a parser (e.g., `positional(integer())`), resolves to the parser's return type.
 
+Without a parser, the schema has a `parse` function that returns the value as is, so that the
+modifiers, such as [multiple](/docs/combinators/functions/multiple.md) and [withDefault](/docs/combinators/functions/withDefault.md), take it: `multiple(positional())`
+collects the values as strings.
+
 ### Parameters
 
 | Name     | Type                                                         | Description                                                        |
@@ -108,7 +116,7 @@ With a parser (e.g., `positional(integer())`), resolves to the parser's return t
 
 ### Returns
 
-[`ArgSchema`](/docs/default/interfaces/ArgSchema.md) & `ArgSchemaPositionalType` — A positional argument schema resolving to string.
+[`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`string`\> & `ArgSchemaPositionalType` — A positional argument schema resolving to string.
 
 ### Examples
 
