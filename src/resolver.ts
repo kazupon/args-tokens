@@ -1570,10 +1570,11 @@ export type ArgResolveErrorType = 'type' | 'required' | 'conflict'
  */
 export class ArgResolveError extends ArgsValidationError {
   /**
-   * The name of the argument on the command line, without dashes: the schema key, in kebab-case
-   * with `toKebab`, such as `input-file` for `inputFile`, whether the option is given in the long
-   * form, as a short option or in the negated form. For a conflict, it is the argument whose
-   * `conflicts` names the other one. `values.name` has the schema key.
+   * The name of the argument on the command line, without the leading dashes: the schema key, in
+   * kebab-case with `toKebab`, such as `input-file` for `inputFile`, whether the option is given in
+   * the long form, as a short option or in the negated form. For a conflict, it is the name of the
+   * argument whose `conflicts` names the other one (the first in the schema when both name each
+   * other). `values.name` has the schema key.
    */
   override name: string
   schema: ArgSchema
