@@ -21,6 +21,7 @@ import {
   withDefault
 } from './combinators.ts'
 
+import type { CombinatorSchema } from './combinators.ts'
 import type { ArgValues, ExtractOptionValue } from './resolver.ts'
 
 test('base combinator type inference', () => {
@@ -595,4 +596,25 @@ test('a required option that the options have only in some cases leaves the valu
     name?: string
     user?: string
   }>()
+})
+
+test('a combinator schema is typed by what its parse function returns', () => {
+  const acceptsStrings = (schema: CombinatorSchema<string>) => schema
+  // @ts-expect-error -- integer() parses to a number, not a string
+  acceptsStrings(integer())
+  acceptsStrings(string())
+
+  // @ts-expect-error -- the transform takes the number that integer() parses to
+  map(integer(), (n: string) => n.toUpperCase())
+
+  // @ts-expect-error -- parse can return null, which cannot be a default
+  withDefault(combinator({ parse: (v: string) => (v === 'none' ? null : v) }), 'auto')
+
+  const date = combinator({ parse: (value: string) => new Date(value) })
+  // @ts-expect-error -- a schema that parses to a Date cannot have a default
+  withDefault(date, '2024-12-31')
+  expectTypeOf<ExtractOptionValue<typeof date>>().toEqualTypeOf<Date>()
+
+  // calling the parse function of a combinator schema gives what it parses to
+  expectTypeOf(integer().parse('1')).toEqualTypeOf<number>()
 })
