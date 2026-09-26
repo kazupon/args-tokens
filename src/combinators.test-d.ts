@@ -503,3 +503,24 @@ test('a base combinator keeps the literal type of its required option', () => {
   const dynamic = { size: integer(options) }
   expectTypeOf<ArgValues<typeof dynamic>>().toEqualTypeOf<{ size?: number }>()
 })
+
+test('unknown options of positional() and the base combinators are type errors', () => {
+  // @ts-expect-error -- 'mx' is not an option of integer()
+  integer({ min: 1, mx: 10 })
+  // @ts-expect-error -- a default is set with withDefault(), not in the options
+  integer({ default: 8080, min: 1 })
+  // @ts-expect-error -- 'minLenght' is not an option of string()
+  string({ minLenght: 1, required: true })
+  // @ts-expect-error -- 'maxx' is not an option of number()
+  number({ min: 0, maxx: 1 })
+  // @ts-expect-error -- 'maxx' is not an option of float()
+  float({ min: 0, maxx: 1 })
+  // @ts-expect-error -- 'negateable' is not an option of boolean()
+  boolean({ negateable: true, description: 'Color' })
+  // @ts-expect-error -- 'descripton' is not an option of positional()
+  positional({ descripton: 'Input file', required: false })
+  // @ts-expect-error -- 'requried' is not an option of choice()
+  choice(['debug', 'info'] as const, { requried: true, description: 'Level' })
+  // @ts-expect-error -- 'metavr' is not an option of combinator()
+  combinator({ parse: Number, metavr: 'number' })
+})
