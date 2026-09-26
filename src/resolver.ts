@@ -283,7 +283,8 @@ export interface ArgSchema {
    * The default is used as is and never goes through `parse`, including when an option is given
    * without a value. An explicit empty value, such as `--name=` or `-n ''`, is a value, not a
    * missing one: a `string` option without `parse` gets `''` instead of the default, unless it is
-   * `required`.
+   * `required`. What `parse` returns is a value too, even `undefined` or `null`, and the default
+   * does not replace it.
    *
    * The value of a `multiple` argument is an array, so its default becomes the only element of the
    * array: `default: 'latest'` gives `['latest']`.
@@ -482,12 +483,12 @@ export interface ArgSchema {
    *
    * The function's return type becomes the resolved argument type.
    *
-   * `parse` is called synchronously, and what it returns becomes the value, so throw to reject a
-   * value. An `async` function returns a promise, and the promise becomes the value as is: it is
-   * not awaited, and its rejection is not reported as an error. Await the value, or each of its
-   * elements with `multiple` (for example with `Promise.all()`), and handle the rejection yourself:
-   * a rejection that nothing handles is an unhandled rejection, which ends a Node.js process by
-   * default.
+   * `parse` is called synchronously, and what it returns becomes the value, even `undefined` or
+   * `null`, so throw to reject a value. An `async` function returns a promise, and the promise
+   * becomes the value as is: it is not awaited, and its rejection is not reported as an error.
+   * Await the value, or each of its elements with `multiple` (for example with `Promise.all()`),
+   * and handle the rejection yourself: a rejection that nothing handles is an unhandled rejection,
+   * which ends a Node.js process by default.
    *
    * A `boolean` option calls `parse` with `'true'`, or `'false'` for the negated form. Other
    * options call it only with a value from the command line: when the option is given without a
@@ -1180,6 +1181,9 @@ export function resolveArgs<A extends Args>(
       }
     }
 
+    // whether a value is resolved from the command line: what `parse` returns is the value, even
+    // `undefined` or `null`, so the default is not used for it
+    let resolved = false
     for (let i = 0; i < optionTokens.length; i++) {
       const token = optionTokens[i]
 
@@ -1222,6 +1226,7 @@ export function resolveArgs<A extends Args>(
         if (error) {
           errors.push(error)
         } else {
+          resolved = true
           if (schema.multiple) {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(kazupon): Allow any type for resolving
             ;(values as any)[rawArg] ||= []
@@ -1235,7 +1240,7 @@ export function resolveArgs<A extends Args>(
       }
     }
 
-    if (values[rawArg] == null && schema.default != null) {
+    if (!resolved && schema.default != null) {
       if (hasDefaultOutsideChoices(schema)) {
         // a mistake in the schema: report the default instead of using it
         errors.push(createDefaultChoiceError(rawArg, arg, schema))

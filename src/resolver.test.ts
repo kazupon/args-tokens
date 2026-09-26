@@ -1611,6 +1611,79 @@ describe('explicit empty value of a string or enum option', () => {
   })
 })
 
+describe('an undefined or null result of parse', () => {
+  // an empty value means "not set", 'none' turns the setting off, and 'bad' is rejected
+  const parse = (value: string) => {
+    if (value === 'bad') {
+      throw new Error('not a URL')
+    }
+    return value === '' ? undefined : value === 'none' ? null : value
+  }
+  const args = {
+    proxy: { type: 'custom', short: 'x', parse, default: 'http://localhost:8080' },
+    target: { type: 'positional', parse, default: 'dist' }
+  } satisfies Args
+
+  test('is the value of an option, not the default', () => {
+    const { values, explicit, error } = resolveArgs(args, parseArgs(['--proxy=', 'out']))
+    expect(error).toBeUndefined()
+    expect(Object.keys(values)).toContain('proxy')
+    expect(values).toEqual({ proxy: undefined, target: 'out' })
+    expect(explicit.proxy).toBe(true)
+
+    expect(resolveArgs(args, parseArgs(['-x', 'none', 'out'])).values.proxy).toBeNull()
+  })
+
+  test('is the value when it comes from the last option given', () => {
+    const { values, error } = resolveArgs(
+      args,
+      parseArgs(['--proxy=http://example.com', '--proxy=', 'out'])
+    )
+    expect(error).toBeUndefined()
+    expect(values).toEqual({ proxy: undefined, target: 'out' })
+
+    // a rejected value does not take it back
+    const rejectedAfter = resolveArgs(args, parseArgs(['--proxy=', '--proxy=bad', 'out']))
+    expect(rejectedAfter.values).toEqual({ proxy: undefined, target: 'out' })
+    expect(rejectedAfter.error?.errors.map(e => (e as ArgsValidationError).code)).toEqual([
+      ArgsValidationErrorKeys.customParse
+    ])
+  })
+
+  test('is the value of a positional argument', () => {
+    const { values, error } = resolveArgs(args, parseArgs(['--proxy=http://example.com', '']))
+    expect(error).toBeUndefined()
+    expect(Object.keys(values)).toContain('target')
+    expect(values.target).toBeUndefined()
+  })
+
+  test('is an element of a multiple option', () => {
+    const { values, error } = resolveArgs(
+      { tags: { type: 'custom', multiple: true, parse, default: 'a' } },
+      parseArgs(['--tags=', '--tags=none', '--tags=b'])
+    )
+    expect(error).toBeUndefined()
+    expect(values.tags).toEqual([undefined, null, 'b'])
+  })
+
+  test('differs from no value, for which the default is used', () => {
+    const notGiven = resolveArgs(args, parseArgs([]))
+    expect(notGiven.values).toEqual({ proxy: 'http://localhost:8080', target: 'dist' })
+
+    const missing = resolveArgs(args, parseArgs(['--proxy']))
+    expect(missing.values.proxy).toBe('http://localhost:8080')
+    expect(missing.error?.errors.map(e => (e as ArgsValidationError).code)).toEqual([
+      ArgsValidationErrorKeys.missingValue
+    ])
+
+    const rejected = resolveArgs(args, parseArgs(['--proxy=bad']))
+    expect(rejected.values.proxy).toBe('http://localhost:8080')
+    expect(rejected.error?.errors.map(e => (e as ArgsValidationError).code)).toEqual([
+      ArgsValidationErrorKeys.customParse
+    ])
+  })
+})
+
 describe('number option without a value', () => {
   const args = {
     port: {

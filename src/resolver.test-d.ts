@@ -494,6 +494,17 @@ test('ArgValues', () => {
       }
     }>
   >().toEqualTypeOf<{ tag: string[]; files: string[] }>()
+
+  // a default does not replace what parse returns, so the value type has what parse can return
+  expectTypeOf<
+    ArgValues<{
+      proxy: {
+        type: 'custom'
+        parse: (value: string) => string | undefined
+        default: 'x'
+      }
+    }>
+  >().toEqualTypeOf<{ proxy: string | undefined }>()
 })
 
 test('ArgExplicitlyProvided', () => {
