@@ -91,9 +91,13 @@ export type Combinator<T> = {
 export type CombinatorSchema<T> = Omit<ArgSchema, 'parse'> & Combinator<T>
 
 /**
- * How the modifiers and {@link positional} read a schema typed as `any`: its `parse` returns
- * `unknown`, and the `parse` of {@link ArgSchema}, which returns `any`, is kept, so that the result
- * still fits any {@link CombinatorSchema}, as the schema typed as `any` does.
+ * How {@link short}, {@link describe}, {@link withDefault}, {@link required}, {@link multiple} and
+ * {@link positional} read a schema typed as `any`: its value is typed `unknown`, and the `parse` of
+ * {@link ArgSchema}, which returns `any`, is kept, so that the result still fits any
+ * {@link CombinatorSchema}, as the schema typed as `any` does.
+ *
+ * For a schema typed by a type parameter `S`, the result is checked as both this type and `S`, so
+ * it fits where `S` does.
  */
 type UntypedCombinatorSchema = ArgSchema & Combinator<unknown>
 
@@ -1029,7 +1033,7 @@ export function withDefault<
  * making an intersection with it (`'A' & 'B'`, that is `never`, for a description set twice).
  * A schema typed as `any`, such as one from untyped code, is taken as
  * {@link UntypedCombinatorSchema}, so that the result is still an argument schema, and still fits
- * any {@link CombinatorSchema}.
+ * any {@link CombinatorSchema}, unless `F` sets `parse`, as {@link map} does.
  */
 type WithFlag<S, F> = Omit<0 extends 1 & S ? UntypedCombinatorSchema : S, keyof F> & F
 
