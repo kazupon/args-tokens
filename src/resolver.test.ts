@@ -1612,8 +1612,13 @@ describe('explicit empty value of a string or enum option', () => {
 })
 
 describe('an undefined or null result of parse', () => {
-  // an empty value means "not set", and 'none' turns the setting off
-  const parse = (value: string) => (value === '' ? undefined : value === 'none' ? null : value)
+  // an empty value means "not set", 'none' turns the setting off, and 'bad' is rejected
+  const parse = (value: string) => {
+    if (value === 'bad') {
+      throw new Error('not a URL')
+    }
+    return value === '' ? undefined : value === 'none' ? null : value
+  }
   const args = {
     proxy: { type: 'custom', short: 'x', parse, default: 'http://localhost:8080' },
     target: { type: 'positional', parse, default: 'dist' }
@@ -1636,6 +1641,13 @@ describe('an undefined or null result of parse', () => {
     )
     expect(error).toBeUndefined()
     expect(values).toEqual({ proxy: undefined, target: 'out' })
+
+    // a rejected value does not take it back
+    const rejectedAfter = resolveArgs(args, parseArgs(['--proxy=', '--proxy=bad', 'out']))
+    expect(rejectedAfter.values).toEqual({ proxy: undefined, target: 'out' })
+    expect(rejectedAfter.error?.errors.map(e => (e as ArgsValidationError).code)).toEqual([
+      ArgsValidationErrorKeys.customParse
+    ])
   })
 
   test('is the value of a positional argument', () => {
@@ -1654,7 +1666,7 @@ describe('an undefined or null result of parse', () => {
     expect(values.tags).toEqual([undefined, null, 'b'])
   })
 
-  test('does not change when no value from the command line is used', () => {
+  test('differs from no value, for which the default is used', () => {
     const notGiven = resolveArgs(args, parseArgs([]))
     expect(notGiven.values).toEqual({ proxy: 'http://localhost:8080', target: 'dist' })
 
@@ -1664,21 +1676,7 @@ describe('an undefined or null result of parse', () => {
       ArgsValidationErrorKeys.missingValue
     ])
 
-    const rejected = resolveArgs(
-      {
-        proxy: {
-          type: 'custom',
-          parse: (value: string) => {
-            if (value === 'bad') {
-              throw new Error('not a URL')
-            }
-            return value
-          },
-          default: 'http://localhost:8080'
-        }
-      },
-      parseArgs(['--proxy=bad'])
-    )
+    const rejected = resolveArgs(args, parseArgs(['--proxy=bad']))
     expect(rejected.values.proxy).toBe('http://localhost:8080')
     expect(rejected.error?.errors.map(e => (e as ArgsValidationError).code)).toEqual([
       ArgsValidationErrorKeys.customParse

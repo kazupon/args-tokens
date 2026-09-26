@@ -992,6 +992,15 @@ describe('map combinator', () => {
     expect(resolveArgs(args, parseArgs([])).values.port).toBe(8080)
   })
 
+  test('an undefined result of the transform is the value, not the default', () => {
+    const args = { proxy: map(withDefault(string(), 'x'), v => v || undefined) }
+    const { values, error } = resolveArgs(args, parseArgs(['--proxy=']))
+    expect(error).toBeUndefined()
+    expect(Object.keys(values)).toContain('proxy')
+    expect(values.proxy).toBeUndefined()
+    expect(resolveArgs(args, parseArgs([])).values.proxy).toBe('x')
+  })
+
   test('an argument starting with - gets no suggestion, and the transform is not called', () => {
     const received: number[] = []
     const { error } = resolveArgs(
