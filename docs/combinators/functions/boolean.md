@@ -12,20 +12,20 @@ to the parse function based on the presence or negation of the flag, or on an ex
 ## Signature
 
 ```ts
-export function boolean<O extends BooleanOptions = {}>(
-  opts?: O
-): WithRequiredOption<CombinatorSchema<boolean>, O>
+export function boolean<const R extends boolean | undefined = boolean | undefined>(
+  opts?: BooleanOptions & { required?: R }
+): WithRequiredOption<CombinatorSchema<boolean>, R>
 ```
 
 ## Parameters
 
-| Name   | Type | Description                   |
-| ------ | ---- | ----------------------------- |
-| `opts` | `O`  | Boolean options. _(optional)_ |
+| Name   | Type                                                                                                                                 | Description                   |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------- |
+| `opts` | [`BooleanOptions`](/docs/combinators/interfaces/BooleanOptions.md) & { [`required`](/docs/combinators/functions/required.md)?: `R` } | Boolean options. _(optional)_ |
 
 ## Returns
 
-`WithRequiredOption`\<[`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`boolean`\>, `O`\> — A combinator schema for boolean flags.
+`WithRequiredOption`\<[`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`boolean`\>, `R`\> — A combinator schema for boolean flags.
 
 ## Examples
 
@@ -38,4 +38,4 @@ const args = {
 
 ## Tags
 
-- `@typeParam` — O - The type of the options, whose literal `required` the schema keeps.
+- `@typeParam` — R - The type of `required` in the options, which the schema keeps when it is `true` or `false`.

@@ -10,20 +10,20 @@ Accepts any numeric value (integer or float).
 ## Signature
 
 ```ts
-export function number<O extends NumberOptions = {}>(
-  opts?: O
-): WithRequiredOption<CombinatorSchema<number>, O>
+export function number<const R extends boolean | undefined = boolean | undefined>(
+  opts?: NumberOptions & { required?: R }
+): WithRequiredOption<CombinatorSchema<number>, R>
 ```
 
 ## Parameters
 
-| Name   | Type | Description                 |
-| ------ | ---- | --------------------------- |
-| `opts` | `O`  | Range options. _(optional)_ |
+| Name   | Type                                                                                                                               | Description                 |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| `opts` | [`NumberOptions`](/docs/combinators/interfaces/NumberOptions.md) & { [`required`](/docs/combinators/functions/required.md)?: `R` } | Range options. _(optional)_ |
 
 ## Returns
 
-`WithRequiredOption`\<[`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`number`\>, `O`\> — A combinator schema that resolves to number.
+`WithRequiredOption`\<[`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`number`\>, `R`\> — A combinator schema that resolves to number.
 
 ## Examples
 
@@ -35,4 +35,4 @@ const args = {
 
 ## Tags
 
-- `@typeParam` — O - The type of the options, whose literal `required` the schema keeps.
+- `@typeParam` — R - The type of `required` in the options, which the schema keeps when it is `true` or `false`.

@@ -10,22 +10,25 @@ Uses `const T` generic to infer literal union types from the values array.
 ## Signature
 
 ```ts
-export function choice<const T extends readonly string[], O extends BaseOptions = {}>(
+export function choice<
+  const T extends readonly string[],
+  const R extends boolean | undefined = boolean | undefined
+>(
   values: T,
-  opts?: O
-): WithRequiredOption<CombinatorSchema<T[number]>, O>
+  opts?: BaseOptions & { required?: R }
+): WithRequiredOption<CombinatorSchema<T[number]>, R>
 ```
 
 ## Parameters
 
-| Name     | Type | Description                                                 |
-| -------- | ---- | ----------------------------------------------------------- |
-| `values` | `T`  | Allowed values.                                             |
-| `opts`   | `O`  | Common options (description, short, required). _(optional)_ |
+| Name     | Type                                                                                                                           | Description                                                 |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------- |
+| `values` | `T`                                                                                                                            | Allowed values.                                             |
+| `opts`   | [`BaseOptions`](/docs/combinators/interfaces/BaseOptions.md) & { [`required`](/docs/combinators/functions/required.md)?: `R` } | Common options (description, short, required). _(optional)_ |
 
 ## Returns
 
-`WithRequiredOption`\<[`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\[`number`\]\>, `O`\> — A combinator schema that resolves to a union of the allowed values.
+`WithRequiredOption`\<[`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\[`number`\]\>, `R`\> — A combinator schema that resolves to a union of the allowed values.
 
 ## Examples
 

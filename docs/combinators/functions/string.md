@@ -8,20 +8,20 @@ Create a string argument schema with optional validation.
 ## Signature
 
 ```ts
-export function string<O extends StringOptions = {}>(
-  opts?: O
-): WithRequiredOption<CombinatorSchema<string>, O>
+export function string<const R extends boolean | undefined = boolean | undefined>(
+  opts?: StringOptions & { required?: R }
+): WithRequiredOption<CombinatorSchema<string>, R>
 ```
 
 ## Parameters
 
-| Name   | Type | Description                      |
-| ------ | ---- | -------------------------------- |
-| `opts` | `O`  | Validation options. _(optional)_ |
+| Name   | Type                                                                                                                               | Description                      |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| `opts` | [`StringOptions`](/docs/combinators/interfaces/StringOptions.md) & { [`required`](/docs/combinators/functions/required.md)?: `R` } | Validation options. _(optional)_ |
 
 ## Returns
 
-`WithRequiredOption`\<[`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`string`\>, `O`\> — A combinator schema that resolves to string.
+`WithRequiredOption`\<[`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`string`\>, `R`\> — A combinator schema that resolves to string.
 
 ## Examples
 
@@ -33,4 +33,4 @@ const args = {
 
 ## Tags
 
-- `@typeParam` — O - The type of the options, whose literal `required` the schema keeps.
+- `@typeParam` — R - The type of `required` in the options, which the schema keeps when it is `true` or `false`.

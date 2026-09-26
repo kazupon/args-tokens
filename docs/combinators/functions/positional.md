@@ -47,9 +47,9 @@ const args = {
 ## Call Signature
 
 ```ts
-export function positional<O extends BaseOptions = {}>(
-  parser?: O
-): WithRequiredOption<ArgSchema & ArgSchemaPositionalType, O>
+export function positional<const R extends boolean | undefined = boolean | undefined>(
+  parser?: BaseOptions & { required?: R }
+): WithRequiredOption<ArgSchema & ArgSchemaPositionalType, R>
 ```
 
 > [!WARNING]
@@ -64,13 +64,13 @@ With `required: false` in the options, the positional argument is optional, in i
 
 ### Parameters
 
-| Name     | Type | Description                                                        |
-| -------- | ---- | ------------------------------------------------------------------ |
-| `parser` | `O`  | Optional base options (description, short, required). _(optional)_ |
+| Name     | Type                                                                                                                           | Description                                                        |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| `parser` | [`BaseOptions`](/docs/combinators/interfaces/BaseOptions.md) & { [`required`](/docs/combinators/functions/required.md)?: `R` } | Optional base options (description, short, required). _(optional)_ |
 
 ### Returns
 
-`WithRequiredOption`\<[`ArgSchema`](/docs/default/interfaces/ArgSchema.md) & `ArgSchemaPositionalType`, `O`\> — A positional argument schema resolving to string.
+`WithRequiredOption`\<[`ArgSchema`](/docs/default/interfaces/ArgSchema.md) & `ArgSchemaPositionalType`, `R`\> — A positional argument schema resolving to string.
 
 ### Examples
 
@@ -84,4 +84,4 @@ const args = {
 
 ### Tags
 
-- `@typeParam` — O - The type of the options, whose literal `required` the positional argument keeps.
+- `@typeParam` — R - The type of `required` in the options, which the positional argument keeps when it is `true` or `false`.
