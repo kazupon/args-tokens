@@ -482,9 +482,10 @@ export interface ArgSchema {
   /**
    * Custom parsing function for `type: 'custom'` arguments.
    *
-   * Required when `type: 'custom'`: without it, `resolveArgs()` and `parse()` throw a `TypeError`,
-   * whether or not the argument is given. Receives the raw string value and must return the parsed
-   * result. Should throw an Error (or subclass) if parsing fails.
+   * Required when `type: 'custom'`: if it is missing or not a function, {@link resolveArgs} and
+   * `parse()` throw a `TypeError`, whether or not the argument is given. The function receives the
+   * raw string value and must return the parsed result. It should throw an Error (or subclass) if
+   * parsing fails.
    *
    * The function's return type becomes the resolved argument type.
    *
