@@ -765,9 +765,11 @@ const { values } = resolveArgs(schema, tokens)
 - `float(opts?)` — Float with optional range, rejects `NaN`/`Infinity`
 - `boolean(opts?)` — Boolean flag, supports `negatable`
 - `positional()` — Positional argument (resolves to string)
-- `positional(parser)` — Typed positional (e.g., `positional(integer())`)
+- `positional(parser)` — Typed positional (e.g., `positional(integer())`), which keeps `required`, `default` and `multiple` of the parser
 - `unrequired(positional())` — Explicitly optional positional argument
 - `choice(values)` — Enum-like with literal type inference
+
+A literal `required: true` or `required: false` in the options is kept in the type: `integer({ required: true })` types the value as present, as `required(integer())` does, and `positional({ required: false })` and `positional(integer({ required: false }))` are optional. `positional(multiple(integer()))` resolves to an array, as `multiple(positional(integer()))` does.
 
 #### Modifier Combinators
 

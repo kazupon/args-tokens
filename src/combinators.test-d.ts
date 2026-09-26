@@ -448,3 +448,151 @@ test('unrequired overrides required type', () => {
   expectTypeOf(composed.required).toEqualTypeOf<false>()
   expectTypeOf<ExtractOptionValue<typeof composed>>().toEqualTypeOf<string>()
 })
+
+test('positional keeps required, default and multiple of its options and parser', () => {
+  const args = {
+    input: positional({ required: false }),
+    count: positional(unrequired(integer())),
+    ids: positional(multiple(integer())),
+    names: positional(required(multiple(string()))),
+    level: positional(unrequired(withDefault(integer(), 1))),
+    source: positional(describe(integer(), 'Source'))
+  }
+  expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{
+    input?: string
+    count?: number
+    ids?: number[]
+    names: string[]
+    level: number
+    source: number
+  }>()
+  expectTypeOf(args.source.description).toEqualTypeOf<'Source'>()
+  expectTypeOf(args.ids.multiple).toEqualTypeOf<true>()
+  // an explicit type argument still gives the value type
+  const explicit = positional<number>(integer())
+  expectTypeOf<ExtractOptionValue<typeof explicit>>().toEqualTypeOf<number>()
+})
+
+test('a base combinator keeps the literal type of its required option', () => {
+  const args = {
+    name: string({ required: true }),
+    ratio: number({ required: true }),
+    port: integer({ required: true }),
+    scale: float({ required: true }),
+    force: boolean({ required: true }),
+    level: choice(['debug', 'info'] as const, { required: true }),
+    config: combinator({ parse: Number, required: true }),
+    host: string({ required: false }),
+    alias: short(integer({ required: true }), 'p'),
+    file: positional(integer({ required: false }))
+  }
+  expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{
+    name: string
+    ratio: number
+    port: number
+    scale: number
+    force: boolean
+    level: 'debug' | 'info'
+    config: number
+    host?: string
+    alias: number
+    file?: number
+  }>()
+  // options whose required is not a literal leave the value optional, as before
+  const options: { required?: boolean } = { required: true }
+  const dynamic = { size: integer(options) }
+  expectTypeOf<ArgValues<typeof dynamic>>().toEqualTypeOf<{ size?: number }>()
+})
+
+test('a base combinator keeps a literal required option inside other combinators', () => {
+  const args = {
+    name: positional(string({ required: false })),
+    ratio: positional(number({ required: false })),
+    scale: positional(float({ required: false })),
+    force: short(boolean({ required: true }), 'f'),
+    level: positional(choice(['debug', 'info'] as const, { required: false })),
+    config: positional(combinator({ parse: Number, required: false })),
+    query: hidden(positional({ required: false }))
+  }
+  expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{
+    name?: string
+    ratio?: number
+    scale?: number
+    force: boolean
+    level?: 'debug' | 'info'
+    config?: number
+    query?: string
+  }>()
+})
+
+test('choice() and combinator() still take explicit type arguments', () => {
+  const args = {
+    level: choice<readonly ['debug', 'info']>(['debug', 'info'], { required: true }),
+    config: combinator<number>({ parse: Number })
+  }
+  // with explicit type arguments, the literal required is not kept
+  expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{
+    level?: 'debug' | 'info'
+    config?: number
+  }>()
+})
+
+test('unknown options of positional() and the base combinators are type errors', () => {
+  // @ts-expect-error -- 'mx' is not an option of integer()
+  integer({ min: 1, mx: 10 })
+  // @ts-expect-error -- a default is set with withDefault(), not in the options
+  integer({ default: 8080, min: 1 })
+  // @ts-expect-error -- 'minLen' is not an option of string()
+  string({ minLen: 1, required: true })
+  // @ts-expect-error -- 'maxx' is not an option of number()
+  number({ min: 0, maxx: 1 })
+  // @ts-expect-error -- 'maxx' is not an option of float()
+  float({ min: 0, maxx: 1 })
+  // @ts-expect-error -- 'negateable' is not an option of boolean()
+  boolean({ negateable: true, description: 'Color' })
+  // @ts-expect-error -- 'desc' is not an option of positional()
+  positional({ desc: 'Input file', required: false })
+  // @ts-expect-error -- 'optional' is not an option of choice()
+  choice(['debug', 'info'] as const, { optional: true, description: 'Level' })
+  // @ts-expect-error -- 'metavr' is not an option of combinator()
+  combinator({ parse: Number, metavr: 'number' })
+})
+
+test('positional keeps only the properties that it copies from its parser', () => {
+  const schema = positional(short(hidden(integer()), 'p'))
+  expectTypeOf(schema).not.toHaveProperty('short')
+  expectTypeOf(schema).not.toHaveProperty('choices')
+  expectTypeOf(schema.hidden).toEqualTypeOf<true>()
+  expectTypeOf(positional(integer()).metavar).toEqualTypeOf<string | undefined>()
+})
+
+test('positional reads a parser of type any as CombinatorSchema<unknown>', () => {
+  const parser = integer() as any
+  const args = { value: describe(positional(parser), 'Value') }
+  expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{ value: unknown }>()
+})
+
+test('a required option of type boolean leaves the value optional', () => {
+  const flag = Math.random() > 0.5
+  const args = { size: integer({ required: flag }) }
+  expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{ size?: number }>()
+})
+
+test('a required option that the options have only in some cases leaves the value optional', () => {
+  const strict = Math.random() > 0.5
+  const maybe: { required?: true } = {}
+  const args = {
+    port: integer(strict ? { required: true } : {}),
+    retries: integer({ min: 0, ...(strict ? { required: true } : {}) }),
+    host: string({ description: 'Host', ...(strict && { required: true }) }),
+    name: string({ required: strict || undefined }),
+    user: string(maybe)
+  }
+  expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{
+    port?: number
+    retries?: number
+    host?: string
+    name?: string
+    user?: string
+  }>()
+})
