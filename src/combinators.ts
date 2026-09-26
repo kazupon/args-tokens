@@ -156,6 +156,9 @@ export interface BaseOptions {
   short?: string
   /**
    * Mark as required.
+   *
+   * A literal `true` or `false` is kept in the type of the schema: `true` types the value as
+   * present, as {@link required} does, and `false` makes a positional argument optional.
    */
   required?: boolean
 }
@@ -192,6 +195,8 @@ export interface StringOptions extends BaseOptions {
 /**
  * Create a string argument schema with optional validation.
  *
+ * @typeParam O - The type of the options, whose literal `required` the schema keeps.
+ *
  * @param opts - Validation options.
  * @returns A combinator schema that resolves to string.
  *
@@ -204,6 +209,9 @@ export interface StringOptions extends BaseOptions {
  *
  * @experimental
  */
+export function string<O extends StringOptions = {}>(
+  opts?: O
+): WithRequiredOption<CombinatorSchema<string>, O>
 // @__NO_SIDE_EFFECTS__
 export function string(opts?: StringOptions): CombinatorSchema<string> {
   const schema: CombinatorSchema<string> = {
@@ -255,6 +263,8 @@ export interface NumberOptions extends BaseOptions {
  *
  * Accepts any numeric value (integer or float).
  *
+ * @typeParam O - The type of the options, whose literal `required` the schema keeps.
+ *
  * @param opts - Range options.
  * @returns A combinator schema that resolves to number.
  *
@@ -267,6 +277,9 @@ export interface NumberOptions extends BaseOptions {
  *
  * @experimental
  */
+export function number<O extends NumberOptions = {}>(
+  opts?: O
+): WithRequiredOption<CombinatorSchema<number>, O>
 // @__NO_SIDE_EFFECTS__
 export function number(opts?: NumberOptions): CombinatorSchema<number> {
   return pureParse({
@@ -313,6 +326,8 @@ export interface IntegerOptions extends BaseOptions {
  *
  * Only accepts integer values (no decimals).
  *
+ * @typeParam O - The type of the options, whose literal `required` the schema keeps.
+ *
  * @param opts - Range options.
  * @returns A combinator schema that resolves to number (integer).
  *
@@ -325,6 +340,9 @@ export interface IntegerOptions extends BaseOptions {
  *
  * @experimental
  */
+export function integer<O extends IntegerOptions = {}>(
+  opts?: O
+): WithRequiredOption<CombinatorSchema<number>, O>
 // @__NO_SIDE_EFFECTS__
 export function integer(opts?: IntegerOptions): CombinatorSchema<number> {
   return pureParse({
@@ -374,6 +392,8 @@ export interface FloatOptions extends BaseOptions {
  *
  * Rejects `NaN` and `Infinity` values.
  *
+ * @typeParam O - The type of the options, whose literal `required` the schema keeps.
+ *
  * @param opts - Range options.
  * @returns A combinator schema that resolves to number (float).
  *
@@ -386,6 +406,9 @@ export interface FloatOptions extends BaseOptions {
  *
  * @experimental
  */
+export function float<O extends FloatOptions = {}>(
+  opts?: O
+): WithRequiredOption<CombinatorSchema<number>, O>
 // @__NO_SIDE_EFFECTS__
 export function float(opts?: FloatOptions): CombinatorSchema<number> {
   return pureParse({
@@ -434,6 +457,8 @@ export interface BooleanOptions extends BaseOptions {
  * to the parse function based on the presence or negation of the flag, or on an explicit
  * `=true` / `=false` value. Other inline values are rejected before the parse function is called.
  *
+ * @typeParam O - The type of the options, whose literal `required` the schema keeps.
+ *
  * @param opts - Boolean options.
  * @returns A combinator schema for boolean flags.
  *
@@ -447,6 +472,9 @@ export interface BooleanOptions extends BaseOptions {
  *
  * @experimental
  */
+export function boolean<O extends BooleanOptions = {}>(
+  opts?: O
+): WithRequiredOption<CombinatorSchema<boolean>, O>
 // @__NO_SIDE_EFFECTS__
 export function boolean(opts?: BooleanOptions): CombinatorSchema<boolean> {
   return {
@@ -584,6 +612,7 @@ export function positional<T>(
  * Uses `const T` generic to infer literal union types from the values array.
  *
  * @typeParam T - The readonly array of allowed string values.
+ * @typeParam O - The type of the options, whose literal `required` the schema keeps.
  *
  * @param values - Allowed values.
  * @param opts - Common options (description, short, required).
@@ -599,6 +628,10 @@ export function positional<T>(
  *
  * @experimental
  */
+export function choice<const T extends readonly string[], O extends BaseOptions = {}>(
+  values: T,
+  opts?: O
+): WithRequiredOption<CombinatorSchema<T[number]>, O>
 // @__NO_SIDE_EFFECTS__
 export function choice<const T extends readonly string[]>(
   values: T,
@@ -661,6 +694,7 @@ export interface CombinatorOptions<T> extends BaseOptions {
  * The returned schema has `type: 'custom'`.
  *
  * @typeParam T - The parsed value type.
+ * @typeParam C - The type of the configuration, whose literal `required` the schema keeps.
  *
  * @param config - Configuration with a parse function and optional metavar.
  * @returns A combinator schema that resolves to the parse function's return type.
@@ -681,6 +715,9 @@ export interface CombinatorOptions<T> extends BaseOptions {
  *
  * @experimental
  */
+export function combinator<T, C extends CombinatorOptions<T> = CombinatorOptions<T>>(
+  config: C & CombinatorOptions<T>
+): WithRequiredOption<CombinatorSchema<T>, C>
 // @__NO_SIDE_EFFECTS__
 export function combinator<T>(config: CombinatorOptions<T>): CombinatorSchema<T> {
   return {

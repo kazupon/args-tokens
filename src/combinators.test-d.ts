@@ -472,3 +472,34 @@ test('positional keeps required, default and multiple of its options and parser'
   const explicit = positional<number>(integer())
   expectTypeOf<ExtractOptionValue<typeof explicit>>().toEqualTypeOf<number>()
 })
+
+test('a base combinator keeps the literal type of its required option', () => {
+  const args = {
+    name: string({ required: true }),
+    ratio: number({ required: true }),
+    port: integer({ required: true }),
+    scale: float({ required: true }),
+    force: boolean({ required: true }),
+    level: choice(['debug', 'info'] as const, { required: true }),
+    config: combinator({ parse: Number, required: true }),
+    host: string({ required: false }),
+    alias: short(integer({ required: true }), 'p'),
+    file: positional(integer({ required: false }))
+  }
+  expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{
+    name: string
+    ratio: number
+    port: number
+    scale: number
+    force: boolean
+    level: 'debug' | 'info'
+    config: number
+    host?: string
+    alias: number
+    file?: number
+  }>()
+  // options whose required is not a literal leave the value optional, as before
+  const options: { required?: boolean } = { required: true }
+  const dynamic = { size: integer(options) }
+  expectTypeOf<ArgValues<typeof dynamic>>().toEqualTypeOf<{ size?: number }>()
+})
