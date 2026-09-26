@@ -131,6 +131,23 @@ test('withDefault type inference', () => {
 
   const explicitDef = withDefault<number>(integer(), 8080)
   expectTypeOf<ExtractOptionValue<typeof explicitDef>>().toEqualTypeOf<number>()
+
+  // an explicit type argument widens the type, for a default typed wider than the choices
+  const env: string = 'auto'
+  const wideDef = withDefault<string>(choice(['auto', 'always', 'never']), env)
+  expectTypeOf<ExtractOptionValue<typeof wideDef>>().toEqualTypeOf<string>()
+})
+
+test('short, describe and map accept explicit type arguments', () => {
+  const explicitShort = short<boolean, 'v'>(boolean(), 'v')
+  expectTypeOf<ExtractOptionValue<typeof explicitShort>>().toEqualTypeOf<boolean>()
+  expectTypeOf(explicitShort.short).toEqualTypeOf<'v'>()
+
+  const explicitDescribe = describe<string, 'Your name'>(string(), 'Your name')
+  expectTypeOf<ExtractOptionValue<typeof explicitDescribe>>().toEqualTypeOf<string>()
+
+  const explicitMap = map<number, string>(integer(), n => String(n))
+  expectTypeOf<ExtractOptionValue<typeof explicitMap>>().toEqualTypeOf<string>()
 })
 
 test('withDefault checks the default against the type of the schema', () => {
@@ -321,6 +338,109 @@ test('unrequired type inference', () => {
 test('describe + modifier composition type inference', () => {
   const composed = required(describe(short(integer(), 'p'), 'Port number'))
   expectTypeOf<ExtractOptionValue<typeof composed>>().toEqualTypeOf<number>()
+})
+
+test('short, describe, withDefault and map keep the modifiers applied before them', () => {
+  const args = {
+    tags: short(multiple(string()), 't'),
+    labels: describe(multiple(string()), 'Labels'),
+    latest: withDefault(multiple(string()), 'latest'),
+    doubled: map(multiple(integer()), n => n * 2),
+    port: short(withDefault(integer(), 8080), 'p'),
+    host: short(required(string()), 'h'),
+    file: describe(required(string()), 'Path to the input file'),
+    count: map(required(integer()), n => n + 1),
+    ids: short(describe(required(multiple(integer())), 'IDs'), 'i'),
+    names: withDefault(
+      describe(
+        map(multiple(string()), v => v.trim()),
+        'Names'
+      ),
+      'x'
+    ),
+    source: describe(positional(integer()), 'Source'),
+    target: describe(unrequired(positional(integer())), 'Target')
+  }
+  expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{
+    tags?: string[]
+    labels?: string[]
+    latest: string[]
+    doubled?: number[]
+    port: number
+    host: string
+    file: string
+    count: number
+    ids: number[]
+    names: string[]
+    source: number
+    target?: number
+  }>()
+
+  // what the earlier modifiers set keeps its literal type
+  expectTypeOf(args.port.default).toEqualTypeOf<number>()
+  expectTypeOf(args.ids.required).toEqualTypeOf<true>()
+  expectTypeOf(args.ids.description).toEqualTypeOf<'IDs'>()
+  expectTypeOf(withDefault(short(integer(), 'p'), 1).short).toEqualTypeOf<'p'>()
+  expectTypeOf(map(short(integer(), 'n'), n => n > 0).short).toEqualTypeOf<'n'>()
+  expectTypeOf(describe(hidden(string()), 'Legacy').hidden).toEqualTypeOf<true>()
+  expectTypeOf(args.source.type).toEqualTypeOf<'positional'>()
+})
+
+test('short, describe and withDefault give the same value types in either order', () => {
+  const before = {
+    tags: short(multiple(string()), 't'),
+    port: short(withDefault(integer(), 8080), 'p'),
+    host: describe(required(string()), 'Host')
+  }
+  const after = {
+    tags: multiple(short(string(), 't')),
+    port: withDefault(short(integer(), 'p'), 8080),
+    host: required(describe(string(), 'Host'))
+  }
+  expectTypeOf<ArgValues<typeof before>>().toEqualTypeOf<ArgValues<typeof after>>()
+})
+
+test('withDefault checks the default of a schema with other modifiers', () => {
+  // @ts-expect-error -- 'c' is not one of the choices
+  withDefault(multiple(choice(['a', 'b'])), 'c')
+
+  // @ts-expect-error -- the default of a multiple schema is one value, not an array
+  withDefault(multiple(string()), ['a'])
+
+  // the error is at the default
+  withDefault(
+    short(integer(), 'p'),
+    // @ts-expect-error -- a string is not a number
+    '8080'
+  )
+})
+
+test('map keeps a default set before it, typed as before the transform', () => {
+  const mappedAfterDefault = map(withDefault(integer(), 8080), n => String(n))
+  expectTypeOf(mappedAfterDefault.default).toEqualTypeOf<number>()
+  expectTypeOf<ArgValues<{ port: typeof mappedAfterDefault }>>().toEqualTypeOf<{ port: string }>()
+})
+
+test('the modifiers keep a schema typed as any an argument schema', () => {
+  const legacy = string() as any
+  const args = {
+    name: required(string()),
+    s: short(legacy, 'x'),
+    d: describe(legacy, 'D'),
+    w: withDefault(legacy, 1),
+    m: map(legacy, (v: unknown) => String(v)),
+    mu: multiple(legacy),
+    r: required(legacy)
+  }
+  expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{
+    name: string
+    s?: unknown
+    d?: unknown
+    w: unknown
+    m?: string
+    mu?: unknown[]
+    r: unknown
+  }>()
 })
 
 test('unrequired overrides required type', () => {

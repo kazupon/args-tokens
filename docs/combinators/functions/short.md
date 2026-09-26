@@ -6,26 +6,27 @@
 Set a short alias on a combinator schema.
 
 The original schema is not modified.
+Other modifiers on `schema` (for example [multiple](/docs/combinators/functions/multiple.md)) are kept.
 
 ## Signature
 
 ```ts
-export function short<T, S extends string>(
-  schema: CombinatorSchema<T>,
-  alias: S
-): CombinatorSchema<T> & CombinatorShort<S>
+export function short<T, A extends string, S extends CombinatorSchema<T> = CombinatorSchema<T>>(
+  schema: S & CombinatorSchema<T>,
+  alias: A
+): WithFlag<S, CombinatorShort<A>>
 ```
 
 ## Parameters
 
-| Name     | Type                                                                            | Description                   |
-| -------- | ------------------------------------------------------------------------------- | ----------------------------- |
-| `schema` | [`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\> | The base combinator schema.   |
-| `alias`  | `S`                                                                             | Single character short alias. |
+| Name     | Type                                                                                  | Description                   |
+| -------- | ------------------------------------------------------------------------------------- | ----------------------------- |
+| `schema` | `S` & [`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\> | The base combinator schema.   |
+| `alias`  | `A`                                                                                   | Single character short alias. |
 
 ## Returns
 
-[`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\> & `CombinatorShort`\<`S`\> — A new schema with the short alias set.
+`WithFlag<S, CombinatorShort<A>>` — A new schema with the short alias set.
 
 ## Examples
 

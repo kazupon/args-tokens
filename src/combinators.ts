@@ -656,9 +656,18 @@ export function combinator<T>(config: CombinatorOptions<T>): CombinatorSchema<T>
  *
  * Creates a new schema that applies `transform` to the result of `schema.parse`.
  * The original schema is not modified.
+ * Other modifiers on `schema` (for example {@link multiple}) are kept, and `transform` is applied
+ * to each value of a `multiple` schema.
+ *
+ * A default set on `schema` is kept, but it does not go through `transform`: when it is used, the
+ * value is the default as is, although it is typed as `U`. Set the default after `map()`, with a
+ * transformed value.
  *
  * @typeParam T - The input schema's parsed type.
  * @typeParam U - The transformed type.
+ * @typeParam S - The input combinator schema, inferred from `schema`. Its other modifiers are kept.
+ *   If type arguments are given explicitly without `S`, `S` is `CombinatorSchema<T>`, and the type
+ *   of the result lacks the other modifiers, although the returned object has them.
  *
  * @param schema - The base combinator schema.
  * @param transform - The transformation function.
@@ -674,10 +683,10 @@ export function combinator<T>(config: CombinatorOptions<T>): CombinatorSchema<T>
  * @experimental
  */
 // @__NO_SIDE_EFFECTS__
-export function map<T, U>(
-  schema: CombinatorSchema<T>,
+export function map<T, U, S extends CombinatorSchema<T> = CombinatorSchema<T>>(
+  schema: S & CombinatorSchema<T>,
   transform: (value: T) => U
-): CombinatorSchema<U> {
+): WithFlag<S, Combinator<U>> {
   const baseParse: (value: string) => T = schema.parse
   return {
     ...schema,
@@ -698,9 +707,14 @@ type CombinatorWithDefault<T> = { default: T }
  * The original schema is not modified. The default must be a value of the schema's parsed type:
  * `T` is inferred from `schema` only, so `withDefault(choice(['auto', 'always']), 'awlays')` is a
  * type error instead of adding `'awlays'` to the type.
+ * Other modifiers on `schema` (for example {@link multiple}) are kept. The default of a `multiple`
+ * schema is one value of the parsed type, which becomes the only element of the array.
  *
  * @typeParam T - The schema's parsed type.
  * @typeParam D - The type of the default value, which must be assignable to `T`.
+ * @typeParam S - The input combinator schema, inferred from `schema`. Its other modifiers are kept.
+ *   If type arguments are given explicitly without `S`, `S` is `CombinatorSchema<T>`, and the type
+ *   of the result lacks the other modifiers, although the returned object has them.
  *
  * @param schema - The base combinator schema.
  * @param defaultValue - The default value, a value of the schema's parsed type.
@@ -716,10 +730,11 @@ type CombinatorWithDefault<T> = { default: T }
  * @experimental
  */
 // @__NO_SIDE_EFFECTS__
-export function withDefault<T extends string | boolean | number, D extends T = T>(
-  schema: CombinatorSchema<T>,
-  defaultValue: D
-): CombinatorSchema<T> & CombinatorWithDefault<T> {
+export function withDefault<
+  T extends string | boolean | number,
+  D extends T = T,
+  S extends CombinatorSchema<T> = CombinatorSchema<T>
+>(schema: S & CombinatorSchema<T>, defaultValue: D): WithFlag<S, CombinatorWithDefault<T>> {
   return {
     ...schema,
     default: defaultValue
@@ -727,12 +742,14 @@ export function withDefault<T extends string | boolean | number, D extends T = T
 }
 
 /**
- * Overlay a flag onto a combinator schema without dropping other modifiers.
+ * Overlay the properties of `F` onto a combinator schema without dropping its other properties.
  *
- * Omits the flag keys from `S` first so optional `ArgSchema` fields
- * (`multiple?: true`, `required?: boolean`) cannot stay as unions.
+ * Omits the keys of `F` from `S` first, so that what `F` sets replaces what `S` has, instead of
+ * making an intersection with it (`'A' & 'B'`, that is `never`, for a description set twice).
+ * A schema typed as `any`, such as one from untyped code, is taken as `CombinatorSchema<unknown>`,
+ * so that the result is still an argument schema.
  */
-type WithFlag<S, F> = Omit<S, keyof F> & F
+type WithFlag<S, F> = Omit<0 extends 1 & S ? CombinatorSchema<unknown> : S, keyof F> & F
 
 /**
  * Options for the {@link multiple} combinator.
@@ -813,9 +830,13 @@ type CombinatorShort<S extends string> = { short: S }
  * Set a short alias on a combinator schema.
  *
  * The original schema is not modified.
+ * Other modifiers on `schema` (for example {@link multiple}) are kept.
  *
  * @typeParam T - The schema's parsed type.
- * @typeParam S - The short alias string literal type.
+ * @typeParam A - The short alias string literal type.
+ * @typeParam S - The input combinator schema, inferred from `schema`. Its other modifiers are kept.
+ *   If type arguments are given explicitly without `S`, `S` is `CombinatorSchema<T>`, and the type
+ *   of the result lacks the other modifiers, although the returned object has them.
  *
  * @param schema - The base combinator schema.
  * @param alias - Single character short alias.
@@ -832,10 +853,10 @@ type CombinatorShort<S extends string> = { short: S }
  * @experimental
  */
 // @__NO_SIDE_EFFECTS__
-export function short<T, S extends string>(
-  schema: CombinatorSchema<T>,
-  alias: S
-): CombinatorSchema<T> & CombinatorShort<S> {
+export function short<T, A extends string, S extends CombinatorSchema<T> = CombinatorSchema<T>>(
+  schema: S & CombinatorSchema<T>,
+  alias: A
+): WithFlag<S, CombinatorShort<A>> {
   return {
     ...schema,
     short: alias
@@ -851,9 +872,13 @@ type CombinatorDescribe<D extends string> = { description: D }
  * Set a description on a combinator schema for help text generation.
  *
  * The original schema is not modified.
+ * Other modifiers on `schema` (for example {@link required}) are kept.
  *
  * @typeParam T - The schema's parsed type.
  * @typeParam D - The description string literal type.
+ * @typeParam S - The input combinator schema, inferred from `schema`. Its other modifiers are kept.
+ *   If type arguments are given explicitly without `S`, `S` is `CombinatorSchema<T>`, and the type
+ *   of the result lacks the other modifiers, although the returned object has them.
  *
  * @param schema - The base combinator schema.
  * @param text - Human-readable description.
@@ -869,10 +894,10 @@ type CombinatorDescribe<D extends string> = { description: D }
  * @experimental
  */
 // @__NO_SIDE_EFFECTS__
-export function describe<T, D extends string>(
-  schema: CombinatorSchema<T>,
+export function describe<T, D extends string, S extends CombinatorSchema<T> = CombinatorSchema<T>>(
+  schema: S & CombinatorSchema<T>,
   text: D
-): CombinatorSchema<T> & CombinatorDescribe<D> {
+): WithFlag<S, CombinatorDescribe<D>> {
   return {
     ...schema,
     description: text

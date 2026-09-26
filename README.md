@@ -778,6 +778,8 @@ const { values } = resolveArgs(schema, tokens)
 - `multiple(schema)` — Accept multiple values (resolves to array)
 - `map(schema, transform)` — Transform the parsed value
 
+Each modifier keeps what earlier modifiers set, so `short(multiple(string()), 't')` resolves to an array of strings, as `multiple(short(string(), 't'))` does.
+
 #### Schema Combinators
 
 - `args(fields)` — Type-safe schema factory (no `satisfies Args` needed)

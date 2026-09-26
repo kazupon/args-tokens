@@ -8,26 +8,29 @@ Set a default value on a combinator schema.
 The original schema is not modified. The default must be a value of the schema's parsed type:
 `T` is inferred from `schema` only, so `withDefault(choice(['auto', 'always']), 'awlays')` is a
 type error instead of adding `'awlays'` to the type.
+Other modifiers on `schema` (for example [multiple](/docs/combinators/functions/multiple.md)) are kept. The default of a `multiple`
+schema is one value of the parsed type, which becomes the only element of the array.
 
 ## Signature
 
 ```ts
-export function withDefault<T extends string | boolean | number, D extends T = T>(
-  schema: CombinatorSchema<T>,
-  defaultValue: D
-): CombinatorSchema<T> & CombinatorWithDefault<T>
+export function withDefault<
+  T extends string | boolean | number,
+  D extends T = T,
+  S extends CombinatorSchema<T> = CombinatorSchema<T>
+>(schema: S & CombinatorSchema<T>, defaultValue: D): WithFlag<S, CombinatorWithDefault<T>>
 ```
 
 ## Parameters
 
-| Name           | Type                                                                            | Description                                             |
-| -------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| `schema`       | [`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\> | The base combinator schema.                             |
-| `defaultValue` | `D`                                                                             | The default value, a value of the schema's parsed type. |
+| Name           | Type                                                                                  | Description                                             |
+| -------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| `schema`       | `S` & [`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\> | The base combinator schema.                             |
+| `defaultValue` | `D`                                                                                   | The default value, a value of the schema's parsed type. |
 
 ## Returns
 
-[`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\> & `CombinatorWithDefault`\<`T`\> — A new schema with the default value set.
+`WithFlag<S, CombinatorWithDefault<T>>` — A new schema with the default value set.
 
 ## Examples
 
