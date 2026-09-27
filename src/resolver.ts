@@ -786,11 +786,22 @@ type IsRequiredPositionalArg<A extends ArgSchema> = A['type'] extends 'positiona
     ? A['required'] extends true
       ? true
       : false
-    : A['required'] extends false
+    : MayBeUnrequired<A> extends true
       ? A['default'] extends {}
         ? true
         : false
       : true
+  : false
+
+/**
+ * Whether the `required` of `A` may be `false`. An optional `required` of type `boolean`, as in
+ * {@link ArgSchema}, says nothing, and is read as missing, so that a positional argument with it
+ * is required.
+ */
+type MayBeUnrequired<A extends ArgSchema> = false extends A['required']
+  ? boolean | undefined extends A['required']
+    ? false
+    : true
   : false
 
 /**

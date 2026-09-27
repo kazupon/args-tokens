@@ -21,8 +21,14 @@ import {
   withDefault
 } from './combinators.ts'
 
-import type { CombinatorSchema } from './combinators.ts'
-import type { ArgValues, ExtractOptionValue } from './resolver.ts'
+import type {
+  BaseOptions,
+  CombinatorOptions,
+  CombinatorSchema,
+  IntegerOptions,
+  StringOptions
+} from './combinators.ts'
+import type { ArgValues, Args, ExtractOptionValue } from './resolver.ts'
 
 test('base combinator type inference', () => {
   // string() → string
@@ -526,6 +532,70 @@ test('a base combinator keeps a literal required option inside other combinators
   }>()
 })
 
+test('a positional argument whose required may be false is optional', () => {
+  const optional = Math.random() > 0.5
+  const flag = Math.random() > 0.5
+  const maybe: { required?: false } = {}
+  const args = {
+    file: positional(string(optional ? { required: false } : {})),
+    port: positional(integer({ required: flag })),
+    user: positional(string(maybe)),
+    mode: positional(choice(['fast', 'safe'] as const, { ...(optional && { required: false }) })),
+    size: positional(combinator(optional ? { parse: Number, required: false } : { parse: Number })),
+    query: positional(optional ? { required: false } : {}),
+    tag: describe(positional(short(string(optional ? { required: false } : {}), 't')), 'Tag'),
+    raw: { type: 'positional' as const, required: flag },
+    count: positional(withDefault(integer(optional ? { required: false } : {}), 1)),
+    level: positional(required(string(optional ? { required: false } : {})))
+  }
+  expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{
+    file?: string
+    port?: number
+    user?: string
+    mode?: 'fast' | 'safe'
+    size?: number
+    query?: string
+    tag?: string
+    raw?: string
+    count: number
+    level: string
+  }>()
+
+  // options stay as they are
+  const options = {
+    name: string(optional ? { required: false } : {}),
+    port: integer({ required: flag }),
+    mode: string(optional ? { required: true } : {})
+  }
+  expectTypeOf<ArgValues<typeof options>>().toEqualTypeOf<{
+    name?: string
+    port?: number
+    mode?: string
+  }>()
+})
+
+test('a positional argument whose required cannot be false, or says nothing, is present', () => {
+  const strict = Math.random() > 0.5
+  const options: StringOptions = {}
+  const args = {
+    name: positional(string({ minLength: 1 })),
+    mode: positional(string(strict ? { required: true } : {})),
+    user: positional(string(options)),
+    file: positional(string() as CombinatorSchema<string>)
+  }
+  expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{
+    name: string
+    mode: string
+    user: string
+    file: string
+  }>()
+
+  // args typed from the context, as in define() of gunshi
+  const define = <A extends Args>(command: { args: A }) => command
+  const command = define({ args: { file: positional(), port: positional(integer()) } })
+  expectTypeOf<ArgValues<typeof command.args>>().toEqualTypeOf<{ file: string; port: number }>()
+})
+
 test('choice() and combinator() still take explicit type arguments', () => {
   const args = {
     level: choice<readonly ['debug', 'info']>(['debug', 'info'], { required: true }),
@@ -536,6 +606,18 @@ test('choice() and combinator() still take explicit type arguments', () => {
     level?: 'debug' | 'info'
     config?: number
   }>()
+})
+
+test('the base combinators keep their signatures as their last overloads', () => {
+  expectTypeOf<Parameters<typeof string>>().toEqualTypeOf<[opts?: StringOptions]>()
+  expectTypeOf<Parameters<typeof integer>>().toEqualTypeOf<[opts?: IntegerOptions]>()
+  expectTypeOf<Parameters<typeof positional>>().toEqualTypeOf<[parser?: BaseOptions]>()
+  expectTypeOf<Parameters<typeof choice>>().toEqualTypeOf<
+    [values: readonly string[], opts?: BaseOptions]
+  >()
+  expectTypeOf<Parameters<typeof combinator>>().toEqualTypeOf<
+    [config: CombinatorOptions<unknown>]
+  >()
 })
 
 test('unknown options of positional() and the base combinators are type errors', () => {
