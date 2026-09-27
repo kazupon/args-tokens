@@ -12,7 +12,9 @@ The original schema is not modified.
 ## Signature
 
 ```ts
-export function unrequired<T extends ArgSchema>(schema: T): WithFlag<T, CombinatorUnrequired>
+export function unrequired<T extends ArgSchema>(
+  schema: T
+): WithFlag<T, CombinatorUnrequired> & Omit<T, 'required'>
 ```
 
 ## Parameters
@@ -23,7 +25,7 @@ export function unrequired<T extends ArgSchema>(schema: T): WithFlag<T, Combinat
 
 ## Returns
 
-`WithFlag<T, CombinatorUnrequired>` — A new schema with `required: false`.
+`WithFlag<T, CombinatorUnrequired> & Omit<T, 'required'>` — A new schema with `required: false`.
 
 ## Examples
 
