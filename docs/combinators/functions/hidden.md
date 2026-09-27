@@ -7,6 +7,7 @@ Hide a combinator schema from generated help or usage output.
 
 The original schema is not modified. This only marks renderer metadata and
 does not change parsing, validation, defaults, conflicts, or resolved values.
+For a union of schemas, such as `strict ? integer() : string()`, each schema gets `hidden: true`.
 
 ## Signature
 

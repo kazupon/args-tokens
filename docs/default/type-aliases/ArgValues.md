@@ -8,10 +8,13 @@ schemas: `number[] | string`. The argument is typed as present only when each sc
 union gives it a value, with a default, with `required: true` or as a required positional
 argument.
 
-TypeScript types a `?:` expression of `multiple(schema)` and `schema`, such as
-`strict ? multiple(integer()) : integer()`, as `schema` alone, since the type of `schema` covers
-that of `multiple(schema)`, so its value is typed without the array: give each schema its own
-argument instead, or check the value with `Array.isArray()`.
+When the type of one schema covers that of the other, as the type of `integer()` covers that of
+`multiple(integer())`, TypeScript types a `?:` expression of them as the covering schema alone:
+the value of `strict ? multiple(integer()) : integer()` is typed without the array, and
+`strict ? multiple(positional()) : positional()` as present, although it may be missing. Give
+each schema its own argument instead, or give the expression the type of both schemas with `as`,
+as in `(strict ? many : one) as typeof many | typeof one` for `const many = multiple(integer())`
+and `const one = integer()`.
 
 ## Signature
 

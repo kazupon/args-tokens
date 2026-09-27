@@ -8,6 +8,8 @@ Mark a combinator schema as not required.
 Useful for overriding a base combinator that was created with `required: true`,
 or for making a positional argument explicitly optional.
 The original schema is not modified.
+For a union of schemas, such as `strict ? integer() : string()`, each schema gets
+`required: false`.
 
 ## Signature
 

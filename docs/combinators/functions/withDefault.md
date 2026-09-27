@@ -119,7 +119,7 @@ not go through `parse`. A schema typed as `any` matches the first overload inste
 Other modifiers on `schema` (for example [multiple](/docs/combinators/functions/multiple.md)) are kept. The default of a `multiple`
 schema is one value, which becomes the only element of the array.
 Since the default is used for whichever schema of the union is in use, the `parse` of each schema
-is typed as returning a value of any of their types:
+is typed as returning a value of any of the types that the schemas parse to:
 `withDefault(strict ? multiple(integer()) : string(), 'none')` resolves to
 `(number | string)[] | number | string`.
 
