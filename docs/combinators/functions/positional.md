@@ -58,8 +58,10 @@ as `strict ? integer() : string()`.
 
 The positional argument resolves to a value of any of their types: a number or a string for
 `strict ? integer() : string()`. Each schema of the union keeps its `required`, `default` and
-`multiple`, so that `positional(strict ? multiple(integer()) : string())` resolves to an array of
-numbers or a string, and is optional, as its `multiple` schema is.
+`multiple`, and the argument is present only when each of them gives it a value:
+`positional(strict ? multiple(integer()) : string())` resolves to an array of numbers or a
+string, and is optional, since a `multiple` positional argument without `required: true` or a
+default may be missing.
 
 ### Parameters
 
@@ -69,7 +71,7 @@ numbers or a string, and is optional, as its `multiple` schema is.
 
 ### Returns
 
-`PositionalOf<S>` — A positional argument schema resolving to a value of any of the types that the schemas of the union parse to.
+`PositionalOf<S>` — A positional argument schema resolving to a value of any of the types that the schemas of the union parse to, in an array for a `multiple` schema.
 
 ### Examples
 
