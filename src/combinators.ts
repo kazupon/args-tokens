@@ -1495,6 +1495,10 @@ type WithFlag<S, F> = Without<S, keyof F> & F & UntypedFlag<S, F>
  * `S['description']` as `string | undefined`, which `description?: string` does not take with
  * `exactOptionalPropertyTypes`, and, for a union constraint, `S['parse']` as the union of the
  * `parse` of its schemas, which fits none of them.
+ *
+ * A property read on this type is typed by the constraint as well: for a schema typed by a type
+ * parameter `S`, `short(schema, 'x').parse` is the `parse` of the constraint, while `schema.parse`
+ * keeps the type `S['parse']`.
  */
 type Modified<S, F> = S extends unknown ? WithFlag<S, F> : never
 
