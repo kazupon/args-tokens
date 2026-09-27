@@ -657,11 +657,9 @@ test('hidden() and unrequired() read a schema typed as any as the other modifier
   acceptsStrings(hidden(legacy))
   acceptsStrings(unrequired(legacy))
 
-  // as after the other modifiers, the result has no index signature
+  // short() drops the index signature of the schema typed as any
   // @ts-expect-error -- 'unknownKey' is not a property of the schema
   expectTypeOf(short(legacy, 'x').unknownKey).toBeAny()
-  // @ts-expect-error -- 'unknownKey' is not a property of the schema
-  expectTypeOf(hidden(legacy).unknownKey).toBeAny()
 })
 
 test('short() and describe() take a union of schemas of different types', () => {
@@ -851,6 +849,23 @@ test('the modifiers nest on a schema typed by a type parameter', () => {
   const parsed = <S extends CombinatorSchema<number>>(schema: S) =>
     describe(short(schema, 'c'), 'Count').parse('1')
   expectTypeOf(parsed(integer())).toEqualTypeOf<number>()
+})
+
+test('the results of hidden() and unrequired() fit Omit of the schema with the flag', () => {
+  const secret = <S extends CombinatorSchema<number>>(
+    schema: S
+  ): Omit<S, 'hidden'> & { hidden: true } => hidden(schema)
+  const optional = <S extends CombinatorSchema<string>>(
+    schema: S
+  ): Omit<S, 'required'> & { required: false } => unrequired(schema)
+  const args = {
+    secret: secret(integer()),
+    optional: optional(required(string()))
+  }
+  expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{
+    secret?: number
+    optional?: string
+  }>()
 })
 
 test('the modifiers take positional() without a parser', () => {

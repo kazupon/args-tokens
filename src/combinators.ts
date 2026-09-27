@@ -1225,6 +1225,8 @@ type WithFlag<S, F> = Without<S, keyof F> & F & UntypedFlag<S, F>
  *
  * It maps the properties of `S` itself, so that TypeScript still sees them when `S` is a type
  * parameter with other modifiers on it, and it maps each schema of a union on its own.
+ * For a type parameter, TypeScript does not take it for `Omit<S, K>`, so {@link hidden} and
+ * {@link unrequired}, whose results were typed `Omit<S, K>` with their flag, return that type too.
  */
 type Without<S, K> = { [P in keyof S as P extends K ? never : NamedKey<P>]: S[P] }
 
@@ -1427,11 +1429,13 @@ type CombinatorHidden = { hidden: true }
  * @experimental
  */
 // @__NO_SIDE_EFFECTS__
-export function hidden<T extends ArgSchema>(schema: T): WithFlag<T, CombinatorHidden> {
+export function hidden<T extends ArgSchema>(
+  schema: T
+): WithFlag<T, CombinatorHidden> & Omit<T, 'hidden'> {
   return {
     ...schema,
     hidden: true
-  } as WithFlag<T, CombinatorHidden>
+  } as WithFlag<T, CombinatorHidden> & Omit<T, 'hidden'>
 }
 
 /**
@@ -1462,11 +1466,13 @@ type CombinatorUnrequired = { required: false }
  * @experimental
  */
 // @__NO_SIDE_EFFECTS__
-export function unrequired<T extends ArgSchema>(schema: T): WithFlag<T, CombinatorUnrequired> {
+export function unrequired<T extends ArgSchema>(
+  schema: T
+): WithFlag<T, CombinatorUnrequired> & Omit<T, 'required'> {
   return {
     ...schema,
     required: false
-  } as WithFlag<T, CombinatorUnrequired>
+  } as WithFlag<T, CombinatorUnrequired> & Omit<T, 'required'>
 }
 
 // ------------------------------------------------------------------------------------------------
