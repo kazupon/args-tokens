@@ -30,11 +30,13 @@ export default defineConfig({
     projects: [
       { extends: true, test: { name: 'default', typecheck: { enabled: true } } },
       {
-        // the type tests that need exactOptionalPropertyTypes, which the sources do not satisfy
+        // type-check the *.exact.test-d.ts files with exactOptionalPropertyTypes too, and nothing
+        // else; the sources have type errors with it, which ignoreSourceErrors leaves out
         extends: true,
         test: {
           name: 'exactOptionalPropertyTypes',
           include: [],
+          benchmark: { include: [] },
           typecheck: {
             enabled: true,
             only: true,
