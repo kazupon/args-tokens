@@ -1425,7 +1425,7 @@ export function withDefault<
  * Other modifiers on `schema` (for example {@link multiple}) are kept. The default of a `multiple`
  * schema is one value, which becomes the only element of the array.
  * Since the default is used for whichever schema of the union is in use, the `parse` of each schema
- * is typed as returning a value of any of their types:
+ * is typed as returning a value of any of the types that the schemas parse to:
  * `withDefault(strict ? multiple(integer()) : string(), 'none')` resolves to
  * `(number | string)[] | number | string`.
  *
@@ -1671,6 +1671,7 @@ type CombinatorHidden = { hidden: true }
  *
  * The original schema is not modified. This only marks renderer metadata and
  * does not change parsing, validation, defaults, conflicts, or resolved values.
+ * For a union of schemas, such as `strict ? integer() : string()`, each schema gets `hidden: true`.
  *
  * @typeParam T - The schema type.
  *
@@ -1708,6 +1709,8 @@ type CombinatorUnrequired = { required: false }
  * Useful for overriding a base combinator that was created with `required: true`,
  * or for making a positional argument explicitly optional.
  * The original schema is not modified.
+ * For a union of schemas, such as `strict ? integer() : string()`, each schema gets
+ * `required: false`.
  *
  * @typeParam T - The schema type.
  *
