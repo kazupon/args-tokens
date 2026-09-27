@@ -631,14 +631,14 @@ type PositionalParserKey =
  * The positional argument schema that {@link positional} returns for a parser: the properties it
  * keeps, with their types, as `type: 'positional'`. A parser of type `any` is read as
  * {@link UntypedCombinatorSchema}.
+ *
+ * As in {@link WithFlag}, it maps the properties of the parser itself, and reads `any` in a part of
+ * its own, so that TypeScript still sees them for a parser typed by a type parameter.
  */
 type PositionalWithParser<S> = {
-  [
-    K in keyof (0 extends 1 & S ? UntypedCombinatorSchema : S) as K extends PositionalParserKey
-      ? K
-      : never
-  ]: (0 extends 1 & S ? UntypedCombinatorSchema : S)[K]
-} & ArgSchemaPositionalType
+  [K in keyof S as K extends PositionalParserKey ? K : never]: S[K]
+} & ArgSchemaPositionalType &
+  (0 extends 1 & S ? Pick<UntypedCombinatorSchema, PositionalParserKey> : unknown)
 
 /**
  * Create a positional argument schema.

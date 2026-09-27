@@ -851,6 +851,25 @@ test('the modifiers nest on a schema typed by a type parameter', () => {
   expectTypeOf(parsed(integer())).toEqualTypeOf<number>()
 })
 
+test('positional() nests with the modifiers on a schema typed by a type parameter', () => {
+  const index = <S extends CombinatorSchema<number>>(schema: S) =>
+    map(positional(schema), n => n * 2)
+  const file = <S extends CombinatorSchema<number>>(schema: S): CombinatorSchema<number> =>
+    describe(hidden(positional(required(schema))), 'File')
+  const port = <S extends CombinatorSchema<number>>(schema: S) =>
+    map(describe(positional(schema), 'Port'), n => n + 1)
+  const args = {
+    index: index(integer()),
+    file: file(integer()),
+    port: port(integer())
+  }
+  expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{
+    index: number
+    file?: number
+    port: number
+  }>()
+})
+
 test('the results of hidden() and unrequired() fit Omit of the schema with the flag', () => {
   const secret = <S extends CombinatorSchema<number>>(
     schema: S
