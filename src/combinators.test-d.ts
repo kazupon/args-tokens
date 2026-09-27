@@ -606,6 +606,21 @@ test('a required that may be false stays an optional property of the schema', ()
   expectTypeOf<{} extends Pick<typeof query, 'required'> ? true : false>().toEqualTypeOf<true>()
 })
 
+test('a required typed as any is read as boolean', () => {
+  const anyRequired = (Math.random() > 0.5) as any
+  const args = {
+    name: string({ required: anyRequired }),
+    port: integer({ required: anyRequired, min: 1 }),
+    file: positional(string({ required: anyRequired }))
+  }
+  // it may be false, as a boolean may
+  expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{
+    name?: string
+    port?: number
+    file?: string
+  }>()
+})
+
 test('choice() and combinator() still take explicit type arguments', () => {
   const args = {
     level: choice<readonly ['debug', 'info']>(['debug', 'info'], { required: true }),

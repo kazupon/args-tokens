@@ -192,9 +192,13 @@ export interface BaseOptions {
 
 /**
  * The schema `S` with the type `R` of `required` in the options: `true` types the value as present,
- * and `false` or `boolean` makes a positional argument optional.
+ * and `false` or `boolean` makes a positional argument optional. `any` is kept as `boolean`, which
+ * it may be, so that an option with it stays optional.
  */
-type WithRequiredOption<S, R extends boolean> = WithFlag<S, { required: R }>
+type WithRequiredOption<S, R extends boolean> = WithFlag<
+  S,
+  { required: unknown extends R ? boolean : R }
+>
 
 /**
  * The schema `S` with an optional `required: false`, when the type `R` of `required` in options
