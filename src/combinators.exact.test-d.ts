@@ -46,6 +46,8 @@ test('the modifiers on a schema typed by a type parameter give a combinator sche
     short(describe(hidden(required(schema)), 'Quiet'), 'q') satisfies CombinatorSchema<number>
   const tag = <S extends CombinatorSchema<number> | CombinatorSchema<string>>(schema: S) =>
     map(describe(schema, 'Tag'), value => `#${value}`) satisfies CombinatorSchema<string>
+  const either = <S extends CombinatorSchema<number> | CombinatorSchema<string>>(schema: S) =>
+    positional(schema) satisfies ArgSchema
 
   const portSchema: PortSchema = { type: 'custom', parse: Number }
   const args = {
@@ -59,7 +61,8 @@ test('the modifiers on a schema typed by a type parameter give a combinator sche
     size: size(integer()),
     doubled: doubled(portSchema),
     quiet: quiet(integer()),
-    tag: tag(Math.random() > 0.5 ? integer() : string())
+    tag: tag(Math.random() > 0.5 ? integer() : string()),
+    either: either(Math.random() > 0.5 ? integer() : string())
   }
   expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{
     alias?: number
@@ -73,5 +76,6 @@ test('the modifiers on a schema typed by a type parameter give a combinator sche
     doubled: number
     quiet: number
     tag?: string
+    either: number | string
   }>()
 })
