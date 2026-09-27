@@ -1057,7 +1057,7 @@ export function map<T, U, S extends CombinatorSchema<T> = CombinatorSchema<T>>(
  * const strict = process.argv.includes('--strict')
  * const args = {
  *   // `value` is a number or a string
- *   label: map(strict ? integer({ min: 0 }) : string(), value => `timeout: ${value}`)
+ *   timeout: map(strict ? integer({ min: 0 }) : string(), value => String(value))
  * }
  * ```
  *
