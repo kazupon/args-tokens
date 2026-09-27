@@ -14,7 +14,7 @@ Other modifiers on `schema` (for example [multiple](/docs/combinators/functions/
 export function short<T, A extends string, S extends CombinatorSchema<T> = CombinatorSchema<T>>(
   schema: S,
   alias: A
-): WithFlag<S, CombinatorShort<A>>
+): Modified<S, CombinatorShort<A>>
 ```
 
 ## Parameters
@@ -26,7 +26,7 @@ export function short<T, A extends string, S extends CombinatorSchema<T> = Combi
 
 ## Returns
 
-`WithFlag<S, CombinatorShort<A>>` — A new schema with the short alias set.
+`Modified<S, CombinatorShort<A>>` — A new schema with the short alias set.
 
 ## Examples
 

@@ -5,7 +5,7 @@
 ```ts
 export function positional<T, S extends CombinatorSchema<T> = CombinatorSchema<T>>(
   parser: S & CombinatorSchema<T>
-): PositionalWithParser<S>
+): PositionalOf<S>
 ```
 
 > [!WARNING]
@@ -28,7 +28,7 @@ resolves to an array, as `multiple(positional(integer()))` does.
 
 ### Returns
 
-`PositionalWithParser<S>` — A positional argument schema resolving to the parser's type.
+`PositionalOf<S>` — A positional argument schema resolving to the parser's type.
 
 ### Examples
 

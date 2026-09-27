@@ -14,7 +14,7 @@ Other modifiers on `schema` (for example [required](/docs/combinators/functions/
 export function describe<T, D extends string, S extends CombinatorSchema<T> = CombinatorSchema<T>>(
   schema: S,
   text: D
-): WithFlag<S, CombinatorDescribe<D>>
+): Modified<S, CombinatorDescribe<D>>
 ```
 
 ## Parameters
@@ -26,7 +26,7 @@ export function describe<T, D extends string, S extends CombinatorSchema<T> = Co
 
 ## Returns
 
-`WithFlag<S, CombinatorDescribe<D>>` — A new schema with the description set.
+`Modified<S, CombinatorDescribe<D>>` — A new schema with the description set.
 
 ## Examples
 

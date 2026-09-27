@@ -6,7 +6,7 @@
 export function map<T, U, S extends CombinatorSchema<T> = CombinatorSchema<T>>(
   schema: S & CombinatorSchema<T>,
   transform: (value: T) => U
-): WithFlag<S, Combinator<U>>
+): Modified<S, Combinator<U>>
 ```
 
 > [!WARNING]
@@ -35,7 +35,7 @@ last overload, whose `transform` takes a value of any of their types.
 
 ### Returns
 
-`WithFlag`\<`S`, [`Combinator`](/docs/combinators/type-aliases/Combinator.md)\<`U`\>\> — A new combinator schema that resolves to the transformed type.
+`Modified`\<`S`, [`Combinator`](/docs/combinators/type-aliases/Combinator.md)\<`U`\>\> — A new combinator schema that resolves to the transformed type.
 
 ### Examples
 
@@ -55,7 +55,7 @@ const args = {
 export function map<T, U, S extends CombinatorSchema<T> = CombinatorSchema<T>>(
   schema: S & Combinator<T>,
   transform: (value: T) => U
-): WithFlag<S, Combinator<U>>
+): Modified<S, Combinator<U>>
 ```
 
 > [!WARNING]
@@ -84,7 +84,7 @@ transformed value.
 
 ### Returns
 
-`WithFlag`\<`S`, [`Combinator`](/docs/combinators/type-aliases/Combinator.md)\<`U`\>\> — A new combinator schema that resolves to the transformed type.
+`Modified`\<`S`, [`Combinator`](/docs/combinators/type-aliases/Combinator.md)\<`U`\>\> — A new combinator schema that resolves to the transformed type.
 
 ### Examples
 
@@ -104,7 +104,7 @@ const args = {
 export function map<S extends CombinatorSchema<unknown>, U>(
   schema: S,
   transform: (value: ParsedType<S>) => U
-): WithFlag<S, Combinator<U>>
+): Modified<S, Combinator<U>>
 ```
 
 > [!WARNING]
@@ -132,7 +132,7 @@ transformed value.
 
 ### Returns
 
-`WithFlag`\<`S`, [`Combinator`](/docs/combinators/type-aliases/Combinator.md)\<`U`\>\> — A new combinator schema that resolves to the transformed type.
+`Modified`\<`S`, [`Combinator`](/docs/combinators/type-aliases/Combinator.md)\<`U`\>\> — A new combinator schema that resolves to the transformed type.
 
 ### Examples
 
