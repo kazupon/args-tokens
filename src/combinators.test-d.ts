@@ -838,6 +838,8 @@ test('a union of a multiple schema and another schema is typed with the array', 
     alias: short(port, 'p'),
     required: describe(required(port), 'Port'),
     mapped: map(port, v => String(v)),
+    hidden: hidden(port),
+    unrequired: unrequired(required(port)),
     both: strict ? multiple(integer()) : multiple(string()),
     level: strict ? multiple(choice(['debug', 'info'] as const)) : boolean(),
     file: positional(strict ? required(multiple(integer())) : withDefault(integer(), 1))
@@ -847,6 +849,8 @@ test('a union of a multiple schema and another schema is typed with the array', 
     alias?: number[] | string
     required: number[] | string
     mapped?: string[] | string
+    hidden?: number[] | string
+    unrequired?: number[] | string
     both?: number[] | string[]
     level?: ('debug' | 'info')[] | boolean
     file: number[] | number

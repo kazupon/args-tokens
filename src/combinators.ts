@@ -1688,7 +1688,7 @@ type CombinatorHidden = { hidden: true }
  */
 export function hidden<T extends ArgSchema>(
   schema: T
-): WithFlag<T, CombinatorHidden> & Omit<T, 'hidden'>
+): T extends unknown ? WithFlag<T, CombinatorHidden> & Omit<T, 'hidden'> : never
 // @__NO_SIDE_EFFECTS__
 export function hidden(schema: ArgSchema): ArgSchema & CombinatorHidden {
   return {
@@ -1726,7 +1726,7 @@ type CombinatorUnrequired = { required: false }
  */
 export function unrequired<T extends ArgSchema>(
   schema: T
-): WithFlag<T, CombinatorUnrequired> & Omit<T, 'required'>
+): T extends unknown ? WithFlag<T, CombinatorUnrequired> & Omit<T, 'required'> : never
 // @__NO_SIDE_EFFECTS__
 export function unrequired(schema: ArgSchema): ArgSchema & CombinatorUnrequired {
   return {
