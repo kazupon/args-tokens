@@ -25,7 +25,7 @@ Other modifiers on `schema` (for example [multiple](/docs/combinators/functions/
 schema is one value of the parsed type, which becomes the only element of the array.
 
 A union of schemas of different types, such as `strict ? integer() : string()`, matches the
-other overload, whose default may be a value of any of their types.
+last overload, whose default may be a value of any of their types.
 
 ### Parameters
 
@@ -53,6 +53,53 @@ const args = {
 ## Call Signature
 
 ```ts
+export function withDefault<
+  T extends string | boolean | number,
+  D extends T = T,
+  S extends CombinatorSchema<T> = CombinatorSchema<T>
+>(schema: S & Combinator<T>, defaultValue: D): WithFlag<S, CombinatorWithDefault<T>>
+```
+
+> [!WARNING]
+> This API is experimental and may change in future versions.
+
+Set a default value on a combinator schema, as the first overload does, for a schema that fits
+the first overload but that TypeScript does not match with it at first, such as
+`positional(integer())`, a class instance or a schema typed by an interface. This overload keeps
+such a schema from matching the overload for a union of schemas of different types.
+
+The original schema is not modified. The default must be a value of the schema's parsed type. The
+schema must parse to a string, number or boolean, since the default can only be one of them and
+does not go through `parse`.
+Other modifiers on `schema` (for example [multiple](/docs/combinators/functions/multiple.md)) are kept. The default of a `multiple`
+schema is one value of the parsed type, which becomes the only element of the array.
+
+### Parameters
+
+| Name           | Type                                                                      | Description                                             |
+| -------------- | ------------------------------------------------------------------------- | ------------------------------------------------------- |
+| `schema`       | `S` & [`Combinator`](/docs/combinators/type-aliases/Combinator.md)\<`T`\> | The base combinator schema.                             |
+| `defaultValue` | `D`                                                                       | The default value, a value of the schema's parsed type. |
+
+### Returns
+
+`WithFlag<S, CombinatorWithDefault<T>>` — A new schema with the default value set.
+
+### Examples
+
+```ts
+const args = {
+  port: withDefault(positional(integer()), 8080)
+}
+```
+
+### Tags
+
+- `@typeParam` — T - The schema's parsed type.
+
+## Call Signature
+
+```ts
 export function withDefault<S extends CombinatorSchema<string | boolean | number>>(
   schema: S,
   defaultValue: unknown extends ParsedType<S> ? never : ParsedType<S>
@@ -68,7 +115,7 @@ Set a default value on a union of combinator schemas of different types, such as
 The original schema is not modified. The default must be a value of one of the types that the
 schemas of the union parse to: a number or a string for `strict ? integer() : string()`. They
 must parse to a string, number or boolean, since the default can only be one of them and does
-not go through `parse`. A schema typed as `any` matches the other overload instead.
+not go through `parse`. A schema typed as `any` matches the first overload instead.
 Other modifiers on `schema` (for example [multiple](/docs/combinators/functions/multiple.md)) are kept. The default of a `multiple`
 schema is one value, which becomes the only element of the array.
 

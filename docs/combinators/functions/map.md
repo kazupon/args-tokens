@@ -24,7 +24,7 @@ value is the default as is, although it is typed as `U`. Set the default after `
 transformed value.
 
 A union of schemas of different types, such as `strict ? integer() : string()`, matches the
-other overload, whose `transform` takes a value of any of their types.
+last overload, whose `transform` takes a value of any of their types.
 
 ### Parameters
 
@@ -42,6 +42,55 @@ other overload, whose `transform` takes a value of any of their types.
 ```ts
 const args = {
   doubled: map(integer(), n => n * 2)
+}
+```
+
+### Tags
+
+- `@typeParam` — T - The input schema's parsed type.
+
+## Call Signature
+
+```ts
+export function map<T, U, S extends CombinatorSchema<T> = CombinatorSchema<T>>(
+  schema: S & Combinator<T>,
+  transform: (value: T) => U
+): WithFlag<S, Combinator<U>>
+```
+
+> [!WARNING]
+> This API is experimental and may change in future versions.
+
+Transform the output of a combinator schema, as the first overload does, for a schema that fits
+the first overload but that TypeScript does not match with it at first, such as
+`positional(integer())`, a class instance or a schema typed by an interface. This overload keeps
+such a schema from matching the overload for a union of schemas of different types.
+
+Creates a new schema that applies `transform` to the result of `schema.parse`.
+The original schema is not modified.
+Other modifiers on `schema` (for example [multiple](/docs/combinators/functions/multiple.md)) are kept, and `transform` is applied
+to each value of a `multiple` schema.
+
+A default set on `schema` is kept, but it does not go through `transform`: when it is used, the
+value is the default as is, although it is typed as `U`. Set the default after `map()`, with a
+transformed value.
+
+### Parameters
+
+| Name        | Type                                                                      | Description                  |
+| ----------- | ------------------------------------------------------------------------- | ---------------------------- |
+| `schema`    | `S` & [`Combinator`](/docs/combinators/type-aliases/Combinator.md)\<`T`\> | The base combinator schema.  |
+| `transform` | `(value: T) => U`                                                         | The transformation function. |
+
+### Returns
+
+`WithFlag`\<`S`, [`Combinator`](/docs/combinators/type-aliases/Combinator.md)\<`U`\>\> — A new combinator schema that resolves to the transformed type.
+
+### Examples
+
+```ts
+const args = {
+  doubled: map(positional(integer()), n => n * 2)
 }
 ```
 
@@ -91,7 +140,7 @@ transformed value.
 const strict = process.argv.includes('--strict')
 const args = {
   // `value` is a number or a string
-  label: map(strict ? integer({ min: 0 }) : string(), value => `timeout: ${value}`)
+  timeout: map(strict ? integer({ min: 0 }) : string(), value => String(value))
 }
 ```
 
