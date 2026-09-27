@@ -64,7 +64,8 @@ Without a parser, the schema has a `parse` function that returns the value as is
 modifiers, such as [multiple](/docs/combinators/functions/multiple.md) and [withDefault](/docs/combinators/functions/withDefault.md), take it: `multiple(positional())`
 collects the values as strings.
 
-With `required: false` in the options, the positional argument is optional, in its type too.
+With `required: false` in the options, the positional argument is optional, in its type too. A
+`required` of type `boolean`, which may be `false`, types it as optional as well.
 
 ### Parameters
 
@@ -88,7 +89,55 @@ const args = {
 
 ### Tags
 
-- `@typeParam` — R - The type of `required` in the options, which the positional argument keeps when it is `true` or `false`.
+- `@typeParam` — R - The type of `required` in the options, which the positional argument keeps.
+
+## Call Signature
+
+```ts
+export function positional<const R extends boolean | undefined = boolean | undefined>(
+  parser?: BaseOptions & { required?: R }
+): WithUnrequiredOption<Omit<CombinatorSchema<string>, 'type'> & ArgSchemaPositionalType, R>
+```
+
+> [!WARNING]
+> This API is experimental and may change in future versions.
+
+Create a positional argument schema.
+
+Without a parser, resolves to string.
+With a parser (e.g., `positional(integer())`), resolves to the parser's return type.
+
+Without a parser, the schema has a `parse` function that returns the value as is, so that the
+modifiers, such as [multiple](/docs/combinators/functions/multiple.md) and [withDefault](/docs/combinators/functions/withDefault.md), take it: `multiple(positional())`
+collects the values as strings.
+
+With a `required: false` that the options have only in some cases, with no `required` in the
+others, such as `optional ? { required: false } : {}`, the positional argument is optional, in
+its type too.
+
+### Parameters
+
+| Name     | Type                                                                                                                           | Description                                                        |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| `parser` | [`BaseOptions`](/docs/combinators/interfaces/BaseOptions.md) & { [`required`](/docs/combinators/functions/required.md)?: `R` } | Optional base options (description, short, required). _(optional)_ |
+
+### Returns
+
+`WithUnrequiredOption`\<`Omit`\<[`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`string`\>, 'type'\> & `ArgSchemaPositionalType`, `R`\> — A positional argument schema resolving to string.
+
+### Examples
+
+```ts
+const args = {
+  command: positional(), // resolves to string
+  port: positional(integer()), // resolves to number
+  query: unrequired(positional()) // optional positional
+}
+```
+
+### Tags
+
+- `@typeParam` — R - The type of `required` in the options, which the positional argument keeps when it may be `false` but not `true`, as for `optional ? { required: false } : {}`.
 
 ## Call Signature
 
