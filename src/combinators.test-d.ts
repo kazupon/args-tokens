@@ -830,6 +830,24 @@ test('map() and withDefault() take a union of schemas of different types', () =>
   withDefault(strict ? integer() : combinator({ parse: (value: string) => new Date(value) }), 1)
 })
 
+test('positional() takes a union of schemas of different types', () => {
+  const strict = Math.random() > 0.5
+  const args = {
+    port: positional(strict ? integer() : string()),
+    ids: positional(strict ? multiple(integer()) : string()),
+    level: positional(strict ? choice(['debug', 'info'] as const) : integer()),
+    file: required(positional(strict ? multiple(integer()) : string())),
+    size: withDefault(positional(strict ? integer() : string()), 1)
+  }
+  expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{
+    port: number | string
+    ids?: number[] | string
+    level: 'debug' | 'info' | number
+    file: number[] | string
+    size: number | string
+  }>()
+})
+
 test('a union of a multiple schema and another schema is typed with the array', () => {
   const strict = Math.random() > 0.5
   const port = strict ? multiple(integer()) : string()
