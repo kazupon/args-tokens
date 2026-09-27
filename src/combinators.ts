@@ -779,7 +779,7 @@ type PositionalParserKey =
   | 'multiple'
 
 /**
- * The positional argument schema that {@link positional} returns for a parser: the properties it
+ * The positional argument schema that {@link positional} builds from a parser: the properties it
  * keeps, with their types, as `type: 'positional'`. A parser of type `any` is read as
  * {@link UntypedCombinatorSchema}.
  *
@@ -793,8 +793,9 @@ type PositionalWithParser<S> = {
 
 /**
  * The positional argument schema that {@link positional} returns for a parser `S`:
- * {@link PositionalWithParser} for each schema of a union. A parser typed by a type parameter is
- * related through the constraint of the type parameter, as for {@link Modified}.
+ * {@link PositionalWithParser} for each schema of a union. For a parser typed by a type parameter,
+ * TypeScript keeps this type unresolved, and relates it as {@link PositionalWithParser} of the
+ * constraint of the type parameter, as for {@link Modified}.
  */
 type PositionalOf<S> = S extends unknown ? PositionalWithParser<S> : never
 
@@ -1484,12 +1485,16 @@ export function withDefault<T extends string | boolean | number>(
 type WithFlag<S, F> = Without<S, keyof F> & F & UntypedFlag<S, F>
 
 /**
- * The schema that a modifier returns: {@link WithFlag} for each schema of a union.
+ * The schema that {@link short}, {@link describe}, {@link required}, {@link multiple}, {@link map}
+ * and {@link withDefault} return: {@link WithFlag} for each schema of a union.
  *
- * For a schema typed by a type parameter, TypeScript keeps this type unresolved, and relates it
- * through the constraint of the type parameter, so that the result fits that constraint, a union
- * included, also with `exactOptionalPropertyTypes`: {@link WithFlag} alone reads an optional
- * property `P` of the type parameter, `S[P]`, as possibly `undefined`.
+ * For a schema typed by a type parameter, TypeScript keeps this type unresolved, and relates it as
+ * {@link WithFlag} of the constraint of the type parameter, for each schema of a union constraint:
+ * the result fits where the modifier on the constraint fits. {@link WithFlag} alone copies each
+ * property `P` of the type parameter as `S[P]`, which TypeScript reads through the constraint:
+ * `S['description']` as `string | undefined`, which `description?: string` does not take with
+ * `exactOptionalPropertyTypes`, and, for a union constraint, `S['parse']` as the union of the
+ * `parse` of its schemas, which fits none of them.
  */
 type Modified<S, F> = S extends unknown ? WithFlag<S, F> : never
 
