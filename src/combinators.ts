@@ -1428,14 +1428,15 @@ type CombinatorHidden = { hidden: true }
  *
  * @experimental
  */
-// @__NO_SIDE_EFFECTS__
 export function hidden<T extends ArgSchema>(
   schema: T
-): WithFlag<T, CombinatorHidden> & Omit<T, 'hidden'> {
+): WithFlag<T, CombinatorHidden> & Omit<T, 'hidden'>
+// @__NO_SIDE_EFFECTS__
+export function hidden(schema: ArgSchema): ArgSchema & CombinatorHidden {
   return {
     ...schema,
     hidden: true
-  } as WithFlag<T, CombinatorHidden> & Omit<T, 'hidden'>
+  }
 }
 
 /**
@@ -1465,14 +1466,15 @@ type CombinatorUnrequired = { required: false }
  *
  * @experimental
  */
-// @__NO_SIDE_EFFECTS__
 export function unrequired<T extends ArgSchema>(
   schema: T
-): WithFlag<T, CombinatorUnrequired> & Omit<T, 'required'> {
+): WithFlag<T, CombinatorUnrequired> & Omit<T, 'required'>
+// @__NO_SIDE_EFFECTS__
+export function unrequired(schema: ArgSchema): ArgSchema & CombinatorUnrequired {
   return {
     ...schema,
     required: false
-  } as WithFlag<T, CombinatorUnrequired> & Omit<T, 'required'>
+  }
 }
 
 // ------------------------------------------------------------------------------------------------
