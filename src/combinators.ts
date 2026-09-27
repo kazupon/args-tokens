@@ -966,7 +966,7 @@ export function combinator<T>(config: CombinatorOptions<T>): CombinatorSchema<T>
  * transformed value.
  *
  * A union of schemas of different types, such as `strict ? integer() : string()`, matches the
- * other overload, whose `transform` takes a value of any of their types.
+ * last overload, whose `transform` takes a value of any of their types.
  *
  * @typeParam T - The input schema's parsed type.
  * @typeParam U - The transformed type.
@@ -989,6 +989,43 @@ export function combinator<T>(config: CombinatorOptions<T>): CombinatorSchema<T>
  */
 export function map<T, U, S extends CombinatorSchema<T> = CombinatorSchema<T>>(
   schema: S & CombinatorSchema<T>,
+  transform: (value: T) => U
+): WithFlag<S, Combinator<U>>
+
+/**
+ * Transform the output of a combinator schema, as the first overload does, for a schema that fits
+ * the first overload but that TypeScript does not match with it at first, such as
+ * `positional(integer())`, a class instance or a schema typed by an interface. This overload keeps
+ * such a schema from matching the overload for a union of schemas of different types.
+ *
+ * Creates a new schema that applies `transform` to the result of `schema.parse`.
+ * The original schema is not modified.
+ * Other modifiers on `schema` (for example {@link multiple}) are kept, and `transform` is applied
+ * to each value of a `multiple` schema.
+ *
+ * A default set on `schema` is kept, but it does not go through `transform`: when it is used, the
+ * value is the default as is, although it is typed as `U`. Set the default after `map()`, with a
+ * transformed value.
+ *
+ * @typeParam T - The input schema's parsed type.
+ * @typeParam U - The transformed type.
+ * @typeParam S - The input combinator schema, inferred from `schema`. Its other modifiers are kept.
+ *
+ * @param schema - The base combinator schema.
+ * @param transform - The transformation function.
+ * @returns A new combinator schema that resolves to the transformed type.
+ *
+ * @example
+ * ```ts
+ * const args = {
+ *   doubled: map(positional(integer()), n => n * 2)
+ * }
+ * ```
+ *
+ * @experimental
+ */
+export function map<T, U, S extends CombinatorSchema<T> = CombinatorSchema<T>>(
+  schema: S & Combinator<T>,
   transform: (value: T) => U
 ): WithFlag<S, Combinator<U>>
 
@@ -1062,7 +1099,7 @@ type CombinatorWithDefault<T> = { default: T }
  * schema is one value of the parsed type, which becomes the only element of the array.
  *
  * A union of schemas of different types, such as `strict ? integer() : string()`, matches the
- * other overload, whose default may be a value of any of their types.
+ * last overload, whose default may be a value of any of their types.
  *
  * @typeParam T - The schema's parsed type.
  * @typeParam D - The type of the default value, which must be assignable to `T`.
@@ -1090,13 +1127,48 @@ export function withDefault<
 >(schema: S & CombinatorSchema<T>, defaultValue: D): WithFlag<S, CombinatorWithDefault<T>>
 
 /**
+ * Set a default value on a combinator schema, as the first overload does, for a schema that fits
+ * the first overload but that TypeScript does not match with it at first, such as
+ * `positional(integer())`, a class instance or a schema typed by an interface. This overload keeps
+ * such a schema from matching the overload for a union of schemas of different types.
+ *
+ * The original schema is not modified. The default must be a value of the schema's parsed type. The
+ * schema must parse to a string, number or boolean, since the default can only be one of them and
+ * does not go through `parse`.
+ * Other modifiers on `schema` (for example {@link multiple}) are kept. The default of a `multiple`
+ * schema is one value of the parsed type, which becomes the only element of the array.
+ *
+ * @typeParam T - The schema's parsed type.
+ * @typeParam D - The type of the default value, which must be assignable to `T`.
+ * @typeParam S - The input combinator schema, inferred from `schema`. Its other modifiers are kept.
+ *
+ * @param schema - The base combinator schema.
+ * @param defaultValue - The default value, a value of the schema's parsed type.
+ * @returns A new schema with the default value set.
+ *
+ * @example
+ * ```ts
+ * const args = {
+ *   port: withDefault(positional(integer()), 8080)
+ * }
+ * ```
+ *
+ * @experimental
+ */
+export function withDefault<
+  T extends string | boolean | number,
+  D extends T = T,
+  S extends CombinatorSchema<T> = CombinatorSchema<T>
+>(schema: S & Combinator<T>, defaultValue: D): WithFlag<S, CombinatorWithDefault<T>>
+
+/**
  * Set a default value on a union of combinator schemas of different types, such as
  * `strict ? integer() : string()`.
  *
  * The original schema is not modified. The default must be a value of one of the types that the
  * schemas of the union parse to: a number or a string for `strict ? integer() : string()`. They
  * must parse to a string, number or boolean, since the default can only be one of them and does
- * not go through `parse`. A schema typed as `any` matches the other overload instead.
+ * not go through `parse`. A schema typed as `any` matches the first overload instead.
  * Other modifiers on `schema` (for example {@link multiple}) are kept. The default of a `multiple`
  * schema is one value, which becomes the only element of the array.
  *

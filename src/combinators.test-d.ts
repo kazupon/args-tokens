@@ -702,6 +702,34 @@ test('map() and withDefault() take a union of schemas of different types', () =>
   withDefault(strict ? integer() : combinator({ parse: (value: string) => new Date(value) }), 1)
 })
 
+test('map() and withDefault() keep the parsed type of a schema typed by an interface', () => {
+  interface PortSchema {
+    type: 'custom'
+    parse: (value: string) => number
+  }
+  const doubled = <S extends PortSchema>(schema: S) =>
+    withDefault(
+      map(schema, n => n * 2),
+      1
+    )
+  const fixed = <S extends PortSchema>(schema: S) =>
+    map(
+      map(schema, n => n),
+      n => n.toFixed(1)
+    )
+  const port: PortSchema = { type: 'custom', parse: Number }
+  const args = {
+    doubled: doubled(port),
+    fixed: fixed(port),
+    positional: withDefault(positional(integer()), 1)
+  }
+  expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{
+    doubled: number
+    fixed?: string
+    positional: number
+  }>()
+})
+
 test('each combinator schema fits only where the values that it parses do', () => {
   const acceptsStrings = (schema: CombinatorSchema<string>) => schema
   const acceptsNumbers = (schema: CombinatorSchema<number>) => schema
