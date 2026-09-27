@@ -1027,6 +1027,39 @@ test('the results of hidden() and unrequired() fit Omit of the schema with the f
   }>()
 })
 
+test('the modifiers on a schema typed by a type parameter fit a union constraint', () => {
+  type NumberOrString = CombinatorSchema<number> | CombinatorSchema<string>
+  const alias = <S extends NumberOrString>(schema: S) => short(schema, 'a') satisfies NumberOrString
+  const note = <S extends NumberOrString>(schema: S) =>
+    describe(schema, 'Note') satisfies NumberOrString
+  const count = <S extends NumberOrString>(schema: S) =>
+    describe(short(schema, 'c'), 'Count') satisfies NumberOrString
+  const ids = <S extends NumberOrString>(schema: S) =>
+    required(multiple(schema)) satisfies NumberOrString
+  const label = <S extends NumberOrString>(schema: S) =>
+    map(describe(schema, 'Label'), value => {
+      const parsed: number | string = value
+      return `#${parsed}`
+    }) satisfies CombinatorSchema<string>
+
+  const strict = Math.random() > 0.5
+  const value = strict ? integer() : string()
+  const args = {
+    alias: alias(value),
+    note: note(value),
+    count: count(value),
+    ids: ids(value),
+    label: label(value)
+  }
+  expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{
+    alias?: number | string
+    note?: number | string
+    count?: number | string
+    ids: number[] | string[]
+    label?: string
+  }>()
+})
+
 test('the modifiers take positional() without a parser', () => {
   const args = {
     entry: required(positional({ description: 'Entry file to serve' })),

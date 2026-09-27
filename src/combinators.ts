@@ -792,6 +792,13 @@ type PositionalWithParser<S> = {
   (0 extends 1 & S ? Pick<UntypedCombinatorSchema, PositionalParserKey> : unknown)
 
 /**
+ * The positional argument schema that {@link positional} returns for a parser `S`:
+ * {@link PositionalWithParser} for each schema of a union. A parser typed by a type parameter is
+ * related through the constraint of the type parameter, as for {@link Modified}.
+ */
+type PositionalOf<S> = S extends unknown ? PositionalWithParser<S> : never
+
+/**
  * Create a positional argument schema.
  *
  * Without a parser, resolves to string.
@@ -823,7 +830,7 @@ type PositionalWithParser<S> = {
  */
 export function positional<T, S extends CombinatorSchema<T> = CombinatorSchema<T>>(
   parser: S & CombinatorSchema<T>
-): PositionalWithParser<S>
+): PositionalOf<S>
 
 /**
  * Create a positional argument schema.
@@ -1243,7 +1250,7 @@ export function combinator<T>(config: CombinatorOptions<T>): CombinatorSchema<T>
 export function map<T, U, S extends CombinatorSchema<T> = CombinatorSchema<T>>(
   schema: S & CombinatorSchema<T>,
   transform: (value: T) => U
-): WithFlag<S, Combinator<U>>
+): Modified<S, Combinator<U>>
 
 /**
  * Transform the output of a combinator schema, as the first overload does, for a schema that fits
@@ -1280,7 +1287,7 @@ export function map<T, U, S extends CombinatorSchema<T> = CombinatorSchema<T>>(
 export function map<T, U, S extends CombinatorSchema<T> = CombinatorSchema<T>>(
   schema: S & Combinator<T>,
   transform: (value: T) => U
-): WithFlag<S, Combinator<U>>
+): Modified<S, Combinator<U>>
 
 /**
  * Transform the output of a union of combinator schemas of different types, such as
@@ -1319,7 +1326,7 @@ export function map<T, U, S extends CombinatorSchema<T> = CombinatorSchema<T>>(
 export function map<S extends CombinatorSchema<unknown>, U>(
   schema: S,
   transform: (value: ParsedType<S>) => U
-): WithFlag<S, Combinator<U>>
+): Modified<S, Combinator<U>>
 // @__NO_SIDE_EFFECTS__
 export function map<T, U>(
   schema: CombinatorSchema<T>,
@@ -1377,7 +1384,7 @@ export function withDefault<
   T extends string | boolean | number,
   D extends T = T,
   S extends CombinatorSchema<T> = CombinatorSchema<T>
->(schema: S & CombinatorSchema<T>, defaultValue: D): WithFlag<S, CombinatorWithDefault<T>>
+>(schema: S & CombinatorSchema<T>, defaultValue: D): Modified<S, CombinatorWithDefault<T>>
 
 /**
  * Set a default value on a combinator schema, as the first overload does, for a schema that fits
@@ -1412,7 +1419,7 @@ export function withDefault<
   T extends string | boolean | number,
   D extends T = T,
   S extends CombinatorSchema<T> = CombinatorSchema<T>
->(schema: S & Combinator<T>, defaultValue: D): WithFlag<S, CombinatorWithDefault<T>>
+>(schema: S & Combinator<T>, defaultValue: D): Modified<S, CombinatorWithDefault<T>>
 
 /**
  * Set a default value on a union of combinator schemas of different types, such as
@@ -1451,7 +1458,7 @@ export function withDefault<
 export function withDefault<S extends CombinatorSchema<string | boolean | number>>(
   schema: S,
   defaultValue: unknown extends ParsedType<S> ? never : ParsedType<S>
-): WithFlag<S, CombinatorWithDefault<ParsedType<S>> & Combinator<ParsedType<S>>>
+): Modified<S, CombinatorWithDefault<ParsedType<S>> & Combinator<ParsedType<S>>>
 // @__NO_SIDE_EFFECTS__
 export function withDefault<T extends string | boolean | number>(
   schema: CombinatorSchema<T>,
@@ -1475,6 +1482,16 @@ export function withDefault<T extends string | boolean | number>(
  * any {@link CombinatorSchema}, unless `F` sets `parse`, as {@link map} does.
  */
 type WithFlag<S, F> = Without<S, keyof F> & F & UntypedFlag<S, F>
+
+/**
+ * The schema that a modifier returns: {@link WithFlag} for each schema of a union.
+ *
+ * For a schema typed by a type parameter, TypeScript keeps this type unresolved, and relates it
+ * through the constraint of the type parameter, so that the result fits that constraint, a union
+ * included, also with `exactOptionalPropertyTypes`: {@link WithFlag} alone reads an optional
+ * property `P` of the type parameter, `S[P]`, as possibly `undefined`.
+ */
+type Modified<S, F> = S extends unknown ? WithFlag<S, F> : never
 
 /**
  * The properties of `S` without the keys `K` and without index signatures: the same properties as
@@ -1531,10 +1548,13 @@ type CombinatorMultiple = { multiple: true }
  *
  * @experimental
  */
-// @__NO_SIDE_EFFECTS__
 export function multiple<S extends CombinatorSchema<unknown>>(
   schema: S
-): WithFlag<S, CombinatorMultiple> {
+): Modified<S, CombinatorMultiple>
+// @__NO_SIDE_EFFECTS__
+export function multiple(
+  schema: CombinatorSchema<unknown>
+): CombinatorSchema<unknown> & CombinatorMultiple {
   return {
     ...schema,
     multiple: true
@@ -1566,10 +1586,13 @@ type CombinatorRequired = { required: true }
  *
  * @experimental
  */
-// @__NO_SIDE_EFFECTS__
 export function required<S extends CombinatorSchema<unknown>>(
   schema: S
-): WithFlag<S, CombinatorRequired> {
+): Modified<S, CombinatorRequired>
+// @__NO_SIDE_EFFECTS__
+export function required(
+  schema: CombinatorSchema<unknown>
+): CombinatorSchema<unknown> & CombinatorRequired {
   return {
     ...schema,
     required: true
@@ -1608,11 +1631,15 @@ type CombinatorShort<S extends string> = { short: S }
  *
  * @experimental
  */
-// @__NO_SIDE_EFFECTS__
 export function short<T, A extends string, S extends CombinatorSchema<T> = CombinatorSchema<T>>(
   schema: S,
   alias: A
-): WithFlag<S, CombinatorShort<A>> {
+): Modified<S, CombinatorShort<A>>
+// @__NO_SIDE_EFFECTS__
+export function short(
+  schema: CombinatorSchema<unknown>,
+  alias: string
+): CombinatorSchema<unknown> & CombinatorShort<string> {
   return {
     ...schema,
     short: alias
@@ -1650,11 +1677,15 @@ type CombinatorDescribe<D extends string> = { description: D }
  *
  * @experimental
  */
-// @__NO_SIDE_EFFECTS__
 export function describe<T, D extends string, S extends CombinatorSchema<T> = CombinatorSchema<T>>(
   schema: S,
   text: D
-): WithFlag<S, CombinatorDescribe<D>> {
+): Modified<S, CombinatorDescribe<D>>
+// @__NO_SIDE_EFFECTS__
+export function describe(
+  schema: CombinatorSchema<unknown>,
+  text: string
+): CombinatorSchema<unknown> & CombinatorDescribe<string> {
   return {
     ...schema,
     description: text

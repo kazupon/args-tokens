@@ -27,7 +27,24 @@ export default defineConfig({
     }
   },
   test: {
-    typecheck: { enabled: true }
+    projects: [
+      { extends: true, test: { name: 'default', typecheck: { enabled: true } } },
+      {
+        // the type tests that need exactOptionalPropertyTypes, which the sources do not satisfy
+        extends: true,
+        test: {
+          name: 'exactOptionalPropertyTypes',
+          include: [],
+          typecheck: {
+            enabled: true,
+            only: true,
+            include: ['src/**/*.exact.test-d.ts'],
+            tsconfig: './tsconfig.exact.json',
+            ignoreSourceErrors: true
+          }
+        }
+      }
+    ]
   },
   lint: defineLintConfig({
     ignorePatterns: [
