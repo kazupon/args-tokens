@@ -14,7 +14,7 @@ The original schema is not modified.
 ```ts
 export function unrequired<T extends ArgSchema>(
   schema: T
-): WithFlag<T, CombinatorUnrequired> & Omit<T, 'required'>
+): T extends unknown ? WithFlag<T, CombinatorUnrequired> & Omit<T, 'required'> : never
 ```
 
 ## Parameters
@@ -25,7 +25,7 @@ export function unrequired<T extends ArgSchema>(
 
 ## Returns
 
-`WithFlag<T, CombinatorUnrequired> & Omit<T, 'required'>` — A new schema with `required: false`.
+`T extends unknown ? WithFlag<T, CombinatorUnrequired> & Omit<T, 'required'> : never` — A new schema with `required: false`.
 
 ## Examples
 
