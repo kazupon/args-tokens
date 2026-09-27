@@ -171,10 +171,11 @@ export interface ArgSchema {
    * required positional arguments before consuming a value.
    *
    * In the type of the values, such as {@link ArgValues}, a single-value positional argument whose
-   * `required` is typed `false` or `boolean` is optional, as it may be missing, unless it has a
-   * `default`. TypeScript widens a `required: true` to `boolean` in a schema written apart from the
-   * call, such as `{ type: 'positional' as const, required: true }`, which types the argument as
-   * optional: write such a schema `as const`.
+   * `required` may be `false`, such as one of type `boolean`, is optional, as it may be missing,
+   * unless it has a `default`. An optional `required` of type `boolean`, as declared here, says
+   * nothing, and keeps it required. TypeScript widens a `required: true` to `boolean` in a schema
+   * written apart from the call, such as `{ type: 'positional' as const, required: true }`, which
+   * types the argument as optional: write such a schema `as const`.
    *
    * @example
    * Required arguments:
@@ -801,13 +802,16 @@ type IsRequiredPositionalArg<A extends ArgSchema> = A['type'] extends 'positiona
 
 /**
  * Whether the `required` of `A` may be `false`. An optional `required` of type `boolean`, as in
- * {@link ArgSchema}, says nothing, and is read as missing, so that a positional argument with it
- * is required.
+ * {@link ArgSchema}, says nothing, and is read as missing, so that a positional argument with it is
+ * required. A `required` that `A` always has may be `false` when its type is `boolean` or
+ * `boolean | undefined`.
  */
 type MayBeUnrequired<A extends ArgSchema> = false extends A['required']
-  ? boolean | undefined extends A['required']
-    ? false
-    : true
+  ? [A] extends [{ required: unknown }]
+    ? true
+    : boolean | undefined extends A['required']
+      ? false
+      : true
   : false
 
 /**

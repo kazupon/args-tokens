@@ -507,6 +507,17 @@ test('ArgValues', () => {
   >().toEqualTypeOf<{ proxy: string | undefined }>()
 })
 
+test('ArgValues types a positional argument whose required may be false as optional', () => {
+  expectTypeOf<
+    ArgValues<{
+      flag: { type: 'positional'; required: boolean }
+      maybe: { type: 'positional'; required: boolean | undefined }
+      nothing: { type: 'positional'; required?: boolean }
+      fallback: { type: 'positional'; required: boolean | undefined; default: 'x' }
+    }>
+  >().toEqualTypeOf<{ flag?: string; maybe?: string; nothing: string; fallback: string }>()
+})
+
 test('ArgExplicitlyProvided', () => {
   type Args = {
     name: {
