@@ -13,7 +13,7 @@ Other modifiers on `schema` (for example [multiple](/docs/combinators/functions/
 ```ts
 export function required<S extends CombinatorSchema<unknown>>(
   schema: S
-): WithFlag<S, CombinatorRequired>
+): Modified<S, CombinatorRequired>
 ```
 
 ## Parameters
@@ -24,7 +24,7 @@ export function required<S extends CombinatorSchema<unknown>>(
 
 ## Returns
 
-`WithFlag<S, CombinatorRequired>` — A copy of `schema` with `required: true`.
+`Modified<S, CombinatorRequired>` — A copy of `schema` with `required: true`.
 
 ## Examples
 

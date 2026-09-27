@@ -7,7 +7,7 @@ export function withDefault<
   T extends string | boolean | number,
   D extends T = T,
   S extends CombinatorSchema<T> = CombinatorSchema<T>
->(schema: S & CombinatorSchema<T>, defaultValue: D): WithFlag<S, CombinatorWithDefault<T>>
+>(schema: S & CombinatorSchema<T>, defaultValue: D): Modified<S, CombinatorWithDefault<T>>
 ```
 
 > [!WARNING]
@@ -36,7 +36,7 @@ last overload, whose default may be a value of any of their types.
 
 ### Returns
 
-`WithFlag<S, CombinatorWithDefault<T>>` — A new schema with the default value set.
+`Modified<S, CombinatorWithDefault<T>>` — A new schema with the default value set.
 
 ### Examples
 
@@ -57,7 +57,7 @@ export function withDefault<
   T extends string | boolean | number,
   D extends T = T,
   S extends CombinatorSchema<T> = CombinatorSchema<T>
->(schema: S & Combinator<T>, defaultValue: D): WithFlag<S, CombinatorWithDefault<T>>
+>(schema: S & Combinator<T>, defaultValue: D): Modified<S, CombinatorWithDefault<T>>
 ```
 
 > [!WARNING]
@@ -83,7 +83,7 @@ schema is one value of the parsed type, which becomes the only element of the ar
 
 ### Returns
 
-`WithFlag<S, CombinatorWithDefault<T>>` — A new schema with the default value set.
+`Modified<S, CombinatorWithDefault<T>>` — A new schema with the default value set.
 
 ### Examples
 
@@ -103,7 +103,7 @@ const args = {
 export function withDefault<S extends CombinatorSchema<string | boolean | number>>(
   schema: S,
   defaultValue: unknown extends ParsedType<S> ? never : ParsedType<S>
-): WithFlag<S, CombinatorWithDefault<ParsedType<S>> & Combinator<ParsedType<S>>>
+): Modified<S, CombinatorWithDefault<ParsedType<S>> & Combinator<ParsedType<S>>>
 ```
 
 > [!WARNING]
@@ -132,7 +132,7 @@ is typed as returning a value of any of the types that the schemas parse to:
 
 ### Returns
 
-`WithFlag`\<`S`, `CombinatorWithDefault`\<`ParsedType`\<`S`\>\> & [`Combinator`](/docs/combinators/type-aliases/Combinator.md)\<`ParsedType`\<`S`\>\>\> — A new schema with the default value set.
+`Modified`\<`S`, `CombinatorWithDefault`\<`ParsedType`\<`S`\>\> & [`Combinator`](/docs/combinators/type-aliases/Combinator.md)\<`ParsedType`\<`S`\>\>\> — A new schema with the default value set.
 
 ### Examples
 
