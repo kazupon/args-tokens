@@ -4,6 +4,7 @@ import { ArgsValidationError, ArgsValidationErrorKeys, isArgsValidationError } f
 
 import type {
   ArgExplicitlyProvided,
+  Args,
   ArgSchema,
   ArgValues,
   ArgsValidationErrorCode,
@@ -516,6 +517,41 @@ test('ArgValues types a positional argument whose required may be false as optio
       fallback: { type: 'positional'; required: boolean | undefined; default: 'x' }
     }>
   >().toEqualTypeOf<{ flag?: string; maybe?: string; nothing: string; fallback: string }>()
+})
+
+test('ArgValues resolves each schema of a union on its own', () => {
+  type Args = {
+    raw: { type: 'number'; multiple: true } | { type: 'string' }
+    kind: { type: 'number' } | { type: 'string' }
+    level: { type: 'enum'; choices: ['a', 'b'] } | { type: 'boolean' }
+    files: { type: 'positional'; multiple: true } | { type: 'positional' }
+    name: { type: 'positional' } | { type: 'string'; required: true }
+    port: { type: 'number'; default: 8080 } | { type: 'string' }
+  }
+  expectTypeOf<ArgValues<Args>>().toEqualTypeOf<{
+    raw?: number[] | string
+    kind?: number | string
+    level?: 'a' | 'b' | boolean
+    files?: string[] | string
+    name: string
+    port?: number | string
+  }>()
+
+  // a schema typed as any is present, as before
+  expectTypeOf<ArgValues<{ legacy: any }>>().toEqualTypeOf<{ legacy: any }>()
+})
+
+test('ArgValues of type parameters can be converted with as to that of related arguments', () => {
+  type Globals = { help: { type: 'boolean' } }
+  function command<A extends Args>(values: ArgValues<Globals & A>) {
+    return values as ArgValues<A>
+  }
+  function merge<A extends Args, B extends Args>(a: ArgValues<A>, b: ArgValues<B>) {
+    return { ...a, ...b } as ArgValues<A & B>
+  }
+  type Name = { name: { type: 'string'; required: true } }
+  expectTypeOf(command<Name>).returns.toEqualTypeOf<{ name: string }>()
+  expectTypeOf(merge<Name, Globals>).returns.toEqualTypeOf<{ name: string; help?: boolean }>()
 })
 
 test('ArgExplicitlyProvided', () => {

@@ -1424,6 +1424,10 @@ export function withDefault<
  * not go through `parse`. A schema typed as `any` matches the first overload instead.
  * Other modifiers on `schema` (for example {@link multiple}) are kept. The default of a `multiple`
  * schema is one value, which becomes the only element of the array.
+ * Since the default is used for whichever schema of the union is in use, the `parse` of each schema
+ * is typed as returning a value of any of the types that the schemas parse to:
+ * `withDefault(strict ? multiple(integer()) : string(), 'none')` resolves to
+ * `(number | string)[] | number | string`.
  *
  * @typeParam S - The input combinator schema, inferred from `schema`: a union of schemas of
  *   different types. Its other modifiers are kept.
@@ -1447,7 +1451,7 @@ export function withDefault<
 export function withDefault<S extends CombinatorSchema<string | boolean | number>>(
   schema: S,
   defaultValue: unknown extends ParsedType<S> ? never : ParsedType<S>
-): WithFlag<S, CombinatorWithDefault<ParsedType<S>>>
+): WithFlag<S, CombinatorWithDefault<ParsedType<S>> & Combinator<ParsedType<S>>>
 // @__NO_SIDE_EFFECTS__
 export function withDefault<T extends string | boolean | number>(
   schema: CombinatorSchema<T>,
@@ -1667,6 +1671,7 @@ type CombinatorHidden = { hidden: true }
  *
  * The original schema is not modified. This only marks renderer metadata and
  * does not change parsing, validation, defaults, conflicts, or resolved values.
+ * For a union of schemas, such as `strict ? integer() : string()`, each schema gets `hidden: true`.
  *
  * @typeParam T - The schema type.
  *
@@ -1684,7 +1689,7 @@ type CombinatorHidden = { hidden: true }
  */
 export function hidden<T extends ArgSchema>(
   schema: T
-): WithFlag<T, CombinatorHidden> & Omit<T, 'hidden'>
+): T extends unknown ? WithFlag<T, CombinatorHidden> & Omit<T, 'hidden'> : never
 // @__NO_SIDE_EFFECTS__
 export function hidden(schema: ArgSchema): ArgSchema & CombinatorHidden {
   return {
@@ -1704,6 +1709,8 @@ type CombinatorUnrequired = { required: false }
  * Useful for overriding a base combinator that was created with `required: true`,
  * or for making a positional argument explicitly optional.
  * The original schema is not modified.
+ * For a union of schemas, such as `strict ? integer() : string()`, each schema gets
+ * `required: false`.
  *
  * @typeParam T - The schema type.
  *
@@ -1722,7 +1729,7 @@ type CombinatorUnrequired = { required: false }
  */
 export function unrequired<T extends ArgSchema>(
   schema: T
-): WithFlag<T, CombinatorUnrequired> & Omit<T, 'required'>
+): T extends unknown ? WithFlag<T, CombinatorUnrequired> & Omit<T, 'required'> : never
 // @__NO_SIDE_EFFECTS__
 export function unrequired(schema: ArgSchema): ArgSchema & CombinatorUnrequired {
   return {

@@ -693,6 +693,20 @@ export interface Args {
 /**
  * An object that contains the values of the arguments.
  *
+ * The value of an argument whose schema is a union, such as
+ * `strict ? multiple(integer()) : string()` with the combinators, is typed as a value of any of its
+ * schemas: `number[] | string`. The argument is typed as present only when each schema of the
+ * union gives it a value, with a default, with `required: true` or as a required positional
+ * argument.
+ *
+ * When the type of one schema covers that of the other, as the type of `integer()` covers that of
+ * `multiple(integer())`, TypeScript types a `?:` expression of them as the covering schema alone:
+ * the value of `strict ? multiple(integer()) : integer()` is typed without the array, and
+ * `strict ? multiple(positional()) : positional()` as present, although it may be missing. Give
+ * each schema its own argument instead, or give the expression the type of both schemas with `as`,
+ * as in `(strict ? many : one) as typeof many | typeof one` for `const many = multiple(integer())`
+ * and `const one = integer()`.
+ *
  * @typeParam T - {@link Args | Arguments} which is an object that defines the command line arguments.
  */
 export type ArgValues<T> = T extends Args
@@ -708,12 +722,20 @@ export type ArgValues<T> = T extends Args
 
 /**
  * Extracts the value type from the argument schema.
+ * For a union of schemas, it is the union of the value types of its schemas.
  *
  * @typeParam A - {@link ArgSchema | Argument schema} which is an object that defines command line arguments.
  *
  * @internal
  */
-export type ExtractOptionValue<A extends ArgSchema> = undefined extends A['parse']
+export type ExtractOptionValue<A extends ArgSchema> = A extends ArgSchema
+  ? ExtractSchemaValue<A>
+  : never
+
+/**
+ * The value type of one schema, which {@link ExtractOptionValue} takes for each schema of a union.
+ */
+type ExtractSchemaValue<A extends ArgSchema> = undefined extends A['parse']
   ? A['type'] extends 'string'
     ? ResolveOptionValue<A, string>
     : A['type'] extends 'boolean'
@@ -738,17 +760,36 @@ type ResolveOptionValue<A extends ArgSchema, T> = A['multiple'] extends true ? T
 /**
  * Resolved argument values.
  *
+ * Each argument is mapped as optional, and the ones that are present, as {@link IsPresentArg}
+ * says, are mapped again as present. The optional mapping types a present argument as `unknown`:
+ * TypeScript does not reduce an intersection such as
+ * `(string | number[] | undefined) & (string | number[])`, of a value type that is a union with an
+ * object type. It maps all the keys without renaming them, which lets TypeScript relate the values
+ * of related type parameters, so that a conversion such as `values as ArgValues<A>` compiles.
+ *
  * @typeParam A - {@link Arguments | Args} which is an object that defines the command line arguments.
  * @typeParam V - Resolvable argument values.
  *
  * @internal
  */
 export type ResolveArgValues<A extends Args, V extends Record<keyof A, unknown>> = {
-  -readonly [Arg in keyof A]?: V[Arg]
-} & FilterArgs<A, V, 'default'> &
-  FilterArgs<A, V, 'required'> &
-  FilterPositionalArgs<A, V> extends infer P
+  -readonly [Arg in keyof A]?: IsPresentArg<A[Arg]> extends true ? unknown : V[Arg]
+} & {
+  -readonly [Arg in keyof A as IsPresentArg<A[Arg]> extends true ? Arg : never]: V[Arg]
+} extends infer P
   ? { [K in keyof P]: P[K] }
+  : never
+
+/**
+ * Whether an argument with the schema `S` has a value: with a default, with `required: true` or as
+ * a required positional argument. For a union of schemas, only when each schema of the union has
+ * one. A `default` or `required` typed as `any`, and a schema typed as `any`, count as giving a
+ * value, as {@link FilterArgs} does.
+ */
+type IsPresentArg<S extends ArgSchema> = S extends ArgSchema
+  ? true extends (S['default'] extends {} ? true : S['required'] extends true ? true : false)
+    ? true
+    : IsRequiredPositionalArg<S>
   : never
 
 /**

@@ -103,7 +103,7 @@ const args = {
 export function withDefault<S extends CombinatorSchema<string | boolean | number>>(
   schema: S,
   defaultValue: unknown extends ParsedType<S> ? never : ParsedType<S>
-): WithFlag<S, CombinatorWithDefault<ParsedType<S>>>
+): WithFlag<S, CombinatorWithDefault<ParsedType<S>> & Combinator<ParsedType<S>>>
 ```
 
 > [!WARNING]
@@ -118,6 +118,10 @@ must parse to a string, number or boolean, since the default can only be one of 
 not go through `parse`. A schema typed as `any` matches the first overload instead.
 Other modifiers on `schema` (for example [multiple](/docs/combinators/functions/multiple.md)) are kept. The default of a `multiple`
 schema is one value, which becomes the only element of the array.
+Since the default is used for whichever schema of the union is in use, the `parse` of each schema
+is typed as returning a value of any of the types that the schemas parse to:
+`withDefault(strict ? multiple(integer()) : string(), 'none')` resolves to
+`(number | string)[] | number | string`.
 
 ### Parameters
 
@@ -128,7 +132,7 @@ schema is one value, which becomes the only element of the array.
 
 ### Returns
 
-`WithFlag<S, CombinatorWithDefault<ParsedType<S>>>` — A new schema with the default value set.
+`WithFlag`\<`S`, `CombinatorWithDefault`\<`ParsedType`\<`S`\>\> & [`Combinator`](/docs/combinators/type-aliases/Combinator.md)\<`ParsedType`\<`S`\>\>\> — A new schema with the default value set.
 
 ### Examples
 
