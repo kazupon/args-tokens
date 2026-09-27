@@ -178,14 +178,20 @@ export interface BaseOptions {
    *
    * A literal `true` or `false` is kept in the type of the schema: `true` types the value as
    * present, as {@link required} does, and `false` makes a positional argument optional. So does a
-   * `required` that may be `false`: one of type `boolean`, or a `false` that the options have only
-   * in some cases, such as `optional ? { required: false } : {}`. A `true` that the options have
-   * only in some cases, such as `strict ? { required: true } : {}`, is not kept.
+   * `required` that may be `false`: one of type `boolean` that the options always have, or a
+   * `false` that they have only in some cases, with no `required` in the others, such as
+   * `optional ? { required: false } : {}`. A `true` that the options have only in some cases, such
+   * as `strict ? { required: true } : {}`, is not kept.
    *
-   * Options whose type only says that `required` is a `boolean` that may be missing, as this one
-   * does, keep a positional argument typed as present, as options without `required` do. So do the
-   * options that a generic helper passes on, since their type is its type parameter. Use
-   * {@link unrequired} for a positional argument that may be missing then.
+   * TypeScript widens a `required: true` to `boolean` in options written apart from the call, such
+   * as `const options = { required: true }`, which makes a positional argument optional, as a
+   * `required` typed as `any` does: write such options `as const`.
+   *
+   * Options whose type only says that `required` is a `boolean` that may be missing, as the type of
+   * this property does, keep a positional argument typed as present, as options without `required`
+   * do. So do `optional ? { required: flag } : {}`, and the options that a generic helper takes as
+   * a type parameter, such as `T extends IntegerOptions`, whose `required` TypeScript reads from
+   * the constraint. Use {@link unrequired} for such a positional argument when it may be missing.
    */
   required?: boolean
 }
@@ -258,9 +264,9 @@ export function string<const R extends boolean>(
 /**
  * Create a string argument schema with optional validation.
  *
- * @typeParam R - The type of `required` in the options, which the schema keeps when it is `false`
- *   only, as for `optional ? { required: false } : {}`, so that a positional argument with it is
- *   optional.
+ * @typeParam R - The type of `required` in the options, which the schema keeps when it may be
+ *   `false` but not `true`, as for `optional ? { required: false } : {}`, so that a positional
+ *   argument with it is optional.
  *
  * @param opts - Validation options.
  * @returns A combinator schema that resolves to string.
@@ -368,9 +374,9 @@ export function number<const R extends boolean>(
  *
  * Accepts any numeric value (integer or float).
  *
- * @typeParam R - The type of `required` in the options, which the schema keeps when it is `false`
- *   only, as for `optional ? { required: false } : {}`, so that a positional argument with it is
- *   optional.
+ * @typeParam R - The type of `required` in the options, which the schema keeps when it may be
+ *   `false` but not `true`, as for `optional ? { required: false } : {}`, so that a positional
+ *   argument with it is optional.
  *
  * @param opts - Range options.
  * @returns A combinator schema that resolves to number.
@@ -475,9 +481,9 @@ export function integer<const R extends boolean>(
  *
  * Only accepts integer values (no decimals).
  *
- * @typeParam R - The type of `required` in the options, which the schema keeps when it is `false`
- *   only, as for `optional ? { required: false } : {}`, so that a positional argument with it is
- *   optional.
+ * @typeParam R - The type of `required` in the options, which the schema keeps when it may be
+ *   `false` but not `true`, as for `optional ? { required: false } : {}`, so that a positional
+ *   argument with it is optional.
  *
  * @param opts - Range options.
  * @returns A combinator schema that resolves to number (integer).
@@ -585,9 +591,9 @@ export function float<const R extends boolean>(
  *
  * Rejects `NaN` and `Infinity` values.
  *
- * @typeParam R - The type of `required` in the options, which the schema keeps when it is `false`
- *   only, as for `optional ? { required: false } : {}`, so that a positional argument with it is
- *   optional.
+ * @typeParam R - The type of `required` in the options, which the schema keeps when it may be
+ *   `false` but not `true`, as for `optional ? { required: false } : {}`, so that a positional
+ *   argument with it is optional.
  *
  * @param opts - Range options.
  * @returns A combinator schema that resolves to number (float).
@@ -697,9 +703,9 @@ export function boolean<const R extends boolean>(
  * to the parse function based on the presence or negation of the flag, or on an explicit
  * `=true` / `=false` value. Other inline values are rejected before the parse function is called.
  *
- * @typeParam R - The type of `required` in the options, which the schema keeps when it is `false`
- *   only, as for `optional ? { required: false } : {}`, so that a positional argument with it is
- *   optional.
+ * @typeParam R - The type of `required` in the options, which the schema keeps when it may be
+ *   `false` but not `true`, as for `optional ? { required: false } : {}`, so that a positional
+ *   argument with it is optional.
  *
  * @param opts - Boolean options.
  * @returns A combinator schema for boolean flags.
@@ -829,8 +835,8 @@ export function positional<T, S extends CombinatorSchema<T> = CombinatorSchema<T
  * modifiers, such as {@link multiple} and {@link withDefault}, take it: `multiple(positional())`
  * collects the values as strings.
  *
- * With `required: false`, or a `required` of type `boolean`, in the options, the positional
- * argument is optional, in its type too.
+ * With `required: false` in the options, the positional argument is optional, in its type too. A
+ * `required` of type `boolean`, which may be `false`, types it as optional as well.
  *
  * @typeParam R - The type of `required` in the options, which the positional argument keeps.
  *
@@ -862,11 +868,12 @@ export function positional<const R extends boolean>(
  * modifiers, such as {@link multiple} and {@link withDefault}, take it: `multiple(positional())`
  * collects the values as strings.
  *
- * With a `required: false` that the options have only in some cases, such as
- * `optional ? { required: false } : {}`, the positional argument is optional, in its type too.
+ * With a `required: false` that the options have only in some cases, with no `required` in the
+ * others, such as `optional ? { required: false } : {}`, the positional argument is optional, in
+ * its type too.
  *
  * @typeParam R - The type of `required` in the options, which the positional argument keeps when it
- *   is `false` only, as for `optional ? { required: false } : {}`.
+ *   may be `false` but not `true`, as for `optional ? { required: false } : {}`.
  *
  * @param parser - Optional base options (description, short, required).
  * @returns A positional argument schema resolving to string.
@@ -976,9 +983,9 @@ export function choice<const T extends readonly string[], const R extends boolea
  * Uses `const T` generic to infer literal union types from the values array.
  *
  * @typeParam T - The readonly array of allowed string values.
- * @typeParam R - The type of `required` in the options, which the schema keeps when it is `false`
- *   only, as for `optional ? { required: false } : {}`, so that a positional argument with it is
- *   optional.
+ * @typeParam R - The type of `required` in the options, which the schema keeps when it may be
+ *   `false` but not `true`, as for `optional ? { required: false } : {}`, so that a positional
+ *   argument with it is optional.
  *
  * @param values - Allowed values.
  * @param opts - Common options (description, short, required).
@@ -1124,9 +1131,9 @@ export function combinator<T, const R extends boolean>(
  * The returned schema has `type: 'custom'`.
  *
  * @typeParam T - The parsed value type.
- * @typeParam R - The type of `required` in the configuration, which the schema keeps when it is
- *   `false` only, as for `optional ? { required: false } : {}`, so that a positional argument with
- *   it is optional.
+ * @typeParam R - The type of `required` in the configuration, which the schema keeps when it may be
+ *   `false` but not `true`, as for `optional ? { required: false } : {}`, so that a positional
+ *   argument with it is optional.
  *
  * @param config - Configuration with a parse function and optional metavar.
  * @returns A combinator schema that resolves to the parse function's return type.

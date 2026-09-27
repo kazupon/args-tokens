@@ -170,6 +170,12 @@ export interface ArgSchema {
    * argument explicitly optional. Optional positional arguments leave enough input values for later
    * required positional arguments before consuming a value.
    *
+   * In the type of the values, such as {@link ArgValues}, a single-value positional argument whose
+   * `required` is typed `false` or `boolean` is optional, as it may be missing, unless it has a
+   * `default`. TypeScript widens a `required: true` to `boolean` in a schema written apart from the
+   * call, such as `{ type: 'positional' as const, required: true }`, which types the argument as
+   * optional: write such a schema `as const`.
+   *
    * @example
    * Required arguments:
    * ```ts
