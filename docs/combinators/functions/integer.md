@@ -72,7 +72,7 @@ const args = {
 
 ### Tags
 
-- `@typeParam` — R - The type of `required` in the options, which the schema keeps when it is `false` only, as for `optional ? { required: false } : {}`, so that a positional argument with it is optional.
+- `@typeParam` — R - The type of `required` in the options, which the schema keeps when it may be `false` but not `true`, as for `optional ? { required: false } : {}`, so that a positional argument with it is optional.
 
 ## Call Signature
 

@@ -64,8 +64,8 @@ Without a parser, the schema has a `parse` function that returns the value as is
 modifiers, such as [multiple](/docs/combinators/functions/multiple.md) and [withDefault](/docs/combinators/functions/withDefault.md), take it: `multiple(positional())`
 collects the values as strings.
 
-With `required: false`, or a `required` of type `boolean`, in the options, the positional
-argument is optional, in its type too.
+With `required: false` in the options, the positional argument is optional, in its type too. A
+`required` of type `boolean`, which may be `false`, types it as optional as well.
 
 ### Parameters
 
@@ -111,8 +111,9 @@ Without a parser, the schema has a `parse` function that returns the value as is
 modifiers, such as [multiple](/docs/combinators/functions/multiple.md) and [withDefault](/docs/combinators/functions/withDefault.md), take it: `multiple(positional())`
 collects the values as strings.
 
-With a `required: false` that the options have only in some cases, such as
-`optional ? { required: false } : {}`, the positional argument is optional, in its type too.
+With a `required: false` that the options have only in some cases, with no `required` in the
+others, such as `optional ? { required: false } : {}`, the positional argument is optional, in
+its type too.
 
 ### Parameters
 
@@ -136,7 +137,7 @@ const args = {
 
 ### Tags
 
-- `@typeParam` — R - The type of `required` in the options, which the positional argument keeps when it is `false` only, as for `optional ? { required: false } : {}`.
+- `@typeParam` — R - The type of `required` in the options, which the positional argument keeps when it may be `false` but not `true`, as for `optional ? { required: false } : {}`.
 
 ## Call Signature
 
