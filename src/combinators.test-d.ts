@@ -656,15 +656,78 @@ test('short() and describe() take a union of schemas of different types', () => 
     c: string | number
     d?: 'debug' | 'info' | boolean
   }>()
+})
 
-  // @ts-expect-error -- map() infers the parsed type from one schema of the union only
-  map(port, v => String(v))
-  // @ts-expect-error -- so does withDefault()
-  withDefault(port, 'x')
-  // a type that covers both schemas of the union works with them
+test('map() and withDefault() take a union of schemas of different types', () => {
+  const strict = Math.random() > 0.5
+  const port = strict ? integer({ min: 1 }) : string()
+  const level = strict ? choice(['debug', 'info'] as const) : boolean()
+  const args = {
+    mapped: map(port, v => [v]),
+    text: withDefault(port, 'x'),
+    number: withDefault(port, 8080),
+    level: withDefault(level, false),
+    required: map(short(required(port), 'p'), v => [v]),
+    multiple: withDefault(multiple(port), 'a')
+  }
+  expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{
+    mapped?: (string | number)[]
+    text: string | number
+    number: string | number
+    level: 'debug' | 'info' | boolean
+    required: (string | number)[]
+    multiple: (string | number)[]
+  }>()
+
+  // a type that covers both schemas of the union gives the same types
   const annotated: CombinatorSchema<string | number> = port
-  const covered = { m: map(annotated, v => String(v)), w: withDefault(annotated, 'x') }
-  expectTypeOf<ArgValues<typeof covered>>().toEqualTypeOf<{ m?: string; w: string | number }>()
+  const covered = { m: map(annotated, v => [v]), w: withDefault(annotated, 'x') }
+  expectTypeOf<ArgValues<typeof covered>>().toEqualTypeOf<{
+    m?: (string | number)[]
+    w: string | number
+  }>()
+
+  // Parameters<typeof map> reads the last overload, whose transform takes an unknown value
+  expectTypeOf<Parameters<typeof map>[1]>().toEqualTypeOf<(value: unknown) => unknown>()
+
+  // @ts-expect-error -- the value may be a number, which has no toUpperCase()
+  map(port, v => v.toUpperCase())
+  // @ts-expect-error -- the transform takes a number as well as a string
+  map(port, (v: string) => v.length)
+  // @ts-expect-error -- the default is a string or a number
+  withDefault(port, true)
+  // @ts-expect-error -- 'warn' is not one of the values
+  withDefault(level, 'warn')
+  // @ts-expect-error -- a schema that parses to a Date cannot have a default, in a union either
+  withDefault(strict ? integer() : combinator({ parse: (value: string) => new Date(value) }), 1)
+})
+
+test('map() and withDefault() keep the parsed type of a schema typed by an interface', () => {
+  interface PortSchema {
+    type: 'custom'
+    parse: (value: string) => number
+  }
+  const doubled = <S extends PortSchema>(schema: S) =>
+    withDefault(
+      map(schema, n => n * 2),
+      1
+    )
+  const fixed = <S extends PortSchema>(schema: S) =>
+    map(
+      map(schema, n => n),
+      n => n.toFixed(1)
+    )
+  const port: PortSchema = { type: 'custom', parse: Number }
+  const args = {
+    doubled: doubled(port),
+    fixed: fixed(port),
+    positional: withDefault(positional(integer()), 1)
+  }
+  expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{
+    doubled: number
+    fixed?: string
+    positional: number
+  }>()
 })
 
 test('each combinator schema fits only where the values that it parses do', () => {
