@@ -47,6 +47,47 @@ const args = {
 ## Call Signature
 
 ```ts
+export function positional<S extends CombinatorSchema<unknown>>(parser: S): PositionalOf<S>
+```
+
+> [!WARNING]
+> This API is experimental and may change in future versions.
+
+Create a positional argument schema from a union of combinator schemas of different types, such
+as `strict ? integer() : string()`.
+
+The positional argument resolves to a value of any of their types: a number or a string for
+`strict ? integer() : string()`. Each schema of the union keeps its `required`, `default` and
+`multiple`, so that `positional(strict ? multiple(integer()) : string())` resolves to an array of
+numbers or a string, and is optional, as its `multiple` schema is.
+
+### Parameters
+
+| Name     | Type | Description                   |
+| -------- | ---- | ----------------------------- |
+| `parser` | `S`  | The parser combinator schema. |
+
+### Returns
+
+`PositionalOf<S>` — A positional argument schema resolving to a value of any of the types that the schemas of the union parse to.
+
+### Examples
+
+```ts
+const strict = process.argv.includes('--strict')
+const args = {
+  // a number or a string
+  port: positional(strict ? integer({ min: 1 }) : string())
+}
+```
+
+### Tags
+
+- `@typeParam` — S - The type of the parser, inferred from `parser`: a union of schemas of different types.
+
+## Call Signature
+
+```ts
 export function positional<const R extends boolean>(
   parser: BaseOptions & { required: R }
 ): WithRequiredOption<Omit<CombinatorSchema<string>, 'type'> & ArgSchemaPositionalType, R>
