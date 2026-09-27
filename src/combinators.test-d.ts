@@ -830,6 +830,35 @@ test('map() and withDefault() take a union of schemas of different types', () =>
   withDefault(strict ? integer() : combinator({ parse: (value: string) => new Date(value) }), 1)
 })
 
+test('a union of a multiple schema and another schema is typed with the array', () => {
+  const strict = Math.random() > 0.5
+  const port = strict ? multiple(integer()) : string()
+  const args = {
+    port,
+    alias: short(port, 'p'),
+    required: describe(required(port), 'Port'),
+    mapped: map(port, v => String(v)),
+    both: strict ? multiple(integer()) : multiple(string()),
+    level: strict ? multiple(choice(['debug', 'info'] as const)) : boolean(),
+    file: positional(strict ? required(multiple(integer())) : withDefault(integer(), 1))
+  }
+  expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{
+    port?: number[] | string
+    alias?: number[] | string
+    required: number[] | string
+    mapped?: string[] | string
+    both?: number[] | string[]
+    level?: ('debug' | 'info')[] | boolean
+    file: number[] | number
+  }>()
+
+  // the default is used for any schema of the union, so each value may be of any of their types
+  const defaults = { port: withDefault(port, 'none') }
+  expectTypeOf<ArgValues<typeof defaults>>().toEqualTypeOf<{
+    port: (number | string)[] | number | string
+  }>()
+})
+
 test('map() and withDefault() keep the parsed type of a schema typed by an interface', () => {
   interface PortSchema {
     type: 'custom'

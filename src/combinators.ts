@@ -1424,6 +1424,10 @@ export function withDefault<
  * not go through `parse`. A schema typed as `any` matches the first overload instead.
  * Other modifiers on `schema` (for example {@link multiple}) are kept. The default of a `multiple`
  * schema is one value, which becomes the only element of the array.
+ * Since the default is used for whichever schema of the union is in use, the `parse` of each schema
+ * is typed as returning a value of any of their types:
+ * `withDefault(strict ? multiple(integer()) : string(), 'none')` resolves to
+ * `(number | string)[] | number | string`.
  *
  * @typeParam S - The input combinator schema, inferred from `schema`: a union of schemas of
  *   different types. Its other modifiers are kept.
@@ -1447,7 +1451,7 @@ export function withDefault<
 export function withDefault<S extends CombinatorSchema<string | boolean | number>>(
   schema: S,
   defaultValue: unknown extends ParsedType<S> ? never : ParsedType<S>
-): WithFlag<S, CombinatorWithDefault<ParsedType<S>>>
+): WithFlag<S, CombinatorWithDefault<ParsedType<S>> & Combinator<ParsedType<S>>>
 // @__NO_SIDE_EFFECTS__
 export function withDefault<T extends string | boolean | number>(
   schema: CombinatorSchema<T>,

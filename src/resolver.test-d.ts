@@ -518,6 +518,28 @@ test('ArgValues types a positional argument whose required may be false as optio
   >().toEqualTypeOf<{ flag?: string; maybe?: string; nothing: string; fallback: string }>()
 })
 
+test('ArgValues resolves each schema of a union on its own', () => {
+  type Args = {
+    raw: { type: 'number'; multiple: true } | { type: 'string' }
+    kind: { type: 'number' } | { type: 'string' }
+    level: { type: 'enum'; choices: ['a', 'b'] } | { type: 'boolean' }
+    files: { type: 'positional'; multiple: true } | { type: 'positional' }
+    name: { type: 'positional' } | { type: 'string'; required: true }
+    port: { type: 'number'; default: 8080 } | { type: 'string' }
+  }
+  expectTypeOf<ArgValues<Args>>().toEqualTypeOf<{
+    raw?: number[] | string
+    kind?: number | string
+    level?: 'a' | 'b' | boolean
+    files?: string[] | string
+    name: string
+    port?: number | string
+  }>()
+
+  // a schema typed as any is present, as before
+  expectTypeOf<ArgValues<{ legacy: any }>>().toEqualTypeOf<{ legacy: any }>()
+})
+
 test('ArgExplicitlyProvided', () => {
   type Args = {
     name: {
