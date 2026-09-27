@@ -11,7 +11,7 @@ does not change parsing, validation, defaults, conflicts, or resolved values.
 ## Signature
 
 ```ts
-export function hidden<T extends ArgSchema>(schema: T): Omit<T, 'hidden'> & CombinatorHidden
+export function hidden<T extends ArgSchema>(schema: T): WithFlag<T, CombinatorHidden>
 ```
 
 ## Parameters
@@ -22,7 +22,7 @@ export function hidden<T extends ArgSchema>(schema: T): Omit<T, 'hidden'> & Comb
 
 ## Returns
 
-`Omit<T, 'hidden'> & CombinatorHidden` — A new schema with `hidden: true`.
+`WithFlag<T, CombinatorHidden>` — A new schema with `hidden: true`.
 
 ## Examples
 
