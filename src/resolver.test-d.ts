@@ -4,6 +4,7 @@ import { ArgsValidationError, ArgsValidationErrorKeys, isArgsValidationError } f
 
 import type {
   ArgExplicitlyProvided,
+  Args,
   ArgSchema,
   ArgValues,
   ArgsValidationErrorCode,
@@ -538,6 +539,19 @@ test('ArgValues resolves each schema of a union on its own', () => {
 
   // a schema typed as any is present, as before
   expectTypeOf<ArgValues<{ legacy: any }>>().toEqualTypeOf<{ legacy: any }>()
+})
+
+test('ArgValues of type parameters can be converted with as to that of related arguments', () => {
+  type Globals = { help: { type: 'boolean' } }
+  function command<A extends Args>(values: ArgValues<Globals & A>) {
+    return values as ArgValues<A>
+  }
+  function merge<A extends Args, B extends Args>(a: ArgValues<A>, b: ArgValues<B>) {
+    return { ...a, ...b } as ArgValues<A & B>
+  }
+  type Name = { name: { type: 'string'; required: true } }
+  expectTypeOf(command<Name>).returns.toEqualTypeOf<{ name: string }>()
+  expectTypeOf(merge<Name, Globals>).returns.toEqualTypeOf<{ name: string; help?: boolean }>()
 })
 
 test('ArgExplicitlyProvided', () => {

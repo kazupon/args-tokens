@@ -757,10 +757,12 @@ type ResolveOptionValue<A extends ArgSchema, T> = A['multiple'] extends true ? T
 /**
  * Resolved argument values.
  *
- * The arguments that are present, as {@link IsPresentArg} says, and the optional ones are mapped
- * apart: an intersection of the optional and the present value types of an argument, such as
- * `(string | number[] | undefined) & (string | number[])`, is not reduced by TypeScript when the
- * value type is a union with an array.
+ * Each argument is mapped as optional, and the ones that are present, as {@link IsPresentArg}
+ * says, are mapped again as present. The optional mapping types a present argument as `unknown`:
+ * TypeScript does not reduce an intersection such as
+ * `(string | number[] | undefined) & (string | number[])`, of a value type that is a union with an
+ * object type. It maps all the keys without renaming them, which lets TypeScript relate the values
+ * of related type parameters, so that a conversion such as `values as ArgValues<A>` compiles.
  *
  * @typeParam A - {@link Arguments | Args} which is an object that defines the command line arguments.
  * @typeParam V - Resolvable argument values.
@@ -768,7 +770,7 @@ type ResolveOptionValue<A extends ArgSchema, T> = A['multiple'] extends true ? T
  * @internal
  */
 export type ResolveArgValues<A extends Args, V extends Record<keyof A, unknown>> = {
-  -readonly [Arg in keyof A as IsPresentArg<A[Arg]> extends true ? never : Arg]?: V[Arg]
+  -readonly [Arg in keyof A]?: IsPresentArg<A[Arg]> extends true ? unknown : V[Arg]
 } & {
   -readonly [Arg in keyof A as IsPresentArg<A[Arg]> extends true ? Arg : never]: V[Arg]
 } extends infer P
