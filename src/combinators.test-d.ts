@@ -596,6 +596,16 @@ test('a positional argument whose required cannot be false, or says nothing, is 
   expectTypeOf<ArgValues<typeof command.args>>().toEqualTypeOf<{ file: string; port: number }>()
 })
 
+test('a required that may be false stays an optional property of the schema', () => {
+  const optional = Math.random() > 0.5
+  const name = string(optional ? { required: false } : {})
+  const query = positional(optional ? { required: false } : {})
+  // not a required property of type false | undefined, which does not fit ArgSchema with
+  // exactOptionalPropertyTypes
+  expectTypeOf<{} extends Pick<typeof name, 'required'> ? true : false>().toEqualTypeOf<true>()
+  expectTypeOf<{} extends Pick<typeof query, 'required'> ? true : false>().toEqualTypeOf<true>()
+})
+
 test('choice() and combinator() still take explicit type arguments', () => {
   const args = {
     level: choice<readonly ['debug', 'info']>(['debug', 'info'], { required: true }),

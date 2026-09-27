@@ -197,15 +197,17 @@ export interface BaseOptions {
 type WithRequiredOption<S, R extends boolean> = WithFlag<S, { required: R }>
 
 /**
- * The schema `S` with the type `R` of `required` in options that may not have it, as
- * `R | undefined`, when `R` is `false` only, as for `optional ? { required: false } : {}`, so
- * that a positional argument with it is optional. `S` stays as is otherwise, such as for options
- * without `required`, for which `R` is `boolean | undefined`.
+ * The schema `S` with an optional `required: false`, when the type `R` of `required` in options
+ * that may not have it may be `false` but not `true`, as for `optional ? { required: false } : {}`,
+ * so that a positional argument with it is optional. The property is optional, instead of
+ * `false | undefined`, so that the schema fits {@link ArgSchema} with `exactOptionalPropertyTypes`.
+ * `S` stays as is otherwise, such as when `R` is `boolean` or `boolean | undefined`, as for options
+ * without `required`.
  */
 type WithUnrequiredOption<S, R extends boolean | undefined> = false extends R
   ? true extends R
     ? S
-    : WithFlag<S, { required: R | undefined }>
+    : WithFlag<S, { required?: false }>
   : S
 
 /**
