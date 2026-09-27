@@ -1,12 +1,14 @@
 import { expectTypeOf, test } from 'vite-plus/test'
 import {
   describe,
+  hidden,
   integer,
   map,
   multiple,
   positional,
   required,
   short,
+  string,
   withDefault
 } from './combinators.ts'
 
@@ -40,6 +42,10 @@ test('the modifiers on a schema typed by a type parameter give a combinator sche
       map(schema, n => n * 2),
       1
     ) satisfies CombinatorSchema<number>
+  const quiet = <S extends CombinatorSchema<number>>(schema: S) =>
+    short(describe(hidden(required(schema)), 'Quiet'), 'q') satisfies CombinatorSchema<number>
+  const tag = <S extends CombinatorSchema<number> | CombinatorSchema<string>>(schema: S) =>
+    map(describe(schema, 'Tag'), value => `#${value}`) satisfies CombinatorSchema<string>
 
   const portSchema: PortSchema = { type: 'custom', parse: Number }
   const args = {
@@ -51,7 +57,9 @@ test('the modifiers on a schema typed by a type parameter give a combinator sche
     label: label(integer()),
     file: file(integer()),
     size: size(integer()),
-    doubled: doubled(portSchema)
+    doubled: doubled(portSchema),
+    quiet: quiet(integer()),
+    tag: tag(Math.random() > 0.5 ? integer() : string())
   }
   expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{
     alias?: number
@@ -63,5 +71,7 @@ test('the modifiers on a schema typed by a type parameter give a combinator sche
     file: number
     size: number
     doubled: number
+    quiet: number
+    tag?: string
   }>()
 })
