@@ -91,13 +91,13 @@ export type Combinator<T> = {
 export type CombinatorSchema<T> = Omit<ArgSchema, 'parse'> & Combinator<T>
 
 /**
- * How {@link short}, {@link describe}, {@link withDefault}, {@link required}, {@link multiple} and
- * {@link positional} read a schema typed as `any`: its value is typed `unknown`, and the `parse` of
- * {@link ArgSchema}, which returns `any`, is kept, so that the result still fits any
- * {@link CombinatorSchema}, as the schema typed as `any` does.
+ * How {@link short}, {@link describe}, {@link withDefault}, {@link required}, {@link multiple},
+ * {@link hidden}, {@link unrequired} and {@link positional} read a schema typed as `any`: its value
+ * is typed `unknown`, and the `parse` of {@link ArgSchema}, which returns `any`, is kept, so that
+ * the result still fits any {@link CombinatorSchema}, as the schema typed as `any` does.
  *
- * For a schema typed by a type parameter `S`, the result is checked as both this type and `S`, so
- * it fits where `S` does.
+ * For a schema typed by a type parameter, whether it is `any` is not known, so the result is built
+ * from the properties of the type parameter, which TypeScript reads through its constraint.
  */
 type UntypedCombinatorSchema = ArgSchema & Combinator<unknown>
 
@@ -631,14 +631,14 @@ type PositionalParserKey =
  * The positional argument schema that {@link positional} returns for a parser: the properties it
  * keeps, with their types, as `type: 'positional'`. A parser of type `any` is read as
  * {@link UntypedCombinatorSchema}.
+ *
+ * As in {@link WithFlag}, it maps the properties of the parser itself, and reads `any` in a part of
+ * its own, so that TypeScript still sees them for a parser typed by a type parameter.
  */
 type PositionalWithParser<S> = {
-  [
-    K in keyof (0 extends 1 & S ? UntypedCombinatorSchema : S) as K extends PositionalParserKey
-      ? K
-      : never
-  ]: (0 extends 1 & S ? UntypedCombinatorSchema : S)[K]
-} & ArgSchemaPositionalType
+  [K in keyof S as K extends PositionalParserKey ? K : never]: S[K]
+} & ArgSchemaPositionalType &
+  (0 extends 1 & S ? Pick<UntypedCombinatorSchema, PositionalParserKey> : unknown)
 
 /**
  * Create a positional argument schema.
@@ -1209,13 +1209,45 @@ export function withDefault<T extends string | boolean | number>(
 /**
  * Overlay the properties of `F` onto a combinator schema without dropping its other properties.
  *
- * Omits the keys of `F` from `S` first, so that what `F` sets replaces what `S` has, instead of
+ * Drops the keys of `F` from `S` first, so that what `F` sets replaces what `S` has, instead of
  * making an intersection with it (`'A' & 'B'`, that is `never`, for a description set twice).
+ * The properties of `S` stay visible when `S` is a type parameter, also through other modifiers,
+ * and each schema of a union gets `F` on its own.
  * A schema typed as `any`, such as one from untyped code, is taken as
  * {@link UntypedCombinatorSchema}, so that the result is still an argument schema, and still fits
  * any {@link CombinatorSchema}, unless `F` sets `parse`, as {@link map} does.
  */
-type WithFlag<S, F> = Omit<0 extends 1 & S ? UntypedCombinatorSchema : S, keyof F> & F
+type WithFlag<S, F> = Without<S, keyof F> & F & UntypedFlag<S, F>
+
+/**
+ * The properties of `S` without the keys `K` and without index signatures: the same properties as
+ * `Omit<S, K>` for a combinator schema that is not a union, and `{}` for `any`.
+ *
+ * It maps the properties of `S` itself, so that TypeScript still sees them when `S` is a type
+ * parameter with other modifiers on it, and it maps each schema of a union on its own.
+ * For a type parameter, TypeScript does not take it for `Omit<S, K>`, so {@link hidden} and
+ * {@link unrequired}, whose results were typed `Omit<S, K>` with their flag, return that type too.
+ */
+type Without<S, K> = { [P in keyof S as P extends K ? never : NamedKey<P>]: S[P] }
+
+/**
+ * `K` for a property name, and `never` for the `string`, `number` or `symbol` key of an index
+ * signature, such as those of `any`.
+ */
+type NamedKey<K> = string extends K
+  ? never
+  : number extends K
+    ? never
+    : symbol extends K
+      ? never
+      : K
+
+/**
+ * {@link UntypedCombinatorSchema} without the keys of `F` for a schema typed as `any`, and
+ * `unknown`, which adds nothing, for any other schema. For a schema typed by a type parameter,
+ * TypeScript leaves it unresolved, and the properties come from {@link Without}.
+ */
+type UntypedFlag<S, F> = 0 extends 1 & S ? Omit<UntypedCombinatorSchema, keyof F> : unknown
 
 /**
  * Options for the {@link multiple} combinator.
@@ -1397,8 +1429,11 @@ type CombinatorHidden = { hidden: true }
  *
  * @experimental
  */
+export function hidden<T extends ArgSchema>(
+  schema: T
+): WithFlag<T, CombinatorHidden> & Omit<T, 'hidden'>
 // @__NO_SIDE_EFFECTS__
-export function hidden<T extends ArgSchema>(schema: T): Omit<T, 'hidden'> & CombinatorHidden {
+export function hidden(schema: ArgSchema): ArgSchema & CombinatorHidden {
   return {
     ...schema,
     hidden: true
@@ -1432,10 +1467,11 @@ type CombinatorUnrequired = { required: false }
  *
  * @experimental
  */
-// @__NO_SIDE_EFFECTS__
 export function unrequired<T extends ArgSchema>(
   schema: T
-): Omit<T, 'required'> & CombinatorUnrequired {
+): WithFlag<T, CombinatorUnrequired> & Omit<T, 'required'>
+// @__NO_SIDE_EFFECTS__
+export function unrequired(schema: ArgSchema): ArgSchema & CombinatorUnrequired {
   return {
     ...schema,
     required: false

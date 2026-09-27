@@ -641,6 +641,27 @@ test('a schema typed as any still fits any combinator schema after a modifier', 
   acceptsStrings(short(legacy, 'x'))
 })
 
+test('hidden() and unrequired() read a schema typed as any as the other modifiers do', () => {
+  const legacy = string() as any
+  const args = {
+    h: withDefault(hidden(legacy), 1),
+    u: withDefault(unrequired(legacy), 'a'),
+    s: short(hidden(legacy), 'x')
+  }
+  expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{
+    h: unknown
+    u: unknown
+    s?: unknown
+  }>()
+  const acceptsStrings = (schema: CombinatorSchema<string>) => schema
+  acceptsStrings(hidden(legacy))
+  acceptsStrings(unrequired(legacy))
+
+  // short() drops the index signature of the schema typed as any
+  // @ts-expect-error -- 'unknownKey' is not a property of the schema
+  expectTypeOf(short(legacy, 'x').unknownKey).toBeAny()
+})
+
 test('short() and describe() take a union of schemas of different types', () => {
   const strict = Math.random() > 0.5
   const port = strict ? integer({ min: 1 }) : string()
@@ -788,6 +809,82 @@ test('a modifier on a schema typed by a type parameter fits where the type param
     // @ts-expect-error -- S parses to numbers, not strings
     required(schema)
   expectTypeOf(asStrings).toBeFunction()
+})
+
+test('the modifiers nest on a schema typed by a type parameter', () => {
+  const count = <S extends CombinatorSchema<number>>(schema: S): CombinatorSchema<number> =>
+    describe(short(schema, 'c'), 'Count')
+  const port = <S extends CombinatorSchema<number>>(schema: S) =>
+    withDefault(describe(short(schema, 'p'), 'Port'), 8080)
+  const doubled = <S extends CombinatorSchema<number>>(schema: S) =>
+    map(describe(short(schema, 'd'), 'Doubled'), n => n * 2)
+  const ports = <S extends CombinatorSchema<number>>(schema: S) =>
+    required(multiple(short(hidden(schema), 'P')))
+  const secret = <S extends CombinatorSchema<number>>(schema: S): CombinatorSchema<number> =>
+    hidden(short(schema, 's'))
+  const optional = <S extends CombinatorSchema<number>>(schema: S): CombinatorSchema<number> =>
+    unrequired(describe(schema, 'Optional'))
+  const label = <S extends CombinatorSchema<string>>(schema: S): CombinatorSchema<string> =>
+    describe(describe(schema, 'Name'), 'Label')
+  const args = {
+    count: count(integer()),
+    port: port(integer()),
+    doubled: doubled(integer()),
+    ports: ports(integer()),
+    secret: secret(integer()),
+    optional: optional(integer()),
+    label: label(string())
+  }
+  expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{
+    count?: number
+    port: number
+    doubled?: number
+    ports: number[]
+    secret?: number
+    optional?: number
+    label?: string
+  }>()
+
+  // the parse function stays callable through the modifiers
+  const parsed = <S extends CombinatorSchema<number>>(schema: S) =>
+    describe(short(schema, 'c'), 'Count').parse('1')
+  expectTypeOf(parsed(integer())).toEqualTypeOf<number>()
+})
+
+test('positional() nests with the modifiers on a schema typed by a type parameter', () => {
+  const index = <S extends CombinatorSchema<number>>(schema: S) =>
+    map(positional(schema), n => n * 2)
+  const file = <S extends CombinatorSchema<number>>(schema: S): CombinatorSchema<number> =>
+    describe(hidden(positional(required(schema))), 'File')
+  const port = <S extends CombinatorSchema<number>>(schema: S) =>
+    map(describe(positional(schema), 'Port'), n => n + 1)
+  const args = {
+    index: index(integer()),
+    file: file(integer()),
+    port: port(integer())
+  }
+  expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{
+    index: number
+    file?: number
+    port: number
+  }>()
+})
+
+test('the results of hidden() and unrequired() fit Omit of the schema with the flag', () => {
+  const secret = <S extends CombinatorSchema<number>>(
+    schema: S
+  ): Omit<S, 'hidden'> & { hidden: true } => hidden(schema)
+  const optional = <S extends CombinatorSchema<string>>(
+    schema: S
+  ): Omit<S, 'required'> & { required: false } => unrequired(schema)
+  const args = {
+    secret: secret(integer()),
+    optional: optional(required(string()))
+  }
+  expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{
+    secret?: number
+    optional?: string
+  }>()
 })
 
 test('the modifiers take positional() without a parser', () => {
