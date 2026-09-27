@@ -96,8 +96,8 @@ export type CombinatorSchema<T> = Omit<ArgSchema, 'parse'> & Combinator<T>
  * is typed `unknown`, and the `parse` of {@link ArgSchema}, which returns `any`, is kept, so that
  * the result still fits any {@link CombinatorSchema}, as the schema typed as `any` does.
  *
- * For a schema typed by a type parameter, whether it is `any` is not known, and the result fits
- * where the type parameter does.
+ * For a schema typed by a type parameter, whether it is `any` is not known, so the result is built
+ * from the properties of the type parameter, which TypeScript reads through its constraint.
  */
 type UntypedCombinatorSchema = ArgSchema & Combinator<unknown>
 
@@ -1220,8 +1220,8 @@ export function withDefault<T extends string | boolean | number>(
 type WithFlag<S, F> = Without<S, keyof F> & F & UntypedFlag<S, F>
 
 /**
- * The properties of `S` without the keys `K` and without index signatures: the same type as
- * `Omit<S, K>` for a combinator schema, and `{}` for `any`.
+ * The properties of `S` without the keys `K` and without index signatures: the same properties as
+ * `Omit<S, K>` for a combinator schema that is not a union, and `{}` for `any`.
  *
  * It maps the properties of `S` itself, so that TypeScript still sees them when `S` is a type
  * parameter with other modifiers on it, and it maps each schema of a union on its own.
@@ -1231,8 +1231,8 @@ type WithFlag<S, F> = Without<S, keyof F> & F & UntypedFlag<S, F>
 type Without<S, K> = { [P in keyof S as P extends K ? never : NamedKey<P>]: S[P] }
 
 /**
- * `K` for a property name, and `never` for the key of an index signature, such as the `string` key
- * of `any`.
+ * `K` for a property name, and `never` for the `string`, `number` or `symbol` key of an index
+ * signature, such as those of `any`.
  */
 type NamedKey<K> = string extends K
   ? never
@@ -1244,7 +1244,8 @@ type NamedKey<K> = string extends K
 
 /**
  * {@link UntypedCombinatorSchema} without the keys of `F` for a schema typed as `any`, and
- * `unknown`, which adds nothing, for any other schema.
+ * `unknown`, which adds nothing, for any other schema. For a schema typed by a type parameter,
+ * TypeScript leaves it unresolved, and the properties come from {@link Without}.
  */
 type UntypedFlag<S, F> = 0 extends 1 & S ? Omit<UntypedCombinatorSchema, keyof F> : unknown
 
