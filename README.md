@@ -696,13 +696,7 @@ A positional argument can also be on either side, such as `[file]` and `--stdin`
 }
 ```
 
-## 🧪 Parser Combinators (Experimental)
-
-<!-- eslint-disable markdown/no-missing-label-refs -->
-
-> [!NOTE] Parser combinators are experimental and may change in future versions.
-
-<!-- eslint-enable markdown/no-missing-label-refs -->
+## 🧪 Parser Combinators
 
 Parser combinators provide composable factory functions that generate `ArgSchema` objects. Instead of writing schema objects manually, you can use combinators for type-safe, composable argument definitions.
 
