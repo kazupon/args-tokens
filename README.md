@@ -433,7 +433,7 @@ Any other `type`, or no `type`, is a mistake that only untyped code can make: if
 ```js
 {
   name: { type: 'string' },        // --name value
-  verbose: { type: 'boolean' },     // --verbose or --no-verbose
+  verbose: { type: 'boolean' },     // --verbose (--no-verbose needs negatable: true)
   port: { type: 'number' },         // --port 3000
   level: { type: 'enum', choices: ['debug', 'info'] },
   file: { type: 'positional' },     // first positional arg
@@ -546,10 +546,10 @@ Allows the argument to accept multiple values. The resolved value becomes an arr
   },
   files: {
     type: 'positional',
-    multiple: true   // Collects all remaining positional args
+    multiple: true   // a.txt b.txt out.txt → ['a.txt', 'b.txt']
   },
   output: {
-    type: 'positional' // Keeps the last positional value when declared after files
+    type: 'positional' // a.txt b.txt out.txt → 'out.txt', left for this required argument
   }
 }
 ```
