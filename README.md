@@ -161,8 +161,8 @@ With `allowCompatible: true`, `parseArgs()` gives the same tokens as `parseArgs`
 When short options are written with `=`, such as `-p=-5` or `-ab=-1`:
 
 - The rest of the argument is a value token after the last option, even when it starts with `-`: `-n=--` gives `-n` the value `--`, not the option terminator.
+- A `=` at the start of a group has no option before it, so it is an option name, as `-=` alone is: `-=5` gives the options `-=` and `-5`, as `node:util` does. A later `=` or `-` starts the value of the option before it, as in any other group: `-==5` gives `-=` the value `5`, and `-=-5` gives it `-5`.
 - `-p=` gives an empty value, as `--port=` does.
-- A `=` at the start of a group has no option before it, so it is an option name, as `-=` alone is: `-=5` gives the options `-=` and `-5`, as `node:util` does, and `-==5` gives `-=` the value `5`.
 - With `shortGrouping: true`, `resolveArgs()` gives the value after `=` to the last option.
 - With `shortGrouping: false`, the default of `resolveArgs()` and `parse()`, the other letters of the group are the value of its first option, as in `-p5`: `-ab=-1` gives `-a` the value `b=-1`.
 
@@ -173,7 +173,7 @@ When short options are written with `=`, such as `-p=-5` or `-ab=-1`:
 
 A `-` inside a group, as in `-o-` or `-p-5`, does not end the options:
 
-- The rest of the group from the `-` is the value of the option before it, in a value token with `inlineValue: false`, since no `=` is written. So `-o- input.txt` gives `-o` the value `-`, and `input.txt` is read as usual.
+- The rest of the group from the `-` is the value of the option before it, in a value token with `inlineValue: false`, since no `=` comes between the option and the value. So `-o- input.txt` gives `-o` the value `-`, and `input.txt` is read as usual.
 - Unlike `node:util`, where `inlineValue: false` means that the value is the next argument, this value token is in the same argument and has its `index`.
 - With `shortGrouping: false`, `resolveArgs()` gives the first option the other letters and that value, as in `-Wno-unused` (`no-unused`) and `-ab-c` (`-a` gets `b-c`). With `shortGrouping: true`, the last option gets it.
 - A boolean option ignores such a value, as it ignores `false` in `-sfalse`.

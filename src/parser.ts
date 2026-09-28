@@ -188,8 +188,8 @@ export function parseArgs(args: string[], options: ParserOptions = {}): ArgToken
         if (separated) {
           shortValue += shortableOption
         } else {
-          // a `=` ends the options only after an option: at the start of the group, it is an
-          // option name, as `-=` alone is
+          // a `=` starts the value only after an option: at the start of the group, no option
+          // can take the value, so it is an option name, as `-=` alone is
           if (
             !allowCompatible &&
             shortableOption.codePointAt(0) === EQUAL_CODE &&
