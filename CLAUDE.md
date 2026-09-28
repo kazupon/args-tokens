@@ -20,13 +20,14 @@ vp run lint:jsr           # JSR publish dry-run
 vp run bench:mitata       # mitata benchmarks
 vp run bench:positionals  # mitata benchmarks for positional arguments
 vp run bench:vitest       # Vitest benchmarks
+vp run bench:compare      # Compare two builds: --base <lib dir> --head <lib dir>
 vp run build:docs         # Regenerate docs/ from JSDoc with vitepress-api-references
 vp test src/parser.test.ts
 vp test watch
 GH_TOKEN="$(gh auth token)" vp run release
 ```
 
-Benchmarks import from `lib/`, so run `vp pack` first.
+Benchmarks import from `lib/`, so run `vp pack` first. `bench:compare` takes the `lib/` of two builds, such as `lib` and one built from a base in another worktree, and compares them as the Benchmark workflow does on pull requests.
 
 ## Architecture
 
