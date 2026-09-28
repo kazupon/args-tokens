@@ -2146,8 +2146,8 @@ describe('enum option', () => {
     })
 
     test('is not checked without choices, with a parse function', () => {
-      // marked as free of side effects, as the parse function of `choice()` is: with choices, such a
-      // function would have the default checked against them
+      // marked as free of side effects, as the parse function of `choice()` is: with choices, such
+      // a function would have the default checked against them
       const parse = Object.defineProperty(
         (value: string) => value,
         Symbol.for('args-tokens.pureParse'),
