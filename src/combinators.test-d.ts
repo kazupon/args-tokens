@@ -633,6 +633,26 @@ test('choice() and combinator() still take explicit type arguments', () => {
   }>()
 })
 
+test('instantiation expressions take all the type arguments of the first overload', () => {
+  const numberDefault = withDefault<number, number>
+  const numberToString = map<number, string, CombinatorSchema<number>>
+  const numberPositional = positional<number, CombinatorSchema<number>>
+  const args = {
+    port: numberDefault(integer(), 8080),
+    label: numberToString(integer(), n => `#${n}`),
+    file: numberPositional(integer())
+  }
+  expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{
+    port: number
+    label?: string
+    file: number
+  }>()
+  type NumberDefault = typeof withDefault<number, number>
+  type NumberToString = typeof map<number, string, CombinatorSchema<number>>
+  expectTypeOf<Parameters<NumberDefault>[1]>().toEqualTypeOf<number>()
+  expectTypeOf<Parameters<NumberToString>[1]>().toEqualTypeOf<(value: number) => string>()
+})
+
 test('the base combinators keep their signatures as their last overloads', () => {
   expectTypeOf<Parameters<typeof string>>().toEqualTypeOf<[opts?: StringOptions]>()
   expectTypeOf<Parameters<typeof integer>>().toEqualTypeOf<[opts?: IntegerOptions]>()
