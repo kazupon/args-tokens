@@ -153,14 +153,14 @@ console.log(tokens)
 // ]
 ```
 
-With `allowCompatible: true`, `parseArgs()` gives the same tokens as `node:util`.
+With `allowCompatible: true`, `parseArgs()` gives the same tokens as `parseArgs` of `node:util` gives without option definitions.
 
 <details>
 <summary>A value after <code>=</code> in a short option group</summary>
 
 When short options are written with `=`, such as `-p=-5` or `-ab=-1`:
 
-- The rest of the argument is the value of the last option, even when it starts with `-`: `-n=--` gives the value `--`, not the option terminator.
+- The rest of the argument is a value token after the last option, even when it starts with `-`: `-n=--` gives `-n` the value `--`, not the option terminator.
 - `-p=` gives an empty value, as `--port=` does.
 - With `shortGrouping: true`, `resolveArgs()` gives the value after `=` to the last option.
 - With `shortGrouping: false`, the default of `resolveArgs()` and `parse()`, the other letters of the group are the value of its first option, as in `-p5`: `-ab=-1` gives `-a` the value `b=-1`.
@@ -262,6 +262,8 @@ console.log('values:', values)
 console.log('positionals:', positionals)
 ```
 
+Besides `values` and `positionals`, `resolveArgs` returns `rest`, the arguments after the option terminator `--` (unlike `parseArgs` of `node:util`, they are not in `positionals`), `error`, the validation failures described in “Validation errors” below, and `explicit`, which is `true` for each argument given on the command line.
+
 ## Convenient argument parsing
 
 Using the `parse` you can transform the arguments into tokens and resolve the argument values once:
@@ -301,11 +303,11 @@ console.log('values:', values)
 console.log('positionals:', positionals)
 ```
 
-`parse` also takes the options of `parseArgs` and `resolveArgs`, such as `allowCompatible`, `shortGrouping`, `skipPositional` and `toKebab`, and they work as they do there.
+`parse` also takes the options of `parseArgs` and `resolveArgs`, such as `allowCompatible`, `shortGrouping`, `skipPositional` and `toKebab`, and they work as they do there. It returns what `resolveArgs` returns, and the `tokens`. Without `args`, it uses a schema with the `boolean` options `help` (`-h`) and `version` (`-v`).
 
 ## Validation errors
 
-`resolveArgs` and `parse` return validation failures as an `AggregateError` in the `error` field. Each argument validation failure is an `ArgsValidationError`, which keeps the existing English `message` as a fallback and adds structured metadata for localization or custom rendering.
+`resolveArgs` and `parse` return validation failures as an `AggregateError` in the `error` field. Each argument validation failure is an `ArgsValidationError`, which has an English `message` as a fallback, and a `code` and `values` for localization or custom rendering.
 
 Use `isArgsValidationError()` to narrow individual errors:
 
@@ -341,14 +343,14 @@ for (const cause of error?.errors ?? []) {
 }
 ```
 
-The resolver uses stable error codes for required options, required positionals, options given without a value, invalid types, invalid choices, custom parse failures, values given to options that do not take one, arguments that conflict, and defaults of `enum` options that are not one of their choices. The `values` object contains interpolation data such as `name`, `displayName`, `rawName`, `expected`, `actual`, `choices`, `choiceValues`, `reason`, `next`, `suggestion`, `conflictName`, and `conflictDisplayName` depending on the error kind. The `values` of `ArgsValidationErrorKeys.invalidDefault` have the same keys as those of `ArgsValidationErrorKeys.invalidChoice`, with the default as `actual`.
+The resolver uses stable error codes for required options, required positionals, options given without a value, invalid types, invalid choices, custom parse failures, values given to options that do not take one, arguments that conflict, and defaults of `enum` options that are not one of their choices. The `values` object contains interpolation data such as `name`, `displayName`, `rawName`, `expected`, `actual`, `choices`, `choiceValues`, `reason`, `next`, `suggestion`, `conflictName`, and `conflictDisplayName` depending on the error kind. The `values` of `ArgsValidationErrorKeys.invalidDefault` have the same keys as those of `ArgsValidationErrorKeys.invalidChoice`, with the default as `actual`. An option that is not in the schema is ignored: `resolveArgs` and `parse` never report `ArgsValidationErrorKeys.unknownOption`.
 
-An option that takes a value reports `ArgsValidationErrorKeys.missingValue` when it is given without one, including a required option. The tokens are made without the schema, as `node:util` `parseArgs` makes them without option definitions, so `--port -5` is read as `--port` followed by the option `-5`, and a value that starts with `-` has to be written with `=` or attached to a short option, such as `--port=-5`, `-p=-5` or `-p-5`.
+An option that takes a value reports `ArgsValidationErrorKeys.missingValue` when it is given without one, including a required option. The tokens are made without the schema, as `node:util` `parseArgs` makes them without option definitions, so `--port -5` is read as `--port` followed by the option `-5`, and a value that starts with `-`, other than `-` alone, has to be written with `=` or attached to a short option, such as `--port=-5`, `-p=-5` or `-p-5`.
 
 <details>
 <summary>The suggestion for a value that starts with <code>-</code></summary>
 
-When the option ends its argument and the next argument is one long option or a group of short options, such as `-5`, `-5.5` or `--foo`, that are not all in the schema, the error has `next` (`'-5'`) and `suggestion` (`'--port=-5'`) in `values`, and the message suggests that form. With `shortGrouping: false`, the default of `resolveArgs()` and `parse()`, only the first letter of a group is an option, and the other letters are its value (a boolean ignores them), so a group whose first letter is in the schema, such as `-p5` or `-vfoo`, gets no suggestion. For `--port -5`, the message is:
+When the option ends its argument and the next argument is one long option or a group of short options, such as `-5`, `-5.5` or `--foo`, that are not all in the schema, the error has `next` (`'-5'`) and `suggestion` (`'--port=-5'`) in `values`, and the message suggests that form. The long form is suggested because it passes such a value in every mode, including `allowCompatible: true`, where `-p=-5` and `-p-5` do not. With `shortGrouping: false`, the default of `resolveArgs()` and `parse()`, only the first letter of a group is an option, and the other letters are its value (a boolean ignores them), so a group whose first letter is in the schema, such as `-p5` or `-vfoo`, gets no suggestion. For `--port -5`, with `port: { type: 'number' }`, the message is:
 
 ```
 Optional argument '--port' requires a value (to pass '-5' as its value, write '--port=-5')
@@ -363,14 +365,14 @@ The `parse` functions of `string()`, `number()`, `integer()`, `float()` and `cho
 <details>
 <summary>A <code>parse</code> function that throws</summary>
 
-When a custom `parse` function throws, args-tokens wraps the failure as `ArgsValidationErrorKeys.customParse` and preserves the thrown value as `cause`. If the parser already throws an `ArgsValidationError`, it is reused without double wrapping, and missing `name`, `displayName`, and `actual` values are filled in. When that update fails, for example because its `values` object is frozen, the thrown error is wrapped like any other thrown value.
+When a custom `parse` function throws, args-tokens wraps the failure as `ArgsValidationErrorKeys.customParse` and preserves the thrown value as `cause`. If the `parse` function throws an `ArgsValidationError`, it is reused without double wrapping: a missing `name` or `displayName` in its `values` is filled in, and so is a missing `actual` when its `code` is `ArgsValidationErrorKeys.invalidType` or `ArgsValidationErrorKeys.invalidChoice`. When that update fails, for example because its `values` object is frozen, the thrown error is wrapped like any other thrown value.
 
 </details>
 
 <details>
 <summary><code>ArgResolveError</code> and conflicts</summary>
 
-`ArgResolveError` now extends `ArgsValidationError` for backward compatibility. Existing checks for `instanceof ArgResolveError`, `.name`, `.type`, `.schema`, and `.message` continue to work. `.name` is the name of the argument on the command line, without the leading dashes and in kebab-case with `toKebab` (`input-file` for the schema key `inputFile`), for every `type` of `ArgResolveError`, `'conflict'` included, while `values.name` is the schema key.
+`ArgResolveError` extends `ArgsValidationError`, so it has `code` and `values` too, besides its `type` (`'type'`, `'required'` or `'conflict'`) and `schema`. `.name` is the name of the argument on the command line, without the leading dashes and in kebab-case with `toKebab` (`input-file` for the schema key `inputFile`), for every `type` of `ArgResolveError`, `'conflict'` included, while `values.name` is the schema key.
 
 A conflict is reported as `ArgsValidationErrorKeys.conflict`. Its `values` has the `displayName` and `name` of the argument whose `conflicts` names the other one, and the `conflictDisplayName` and `conflictName` of the other one. When both name each other, `name` is the one that comes first in the schema. `displayName` and `conflictDisplayName` show an option as it was written, as in the message: with `short: 'p'` and `short: 's'`, `-p 80 -s /run/app.sock` gives `"'-p'"` and `"'-s'"`. A positional argument is shown by its name, as in its other errors, such as `"'file'"` (in kebab-case with `toKebab`). `name` and `conflictName` are the schema keys.
 
@@ -385,7 +387,7 @@ Since 0.29.0, `isArgsValidationError()` works across bundled copies of `args-tok
 
 ## Node.js `parseArgs` tokens compatible
 
-If you want to use the same short options tokens as returned Node.js `parseArgs`, you can use `allowCompatible` parse option on `parseArgs`:
+If you want the same tokens as Node.js `parseArgs` returns without option definitions, use the `allowCompatible` option of `parseArgs`:
 
 ```js
 import { parseArgs as parseArgsNode } from 'node:util'
