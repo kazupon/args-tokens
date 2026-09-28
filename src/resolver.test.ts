@@ -1581,7 +1581,10 @@ describe('explicit empty value of a string or enum option', () => {
   })
 
   test('an enum option that accepts an empty value gets it', () => {
-    const withoutChoices = resolveArgs({ x: { type: 'enum' } }, parseArgs(['--x=']))
+    const withoutChoices = resolveArgs(
+      { x: { type: 'enum', parse: (value: string) => value } },
+      parseArgs(['--x='])
+    )
     expect(withoutChoices.error).toBeUndefined()
     expect(withoutChoices.values).toEqual({ x: '' })
 
@@ -1593,7 +1596,7 @@ describe('explicit empty value of a string or enum option', () => {
     expect(withEmptyChoice.values.x).toBe('')
 
     const multiple = resolveArgs(
-      { x: { type: 'enum', multiple: true } },
+      { x: { type: 'enum', choices: ['', 'a'], multiple: true } },
       parseArgs(['--x=', '--x=a'])
     )
     expect(multiple.error).toBeUndefined()
@@ -2142,9 +2145,16 @@ describe('enum option', () => {
       ])
     })
 
-    test('is not checked without choices', () => {
+    test('is not checked without choices, with a parse function', () => {
+      // marked as free of side effects, as the parse function of `choice()` is: with choices, such
+      // a function would have the default checked against them
+      const parse = Object.defineProperty(
+        (value: string) => value,
+        Symbol.for('args-tokens.pureParse'),
+        { value: true }
+      )
       const { values, error } = resolveArgs(
-        { level: { type: 'enum', default: 'verbose' } },
+        { level: { type: 'enum', parse, default: 'verbose' } },
         parseArgs([])
       )
       expect(error).toBeUndefined()
@@ -5199,8 +5209,8 @@ describe('option given without a value', () => {
       }
     },
     {
-      label: 'enum without choices',
-      schema: { type: 'enum' },
+      label: 'enum without choices, with a parse function',
+      schema: { type: 'enum', parse: (value: string) => value },
       values: { displayName: "'--x'", name: 'x', expected: 'enum', choices: '', choiceValues: [] }
     },
     {
@@ -5780,22 +5790,6 @@ describe('option given without a value followed by an argument starting with -',
     })
     expect(result.error?.errors[0].message).toBe(
       "Optional argument '--x' requires a value (to pass '-5' as its value, write '--x=-5')"
-    )
-  })
-
-  test('an enum without choices suggests any value', () => {
-    const result = resolveArgs({ mode: { type: 'enum' } }, parseArgs(['--mode', '-x']))
-    expectMissingValueError(result.error, {
-      displayName: "'--mode'",
-      name: 'mode',
-      expected: 'enum',
-      choices: '',
-      choiceValues: [],
-      next: '-x',
-      suggestion: '--mode=-x'
-    })
-    expect(result.error?.errors[0].message).toBe(
-      "Optional argument '--mode' requires a value (to pass '-x' as its value, write '--mode=-x')"
     )
   })
 
@@ -6814,6 +6808,102 @@ describe('a mistake in the schema', () => {
     expect(() => resolveArgs(args, parseArgs([]))).toThrow(
       "Unsupported argument type 'integer' for option 'size'"
     )
+  })
+
+  test.each([
+    { argv: [] },
+    { argv: ['--logLevel=debug'] },
+    { argv: ['--logLevel'] },
+    { argv: ['--logLevel', '-x'] }
+  ])('an enum argument without choices throws with $argv', ({ argv }) => {
+    // `choices` is missing, for example after refactoring
+    const args = { logLevel: { type: 'enum', description: 'log level' } } satisfies Args
+
+    expect(() => resolveArgs(args, parseArgs(argv))).toThrow(TypeError)
+    expect(() => resolveArgs(args, parseArgs(argv))).toThrow(
+      "argument 'logLevel' should have a 'choices' array"
+    )
+  })
+
+  test('an enum argument without choices is named as on the command line', () => {
+    const args = { logLevel: { type: 'enum' } } satisfies Args
+
+    expect(() => resolveArgs(args, parseArgs([]), { toKebab: true })).toThrow(
+      "argument 'log-level' should have a 'choices' array"
+    )
+  })
+
+  test('an enum argument without choices is named with its own toKebab', () => {
+    const args = { logLevel: { type: 'enum', toKebab: true } } satisfies Args
+
+    expect(() => resolveArgs(args, parseArgs([]))).toThrow(
+      "argument 'log-level' should have a 'choices' array"
+    )
+  })
+
+  test.each([
+    { label: 'required, not given', schema: { type: 'enum', required: true }, argv: [] },
+    { label: 'with a default, not given', schema: { type: 'enum', default: 'info' }, argv: [] },
+    { label: 'multiple', schema: { type: 'enum', multiple: true }, argv: ['--level=a'] },
+    { label: 'with undefined choices', schema: { type: 'enum', choices: undefined }, argv: [] },
+    {
+      label: 'with a parse that is not a function',
+      schema: { type: 'enum', parse: 'x' },
+      argv: []
+    },
+    // only untyped code can give choices that are not an array
+    { label: 'with null choices', schema: { type: 'enum', choices: null }, argv: [] },
+    {
+      label: 'with choices in a string',
+      schema: { type: 'enum', choices: 'debug,info' },
+      argv: ['--level=bug']
+    },
+    {
+      label: 'with choices in a set',
+      schema: { type: 'enum', choices: new Set(['debug']) },
+      argv: ['--level=debug']
+    }
+  ])('an enum argument without choices throws: $label', ({ schema, argv }) => {
+    const args = { level: schema } as unknown as Args
+
+    expect(() => resolveArgs(args, parseArgs(argv))).toThrow(TypeError)
+    expect(() => resolveArgs(args, parseArgs(argv))).toThrow(
+      "argument 'level' should have a 'choices' array"
+    )
+  })
+
+  test('an enum argument with empty choices does not throw, and takes no value', () => {
+    const args = { level: { type: 'enum', choices: [] } } satisfies Args
+
+    expect(resolveArgs(args, parseArgs([])).values).toEqual({})
+    const { values, error } = resolveArgs(args, parseArgs(['--level=debug']))
+    expect(values).toEqual({})
+    expect(error?.errors.map(e => (e as ArgsValidationError).code)).toEqual([
+      ArgsValidationErrorKeys.invalidChoice
+    ])
+  })
+
+  test('an enum argument with choices from another realm does not throw', () => {
+    const choices = runInNewContext("['debug', 'info']") as string[]
+    const { values, error } = resolveArgs(
+      { level: { type: 'enum', choices } },
+      parseArgs(['--level=debug'])
+    )
+    expect(error).toBeUndefined()
+    expect(values).toEqual({ level: 'debug' })
+  })
+
+  test('no parse function is called when an enum argument has no choices', () => {
+    const parse = vi.fn<(value: string) => string>(value => value)
+    const args = {
+      name: { type: 'custom', parse },
+      level: { type: 'enum' }
+    } satisfies Args
+
+    expect(() => resolveArgs(args, parseArgs(['--name=x', '--level=debug']))).toThrow(
+      "argument 'level' should have a 'choices' array"
+    )
+    expect(parse).not.toHaveBeenCalled()
   })
 })
 
