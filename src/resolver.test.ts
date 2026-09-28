@@ -6815,6 +6815,72 @@ describe('a mistake in the schema', () => {
       "Unsupported argument type 'integer' for option 'size'"
     )
   })
+
+  test.each([
+    { argv: [] },
+    { argv: ['--logLevel=debug'] },
+    { argv: ['--logLevel'] },
+    { argv: ['--logLevel', '-x'] }
+  ])('an enum argument without choices throws with $argv', ({ argv }) => {
+    // `choices` is missing, for example after refactoring
+    const args = { logLevel: { type: 'enum', description: 'log level' } } satisfies Args
+
+    expect(() => resolveArgs(args, parseArgs(argv))).toThrow(TypeError)
+    expect(() => resolveArgs(args, parseArgs(argv))).toThrow(
+      "argument 'logLevel' should have a 'choices' array"
+    )
+  })
+
+  test('an enum argument without choices is named as on the command line', () => {
+    const args = { logLevel: { type: 'enum' } } satisfies Args
+
+    expect(() => resolveArgs(args, parseArgs([]), { toKebab: true })).toThrow(
+      "argument 'log-level' should have a 'choices' array"
+    )
+  })
+
+  test.each([
+    { label: 'required, not given', schema: { type: 'enum', required: true }, argv: [] },
+    { label: 'with a default, not given', schema: { type: 'enum', default: 'info' }, argv: [] },
+    { label: 'multiple', schema: { type: 'enum', multiple: true }, argv: ['--level=a'] },
+    { label: 'with undefined choices', schema: { type: 'enum', choices: undefined }, argv: [] },
+    {
+      label: 'with a parse that is not a function',
+      schema: { type: 'enum', parse: 'x' },
+      argv: []
+    },
+    // only untyped code can give choices that are not an array
+    {
+      label: 'with choices in a string',
+      schema: { type: 'enum', choices: 'debug,info' },
+      argv: ['--level=bug']
+    },
+    {
+      label: 'with choices in a set',
+      schema: { type: 'enum', choices: new Set(['debug']) },
+      argv: ['--level=debug']
+    }
+  ])('an enum argument without choices throws: $label', ({ schema, argv }) => {
+    const args = { level: schema } as unknown as Args
+
+    expect(() => resolveArgs(args, parseArgs(argv))).toThrow(TypeError)
+    expect(() => resolveArgs(args, parseArgs(argv))).toThrow(
+      "argument 'level' should have a 'choices' array"
+    )
+  })
+
+  test('no parse function is called when an enum argument has no choices', () => {
+    const parse = vi.fn<(value: string) => string>(value => value)
+    const args = {
+      name: { type: 'custom', parse },
+      level: { type: 'enum' }
+    } satisfies Args
+
+    expect(() => resolveArgs(args, parseArgs(['--name=x', '--level=debug']))).toThrow(
+      "argument 'level' should have a 'choices' array"
+    )
+    expect(parse).not.toHaveBeenCalled()
+  })
 })
 
 /* oxlint-enable no-unsafe-optional-chaining */

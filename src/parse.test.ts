@@ -189,3 +189,12 @@ test('a custom argument without parse throws, whether or not it is given', () =>
     "argument 'config' should have a 'parse' function"
   )
 })
+
+test('an enum argument without choices throws, whether or not it is given', () => {
+  const args = { level: { type: 'enum' } } satisfies Args
+
+  expect(() => parse([], { args })).toThrow("argument 'level' should have a 'choices' array")
+  expect(() => parse(['--level=debug'], { args })).toThrow(
+    "argument 'level' should have a 'choices' array"
+  )
+})
