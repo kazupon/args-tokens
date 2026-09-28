@@ -972,7 +972,7 @@ export function positional<T>(
     return {
       type: 'positional',
       parse: parser.parse,
-      metavar: parser.metavar,
+      ...(parser.metavar != null ? { metavar: parser.metavar } : {}),
       ...(parser.description != null ? { description: parser.description } : {}),
       ...(parser.hidden != null ? { hidden: parser.hidden } : {}),
       ...(parser.required != null ? { required: parser.required } : {}),
