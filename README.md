@@ -931,7 +931,7 @@ The development of `args-tokens` is supported by my OSS sponsors!
 [npm-version-href]: https://npmjs.com/package/args-tokens
 [jsr-src]: https://jsr.io/badges/@kazupon/args-tokens
 [jsr-href]: https://jsr.io/@kazupon/args-tokens
-[install-size-src]: https://pkg-size.dev/badge/install/35082
+[install-size-src]: https://img.shields.io/npm/unpacked-size/args-tokens?style=flat
 [install-size-href]: https://pkg-size.dev/args-tokens
 [ci-src]: https://github.com/kazupon/args-tokens/actions/workflows/ci.yml/badge.svg
 [ci-href]: https://github.com/kazupon/args-tokens/actions/workflows/ci.yml
