@@ -24,7 +24,10 @@ value is the default as is, although it is typed as `U`. Set the default after `
 transformed value.
 
 A union of schemas of different types, such as `strict ? integer() : string()`, matches the
-last overload, whose `transform` takes a value of any of their types.
+last overload, whose `transform` takes a value of any of their types. An instantiation expression
+with two type arguments, such as `typeof map<number, string>`, is applied to that overload too,
+whose first type argument must be a schema, and is a type error: give `S` as well, as in
+`typeof map<number, string, CombinatorSchema<number>>`.
 
 ### Parameters
 
