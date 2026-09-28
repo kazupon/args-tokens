@@ -12,14 +12,10 @@ import {
   integer,
   boolean,
   positional,
-  choice,
   withDefault,
-  multiple,
   required,
   short,
-  map,
-  merge,
-  extend
+  merge
 } from 'args-tokens/combinators'
 
 // Define reusable schema groups with args()

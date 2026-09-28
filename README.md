@@ -15,8 +15,8 @@
 
 ## 🐱 Motivation
 
-- Although Node.js [`parseArgs`](https://nodejs.org/api/util.html#utilparseargsconfig) can return tokens, that the short options are not in the format I expect. Of course, I recognize the background of [this issue](https://github.com/pkgjs/parseargs/issues/78).
-- `parseArgs` gives the command line args parser a useful util, so the resolution of the options values and the parsing of the tokens are tightly coupled. As a result, Performance is sacrificed. Of course, I recognize that's the trade-off.
+- Although Node.js [`parseArgs`](https://nodejs.org/api/util.html#utilparseargsconfig) can return tokens, the short options are not in the format I expect. Of course, I recognize the background of [this issue](https://github.com/pkgjs/parseargs/issues/78).
+- `parseArgs` gives the command line args parser a useful util, so the resolution of the options values and the parsing of the tokens are tightly coupled. As a result, performance is sacrificed. Of course, I recognize that's the trade-off.
 
 ## ⏱️ Benchmark
 
@@ -94,7 +94,7 @@ Breaking changes might not follow SemVer, please pin Vitest's version when using
 
 ## ❓ What's different about `parseArgs` tokens?
 
-The token output for the short option `-x=v` is different:
+A value in a short option group is read differently: for `-a=1`, args-tokens gives the option `-a` and its value `1`, while `node:util` reads `=` and `1` as options.
 
 ```js
 import { parseArgs as parseArgsNode } from 'node:util'
@@ -109,7 +109,8 @@ const { tokens: tokensNode } = parseArgsNode({
 })
 console.log(tokensNode)
 
-//   ({
+// [
+//   {
 //     kind: 'option',
 //     name: 'a',
 //     rawName: '-a',
@@ -132,7 +133,7 @@ console.log(tokensNode)
 //     index: 0,
 //     value: undefined,
 //     inlineValue: undefined
-//   })
+//   }
 // ]
 
 // args-tokens parseArgs tokens
@@ -152,20 +153,43 @@ console.log(tokens)
 // ]
 ```
 
-When short options are written with `=` and a value, such as `-p=-5` or `-ab=-1`, the rest of the argument is the value of the last option, even when it starts with `-`: `-n=--` gives the value `--`, not the option terminator. `-p=` gives an empty value, as `--port=` does, and `allowCompatible: true` keeps the `node:util` tokens. With `shortGrouping: true`, `resolveArgs()` gives the value after `=` to the last option. With `shortGrouping: false`, the default of `resolveArgs()` and `parse()`, the other letters of the group are the value of its first option, as in `-p5`: `-ab=-1` gives `-a` the value `b=-1`.
+With `allowCompatible: true`, `parseArgs()` gives the same tokens as `parseArgs` of `node:util` gives without option definitions.
 
-A `-` inside a group, as in `-o-` or `-p-5`, does not end the options: the rest of the group from the `-` is the value of the option before it, in a value token with `inlineValue: false`, since no `=` is written. So `-o- input.txt` gives `-o` the value `-`, and `input.txt` is read as usual. Unlike `node:util`, where `inlineValue: false` means that the value is the next argument, this value token is in the same argument and has its `index`. With `shortGrouping: false`, `resolveArgs()` gives the first option the other letters and that value, as in `-Wno-unused` (`no-unused`) and `-ab-c` (`-a` gets `b-c`), and with `shortGrouping: true` the last option gets it. A boolean option ignores such a value, as it ignores `false` in `-sfalse`. `allowCompatible: true` keeps the `node:util` tokens, where the `-` becomes the option terminator.
+<details>
+<summary>A value after <code>=</code> in a short option group</summary>
+
+When short options are written with `=`, such as `-p=-5` or `-ab=-1`:
+
+- The rest of the argument is a value token after the last option, even when it starts with `-`: `-n=--` gives `-n` the value `--`, not the option terminator.
+- `-p=` gives an empty value, as `--port=` does.
+- With `shortGrouping: true`, `resolveArgs()` gives the value after `=` to the last option.
+- With `shortGrouping: false`, the default of `resolveArgs()` and `parse()`, the other letters of the group are the value of its first option, as in `-p5`: `-ab=-1` gives `-a` the value `b=-1`.
+
+</details>
+
+<details>
+<summary>A <code>-</code> inside a short option group</summary>
+
+A `-` inside a group, as in `-o-` or `-p-5`, does not end the options:
+
+- The rest of the group from the `-` is the value of the option before it, in a value token with `inlineValue: false`, since no `=` is written. So `-o- input.txt` gives `-o` the value `-`, and `input.txt` is read as usual.
+- Unlike `node:util`, where `inlineValue: false` means that the value is the next argument, this value token is in the same argument and has its `index`.
+- With `shortGrouping: false`, `resolveArgs()` gives the first option the other letters and that value, as in `-Wno-unused` (`no-unused`) and `-ab-c` (`-a` gets `b-c`). With `shortGrouping: true`, the last option gets it.
+- A boolean option ignores such a value, as it ignores `false` in `-sfalse`.
+- `allowCompatible: true` keeps the `node:util` tokens, where the `-` becomes the option terminator.
+
+</details>
 
 ## 💿 Installation
 
 ```sh
 # npm
-npm install --save args-tokens
+npm install args-tokens
 
-## yarn
+# yarn
 yarn add args-tokens
 
-## pnpm
+# pnpm
 pnpm add args-tokens
 ```
 
@@ -238,9 +262,11 @@ console.log('values:', values)
 console.log('positionals:', positionals)
 ```
 
+Besides `values` and `positionals`, `resolveArgs` returns `rest`, the arguments after the option terminator `--` (unlike `parseArgs` of `node:util`, they are not in `positionals`), `error`, the validation failures described in “Validation errors” below, and `explicit`, which is `true` for each argument given on the command line.
+
 ## Convenient argument parsing
 
-Using the `parse` you can transform the arguments into tokens and resolve the argument values once:
+Using the `parse` you can transform the arguments into tokens and resolve the argument values at once:
 
 ```js
 import { parse } from 'args-tokens' // for Node.js and Bun
@@ -277,11 +303,11 @@ console.log('values:', values)
 console.log('positionals:', positionals)
 ```
 
-`parse` also takes the options of `parseArgs` and `resolveArgs`, such as `allowCompatible`, `shortGrouping`, `skipPositional` and `toKebab`, and they work as they do there.
+`parse` also takes the options of `parseArgs` and `resolveArgs`, such as `allowCompatible`, `shortGrouping`, `skipPositional` and `toKebab`, and they work as they do there. It returns what `resolveArgs` returns, and the `tokens`. Without `args`, it uses a schema with the `boolean` options `help` (`-h`) and `version` (`-v`).
 
 ## Validation errors
 
-`resolveArgs` and `parse` return validation failures as an `AggregateError` in the `error` field. Each argument validation failure is an `ArgsValidationError`, which keeps the existing English `message` as a fallback and adds structured metadata for localization or custom rendering.
+`resolveArgs` and `parse` return validation failures as an `AggregateError` in the `error` field. Each argument validation failure is an `ArgsValidationError`, which has an English `message` as a fallback, and a `code` and `values` for localization or custom rendering.
 
 Use `isArgsValidationError()` to narrow individual errors:
 
@@ -317,25 +343,51 @@ for (const cause of error?.errors ?? []) {
 }
 ```
 
-The resolver uses stable error codes for required options, required positionals, options given without a value, invalid types, invalid choices, custom parse failures, values given to options that do not take one, arguments that conflict, and defaults of `enum` options that are not one of their choices. The `values` object contains interpolation data such as `name`, `displayName`, `rawName`, `expected`, `actual`, `choices`, `choiceValues`, `reason`, `next`, `suggestion`, `conflictName`, and `conflictDisplayName` depending on the error kind.
+The resolver uses stable error codes for required options, required positionals, options given without a value, invalid types, invalid choices, custom parse failures, values given to options that do not take one, arguments that conflict, and defaults of `enum` options that are not one of their choices. The `values` object contains interpolation data such as `name`, `displayName`, `rawName`, `expected`, `actual`, `choices`, `choiceValues`, `reason`, `next`, `suggestion`, `conflictName`, and `conflictDisplayName` depending on the error kind. The `values` of `ArgsValidationErrorKeys.invalidDefault` have the same keys as those of `ArgsValidationErrorKeys.invalidChoice`, with the default as `actual`. An option that is not in the schema is not reported: `resolveArgs` and `parse` never report `ArgsValidationErrorKeys.unknownOption`. It takes the argument after it as its value, unless that argument is an option, and the value is dropped: with no `foo` in the schema, `--foo bar` gives no positional argument.
 
-An option that takes a value reports `ArgsValidationErrorKeys.missingValue` when it is given without one, including a required option. The tokens are made without the schema, as `node:util` `parseArgs` makes them without option definitions, so `--port -5` is read as `--port` followed by the option `-5`, and a value that starts with `-` has to be written with `=` or attached to a short option, such as `--port=-5`, `-p=-5` or `-p-5`. When the option ends its argument and the next argument is one long option or a group of short options, such as `-5`, `-5.5` or `--foo`, that are not all in the schema, the error has `next` (`'-5'`) and `suggestion` (`'--port=-5'`) in `values`, and the message suggests that form. With `shortGrouping: false`, the default of `resolveArgs()` and `parse()`, only the first letter of a group is an option, and the other letters are its value (a boolean ignores them), so a group whose first letter is in the schema, such as `-p5` or `-vfoo`, gets no suggestion. For `--port -5`, the message is:
+An option that takes a value reports `ArgsValidationErrorKeys.missingValue` when it is given without one, including a required option. The tokens are made without the schema, as `node:util` `parseArgs` makes them without option definitions, so `--port -5` is read as `--port` followed by the option `-5`, and a value that starts with `-`, other than `-` alone, has to be written with `=` or attached to a short option, such as `--port=-5`, `-p=-5` or `-p-5`.
+
+<details>
+<summary>The suggestion for a value that starts with <code>-</code></summary>
+
+When the option ends its argument and the next argument is one long option or a group of short options, such as `-5`, `-5.5` or `--foo`, that are not all in the schema, the error has `next` (`'-5'`) and `suggestion` (`'--port=-5'`) in `values`, and the message suggests that form. The long form is suggested because it passes such a value in every mode, including `allowCompatible: true`, where `-p=-5` and `-p-5` do not. With `shortGrouping: false`, the default of `resolveArgs()` and `parse()`, only the first letter of a group is an option, and the other letters are its value (a boolean ignores them), so a group whose first letter is in the schema, such as `-p5` or `-vfoo`, gets no suggestion. For `--port -5`, with `port: { type: 'number' }`, the message is:
 
 ```
 Optional argument '--port' requires a value (to pass '-5' as its value, write '--port=-5')
 ```
 
-`next`, `suggestion` and the hint in the message are given only when the option can take that value, as far as args-tokens can tell. A `number` option gets them only for a numeric value, and an `enum` option with `choices` only for one of the choices, with or without a `parse` function. So `--port -x` gets no suggestion, and neither does `--level -x` for an `enum` option with `choices: ['debug', 'info']`. The `parse` functions of `string()`, `number()`, `integer()`, `float()` and `choice()` have no side effects, so they are also called with the value to check it: `--count -x` gets no suggestion for `integer()`, `--count -5` does, and `--port -5` gets none for `number({ min: 1 })`. A `parse` function of your own, such as one given to `combinator()`, is never called with a value that the option was not given, and neither is a `map()` transform. An option with such a function is checked by its type or `choices` only: a `number` option or an `enum` option with `choices` gets the suggestion as above, so `--port -5` still gets `--port=-5` for `map(number({ min: 1 }), n => n)`, and any other option gets none. A `string()` whose `pattern` has the `g` or `y` flag is treated the same way, since `test` moves the `lastIndex` of such a pattern.
+`next`, `suggestion` and the hint in the message are given only when the option can take that value, as far as args-tokens can tell. A `number` option gets them only for a numeric value, and an `enum` option with `choices` only for one of the choices, with or without a `parse` function. So `--port -x` gets no suggestion, and neither does `--level -x` for an `enum` option with `choices: ['debug', 'info']`.
 
-When a custom `parse` function throws, args-tokens wraps the failure as `ArgsValidationErrorKeys.customParse` and preserves the thrown value as `cause`. If the parser already throws an `ArgsValidationError`, it is reused without double wrapping, and missing `name`, `displayName`, and `actual` values are filled in. When that update fails, for example because its `values` object is frozen, the thrown error is wrapped like any other thrown value.
+The `parse` functions of `string()`, `number()`, `integer()`, `float()` and `choice()` have no side effects, so they are also called with the value to check it: `--count -x` gets no suggestion for `integer()`, `--count -5` does, and `--port -5` gets none for `number({ min: 1 })`. A `parse` function of your own, such as one given to `combinator()`, is never called with a value that the option was not given, and neither is a `map()` transform. An option with such a function is checked by its type or `choices` only: a `number` option or an `enum` option with `choices` gets the suggestion as above, so `--port -5` still gets `--port=-5` for `map(number({ min: 1 }), n => n)`, and any other option gets none. A `string()` whose `pattern` has the `g` or `y` flag is treated the same way, since `test` moves the `lastIndex` of such a pattern.
 
-`ArgResolveError` now extends `ArgsValidationError` for backward compatibility. Existing checks for `instanceof ArgResolveError`, `.name`, `.type`, `.schema`, and `.message` continue to work. `.name` is the name of the argument on the command line, without the leading dashes and in kebab-case with `toKebab` (`input-file` for the schema key `inputFile`), for every `type` of `ArgResolveError`, `'conflict'` included, while `values.name` is the schema key. A conflict is reported as `ArgsValidationErrorKeys.conflict`. Its `values` has the `displayName` and `name` of the argument whose `conflicts` names the other one, and the `conflictDisplayName` and `conflictName` of the other one. When both name each other, `name` is the one that comes first in the schema. `displayName` and `conflictDisplayName` show an option as it was written, as in the message: with `short: 'p'` and `short: 's'`, `-p 80 -s /run/app.sock` gives `"'-p'"` and `"'-s'"`. A positional argument is shown by its name, as in its other errors, such as `"'file'"` (in kebab-case with `toKebab`). `name` and `conflictName` are the schema keys.
+</details>
+
+<details>
+<summary>A <code>parse</code> function that throws</summary>
+
+When a custom `parse` function throws, args-tokens wraps the failure as `ArgsValidationErrorKeys.customParse` and preserves the thrown value as `cause`. If the `parse` function throws an `ArgsValidationError`, it is reused without double wrapping: a missing `name` or `displayName` in its `values` is filled in, and so is a missing `actual` when its `code` is `ArgsValidationErrorKeys.invalidType` or `ArgsValidationErrorKeys.invalidChoice`. When that update fails, for example because its `values` object is frozen, the thrown error is wrapped like any other thrown value.
+
+</details>
+
+<details>
+<summary><code>ArgResolveError</code> and conflicts</summary>
+
+`ArgResolveError` extends `ArgsValidationError`, so it has `code` and `values` too, besides its `type` (`'type'`, `'required'` or `'conflict'`) and `schema`. `.name` is the name of the argument on the command line, without the leading dashes and in kebab-case with `toKebab` (`input-file` for the schema key `inputFile`), for every `type` of `ArgResolveError`, `'conflict'` included, while `values.name` is the schema key.
+
+A conflict is reported as `ArgsValidationErrorKeys.conflict`. Its `values` has the `displayName` and `name` of the argument whose `conflicts` names the other one, and the `conflictDisplayName` and `conflictName` of the other one. When both name each other, `name` is the one that comes first in the schema. `displayName` and `conflictDisplayName` show an option as it was written, as in the message: with `short: 'p'` and `short: 's'`, `-p 80 -s /run/app.sock` gives `"'-p'"` and `"'-s'"`. A positional argument is shown by its name, as in its other errors, such as `"'file'"` (in kebab-case with `toKebab`). `name` and `conflictName` are the schema keys.
+
+</details>
+
+<details>
+<summary><code>isArgsValidationError()</code> across bundled copies of args-tokens</summary>
 
 Since 0.29.0, `isArgsValidationError()` works across bundled copies of `args-tokens`. Each error instance carries a non-enumerable brand keyed by `Symbol.for('args-tokens.ArgsValidationError')`, so the guard recognizes errors created by another copy of the library, for example when a host and a plugin each bundle `args-tokens`, even though `instanceof` does not match. Every copy involved must be 0.29.0 or later, because older versions neither set nor check the brand. The guard does not depend on `error.name`, which `ArgResolveError` overrides with the argument name. It narrows only to `ArgsValidationError`: across copies, `instanceof ArgResolveError` still fails, so do not rely on `type` or `schema` for errors that may come from another copy.
 
+</details>
+
 ## Node.js `parseArgs` tokens compatible
 
-If you want to use the same short options tokens as returned Node.js `parseArgs`, you can use `allowCompatible` parse option on `parseArgs`:
+If you want the same tokens as Node.js `parseArgs` returns without option definitions, use the `allowCompatible` option of `parseArgs`:
 
 ```js
 import { parseArgs as parseArgsNode } from 'node:util'
@@ -353,7 +405,7 @@ const { tokens: tokensNode } = parseArgsNode({
 })
 
 // args-tokens parseArgs tokens
-const tokens = parseArgs(['-a=1'], { allowCompatible: true }) // add `allowCompatible` option
+const tokens = parseArgs(args, { allowCompatible: true }) // add `allowCompatible` option
 
 // validate
 deepStrictEqual(tokensNode, tokens)
@@ -370,7 +422,7 @@ The `ArgSchema` interface defines the configuration for command-line arguments. 
 Type of the argument value:
 
 - `'string'`: Text value
-- `'boolean'`: True/false flag (can be negatable with `--no-` prefix). `--flag=true` and `--flag=false` set the value explicitly; any other value after `=` is an error
+- `'boolean'`: True/false flag (can be negatable with `--no-` prefix). `--flag=true` and `--flag=false` set the value explicitly; any other value after `=` is an error with the code `ArgsValidationErrorKeys.invalidType`
 - `'number'`: Numeric value (parsed as integer or float)
 - `'enum'`: One of predefined string values (requires `choices` property)
 - `'positional'`: Non-option argument by position
@@ -383,7 +435,7 @@ Any other `type`, or no `type`, is a mistake that only untyped code can make: if
 ```js
 {
   name: { type: 'string' },        // --name value
-  verbose: { type: 'boolean' },     // --verbose or --no-verbose
+  verbose: { type: 'boolean' },     // --verbose (--no-verbose needs negatable: true)
   port: { type: 'number' },         // --port 3000
   level: { type: 'enum', choices: ['debug', 'info'] },
   file: { type: 'positional' },     // first positional arg
@@ -393,7 +445,7 @@ Any other `type`, or no `type`, is a mistake that only untyped code can make: if
 
 #### `short` (optional)
 
-Single character alias for the long option name. Allows users to use `-x` instead of `--extended-option`.
+Single character alias for the long option name. Allows users to use `-x` instead of `--extended-option`. It is only for options, not for positional arguments.
 
 <!-- eslint-skip -->
 
@@ -450,13 +502,30 @@ Hides the argument from generated help or usage output. This is renderer metadat
 }
 ```
 
+#### `metavar` (optional)
+
+Display name hint for the value of the argument in help text, such as `integer` in `--port <integer>`. Particularly useful for `type: 'custom'` arguments, where the type name would otherwise be unhelpful. For a `custom` option that is given without a value, it is also the `expected` in the `values` of the `ArgsValidationErrorKeys.missingValue` error, which is `'custom'` without it.
+
+<!-- eslint-skip -->
+
+```js
+{
+  port: {
+    type: 'custom',
+    parse: (value) => parseInt(value, 10),
+    metavar: 'integer',
+    description: 'Port number (1-65535)'
+  }
+}
+```
+
 #### `required` (optional)
 
-Marks the argument as required. When `true`, the argument must be provided. When it is missing, the error is an `ArgResolveError` with `type: 'required'` and the code `ArgsValidationErrorKeys.requiredOption`, or `ArgsValidationErrorKeys.requiredPositional` for a positional argument. Its `values` has the `displayName` as in the message, such as `"'--input'"` for an option (`"'--input' or '-i'"` with the short name `i`) and `"'source'"` for a positional argument, and the `name`, which is the schema key.
+Marks the argument as required. When `true`, the argument must be provided. When it is missing, the error is an `ArgResolveError` with `type: 'required'` and the code `ArgsValidationErrorKeys.requiredOption`, or `ArgsValidationErrorKeys.requiredPositional` for a positional argument.
 
-An option given without a value, such as `--input` with nothing after it, is reported as `ArgsValidationErrorKeys.missingValue` instead. An explicit empty value, such as `--input=`, or `-i ''` with the short name `i`, is still reported as required, but the option counts as given: it is `true` in the `explicit` result of `resolveArgs()` and `parse()`, and takes part in conflicts, as any other given option does.
+For single-value positional arguments, omitting `required` keeps the argument required for compatibility, unless it has a `default`, which makes it optional. A `multiple` positional argument is optional unless `required: true` is set. Set `required: false` to make a positional argument explicitly optional.
 
-For single-value positional arguments, omitting `required` keeps the argument required for compatibility, unless it has a `default`, which makes it optional. A `multiple` positional argument is optional unless `required: true` is set. Set `required: false` to make a positional argument explicitly optional. When an optional positional argument appears before later required positional arguments, it consumes a value only when enough values remain for those required positional arguments.
+For the `values` of the error, an option given without a value or with an explicit empty value, and how an optional positional argument leaves values for later required ones, see [`ArgSchema`](./docs/default/interfaces/ArgSchema.md#properties) in the API references.
 
 <!-- eslint-skip -->
 
@@ -480,9 +549,9 @@ For single-value positional arguments, omitting `required` keeps the argument re
 
 #### `multiple` (optional)
 
-Allows the argument to accept multiple values. The resolved value becomes an array.
+Allows the argument to accept multiple values. The resolved value becomes an array. When the argument is not given and has no `default`, its value is `undefined`, not an empty array.
 
-- For options: can be specified multiple times (`--tag foo --tag bar`)
+- For options: can be specified multiple times (`--tags foo --tags bar`)
 - For positional: collects remaining positional arguments after preserving values for later required positional arguments
 
 <!-- eslint-skip -->
@@ -496,10 +565,10 @@ Allows the argument to accept multiple values. The resolved value becomes an arr
   },
   files: {
     type: 'positional',
-    multiple: true   // Collects all remaining positional args
+    multiple: true   // a.txt b.txt out.txt → ['a.txt', 'b.txt']
   },
   output: {
-    type: 'positional' // Keeps the last positional value when declared after files
+    type: 'positional' // a.txt b.txt out.txt → 'out.txt', left for this required argument
   }
 }
 ```
@@ -526,7 +595,7 @@ Enables negation for boolean arguments using `--no-` prefix. Only applicable to 
 
 Array of allowed string values for enum-type arguments. Required when `type: 'enum'`.
 
-The value given on the command line is checked before `parse`, so `parse` receives only one of the choices.
+The value given on the command line is checked before `parse`, so `parse` receives only one of the choices. Any other value is reported as an `ArgResolveError` with `type: 'type'` and the code `ArgsValidationErrorKeys.invalidChoice`.
 
 <!-- eslint-skip -->
 
@@ -548,15 +617,11 @@ The value given on the command line is checked before `parse`, so `parse` receiv
 
 #### `default` (optional)
 
-Default value used when the argument is not provided. The type must match the argument's `type` property.
+Default value used when the argument is not provided. An option that is given without a value, or with a value that is rejected, also gets its default, along with the error. The type must match the argument's `type` property.
 
-The default is used as is. It does not go through `parse`, including when an option is given without a value. An explicit empty value, such as `--name=` or `-n ''`, is a value, not a missing one: a `string` option without `parse` gets `''` instead of the default, unless it is `required`. What `parse` returns is a value too, even `undefined` or `null`, and the default does not replace it.
+The default is used as is. It does not go through `parse`. The value of a `multiple` argument is an array, so its default becomes the only element of the array: `default: 'latest'` gives `['latest']`.
 
-The value of a `multiple` argument is an array, so its default becomes the only element of the array: `default: 'latest'` gives `['latest']`.
-
-The default of an `enum` option with `choices` is checked when it would be used, that is, when no value from the command line is used: the option is not given, or its values are missing or rejected. A default that is not one of the choices is reported as an `ArgResolveError` with `type: 'type'` and the code `ArgsValidationErrorKeys.invalidDefault`, and is not used. Its `values` has the same keys as that of `ArgsValidationErrorKeys.invalidChoice`, with the default as `actual`. With a `parse` function of your own, or a `map()` transform, the default is a value that the function returns, which need not be one of the choices, and it is not checked. `choice()` returns the value as is, so its default is checked.
-
-For positional arguments, `multiple` ones included, the default is used when no value is left for the argument: when the positional values run out, or when the remaining ones are preserved for later required positional arguments. With `required: true`, the default is not used, and the argument is reported as required instead.
+For an explicit empty value, the default of an `enum` option that is not one of its choices, and the default of a positional argument, see [`ArgSchema`](./docs/default/interfaces/ArgSchema.md#properties) in the API references.
 
 <!-- eslint-skip -->
 
@@ -588,7 +653,7 @@ For positional arguments, `multiple` ones included, the default is used when no 
 
 #### `toKebab` (optional)
 
-Converts the argument name from camelCase to kebab-case for CLI usage. A property like `maxCount` becomes available as `--max-count`.
+Converts the argument name from camelCase to kebab-case for CLI usage. A property like `maxCount` becomes available as `--max-count`. `--maxCount` is then an option that is not in the schema, and the key in `values` stays `maxCount`. The `toKebab` option of `resolveArgs()` and `parse()` applies it to all arguments.
 
 <!-- eslint-skip -->
 
@@ -608,13 +673,11 @@ Converts the argument name from camelCase to kebab-case for CLI usage. A propert
 
 #### `parse` (optional)
 
-Custom parsing function for `type: 'custom'` arguments. Required when `type: 'custom'`: if it is missing or not a function, `resolveArgs()` and `parse()` throw a `TypeError`, whether or not the argument is given. The function should throw an Error if parsing fails.
+Custom parsing function. Required when `type: 'custom'`: if it is missing or not a function, `resolveArgs()` and `parse()` throw a `TypeError`, whether or not the argument is given. An argument of another type uses it too, in place of its own parsing. The function should throw an Error if parsing fails.
 
-`parse` is called synchronously, and what it returns becomes the value, even `undefined` or `null`, so throw to reject a value. An `async` function returns a promise, and the promise becomes the value as is: `resolveArgs()` and `parse()` do not await it, and do not report its rejection as a validation error. Await the value, or each of its elements with `multiple` (for example with `Promise.all()`), and handle the rejection yourself: a rejection that nothing handles is an unhandled rejection, which ends a Node.js process by default.
+`parse` receives the value from the command line, or `'true'` / `'false'` for a `boolean` option. It is called synchronously, and what it returns becomes the value, even `undefined` or `null`, so throw to reject a value.
 
-`parse` receives the value from the command line, or `'true'` / `'false'` for a `boolean` option. When an option other than `boolean` is given without a value, `parse` is not called and the missing value is reported as a validation error. An explicit empty value, such as `--config=`, or `-c=` with the short name `c`, is passed as `''` unless `required: true` is set.
-
-An `enum` option with `choices` passes only one of them to `parse`. Any other value, an explicit empty one included, is reported as `ArgsValidationErrorKeys.invalidChoice`, except that a required option reports an explicit empty value as required. List the values users type in `choices`, and use `parse` to change them.
+For an `async` function, an option given without a value or with an explicit empty value, and an `enum` option with `choices`, see [`ArgSchema`](./docs/default/interfaces/ArgSchema.md#properties) in the API references.
 
 <!-- eslint-skip -->
 
@@ -648,9 +711,9 @@ An `enum` option with `choices` passes only one of them to `parse`. Any other va
 
 Specifies other options that cannot be used together with this option. When conflicting options are provided together, the error is an `ArgResolveError` with `type: 'conflict'` and the code `ArgsValidationErrorKeys.conflict`.
 
-Conflicts only need to be defined on one side - if option A defines a conflict with option B, the conflict is automatically detected when both are used.
+Conflicts only need to be defined on one side - if option A defines a conflict with option B, the conflict is automatically detected when both are used. The names in `conflicts` are the schema keys, such as `inputFile`, not the kebab-case names of `toKebab`. The error names first the argument whose `conflicts` names the other one, or, when both name each other, the one that comes first in the schema.
 
-A positional argument can also be on either side, such as `[file]` and `--stdin`. It conflicts when it is given, and the error shows it by its name, in kebab-case with `toKebab`. The argument named first is chosen as for options, and the message starts with its kind: `Positional argument 'file' conflicts with '--stdin'` or `Optional argument '--stdin' conflicts with 'file'`.
+A positional argument can also be on either side, such as `[file]` and `--stdin`. It conflicts when it is given, and the error shows it by its name, in kebab-case with `toKebab`. The message starts with the kind of the argument named first: `Positional argument 'file' conflicts with '--stdin'` or `Optional argument '--stdin' conflicts with 'file'`.
 
 <!-- eslint-skip -->
 
@@ -712,16 +775,10 @@ import {
   integer,
   boolean,
   positional,
-  choice,
   withDefault,
-  multiple,
   required,
   short,
-  describe,
-  unrequired,
-  map,
-  merge,
-  extend
+  merge
 } from 'args-tokens/combinators'
 
 // Define reusable schema groups with args()
@@ -747,6 +804,7 @@ const schema = merge(
 const argv = ['dev', '--port', '9131', '--host', 'example.com', '--verbose']
 const tokens = parseArgs(argv)
 const { values } = resolveArgs(schema, tokens)
+// values → { verbose: true, port: 9131, host: 'example.com', command: 'dev' }
 ```
 
 ### Available Combinators
@@ -758,10 +816,12 @@ const { values } = resolveArgs(schema, tokens)
 - `integer(opts?)` — Integer only, with optional range
 - `float(opts?)` — Float with optional range, rejects `NaN`/`Infinity`
 - `boolean(opts?)` — Boolean flag, supports `negatable`
-- `positional()` — Positional argument (resolves to string), which the modifiers take, as in `multiple(positional())`
+- `positional(opts?)` — Positional argument (resolves to string), which the modifiers take, as in `multiple(positional())`
 - `positional(parser)` — Typed positional (e.g., `positional(integer())`), which keeps `required`, `default` and `multiple` of the parser
 - `unrequired(positional())` — Explicitly optional positional argument
-- `choice(values)` — Enum-like with literal type inference
+- `choice(values, opts?)` — Enum-like with literal type inference
+
+Each base combinator also takes the common options `description`, `short`, `hidden` and `required` (for `choice()`, in its second argument), which set the same properties as `describe()`, `short()`, `hidden()` and `required()`. `short` has no effect on a positional argument. `combinator()` takes them in its configuration too.
 
 A literal `required: true` or `required: false` in the options is kept in the type: `integer({ required: true })` types the value as present, as `required(integer())` does, and `positional({ required: false })` and `positional(integer({ required: false }))` are optional. So is a positional argument whose `required` may be `false`, such as `positional(integer({ required: flag }))` for a `flag` of type `boolean`, or `positional(string(optional ? { required: false } : {}))`, and so is one with a `required: true` that TypeScript widens to `boolean`, as in `const options = { required: true }`: write such options `as const`. Options whose type only says that `required` is a `boolean` that may be missing, such as `optional ? { required: flag } : {}` or the options that a helper typed `<T extends IntegerOptions>(options: T)` passes on, keep the positional argument typed as present: use `unrequired()` when it may be missing. `positional(multiple(integer()))` resolves to an array, as `multiple(positional(integer()))` does.
 
@@ -774,14 +834,14 @@ A literal `required: true` or `required: false` in the options is kept in the ty
 - `unrequired(schema)` — Mark as not required (override `required: true`, or make a positional optional)
 - `withDefault(schema, defaultValue)` — Set a default value of the schema's type, which must be a string, number or boolean
 - `multiple(schema)` — Accept multiple values (resolves to array)
-- `map(schema, transform)` — Transform the parsed value
+- `map(schema, transform)` — Transform the parsed value. A default set before `map()` is not transformed, so set it after, as in `withDefault(map(integer(), n => n * 2), 10)`
 
 Each modifier keeps what earlier modifiers set, so `short(multiple(string()), 't')` resolves to an array of strings, as `multiple(short(string(), 't'))` does.
 
 #### Schema Combinators
 
 - `args(fields)` — Type-safe schema factory (no `satisfies Args` needed)
-- `merge(...schemas)` — Compose multiple schemas into one
+- `merge(...schemas)` — Compose multiple schemas into one, where a later schema wins on a key conflict
 - `extend(base, overrides)` — Override or add fields to a schema
 
 #### Custom Combinators
@@ -838,11 +898,11 @@ const { values } = resolveArgs(schema, tokens)
 
 ## 📚 API References
 
-See the [API References](./docs/index.md)
+See the [API References](./docs/index.md).
 
 ## 🙌 Contributing guidelines
 
-If you are interested in contributing to `args-tokens`, I highly recommend checking out [the contributing guidelines](/CONTRIBUTING.md) here. You'll find all the relevant information such as [how to make a PR](/CONTRIBUTING.md#pull-request-guidelines), [how to setup development](/CONTRIBUTING.md#development-setup)) etc., there.
+If you are interested in contributing to `args-tokens`, I highly recommend checking out [the contributing guidelines](/CONTRIBUTING.md) here. You'll find all the relevant information such as [how to make a PR](/CONTRIBUTING.md#pull-request-guidelines), [how to set up development](/CONTRIBUTING.md#development-setup) etc., there.
 
 ## 💖 Credits
 
@@ -853,7 +913,7 @@ This project is inspired by:
 
 ## 🤝 Sponsors
 
-The development of Gunshi is supported by my OSS sponsors!
+The development of `args-tokens` is supported by my OSS sponsors!
 
 <p align="center">
   <a href="https://cdn.jsdelivr.net/gh/kazupon/sponsors/sponsors.svg">
@@ -863,7 +923,7 @@ The development of Gunshi is supported by my OSS sponsors!
 
 ## ©️ License
 
-[MIT](http://opensource.org/licenses/MIT)
+[MIT](https://opensource.org/license/MIT)
 
 <!-- Badges -->
 
@@ -871,7 +931,7 @@ The development of Gunshi is supported by my OSS sponsors!
 [npm-version-href]: https://npmjs.com/package/args-tokens
 [jsr-src]: https://jsr.io/badges/@kazupon/args-tokens
 [jsr-href]: https://jsr.io/@kazupon/args-tokens
-[install-size-src]: https://pkg-size.dev/badge/install/35082
+[install-size-src]: https://img.shields.io/npm/unpacked-size/args-tokens?style=flat
 [install-size-href]: https://pkg-size.dev/args-tokens
 [ci-src]: https://github.com/kazupon/args-tokens/actions/workflows/ci.yml/badge.svg
 [ci-href]: https://github.com/kazupon/args-tokens/actions/workflows/ci.yml

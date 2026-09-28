@@ -20,9 +20,9 @@ export interface ParseOptions<A extends Args> extends ParserOptions, ResolveArgs
 
 ## Properties
 
-| Name                | Type | Description                                                                                     |
-| ------------------- | ---- | ----------------------------------------------------------------------------------------------- |
-| `args` _(optional)_ | `A`  | [Arguments schema](/docs/default/interfaces/Args.md), which defines the command line arguments. |
+| Name                | Type | Description                                                                                                                                                                                                                        |
+| ------------------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `args` _(optional)_ | `A`  | [Arguments schema](/docs/default/interfaces/Args.md), which defines the command line arguments. Without it, [parse](/docs/default/functions/parse.md) uses a schema with the `boolean` options `help` (`-h`) and `version` (`-v`). |
 
 ## Tags
 
