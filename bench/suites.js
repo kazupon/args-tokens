@@ -1,5 +1,6 @@
 /**
- * The benchmark suites shared by `bench/mitata.js`, `bench/positionals.js` and `bench/compare.mjs`.
+ * The benchmark suites shared by `bench/mitata.js`, `bench/positionals.js`, `bench/run-suite.mjs`
+ * and `bench/compare.mjs`.
  *
  * Each suite registers its benchmarks for a build of args-tokens (`lib`), so that the same suites
  * can measure the build of a pull request and the build of its base.
@@ -27,6 +28,8 @@ export const args = [
   '10'
 ]
 
+// the schema of the parse suite, for its check: its benchmarks write the schema inline, as
+// bench/mitata.js always did, so that each iteration creates it
 const schema = {
   foo: { type: 'boolean', short: 'f' },
   bar: { type: 'number', short: 'b', required: true }
@@ -99,7 +102,7 @@ export const positionalCases = [
  * The suites: `register(bench, lib)` adds the benchmarks, `check(lib)` returns what each input
  * resolves to, so that a comparison can tell when two builds do different work.
  * `control` names a benchmark that does not use args-tokens, whose ratio between two builds shows
- * the noise of the machine.
+ * the noise of the machine (`null` when a suite has none).
  */
 export const suites = {
   parse: {
@@ -110,17 +113,28 @@ export const suites = {
         parseArgsNode({ allowPositionals: true, strict: false, args, tokens: true })
       })
       bench('args-tokens parse (equivalent to util.parseArgs)', () => {
-        parse(args, { args: schema })
+        parse(args, {
+          args: {
+            foo: { type: 'boolean', short: 'f' },
+            bar: { type: 'number', short: 'b', required: true }
+          }
+        })
       })
       bench('args-tokens parseArgs', () => {
         parseArgs(args)
       })
       bench('args-tokens resolveArgs', () => {
-        resolveArgs(schema, tokens)
+        resolveArgs(
+          {
+            foo: { type: 'boolean', short: 'f' },
+            bar: { type: 'number', short: 'b', required: true }
+          },
+          tokens
+        )
       })
     },
     check({ parse }) {
-      return { parse: summarize(parse(args, { args: schema })) }
+      return { args: summarize(parse(args, { args: schema })) }
     }
   },
   positionals: {
