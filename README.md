@@ -775,16 +775,10 @@ import {
   integer,
   boolean,
   positional,
-  choice,
   withDefault,
-  multiple,
   required,
   short,
-  describe,
-  unrequired,
-  map,
-  merge,
-  extend
+  merge
 } from 'args-tokens/combinators'
 
 // Define reusable schema groups with args()
@@ -810,6 +804,7 @@ const schema = merge(
 const argv = ['dev', '--port', '9131', '--host', 'example.com', '--verbose']
 const tokens = parseArgs(argv)
 const { values } = resolveArgs(schema, tokens)
+// values → { verbose: true, port: 9131, host: 'example.com', command: 'dev' }
 ```
 
 ### Available Combinators
@@ -821,10 +816,12 @@ const { values } = resolveArgs(schema, tokens)
 - `integer(opts?)` — Integer only, with optional range
 - `float(opts?)` — Float with optional range, rejects `NaN`/`Infinity`
 - `boolean(opts?)` — Boolean flag, supports `negatable`
-- `positional()` — Positional argument (resolves to string), which the modifiers take, as in `multiple(positional())`
+- `positional(opts?)` — Positional argument (resolves to string), which the modifiers take, as in `multiple(positional())`
 - `positional(parser)` — Typed positional (e.g., `positional(integer())`), which keeps `required`, `default` and `multiple` of the parser
 - `unrequired(positional())` — Explicitly optional positional argument
-- `choice(values)` — Enum-like with literal type inference
+- `choice(values, opts?)` — Enum-like with literal type inference
+
+Each base combinator also takes the common options `description`, `short`, `hidden` and `required` (for `choice()`, in its second argument), which set the same properties as `describe()`, `short()`, `hidden()` and `required()`. `combinator()` takes them in its configuration too.
 
 A literal `required: true` or `required: false` in the options is kept in the type: `integer({ required: true })` types the value as present, as `required(integer())` does, and `positional({ required: false })` and `positional(integer({ required: false }))` are optional. So is a positional argument whose `required` may be `false`, such as `positional(integer({ required: flag }))` for a `flag` of type `boolean`, or `positional(string(optional ? { required: false } : {}))`, and so is one with a `required: true` that TypeScript widens to `boolean`, as in `const options = { required: true }`: write such options `as const`. Options whose type only says that `required` is a `boolean` that may be missing, such as `optional ? { required: flag } : {}` or the options that a helper typed `<T extends IntegerOptions>(options: T)` passes on, keep the positional argument typed as present: use `unrequired()` when it may be missing. `positional(multiple(integer()))` resolves to an array, as `multiple(positional(integer()))` does.
 
@@ -837,14 +834,14 @@ A literal `required: true` or `required: false` in the options is kept in the ty
 - `unrequired(schema)` — Mark as not required (override `required: true`, or make a positional optional)
 - `withDefault(schema, defaultValue)` — Set a default value of the schema's type, which must be a string, number or boolean
 - `multiple(schema)` — Accept multiple values (resolves to array)
-- `map(schema, transform)` — Transform the parsed value
+- `map(schema, transform)` — Transform the parsed value. A default set before `map()` is not transformed, so set it after, as in `withDefault(map(integer(), n => n * 2), 10)`
 
 Each modifier keeps what earlier modifiers set, so `short(multiple(string()), 't')` resolves to an array of strings, as `multiple(short(string(), 't'))` does.
 
 #### Schema Combinators
 
 - `args(fields)` — Type-safe schema factory (no `satisfies Args` needed)
-- `merge(...schemas)` — Compose multiple schemas into one
+- `merge(...schemas)` — Compose multiple schemas into one, where a later schema wins on a key conflict
 - `extend(base, overrides)` — Override or add fields to a schema
 
 #### Custom Combinators
