@@ -609,7 +609,7 @@ export class ArgsValidationError extends Error {
    *
    * This code can also be used as an i18n resource key.
    */
-  readonly code?: ArgsValidationErrorCode
+  readonly code?: ArgsValidationErrorCode | undefined
   /**
    * Interpolation values for `code`.
    */
