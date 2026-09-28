@@ -6640,6 +6640,31 @@ describe('schema.parse priority', () => {
     expect(values.file).toBe('app.js')
     expect(positionals).toEqual(['app.js'])
   })
+
+  test('analyze phase: boolean with a parse function followed by positional', () => {
+    // a boolean option with a parse function is still a boolean: it does not take the next argument
+    // as its value
+    const schema = {
+      file: {
+        type: 'positional'
+      },
+      verbose: {
+        type: 'boolean',
+        negatable: true,
+        parse: (v: string) => v === 'true'
+      }
+    } as const
+
+    const flag = resolveArgs(schema, parseArgs(['--verbose', 'a.txt']))
+    expect(flag.values).toEqual({ file: 'a.txt', verbose: true })
+    expect(flag.positionals).toEqual(['a.txt'])
+    expect(flag.error).toBeUndefined()
+
+    const negated = resolveArgs(schema, parseArgs(['--no-verbose', 'a.txt']))
+    expect(negated.values).toEqual({ file: 'a.txt', verbose: false })
+    expect(negated.positionals).toEqual(['a.txt'])
+    expect(negated.error).toBeUndefined()
+  })
 })
 
 describe('a mistake in the schema', () => {
@@ -6765,6 +6790,22 @@ describe('a mistake in the schema', () => {
     expect(() => resolveArgs(args, parseArgs([]))).toThrow(
       "argument 'config-file' should have a 'parse' function"
     )
+  })
+
+  test('a mistake after a boolean option is thrown before resolving any argument', () => {
+    // the mistake comes after a boolean option, whose long names are also collected before any
+    // argument is resolved
+    const parse = vi.fn<(value: string) => string>(value => value)
+    const args = {
+      verbose: { type: 'boolean', negatable: true },
+      name: { type: 'custom', parse },
+      config: { type: 'custom' }
+    } satisfies Args
+
+    expect(() => resolveArgs(args, parseArgs(['--no-verbose', '--name=x']))).toThrow(
+      "argument 'config' should have a 'parse' function"
+    )
+    expect(parse).not.toHaveBeenCalled()
   })
 
   test('an unsupported type with a parse that is not a function throws', () => {
