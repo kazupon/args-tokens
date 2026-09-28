@@ -8,9 +8,6 @@ export function combinator<T, const R extends boolean>(
 ): WithRequiredOption<CombinatorSchema<T>, R>
 ```
 
-> [!WARNING]
-> This API is experimental and may change in future versions.
-
 Create a custom argument schema with a user-defined parse function.
 
 This is the most general custom combinator. Use it when none of the built-in
@@ -56,9 +53,6 @@ export function combinator<T, const R extends boolean | undefined = boolean | un
 ): WithUnrequiredOption<CombinatorSchema<T>, R>
 ```
 
-> [!WARNING]
-> This API is experimental and may change in future versions.
-
 Create a custom argument schema with a user-defined parse function.
 
 This is the most general custom combinator. Use it when none of the built-in
@@ -101,9 +95,6 @@ const date = combinator({
 ```ts
 export function combinator<T>(config: CombinatorOptions<T>): CombinatorSchema<T>
 ```
-
-> [!WARNING]
-> This API is experimental and may change in future versions.
 
 Create a custom argument schema with a user-defined parse function.
 

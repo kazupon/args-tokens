@@ -1,8 +1,5 @@
 # Function: multiple()
 
-> [!WARNING]
-> This API is experimental and may change in future versions.
-
 Mark a combinator schema as accepting multiple values.
 
 The resolved value becomes an array. The original schema is not modified.

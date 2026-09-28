@@ -9,9 +9,6 @@ export function map<T, U, S extends CombinatorSchema<T> = CombinatorSchema<T>>(
 ): Modified<S, Combinator<U>>
 ```
 
-> [!WARNING]
-> This API is experimental and may change in future versions.
-
 Transform the output of a combinator schema.
 
 Creates a new schema that applies `transform` to the result of `schema.parse`.
@@ -61,9 +58,6 @@ export function map<T, U, S extends CombinatorSchema<T> = CombinatorSchema<T>>(
 ): Modified<S, Combinator<U>>
 ```
 
-> [!WARNING]
-> This API is experimental and may change in future versions.
-
 Transform the output of a combinator schema, as the first overload does, for a schema that fits
 the first overload but that TypeScript does not match with it at first, such as
 `positional(integer())`, a class instance or a schema typed by an interface. This overload keeps
@@ -109,9 +103,6 @@ export function map<S extends CombinatorSchema<unknown>, U>(
   transform: (value: ParsedType<S>) => U
 ): Modified<S, Combinator<U>>
 ```
-
-> [!WARNING]
-> This API is experimental and may change in future versions.
 
 Transform the output of a union of combinator schemas of different types, such as
 `strict ? integer() : string()`.

@@ -6,9 +6,6 @@
 export function merge<A extends Args, B extends Args>(a: A, b: B): Omit<A, keyof B> & B
 ```
 
-> [!WARNING]
-> This API is experimental and may change in future versions.
-
 Compose multiple [Args](/docs/default/interfaces/Args.md) schemas into one.
 
 On key conflicts the later schema wins (last-write-wins).
@@ -46,9 +43,6 @@ export function merge<A extends Args, B extends Args, C extends Args>(
 ): Omit<Omit<A, keyof B | keyof C> & Omit<B, keyof C>, never> & C
 ```
 
-> [!WARNING]
-> This API is experimental and may change in future versions.
-
 Compose multiple [Args](/docs/default/interfaces/Args.md) schemas into one.
 
 ### Parameters
@@ -74,9 +68,6 @@ export function merge<A extends Args, B extends Args, C extends Args, D extends 
 ): MergeArgs<[A, B, C, D]>
 ```
 
-> [!WARNING]
-> This API is experimental and may change in future versions.
-
 Compose multiple [Args](/docs/default/interfaces/Args.md) schemas into one.
 
 ### Parameters
@@ -97,9 +88,6 @@ Compose multiple [Args](/docs/default/interfaces/Args.md) schemas into one.
 ```ts
 export function merge<T extends Args[]>(...schemas: T): MergeArgs<T>
 ```
-
-> [!WARNING]
-> This API is experimental and may change in future versions.
 
 Compose multiple [Args](/docs/default/interfaces/Args.md) schemas into one.
 

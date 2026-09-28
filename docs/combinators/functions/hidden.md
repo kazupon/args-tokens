@@ -1,8 +1,5 @@
 # Function: hidden()
 
-> [!WARNING]
-> This API is experimental and may change in future versions.
-
 Hide a combinator schema from generated help or usage output.
 
 The original schema is not modified. This only marks renderer metadata and

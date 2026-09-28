@@ -8,9 +8,6 @@ export function string<const R extends boolean>(
 ): WithRequiredOption<CombinatorSchema<string>, R>
 ```
 
-> [!WARNING]
-> This API is experimental and may change in future versions.
-
 Create a string argument schema with optional validation.
 
 ### Parameters
@@ -43,9 +40,6 @@ export function string<const R extends boolean | undefined = boolean | undefined
 ): WithUnrequiredOption<CombinatorSchema<string>, R>
 ```
 
-> [!WARNING]
-> This API is experimental and may change in future versions.
-
 Create a string argument schema with optional validation.
 
 ### Parameters
@@ -75,9 +69,6 @@ const args = {
 ```ts
 export function string(opts?: StringOptions): CombinatorSchema<string>
 ```
-
-> [!WARNING]
-> This API is experimental and may change in future versions.
 
 Create a string argument schema with optional validation.
 

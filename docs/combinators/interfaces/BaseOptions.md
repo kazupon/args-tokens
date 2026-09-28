@@ -1,8 +1,5 @@
 # Interface: BaseOptions
 
-> [!WARNING]
-> This API is experimental and may change in future versions.
-
 Common options shared by all base combinators.
 
 ## Signature

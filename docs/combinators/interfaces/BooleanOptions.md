@@ -1,8 +1,5 @@
 # Interface: BooleanOptions
 
-> [!WARNING]
-> This API is experimental and may change in future versions.
-
 Options for the [boolean](/docs/combinators/functions/boolean.md) combinator.
 
 ## Extends

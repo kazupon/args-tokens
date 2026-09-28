@@ -1,8 +1,5 @@
 # Function: required()
 
-> [!WARNING]
-> This API is experimental and may change in future versions.
-
 Mark a combinator schema as required.
 
 The original schema is not modified.

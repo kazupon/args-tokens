@@ -8,9 +8,6 @@ export function number<const R extends boolean>(
 ): WithRequiredOption<CombinatorSchema<number>, R>
 ```
 
-> [!WARNING]
-> This API is experimental and may change in future versions.
-
 Create a number argument schema with optional range validation.
 
 Accepts any numeric value (integer or float).
@@ -45,9 +42,6 @@ export function number<const R extends boolean | undefined = boolean | undefined
 ): WithUnrequiredOption<CombinatorSchema<number>, R>
 ```
 
-> [!WARNING]
-> This API is experimental and may change in future versions.
-
 Create a number argument schema with optional range validation.
 
 Accepts any numeric value (integer or float).
@@ -79,9 +73,6 @@ const args = {
 ```ts
 export function number(opts?: NumberOptions): CombinatorSchema<number>
 ```
-
-> [!WARNING]
-> This API is experimental and may change in future versions.
 
 Create a number argument schema with optional range validation.
 

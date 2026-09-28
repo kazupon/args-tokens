@@ -1,8 +1,5 @@
 # Function: describe()
 
-> [!WARNING]
-> This API is experimental and may change in future versions.
-
 Set a description on a combinator schema for help text generation.
 
 The original schema is not modified.

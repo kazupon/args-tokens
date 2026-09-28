@@ -1,8 +1,5 @@
 # Function: unrequired()
 
-> [!WARNING]
-> This API is experimental and may change in future versions.
-
 Mark a combinator schema as not required.
 
 Useful for overriding a base combinator that was created with `required: true`,
