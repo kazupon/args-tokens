@@ -15,8 +15,8 @@
 
 ## 🐱 Motivation
 
-- Although Node.js [`parseArgs`](https://nodejs.org/api/util.html#utilparseargsconfig) can return tokens, that the short options are not in the format I expect. Of course, I recognize the background of [this issue](https://github.com/pkgjs/parseargs/issues/78).
-- `parseArgs` gives the command line args parser a useful util, so the resolution of the options values and the parsing of the tokens are tightly coupled. As a result, Performance is sacrificed. Of course, I recognize that's the trade-off.
+- Although Node.js [`parseArgs`](https://nodejs.org/api/util.html#utilparseargsconfig) can return tokens, the short options are not in the format I expect. Of course, I recognize the background of [this issue](https://github.com/pkgjs/parseargs/issues/78).
+- `parseArgs` gives the command line args parser a useful util, so the resolution of the options values and the parsing of the tokens are tightly coupled. As a result, performance is sacrificed. Of course, I recognize that's the trade-off.
 
 ## ⏱️ Benchmark
 
@@ -184,12 +184,12 @@ A `-` inside a group, as in `-o-` or `-p-5`, does not end the options:
 
 ```sh
 # npm
-npm install --save args-tokens
+npm install args-tokens
 
-## yarn
+# yarn
 yarn add args-tokens
 
-## pnpm
+# pnpm
 pnpm add args-tokens
 ```
 
@@ -266,7 +266,7 @@ Besides `values` and `positionals`, `resolveArgs` returns `rest`, the arguments 
 
 ## Convenient argument parsing
 
-Using the `parse` you can transform the arguments into tokens and resolve the argument values once:
+Using the `parse` you can transform the arguments into tokens and resolve the argument values at once:
 
 ```js
 import { parse } from 'args-tokens' // for Node.js and Bun
@@ -898,11 +898,11 @@ const { values } = resolveArgs(schema, tokens)
 
 ## 📚 API References
 
-See the [API References](./docs/index.md)
+See the [API References](./docs/index.md).
 
 ## 🙌 Contributing guidelines
 
-If you are interested in contributing to `args-tokens`, I highly recommend checking out [the contributing guidelines](/CONTRIBUTING.md) here. You'll find all the relevant information such as [how to make a PR](/CONTRIBUTING.md#pull-request-guidelines), [how to setup development](/CONTRIBUTING.md#development-setup)) etc., there.
+If you are interested in contributing to `args-tokens`, I highly recommend checking out [the contributing guidelines](/CONTRIBUTING.md) here. You'll find all the relevant information such as [how to make a PR](/CONTRIBUTING.md#pull-request-guidelines), [how to set up development](/CONTRIBUTING.md#development-setup) etc., there.
 
 ## 💖 Credits
 
@@ -923,7 +923,7 @@ The development of `args-tokens` is supported by my OSS sponsors!
 
 ## ©️ License
 
-[MIT](http://opensource.org/licenses/MIT)
+[MIT](https://opensource.org/license/MIT)
 
 <!-- Badges -->
 
