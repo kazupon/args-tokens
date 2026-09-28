@@ -1581,7 +1581,10 @@ describe('explicit empty value of a string or enum option', () => {
   })
 
   test('an enum option that accepts an empty value gets it', () => {
-    const withoutChoices = resolveArgs({ x: { type: 'enum' } }, parseArgs(['--x=']))
+    const withoutChoices = resolveArgs(
+      { x: { type: 'enum', parse: (value: string) => value } },
+      parseArgs(['--x='])
+    )
     expect(withoutChoices.error).toBeUndefined()
     expect(withoutChoices.values).toEqual({ x: '' })
 
@@ -1593,7 +1596,7 @@ describe('explicit empty value of a string or enum option', () => {
     expect(withEmptyChoice.values.x).toBe('')
 
     const multiple = resolveArgs(
-      { x: { type: 'enum', multiple: true } },
+      { x: { type: 'enum', choices: ['', 'a'], multiple: true } },
       parseArgs(['--x=', '--x=a'])
     )
     expect(multiple.error).toBeUndefined()
@@ -2142,9 +2145,9 @@ describe('enum option', () => {
       ])
     })
 
-    test('is not checked without choices', () => {
+    test('is not checked without choices, with a parse function', () => {
       const { values, error } = resolveArgs(
-        { level: { type: 'enum', default: 'verbose' } },
+        { level: { type: 'enum', parse: (value: string) => value, default: 'verbose' } },
         parseArgs([])
       )
       expect(error).toBeUndefined()
@@ -5199,8 +5202,8 @@ describe('option given without a value', () => {
       }
     },
     {
-      label: 'enum without choices',
-      schema: { type: 'enum' },
+      label: 'enum without choices, with a parse function',
+      schema: { type: 'enum', parse: (value: string) => value },
       values: { displayName: "'--x'", name: 'x', expected: 'enum', choices: '', choiceValues: [] }
     },
     {
@@ -5780,22 +5783,6 @@ describe('option given without a value followed by an argument starting with -',
     })
     expect(result.error?.errors[0].message).toBe(
       "Optional argument '--x' requires a value (to pass '-5' as its value, write '--x=-5')"
-    )
-  })
-
-  test('an enum without choices suggests any value', () => {
-    const result = resolveArgs({ mode: { type: 'enum' } }, parseArgs(['--mode', '-x']))
-    expectMissingValueError(result.error, {
-      displayName: "'--mode'",
-      name: 'mode',
-      expected: 'enum',
-      choices: '',
-      choiceValues: [],
-      next: '-x',
-      suggestion: '--mode=-x'
-    })
-    expect(result.error?.errors[0].message).toBe(
-      "Optional argument '--mode' requires a value (to pass '-x' as its value, write '--mode=-x')"
     )
   })
 

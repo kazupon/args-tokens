@@ -255,8 +255,13 @@ export interface ArgSchema {
   /**
    * Array of allowed string values for enum-type arguments.
    *
-   * Required when `type: 'enum'`. The argument value must be one of these choices, otherwise the
-   * error is an `ArgResolveError` with type 'type' and the code `err:arg:invalid-choice`
+   * Required when `type: 'enum'`, unless the argument has a `parse` function: if it is missing or
+   * not an array, {@link resolveArgs} and `parse()` throw a `TypeError`, whether or not the
+   * argument is given. With a `parse` function and no `choices`, any value is passed to the
+   * function.
+   *
+   * The argument value must be one of these choices, otherwise the error is an `ArgResolveError`
+   * with type 'type' and the code `err:arg:invalid-choice`
    * ({@link ArgsValidationErrorKeys}.invalidChoice).
    *
    * The value is checked before `parse` is called, so a `parse` function receives only one of
@@ -1041,12 +1046,18 @@ export function resolveArgs<A extends Args>(
     const entry = argEntries[i]
     const rawArg = entry[0]
     const schema = entry[1]
-    // an argument with a `parse` function is resolved by it, whatever its type. The name in the
-    // error is made only when it is thrown: with `toKebab`, making it calls `kebabnize()`
+    // an argument with a `parse` function is resolved by it, whatever its type, and an `enum` one
+    // then needs no `choices`. The name in the error is made only when it is thrown: with
+    // `toKebab`, making it calls `kebabnize()`
     if (typeof schema.parse !== 'function') {
       if (schema.type === 'custom') {
         throw new TypeError(
           `argument '${getOptionName(rawArg, schema)}' should have a 'parse' function`
+        )
+      }
+      if (schema.type === 'enum' && !Array.isArray(schema.choices)) {
+        throw new TypeError(
+          `argument '${getOptionName(rawArg, schema)}' should have a 'choices' array`
         )
       }
       if (!ARG_TYPES.has(schema.type)) {
