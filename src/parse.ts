@@ -22,6 +22,9 @@ import type { ArgExplicitlyProvided, Args, ArgValues, ResolveArgs } from './reso
 export interface ParseOptions<A extends Args> extends ParserOptions, ResolveArgs {
   /**
    * {@link Args | Arguments schema}, which defines the command line arguments.
+   *
+   * Without it, {@link parse} uses a schema with the `boolean` options `help` (`-h`) and `version`
+   * (`-v`).
    */
   args?: A
 }
@@ -81,7 +84,7 @@ const DEFAULT_OPTIONS = {
  *
  * @param args - command line arguments
  * @param options - parse options, about details see {@link ParseOptions}
- * @returns An object that contains the values of the arguments, positional arguments, {@link AggregateError | validation errors}, and {@link ArgToken | argument tokens}.
+ * @returns An object that contains the values of the arguments, positional arguments, rest arguments, {@link AggregateError | validation errors}, explicit provision status, and {@link ArgToken | argument tokens}.
  *
  * @example
  * ```js
