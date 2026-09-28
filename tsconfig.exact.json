@@ -1,7 +1,0 @@
-{
-  "extends": "./tsconfig.json",
-  "compilerOptions": {
-    "exactOptionalPropertyTypes": true
-  },
-  "include": ["src/**/*.exact.test-d.ts"]
-}

@@ -28,7 +28,7 @@ import type {
   IntegerOptions,
   StringOptions
 } from './combinators.ts'
-import type { ArgValues, Args, ExtractOptionValue } from './resolver.ts'
+import type { ArgSchema, ArgValues, Args, ExtractOptionValue } from './resolver.ts'
 
 test('base combinator type inference', () => {
   // string() → string
@@ -667,11 +667,11 @@ test('instantiation expressions with one more type argument skip the overloads f
 })
 
 test('the base combinators keep their signatures as their last overloads', () => {
-  expectTypeOf<Parameters<typeof string>>().toEqualTypeOf<[opts?: StringOptions]>()
-  expectTypeOf<Parameters<typeof integer>>().toEqualTypeOf<[opts?: IntegerOptions]>()
-  expectTypeOf<Parameters<typeof positional>>().toEqualTypeOf<[parser?: BaseOptions]>()
+  expectTypeOf<Parameters<typeof string>>().toEqualTypeOf<[opts?: StringOptions | undefined]>()
+  expectTypeOf<Parameters<typeof integer>>().toEqualTypeOf<[opts?: IntegerOptions | undefined]>()
+  expectTypeOf<Parameters<typeof positional>>().toEqualTypeOf<[parser?: BaseOptions | undefined]>()
   expectTypeOf<Parameters<typeof choice>>().toEqualTypeOf<
-    [values: readonly string[], opts?: BaseOptions]
+    [values: readonly string[], opts?: BaseOptions | undefined]
   >()
   expectTypeOf<Parameters<typeof combinator>>().toEqualTypeOf<
     [config: CombinatorOptions<unknown>]
@@ -726,14 +726,12 @@ test('a required option that the options have only in some cases leaves the valu
     port: integer(strict ? { required: true } : {}),
     retries: integer({ min: 0, ...(strict ? { required: true } : {}) }),
     host: string({ description: 'Host', ...(strict && { required: true }) }),
-    name: string({ required: strict || undefined }),
     user: string(maybe)
   }
   expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{
     port?: number
     retries?: number
     host?: string
-    name?: string
     user?: string
   }>()
 })
@@ -1075,6 +1073,71 @@ test('the results of hidden() and unrequired() fit Omit of the schema with the f
   expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{
     secret?: number
     optional?: string
+  }>()
+})
+
+test('the modifiers on a schema typed by a type parameter give a combinator schema', () => {
+  interface PortSchema {
+    type: 'custom'
+    parse: (value: string) => number
+    description?: string
+  }
+  const alias = <S extends CombinatorSchema<number>>(schema: S) =>
+    short(schema, 'a') satisfies CombinatorSchema<number>
+  const note = <S extends CombinatorSchema<number>>(schema: S) =>
+    describe(schema, 'Note') satisfies CombinatorSchema<number>
+  const count = <S extends CombinatorSchema<number>>(schema: S) =>
+    describe(short(schema, 'c'), 'Count') satisfies CombinatorSchema<number>
+  const port = <S extends CombinatorSchema<number>>(schema: S) =>
+    withDefault(describe(short(schema, 'p'), 'Port'), 8080) satisfies CombinatorSchema<number>
+  const ids = <S extends CombinatorSchema<number>>(schema: S) =>
+    required(multiple(schema)) satisfies CombinatorSchema<number>
+  const label = <S extends CombinatorSchema<number>>(schema: S) =>
+    map(describe(schema, 'Label'), n => `#${n}`) satisfies CombinatorSchema<string>
+  const file = <S extends CombinatorSchema<number>>(schema: S) =>
+    positional(schema) satisfies ArgSchema
+  const size = <S extends CombinatorSchema<number>>(schema: S) =>
+    withDefault(positional(schema), 1) satisfies CombinatorSchema<number>
+  const doubled = <S extends PortSchema>(schema: S) =>
+    withDefault(
+      map(schema, n => n * 2),
+      1
+    ) satisfies CombinatorSchema<number>
+  const quiet = <S extends CombinatorSchema<number>>(schema: S) =>
+    short(describe(hidden(required(schema)), 'Quiet'), 'q') satisfies CombinatorSchema<number>
+  const tag = <S extends CombinatorSchema<number> | CombinatorSchema<string>>(schema: S) =>
+    map(describe(schema, 'Tag'), value => `#${value}`) satisfies CombinatorSchema<string>
+  const either = <S extends CombinatorSchema<number> | CombinatorSchema<string>>(schema: S) =>
+    positional(schema) satisfies ArgSchema
+
+  const portSchema: PortSchema = { type: 'custom', parse: Number }
+  const args = {
+    alias: alias(integer()),
+    note: note(integer()),
+    count: count(integer()),
+    port: port(integer()),
+    ids: ids(integer()),
+    label: label(integer()),
+    file: file(integer()),
+    size: size(integer()),
+    doubled: doubled(portSchema),
+    quiet: quiet(integer()),
+    tag: tag(Math.random() > 0.5 ? integer() : string()),
+    either: either(Math.random() > 0.5 ? integer() : string())
+  }
+  expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{
+    alias?: number
+    note?: number
+    count?: number
+    port: number
+    ids: number[]
+    label?: string
+    file: number
+    size: number
+    doubled: number
+    quiet: number
+    tag?: string
+    either: number | string
   }>()
 })
 

@@ -1,5 +1,5 @@
 import { lintJsrExports } from 'jsr-exports-lint/tsdown'
-import { defineConfig } from 'vite-plus'
+import { configDefaults, defineConfig } from 'vite-plus'
 import {
   defaultIgnoreFilesOfEnforceHeaderCommentRule,
   defineFmtConfig,
@@ -28,21 +28,29 @@ export default defineConfig({
   },
   test: {
     projects: [
-      { extends: true, test: { name: 'default', typecheck: { enabled: true } } },
       {
-        // type-check the *.exact.test-d.ts files with exactOptionalPropertyTypes too, and nothing
-        // else; the sources have type errors with it, which ignoreSourceErrors leaves out
         extends: true,
         test: {
-          name: 'exactOptionalPropertyTypes',
+          name: 'default',
+          typecheck: {
+            enabled: true,
+            exclude: [...configDefaults.typecheck.exclude, 'src/**/*.inexact.test-d.ts']
+          }
+        }
+      },
+      {
+        // type-check the sources and the type tests without exactOptionalPropertyTypes too, which
+        // tsconfig.json turns on
+        extends: true,
+        test: {
+          name: 'inexact',
           include: [],
           benchmark: { include: [] },
           typecheck: {
             enabled: true,
             only: true,
-            include: ['src/**/*.exact.test-d.ts'],
-            tsconfig: './tsconfig.exact.json',
-            ignoreSourceErrors: true
+            include: ['src/**/*.test-d.ts'],
+            tsconfig: './tsconfig.inexact.json'
           }
         }
       }
