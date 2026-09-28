@@ -143,15 +143,31 @@ describe('short options', () => {
       ])
     })
 
-    test('a value without an option before = is read as another argument', () => {
-      expect(parseArgs(['-=5'])).toEqual([{ kind: 'positional', index: 0, value: '5' }])
-      // no option takes the value, so `-abc` is read as short options
-      expect(parseArgs(['-=-abc'])).toEqual([
-        { kind: 'option', name: 'a', rawName: '-a', index: 0 },
-        { kind: 'option', name: 'b', rawName: '-b', index: 0 },
-        { kind: 'option', name: 'c', rawName: '-c', index: 0 }
+    test('a = with no option before it is an option name, as -= alone is', () => {
+      expect(parseArgs(['-=5'])).toEqual([
+        { kind: 'option', name: '=', rawName: '-=', index: 0 },
+        { kind: 'option', name: '5', rawName: '-5', index: 0 }
+      ])
+      // a `=` after an option, `-=` included, ends the options
+      expect(parseArgs(['-==5'])).toEqual([
+        { kind: 'option', name: '=', rawName: '-=', index: 0 },
+        { kind: 'option', index: 0, value: '5', inlineValue: true }
       ])
     })
+
+    test.each(['-=5', '-=abc', '-=5 -av', '-=x build'])(
+      '%s, a group that starts with = and has no other = or -, gives the node:util tokens',
+      argv => {
+        const args = argv.split(' ')
+        const { tokens } = parseArgsNode({
+          allowPositionals: true,
+          strict: false,
+          args,
+          tokens: true
+        })
+        expect(parseArgs(args)).toEqual(tokens)
+      }
+    )
 
     test('allowCompatible keeps the node:util tokens', () => {
       const args = ['-p=-5']
@@ -213,10 +229,10 @@ describe('short options', () => {
       ])
     })
 
-    test('the value after a leading =, read as another argument, is read the same way', () => {
+    test('a - after a leading = starts the value of -=', () => {
       expect(parseArgs(['-=-v-'])).toEqual([
-        { kind: 'option', name: 'v', rawName: '-v', index: 0 },
-        { kind: 'option', index: 0, value: '-', inlineValue: false }
+        { kind: 'option', name: '=', rawName: '-=', index: 0 },
+        { kind: 'option', index: 0, value: '-v-', inlineValue: false }
       ])
     })
 
@@ -289,9 +305,10 @@ describe('long option with an empty name', () => {
     ])
   })
 
-  test('-=--== gives it too, as the rest of a -= group is read again', () => {
+  test('-=--== does not give it: the rest of the group after -= is the value of -=', () => {
     expect(parseArgs(['-=--=='])).toEqual([
-      { kind: 'option', name: '', rawName: '--', index: 0, value: '=', inlineValue: true }
+      { kind: 'option', name: '=', rawName: '-=', index: 0 },
+      { kind: 'option', index: 0, value: '--==', inlineValue: false }
     ])
   })
 

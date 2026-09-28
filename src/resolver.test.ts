@@ -1308,6 +1308,20 @@ describe('short option with a value after =', () => {
     expect(values.port).toBe(-5)
     expect(values.verbose).toBe(true)
   })
+
+  test.each([
+    { shortGrouping: false, verbose: undefined },
+    { shortGrouping: true, verbose: true }
+  ])(
+    'a group that starts with = gives no positional value (shortGrouping: $shortGrouping)',
+    ({ shortGrouping, verbose }) => {
+      const withFile = { ...args, file: { type: 'positional', required: false } } as const
+      const { values, positionals } = resolveArgs(withFile, parseArgs(['-=v']), { shortGrouping })
+      // `-=` is not in the schema. Without shortGrouping, it takes the other letters as its value
+      expect(values).toEqual(verbose === undefined ? {} : { verbose })
+      expect(positionals).toEqual([])
+    }
+  )
 })
 
 describe('short option with a value after -', () => {
@@ -6111,10 +6125,7 @@ describe('long option with an empty name', () => {
     { label: '--def --=x=y x', argv: ['--def', '--=x=y', 'x'], shortGrouping: false },
     { label: '-d --== x', argv: ['-d', '--==', 'x'], shortGrouping: false },
     { label: '--def --== x', argv: ['--def', '--==', 'x'], shortGrouping: true },
-    { label: '-d --== x', argv: ['-d', '--==', 'x'], shortGrouping: true },
-    // the rest of a `-=` group is read again as an argument, which gives the same token
-    { label: '--def -=--=a=b x', argv: ['--def', '-=--=a=b', 'x'], shortGrouping: false },
-    { label: '-d -=--== x', argv: ['-d', '-=--==', 'x'], shortGrouping: true }
+    { label: '-d --== x', argv: ['-d', '--==', 'x'], shortGrouping: true }
   ])(
     '$label finishes the option before it (shortGrouping: $shortGrouping)',
     ({ argv, shortGrouping }) => {
