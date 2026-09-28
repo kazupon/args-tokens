@@ -341,7 +341,7 @@ for (const cause of error?.errors ?? []) {
 }
 ```
 
-The resolver uses stable error codes for required options, required positionals, options given without a value, invalid types, invalid choices, custom parse failures, values given to options that do not take one, arguments that conflict, and defaults of `enum` options that are not one of their choices. The `values` object contains interpolation data such as `name`, `displayName`, `rawName`, `expected`, `actual`, `choices`, `choiceValues`, `reason`, `next`, `suggestion`, `conflictName`, and `conflictDisplayName` depending on the error kind.
+The resolver uses stable error codes for required options, required positionals, options given without a value, invalid types, invalid choices, custom parse failures, values given to options that do not take one, arguments that conflict, and defaults of `enum` options that are not one of their choices. The `values` object contains interpolation data such as `name`, `displayName`, `rawName`, `expected`, `actual`, `choices`, `choiceValues`, `reason`, `next`, `suggestion`, `conflictName`, and `conflictDisplayName` depending on the error kind. The `values` of `ArgsValidationErrorKeys.invalidDefault` have the same keys as those of `ArgsValidationErrorKeys.invalidChoice`, with the default as `actual`.
 
 An option that takes a value reports `ArgsValidationErrorKeys.missingValue` when it is given without one, including a required option. The tokens are made without the schema, as `node:util` `parseArgs` makes them without option definitions, so `--port -5` is read as `--port` followed by the option `-5`, and a value that starts with `-` has to be written with `=` or attached to a short option, such as `--port=-5`, `-p=-5` or `-p-5`.
 
@@ -502,11 +502,11 @@ Hides the argument from generated help or usage output. This is renderer metadat
 
 #### `required` (optional)
 
-Marks the argument as required. When `true`, the argument must be provided. When it is missing, the error is an `ArgResolveError` with `type: 'required'` and the code `ArgsValidationErrorKeys.requiredOption`, or `ArgsValidationErrorKeys.requiredPositional` for a positional argument. Its `values` has the `displayName` as in the message, such as `"'--input'"` for an option (`"'--input' or '-i'"` with the short name `i`) and `"'source'"` for a positional argument, and the `name`, which is the schema key.
+Marks the argument as required. When `true`, the argument must be provided. When it is missing, the error is an `ArgResolveError` with `type: 'required'` and the code `ArgsValidationErrorKeys.requiredOption`, or `ArgsValidationErrorKeys.requiredPositional` for a positional argument.
 
-An option given without a value, such as `--input` with nothing after it, is reported as `ArgsValidationErrorKeys.missingValue` instead. An explicit empty value, such as `--input=`, or `-i ''` with the short name `i`, is still reported as required, but the option counts as given: it is `true` in the `explicit` result of `resolveArgs()` and `parse()`, and takes part in conflicts, as any other given option does.
+For single-value positional arguments, omitting `required` keeps the argument required for compatibility, unless it has a `default`, which makes it optional. A `multiple` positional argument is optional unless `required: true` is set. Set `required: false` to make a positional argument explicitly optional.
 
-For single-value positional arguments, omitting `required` keeps the argument required for compatibility, unless it has a `default`, which makes it optional. A `multiple` positional argument is optional unless `required: true` is set. Set `required: false` to make a positional argument explicitly optional. When an optional positional argument appears before later required positional arguments, it consumes a value only when enough values remain for those required positional arguments.
+For the `values` of the error, an option given without a value or with an explicit empty value, and how an optional positional argument leaves values for later required ones, see [`ArgSchema`](./docs/default/interfaces/ArgSchema.md#properties) in the API references.
 
 <!-- eslint-skip -->
 
@@ -600,13 +600,9 @@ The value given on the command line is checked before `parse`, so `parse` receiv
 
 Default value used when the argument is not provided. The type must match the argument's `type` property.
 
-The default is used as is. It does not go through `parse`, including when an option is given without a value. An explicit empty value, such as `--name=` or `-n ''`, is a value, not a missing one: a `string` option without `parse` gets `''` instead of the default, unless it is `required`. What `parse` returns is a value too, even `undefined` or `null`, and the default does not replace it.
+The default is used as is. It does not go through `parse`. The value of a `multiple` argument is an array, so its default becomes the only element of the array: `default: 'latest'` gives `['latest']`.
 
-The value of a `multiple` argument is an array, so its default becomes the only element of the array: `default: 'latest'` gives `['latest']`.
-
-The default of an `enum` option with `choices` is checked when it would be used, that is, when no value from the command line is used: the option is not given, or its values are missing or rejected. A default that is not one of the choices is reported as an `ArgResolveError` with `type: 'type'` and the code `ArgsValidationErrorKeys.invalidDefault`, and is not used. Its `values` has the same keys as that of `ArgsValidationErrorKeys.invalidChoice`, with the default as `actual`. With a `parse` function of your own, or a `map()` transform, the default is a value that the function returns, which need not be one of the choices, and it is not checked. `choice()` returns the value as is, so its default is checked.
-
-For positional arguments, `multiple` ones included, the default is used when no value is left for the argument: when the positional values run out, or when the remaining ones are preserved for later required positional arguments. With `required: true`, the default is not used, and the argument is reported as required instead.
+For an explicit empty value, the default of an `enum` option that is not one of its choices, and the default of a positional argument, see [`ArgSchema`](./docs/default/interfaces/ArgSchema.md#properties) in the API references.
 
 <!-- eslint-skip -->
 
@@ -660,11 +656,9 @@ Converts the argument name from camelCase to kebab-case for CLI usage. A propert
 
 Custom parsing function for `type: 'custom'` arguments. Required when `type: 'custom'`: if it is missing or not a function, `resolveArgs()` and `parse()` throw a `TypeError`, whether or not the argument is given. The function should throw an Error if parsing fails.
 
-`parse` is called synchronously, and what it returns becomes the value, even `undefined` or `null`, so throw to reject a value. An `async` function returns a promise, and the promise becomes the value as is: `resolveArgs()` and `parse()` do not await it, and do not report its rejection as a validation error. Await the value, or each of its elements with `multiple` (for example with `Promise.all()`), and handle the rejection yourself: a rejection that nothing handles is an unhandled rejection, which ends a Node.js process by default.
+`parse` receives the value from the command line, or `'true'` / `'false'` for a `boolean` option. It is called synchronously, and what it returns becomes the value, even `undefined` or `null`, so throw to reject a value.
 
-`parse` receives the value from the command line, or `'true'` / `'false'` for a `boolean` option. When an option other than `boolean` is given without a value, `parse` is not called and the missing value is reported as a validation error. An explicit empty value, such as `--config=`, or `-c=` with the short name `c`, is passed as `''` unless `required: true` is set.
-
-An `enum` option with `choices` passes only one of them to `parse`. Any other value, an explicit empty one included, is reported as `ArgsValidationErrorKeys.invalidChoice`, except that a required option reports an explicit empty value as required. List the values users type in `choices`, and use `parse` to change them.
+For an `async` function, an option given without a value or with an explicit empty value, and an `enum` option with `choices`, see [`ArgSchema`](./docs/default/interfaces/ArgSchema.md#properties) in the API references.
 
 <!-- eslint-skip -->
 
