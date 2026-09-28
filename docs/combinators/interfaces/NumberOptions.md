@@ -1,8 +1,5 @@
 # Interface: NumberOptions
 
-> [!WARNING]
-> This API is experimental and may change in future versions.
-
 Options for the [number](/docs/combinators/functions/number.md) combinator.
 
 ## Extends

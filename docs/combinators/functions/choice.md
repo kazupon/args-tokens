@@ -9,9 +9,6 @@ export function choice<const T extends readonly string[], const R extends boolea
 ): WithRequiredOption<CombinatorSchema<T[number]>, R>
 ```
 
-> [!WARNING]
-> This API is experimental and may change in future versions.
-
 Create an enum-like argument schema with literal type inference.
 
 Uses `const T` generic to infer literal union types from the values array.
@@ -52,9 +49,6 @@ export function choice<
 ): WithUnrequiredOption<CombinatorSchema<T[number]>, R>
 ```
 
-> [!WARNING]
-> This API is experimental and may change in future versions.
-
 Create an enum-like argument schema with literal type inference.
 
 Uses `const T` generic to infer literal union types from the values array.
@@ -91,9 +85,6 @@ export function choice<const T extends readonly string[]>(
   opts?: BaseOptions
 ): CombinatorSchema<T[number]>
 ```
-
-> [!WARNING]
-> This API is experimental and may change in future versions.
 
 Create an enum-like argument schema with literal type inference.
 

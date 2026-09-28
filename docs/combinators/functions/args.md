@@ -1,8 +1,5 @@
 # Function: args()
 
-> [!WARNING]
-> This API is experimental and may change in future versions.
-
 Type-safe schema factory.
 
 Returns the input unchanged at runtime, but provides type inference

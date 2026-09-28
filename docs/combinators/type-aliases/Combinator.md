@@ -1,8 +1,5 @@
 # Type Alias: Combinator
 
-> [!WARNING]
-> This API is experimental and may change in future versions.
-
 A combinator produced by combinator factory functions.
 
 ## Signature

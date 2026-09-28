@@ -1,8 +1,5 @@
 # Function: extend()
 
-> [!WARNING]
-> This API is experimental and may change in future versions.
-
 Extend a schema by overriding or adding fields.
 
 Equivalent to `merge(base, overrides)` but communicates the intent of

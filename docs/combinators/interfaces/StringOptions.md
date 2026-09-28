@@ -1,8 +1,5 @@
 # Interface: StringOptions
 
-> [!WARNING]
-> This API is experimental and may change in future versions.
-
 Options for the [string](/docs/combinators/functions/string.md) combinator.
 
 ## Extends

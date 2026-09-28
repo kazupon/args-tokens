@@ -10,9 +10,6 @@ export function withDefault<
 >(schema: S & CombinatorSchema<T>, defaultValue: D): Modified<S, CombinatorWithDefault<T>>
 ```
 
-> [!WARNING]
-> This API is experimental and may change in future versions.
-
 Set a default value on a combinator schema.
 
 The original schema is not modified. The default must be a value of the schema's parsed type:
@@ -63,9 +60,6 @@ export function withDefault<
 >(schema: S & Combinator<T>, defaultValue: D): Modified<S, CombinatorWithDefault<T>>
 ```
 
-> [!WARNING]
-> This API is experimental and may change in future versions.
-
 Set a default value on a combinator schema, as the first overload does, for a schema that fits
 the first overload but that TypeScript does not match with it at first, such as
 `positional(integer())`, a class instance or a schema typed by an interface. This overload keeps
@@ -108,9 +102,6 @@ export function withDefault<S extends CombinatorSchema<string | boolean | number
   defaultValue: unknown extends ParsedType<S> ? never : ParsedType<S>
 ): Modified<S, CombinatorWithDefault<ParsedType<S>> & Combinator<ParsedType<S>>>
 ```
-
-> [!WARNING]
-> This API is experimental and may change in future versions.
 
 Set a default value on a union of combinator schemas of different types, such as
 `strict ? integer() : string()`.

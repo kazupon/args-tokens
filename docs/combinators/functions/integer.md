@@ -8,9 +8,6 @@ export function integer<const R extends boolean>(
 ): WithRequiredOption<CombinatorSchema<number>, R>
 ```
 
-> [!WARNING]
-> This API is experimental and may change in future versions.
-
 Create an integer argument schema with optional range validation.
 
 Only accepts integer values (no decimals).
@@ -45,9 +42,6 @@ export function integer<const R extends boolean | undefined = boolean | undefine
 ): WithUnrequiredOption<CombinatorSchema<number>, R>
 ```
 
-> [!WARNING]
-> This API is experimental and may change in future versions.
-
 Create an integer argument schema with optional range validation.
 
 Only accepts integer values (no decimals).
@@ -79,9 +73,6 @@ const args = {
 ```ts
 export function integer(opts?: IntegerOptions): CombinatorSchema<number>
 ```
-
-> [!WARNING]
-> This API is experimental and may change in future versions.
 
 Create an integer argument schema with optional range validation.
 

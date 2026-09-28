@@ -45,8 +45,6 @@
  * const { values } = resolveArgs(schema, tokens)
  * ```
  *
- * @experimental This module is experimental and may change in future versions.
- *
  * @module
  */
 
@@ -65,8 +63,6 @@ import type { Args, ArgSchema } from './resolver.ts'
  * A combinator produced by combinator factory functions.
  *
  * @typeParam T - The parsed value type.
- *
- * @experimental
  */
 export type Combinator<T> = {
   /**
@@ -85,8 +81,6 @@ export type Combinator<T> = {
  * that it parses do: `integer()` is not a `CombinatorSchema<string>`.
  *
  * @typeParam T - The parsed value type.
- *
- * @experimental
  */
 export type CombinatorSchema<T> = Omit<ArgSchema, 'parse'> & Combinator<T>
 
@@ -157,8 +151,6 @@ function pureParse<S extends Combinator<unknown>>(schema: S): S {
 
 /**
  * Common options shared by all base combinators.
- *
- * @experimental
  */
 export interface BaseOptions {
   /**
@@ -222,8 +214,6 @@ type WithUnrequiredOption<S, R extends boolean | undefined> = false extends R
 
 /**
  * Options for the {@link string} combinator.
- *
- * @experimental
  */
 export interface StringOptions extends BaseOptions {
   /**
@@ -254,8 +244,6 @@ export interface StringOptions extends BaseOptions {
  *   name: string({ minLength: 1, maxLength: 50 })
  * }
  * ```
- *
- * @experimental
  */
 export function string<const R extends boolean>(
   opts: StringOptions & { required: R }
@@ -277,8 +265,6 @@ export function string<const R extends boolean>(
  *   name: string({ minLength: 1, maxLength: 50 })
  * }
  * ```
- *
- * @experimental
  */
 export function string<const R extends boolean | undefined = boolean | undefined>(
   opts?: StringOptions & { required?: R }
@@ -296,8 +282,6 @@ export function string<const R extends boolean | undefined = boolean | undefined
  *   name: string({ minLength: 1, maxLength: 50 })
  * }
  * ```
- *
- * @experimental
  */
 export function string(opts?: StringOptions): CombinatorSchema<string>
 // @__NO_SIDE_EFFECTS__
@@ -332,8 +316,6 @@ export function string(opts?: StringOptions): CombinatorSchema<string> {
 
 /**
  * Options for the {@link number} combinator.
- *
- * @experimental
  */
 export interface NumberOptions extends BaseOptions {
   /**
@@ -362,8 +344,6 @@ export interface NumberOptions extends BaseOptions {
  *   timeout: number({ min: 0, max: 30000 })
  * }
  * ```
- *
- * @experimental
  */
 export function number<const R extends boolean>(
   opts: NumberOptions & { required: R }
@@ -387,8 +367,6 @@ export function number<const R extends boolean>(
  *   timeout: number({ min: 0, max: 30000 })
  * }
  * ```
- *
- * @experimental
  */
 export function number<const R extends boolean | undefined = boolean | undefined>(
   opts?: NumberOptions & { required?: R }
@@ -408,8 +386,6 @@ export function number<const R extends boolean | undefined = boolean | undefined
  *   timeout: number({ min: 0, max: 30000 })
  * }
  * ```
- *
- * @experimental
  */
 export function number(opts?: NumberOptions): CombinatorSchema<number>
 // @__NO_SIDE_EFFECTS__
@@ -439,8 +415,6 @@ export function number(opts?: NumberOptions): CombinatorSchema<number> {
 
 /**
  * Options for the {@link integer} combinator.
- *
- * @experimental
  */
 export interface IntegerOptions extends BaseOptions {
   /**
@@ -469,8 +443,6 @@ export interface IntegerOptions extends BaseOptions {
  *   retries: integer({ min: 0, max: 10 })
  * }
  * ```
- *
- * @experimental
  */
 export function integer<const R extends boolean>(
   opts: IntegerOptions & { required: R }
@@ -494,8 +466,6 @@ export function integer<const R extends boolean>(
  *   retries: integer({ min: 0, max: 10 })
  * }
  * ```
- *
- * @experimental
  */
 export function integer<const R extends boolean | undefined = boolean | undefined>(
   opts?: IntegerOptions & { required?: R }
@@ -515,8 +485,6 @@ export function integer<const R extends boolean | undefined = boolean | undefine
  *   retries: integer({ min: 0, max: 10 })
  * }
  * ```
- *
- * @experimental
  */
 export function integer(opts?: IntegerOptions): CombinatorSchema<number>
 // @__NO_SIDE_EFFECTS__
@@ -549,8 +517,6 @@ export function integer(opts?: IntegerOptions): CombinatorSchema<number> {
 
 /**
  * Options for the {@link float} combinator.
- *
- * @experimental
  */
 export interface FloatOptions extends BaseOptions {
   /**
@@ -579,8 +545,6 @@ export interface FloatOptions extends BaseOptions {
  *   ratio: float({ min: 0, max: 1 })
  * }
  * ```
- *
- * @experimental
  */
 export function float<const R extends boolean>(
   opts: FloatOptions & { required: R }
@@ -604,8 +568,6 @@ export function float<const R extends boolean>(
  *   ratio: float({ min: 0, max: 1 })
  * }
  * ```
- *
- * @experimental
  */
 export function float<const R extends boolean | undefined = boolean | undefined>(
   opts?: FloatOptions & { required?: R }
@@ -625,8 +587,6 @@ export function float<const R extends boolean | undefined = boolean | undefined>
  *   ratio: float({ min: 0, max: 1 })
  * }
  * ```
- *
- * @experimental
  */
 export function float(opts?: FloatOptions): CombinatorSchema<number>
 // @__NO_SIDE_EFFECTS__
@@ -660,8 +620,6 @@ export function float(opts?: FloatOptions): CombinatorSchema<number> {
 
 /**
  * Options for the {@link boolean} combinator.
- *
- * @experimental
  */
 export interface BooleanOptions extends BaseOptions {
   /**
@@ -689,8 +647,6 @@ export interface BooleanOptions extends BaseOptions {
  * }
  * // Usage: --color (true), --no-color (false)
  * ```
- *
- * @experimental
  */
 export function boolean<const R extends boolean>(
   opts: BooleanOptions & { required: R }
@@ -717,8 +673,6 @@ export function boolean<const R extends boolean>(
  * }
  * // Usage: --color (true), --no-color (false)
  * ```
- *
- * @experimental
  */
 export function boolean<const R extends boolean | undefined = boolean | undefined>(
   opts?: BooleanOptions & { required?: R }
@@ -741,8 +695,6 @@ export function boolean<const R extends boolean | undefined = boolean | undefine
  * }
  * // Usage: --color (true), --no-color (false)
  * ```
- *
- * @experimental
  */
 export function boolean(opts?: BooleanOptions): CombinatorSchema<boolean>
 // @__NO_SIDE_EFFECTS__
@@ -831,8 +783,6 @@ type PositionalOf<S> = S extends unknown ? PositionalWithParser<S> : never
  *   query: unrequired(positional())  // optional positional
  * }
  * ```
- *
- * @experimental
  */
 export function positional<T, S extends CombinatorSchema<T> = CombinatorSchema<T>>(
   parser: S & CombinatorSchema<T>
@@ -864,8 +814,6 @@ export function positional<T, S extends CombinatorSchema<T> = CombinatorSchema<T
  *   port: positional(strict ? integer({ min: 1 }) : string())
  * }
  * ```
- *
- * @experimental
  */
 export function positional<S extends CombinatorSchema<unknown>>(parser: S): PositionalOf<S>
 
@@ -895,8 +843,6 @@ export function positional<S extends CombinatorSchema<unknown>>(parser: S): Posi
  *   query: unrequired(positional())  // optional positional
  * }
  * ```
- *
- * @experimental
  */
 export function positional<const R extends boolean>(
   parser: BaseOptions & { required: R }
@@ -930,8 +876,6 @@ export function positional<const R extends boolean>(
  *   query: unrequired(positional())  // optional positional
  * }
  * ```
- *
- * @experimental
  */
 export function positional<const R extends boolean | undefined = boolean | undefined>(
   parser?: BaseOptions & { required?: R }
@@ -958,8 +902,6 @@ export function positional<const R extends boolean | undefined = boolean | undef
  *   query: unrequired(positional())  // optional positional
  * }
  * ```
- *
- * @experimental
  */
 export function positional(
   parser?: BaseOptions
@@ -1013,8 +955,6 @@ export function positional<T>(
  * }
  * // typeof values.level === 'debug' | 'info' | 'warn' | 'error'
  * ```
- *
- * @experimental
  */
 export function choice<const T extends readonly string[], const R extends boolean>(
   values: T,
@@ -1042,8 +982,6 @@ export function choice<const T extends readonly string[], const R extends boolea
  * }
  * // typeof values.level === 'debug' | 'info' | 'warn' | 'error'
  * ```
- *
- * @experimental
  */
 export function choice<
   const T extends readonly string[],
@@ -1071,8 +1009,6 @@ export function choice<
  * }
  * // typeof values.level === 'debug' | 'info' | 'warn' | 'error'
  * ```
- *
- * @experimental
  */
 export function choice<const T extends readonly string[]>(
   values: T,
@@ -1108,8 +1044,6 @@ export function choice<const T extends readonly string[]>(
  * Options for the {@link combinator} factory function.
  *
  * @typeParam T - The parsed value type.
- *
- * @experimental
  */
 export interface CombinatorOptions<T> extends BaseOptions {
   /**
@@ -1158,8 +1092,6 @@ export interface CombinatorOptions<T> extends BaseOptions {
  *   metavar: 'date'
  * })
  * ```
- *
- * @experimental
  */
 export function combinator<T, const R extends boolean>(
   config: CombinatorOptions<T> & { required: R }
@@ -1195,8 +1127,6 @@ export function combinator<T, const R extends boolean>(
  *   metavar: 'date'
  * })
  * ```
- *
- * @experimental
  */
 export function combinator<T, const R extends boolean | undefined = boolean | undefined>(
   config: CombinatorOptions<T> & { required?: R }
@@ -1229,8 +1159,6 @@ export function combinator<T, const R extends boolean | undefined = boolean | un
  *   metavar: 'date'
  * })
  * ```
- *
- * @experimental
  */
 export function combinator<T>(config: CombinatorOptions<T>): CombinatorSchema<T>
 // @__NO_SIDE_EFFECTS__
@@ -1284,8 +1212,6 @@ export function combinator<T>(config: CombinatorOptions<T>): CombinatorSchema<T>
  *   doubled: map(integer(), n => n * 2)
  * }
  * ```
- *
- * @experimental
  */
 export function map<T, U, S extends CombinatorSchema<T> = CombinatorSchema<T>>(
   schema: S & CombinatorSchema<T>,
@@ -1321,8 +1247,6 @@ export function map<T, U, S extends CombinatorSchema<T> = CombinatorSchema<T>>(
  *   doubled: map(positional(integer()), n => n * 2)
  * }
  * ```
- *
- * @experimental
  */
 export function map<T, U, S extends CombinatorSchema<T> = CombinatorSchema<T>>(
   schema: S & Combinator<T>,
@@ -1360,8 +1284,6 @@ export function map<T, U, S extends CombinatorSchema<T> = CombinatorSchema<T>>(
  *   timeout: map(strict ? integer({ min: 0 }) : string(), value => String(value))
  * }
  * ```
- *
- * @experimental
  */
 export function map<S extends CombinatorSchema<unknown>, U>(
   schema: S,
@@ -1420,8 +1342,6 @@ type CombinatorWithDefault<T> = { default: T }
  *   port: withDefault(integer({ min: 1, max: 65535 }), 8080)
  * }
  * ```
- *
- * @experimental
  */
 export function withDefault<
   T extends string | boolean | number,
@@ -1455,8 +1375,6 @@ export function withDefault<
  *   port: withDefault(positional(integer()), 8080)
  * }
  * ```
- *
- * @experimental
  */
 export function withDefault<
   T extends string | boolean | number,
@@ -1495,8 +1413,6 @@ export function withDefault<
  * }
  * // typeof values.timeout === number | string
  * ```
- *
- * @experimental
  */
 export function withDefault<S extends CombinatorSchema<string | boolean | number>>(
   schema: S,
@@ -1596,8 +1512,6 @@ type CombinatorMultiple = { multiple: true }
  * }
  * // typeof values.tags === string[]
  * ```
- *
- * @experimental
  */
 export function multiple<S extends CombinatorSchema<unknown>>(
   schema: S
@@ -1634,8 +1548,6 @@ type CombinatorRequired = { required: true }
  *   name: required(string())
  * }
  * ```
- *
- * @experimental
  */
 export function required<S extends CombinatorSchema<unknown>>(
   schema: S
@@ -1679,8 +1591,6 @@ type CombinatorShort<S extends string> = { short: S }
  * }
  * // Usage: -v or --verbose
  * ```
- *
- * @experimental
  */
 export function short<T, A extends string, S extends CombinatorSchema<T> = CombinatorSchema<T>>(
   schema: S,
@@ -1725,8 +1635,6 @@ type CombinatorDescribe<D extends string> = { description: D }
  *   port: describe(integer(), 'Port number to listen on')
  * }
  * ```
- *
- * @experimental
  */
 export function describe<T, D extends string, S extends CombinatorSchema<T> = CombinatorSchema<T>>(
   schema: S,
@@ -1766,8 +1674,6 @@ type CombinatorHidden = { hidden: true }
  *   legacy: hidden(string())
  * }
  * ```
- *
- * @experimental
  */
 export function hidden<T extends ArgSchema>(
   schema: T
@@ -1806,8 +1712,6 @@ type CombinatorUnrequired = { required: false }
  *   query: unrequired(positional())
  * }
  * ```
- *
- * @experimental
  */
 export function unrequired<T extends ArgSchema>(
   schema: T
@@ -1854,8 +1758,6 @@ type MergeArgs<T extends Args[]> = T extends [infer Only extends Args]
  *   help: short(boolean(), 'h')
  * })
  * ```
- *
- * @experimental
  */
 // @__NO_SIDE_EFFECTS__
 export function args<T extends Args>(fields: T): T {
@@ -1880,8 +1782,6 @@ export function args<T extends Args>(fields: T): T {
  * const network = args({ host: required(string()), port: withDefault(integer(), 8080) })
  * const schema = merge(common, network)
  * ```
- *
- * @experimental
  */
 export function merge<A extends Args, B extends Args>(a: A, b: B): Omit<A, keyof B> & B
 /**
@@ -1891,8 +1791,6 @@ export function merge<A extends Args, B extends Args>(a: A, b: B): Omit<A, keyof
  * @param b - Second schema.
  * @param c - Third schema.
  * @returns A merged schema containing all fields.
- *
- * @experimental
  */
 export function merge<A extends Args, B extends Args, C extends Args>(
   a: A,
@@ -1907,8 +1805,6 @@ export function merge<A extends Args, B extends Args, C extends Args>(
  * @param c - Third schema.
  * @param d - Fourth schema.
  * @returns A merged schema containing all fields.
- *
- * @experimental
  */
 export function merge<A extends Args, B extends Args, C extends Args, D extends Args>(
   a: A,
@@ -1921,8 +1817,6 @@ export function merge<A extends Args, B extends Args, C extends Args, D extends 
  *
  * @param schemas - The schemas to merge.
  * @returns A merged schema containing all fields.
- *
- * @experimental
  */
 export function merge<T extends Args[]>(...schemas: T): MergeArgs<T>
 // @__NO_SIDE_EFFECTS__
@@ -1954,8 +1848,6 @@ export function merge(...schemas: Args[]): Args {
  * const base = args({ port: withDefault(integer(), 8080) })
  * const strict = extend(base, { port: required(integer({ min: 1, max: 65535 })) })
  * ```
- *
- * @experimental
  */
 // @__NO_SIDE_EFFECTS__
 export function extend<T extends Args, U extends Args>(

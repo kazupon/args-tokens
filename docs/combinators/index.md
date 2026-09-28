@@ -1,8 +1,5 @@
 # combinators
 
-> [!WARNING]
-> This module is experimental and may change in future versions.
-
 Parser combinator factory functions for composable argument schema construction.
 
 ## Example

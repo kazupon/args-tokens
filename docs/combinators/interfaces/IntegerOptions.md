@@ -1,8 +1,5 @@
 # Interface: IntegerOptions
 
-> [!WARNING]
-> This API is experimental and may change in future versions.
-
 Options for the [integer](/docs/combinators/functions/integer.md) combinator.
 
 ## Extends

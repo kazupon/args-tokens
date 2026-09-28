@@ -8,9 +8,6 @@ export function boolean<const R extends boolean>(
 ): WithRequiredOption<CombinatorSchema<boolean>, R>
 ```
 
-> [!WARNING]
-> This API is experimental and may change in future versions.
-
 Create a boolean argument schema.
 
 Boolean arguments are existence-based. The resolver passes `"true"` or `"false"`
@@ -48,9 +45,6 @@ export function boolean<const R extends boolean | undefined = boolean | undefine
 ): WithUnrequiredOption<CombinatorSchema<boolean>, R>
 ```
 
-> [!WARNING]
-> This API is experimental and may change in future versions.
-
 Create a boolean argument schema.
 
 Boolean arguments are existence-based. The resolver passes `"true"` or `"false"`
@@ -85,9 +79,6 @@ const args = {
 ```ts
 export function boolean(opts?: BooleanOptions): CombinatorSchema<boolean>
 ```
-
-> [!WARNING]
-> This API is experimental and may change in future versions.
 
 Create a boolean argument schema.
 

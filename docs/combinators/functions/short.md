@@ -1,8 +1,5 @@
 # Function: short()
 
-> [!WARNING]
-> This API is experimental and may change in future versions.
-
 Set a short alias on a combinator schema.
 
 The original schema is not modified.

@@ -1,8 +1,5 @@
 # Interface: FloatOptions
 
-> [!WARNING]
-> This API is experimental and may change in future versions.
-
 Options for the [float](/docs/combinators/functions/float.md) combinator.
 
 ## Extends

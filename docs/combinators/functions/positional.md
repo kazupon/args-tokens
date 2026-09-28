@@ -8,9 +8,6 @@ export function positional<T, S extends CombinatorSchema<T> = CombinatorSchema<T
 ): PositionalOf<S>
 ```
 
-> [!WARNING]
-> This API is experimental and may change in future versions.
-
 Create a positional argument schema.
 
 Without a parser, resolves to string.
@@ -55,9 +52,6 @@ const args = {
 export function positional<S extends CombinatorSchema<unknown>>(parser: S): PositionalOf<S>
 ```
 
-> [!WARNING]
-> This API is experimental and may change in future versions.
-
 Create a positional argument schema from a union of combinator schemas of different types, such
 as `strict ? integer() : string()`.
 
@@ -99,9 +93,6 @@ export function positional<const R extends boolean>(
   parser: BaseOptions & { required: R }
 ): WithRequiredOption<Omit<CombinatorSchema<string>, 'type'> & ArgSchemaPositionalType, R>
 ```
-
-> [!WARNING]
-> This API is experimental and may change in future versions.
 
 Create a positional argument schema.
 
@@ -147,9 +138,6 @@ export function positional<const R extends boolean | undefined = boolean | undef
 ): WithUnrequiredOption<Omit<CombinatorSchema<string>, 'type'> & ArgSchemaPositionalType, R>
 ```
 
-> [!WARNING]
-> This API is experimental and may change in future versions.
-
 Create a positional argument schema.
 
 Without a parser, resolves to string.
@@ -194,9 +182,6 @@ export function positional(
   parser?: BaseOptions
 ): Omit<CombinatorSchema<string>, 'type'> & ArgSchemaPositionalType
 ```
-
-> [!WARNING]
-> This API is experimental and may change in future versions.
 
 Create a positional argument schema.
 

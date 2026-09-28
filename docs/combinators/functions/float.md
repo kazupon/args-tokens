@@ -8,9 +8,6 @@ export function float<const R extends boolean>(
 ): WithRequiredOption<CombinatorSchema<number>, R>
 ```
 
-> [!WARNING]
-> This API is experimental and may change in future versions.
-
 Create a floating-point argument schema with optional range validation.
 
 Rejects `NaN` and `Infinity` values.
@@ -45,9 +42,6 @@ export function float<const R extends boolean | undefined = boolean | undefined>
 ): WithUnrequiredOption<CombinatorSchema<number>, R>
 ```
 
-> [!WARNING]
-> This API is experimental and may change in future versions.
-
 Create a floating-point argument schema with optional range validation.
 
 Rejects `NaN` and `Infinity` values.
@@ -79,9 +73,6 @@ const args = {
 ```ts
 export function float(opts?: FloatOptions): CombinatorSchema<number>
 ```
-
-> [!WARNING]
-> This API is experimental and may change in future versions.
 
 Create a floating-point argument schema with optional range validation.
 

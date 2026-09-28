@@ -49,11 +49,10 @@ The library is structured into five entry points:
 
 4. **utils.ts** (`/utils` export): Utility functions used internally (`kebabnize`, `formatChoices`), also imported by gunshi
 
-5. **combinators.ts** (`/combinators` export, experimental): Parser combinator factory functions
+5. **combinators.ts** (`/combinators` export): Parser combinator factory functions
    - Base combinators (`string`, `number`, `integer`, `float`, `boolean`, `positional`, `choice`, `combinator`) generate `ArgSchema` objects
    - Modifier combinators (`map`, `withDefault`, `multiple`, `required`, `unrequired`, `short`, `describe`, `hidden`) return a new schema without mutating the input
    - Schema combinators (`args`, `merge`, `extend`) compose schema objects
-   - Marked `@experimental`; API may change
 
 The library uses a two-phase approach:
 

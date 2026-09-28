@@ -1,8 +1,5 @@
 # Interface: CombinatorOptions
 
-> [!WARNING]
-> This API is experimental and may change in future versions.
-
 Options for the [combinator](/docs/combinators/functions/combinator.md) factory function.
 
 ## Extends
