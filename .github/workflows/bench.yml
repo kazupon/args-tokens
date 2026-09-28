@@ -1,0 +1,153 @@
+---
+name: Benchmark
+
+env:
+  CI: true
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - src/**
+      - bench/**
+      - package.json
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - vite.config.ts
+      - .github/workflows/bench.yml
+  push:
+    branches:
+      - main
+    paths:
+      - src/**
+      - bench/**
+      - package.json
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - vite.config.ts
+      - .github/workflows/bench.yml
+  workflow_dispatch:
+    inputs:
+      base:
+        description: 'The ref to compare with (a tag, a branch or a commit; the latest release when empty)'
+        required: false
+        default: ''
+      rounds:
+        description: 'The number of rounds'
+        required: false
+        default: '5'
+
+permissions: {}
+
+concurrency:
+  group: bench-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compare:
+    name: Compare with the base
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    outputs:
+      markdown: ${{ steps.compare.outputs.markdown }}
+    steps:
+      - name: Checkout head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: head
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Resolve the base
+        id: base
+        working-directory: head
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_BASE: ${{ inputs.base }}
+        run: |
+          if [ "$EVENT_NAME" = pull_request ]; then
+            # the head is the merge commit of the pull request, whose first parent is the base
+            base="$(git rev-parse HEAD^1)"
+          elif [ -n "$INPUT_BASE" ]; then
+            base="$(git rev-parse --verify "${INPUT_BASE}^{commit}")"
+          else
+            base="$(git describe --tags --abbrev=0 --match 'v*' HEAD)"
+          fi
+          echo "ref=$base" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout base
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ steps.base.outputs.ref }}
+          path: base
+          persist-credentials: false
+
+      - name: Setup Vite Plus
+        uses: voidzero-dev/setup-vp@3754dd7dbdb32bd8f6d28b6043de13ad3a75f21f # v1.21.1
+        with:
+          node-version: 24
+          working-directory: head
+          cache: true
+          run-install: false
+
+      - name: Build the base and the head
+        run: |
+          for dir in base head; do
+            (cd "$dir" && vp install --frozen-lockfile && vp pack)
+          done
+
+      - name: Compare
+        id: compare
+        working-directory: head
+        env:
+          ROUNDS: ${{ inputs.rounds || '5' }}
+        run: |
+          node bench/compare.mjs --base ../base/lib --head lib --rounds "$ROUNDS" \
+            --json ../bench.json --markdown ../bench.md
+          delimiter="BENCH_$(openssl rand -hex 16)"
+          { echo "markdown<<$delimiter"; cat ../bench.md; echo "$delimiter"; } >> "$GITHUB_OUTPUT"
+
+      - name: Write the summary
+        run: cat bench.md >> "$GITHUB_STEP_SUMMARY"
+
+  comment:
+    name: Comment on the pull request
+    needs: compare
+    # only for a pull request from a branch of this repository: the token of a pull request from a
+    # fork cannot write, and its results stay in the summary of the compare job
+    if: >-
+      github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      pull-requests: write
+    steps:
+      # no checkout: this job does not run the code of the pull request
+      - name: Post or update the comment
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          MARKDOWN: ${{ needs.compare.outputs.markdown }}
+        run: |
+          marker='<!-- args-tokens-benchmark -->'
+          {
+            echo "$marker"
+            printf '%s\n\n' "$MARKDOWN"
+            echo "Measured at ${HEAD_SHA} ([workflow run](${RUN_URL})). The results are informational and do not fail the checks."
+          } > body.md
+          # the ids of the comments that this workflow posted, without a pipe to head, which
+          # could stop gh early under pipefail
+          ids="$(gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" --paginate \
+            --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | startswith(\"${marker}\"))) | .id")"
+          id="${ids%%$'\n'*}"
+          if [ -n "$id" ]; then
+            gh api --method PATCH "repos/${REPO}/issues/comments/${id}" -F body=@body.md > /dev/null
+          else
+            gh api --method POST "repos/${REPO}/issues/${PR_NUMBER}/comments" -F body=@body.md > /dev/null
+          fi
