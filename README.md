@@ -897,7 +897,7 @@ This project is inspired by:
 
 ## 🤝 Sponsors
 
-The development of Gunshi is supported by my OSS sponsors!
+The development of `args-tokens` is supported by my OSS sponsors!
 
 <p align="center">
   <a href="https://cdn.jsdelivr.net/gh/kazupon/sponsors/sponsors.svg">
