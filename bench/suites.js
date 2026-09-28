@@ -35,6 +35,16 @@ const schema = {
   bar: { type: 'number', short: 'b', required: true }
 }
 
+// the arguments and the schema of the benchmark with toKebab, which names each option in kebab case
+const kebabArgs = ['--dry-run', '--out-dir', 'dist', '--max-workers=8']
+const kebabSchema = {
+  dryRun: { type: 'boolean', short: 'n' },
+  outDir: { type: 'string', short: 'o' },
+  logLevel: { type: 'enum', choices: ['info', 'debug'], default: 'info' },
+  maxWorkers: { type: 'number', default: 4 },
+  configFile: { type: 'string' }
+}
+
 export const positionalCases = [
   {
     name: 'options only',
@@ -132,9 +142,26 @@ export const suites = {
           tokens
         )
       })
+      const kebabTokens = parseArgs(kebabArgs)
+      bench('args-tokens resolveArgs with toKebab', () => {
+        resolveArgs(
+          {
+            dryRun: { type: 'boolean', short: 'n' },
+            outDir: { type: 'string', short: 'o' },
+            logLevel: { type: 'enum', choices: ['info', 'debug'], default: 'info' },
+            maxWorkers: { type: 'number', default: 4 },
+            configFile: { type: 'string' }
+          },
+          kebabTokens,
+          { toKebab: true }
+        )
+      })
     },
-    check({ parse }) {
-      return { args: summarize(parse(args, { args: schema })) }
+    check({ parse, parseArgs, resolveArgs }) {
+      return {
+        args: summarize(parse(args, { args: schema })),
+        toKebab: summarize(resolveArgs(kebabSchema, parseArgs(kebabArgs), { toKebab: true }))
+      }
     }
   },
   positionals: {
