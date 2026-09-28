@@ -109,7 +109,8 @@ const { tokens: tokensNode } = parseArgsNode({
 })
 console.log(tokensNode)
 
-//   ({
+// [
+//   {
 //     kind: 'option',
 //     name: 'a',
 //     rawName: '-a',
@@ -132,7 +133,7 @@ console.log(tokensNode)
 //     index: 0,
 //     value: undefined,
 //     inlineValue: undefined
-//   })
+//   }
 // ]
 
 // args-tokens parseArgs tokens
