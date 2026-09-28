@@ -16,6 +16,12 @@ export function unrequired<T extends ArgSchema>(
 ): T extends unknown ? WithFlag<T, CombinatorUnrequired> & Omit<T, 'required'> : never
 ```
 
+## Type Parameters
+
+| Name                                                               | Description      |
+| ------------------------------------------------------------------ | ---------------- |
+| `T` _extends_ [`ArgSchema`](/docs/default/interfaces/ArgSchema.md) | The schema type. |
+
 ## Parameters
 
 | Name     | Type | Description                 |
@@ -34,7 +40,3 @@ const args = {
   query: unrequired(positional())
 }
 ```
-
-## Tags
-
-- `@typeParam` — T - The schema type.

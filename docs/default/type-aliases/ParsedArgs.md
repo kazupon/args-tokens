@@ -1,4 +1,4 @@
-# Type Alias: ParsedArgs
+# Type Alias: ParsedArgs&lt;A&gt;
 
 Parsed command line arguments.
 
@@ -15,6 +15,12 @@ export type ParsedArgs<A extends Args> = {
 }
 ```
 
+## Type Parameters
+
+| Name                                                     | Description                                                                                                       |
+| -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `A` _extends_ [`Args`](/docs/default/interfaces/Args.md) | [Arguments schema](/docs/default/interfaces/Args.md), which is an object that defines the command line arguments. |
+
 ## Properties
 
 | Name          | Type                                                                                  | Description                                                                                                                                                                                                                                                                                       |
@@ -25,7 +31,3 @@ export type ParsedArgs<A extends Args> = {
 | `rest`        | `string[]`                                                                            | Rest arguments, same as `rest` in [resolveArgs](/docs/default/functions/resolveArgs.md).                                                                                                                                                                                                          |
 | `tokens`      | [`ArgToken`](/docs/default/interfaces/ArgToken.md)\[\]                                | Argument tokens, same as `tokens` which is parsed by [parseArgs](/docs/default/functions/parseArgs.md).                                                                                                                                                                                           |
 | `values`      | [`ArgValues`](/docs/default/type-aliases/ArgValues.md)\<`A`\>                         | Parsed values, same as `values` in [resolveArgs](/docs/default/functions/resolveArgs.md).                                                                                                                                                                                                         |
-
-## Tags
-
-- `@typeParam` — A - [Arguments schema](/docs/default/interfaces/Args.md), which is an object that defines the command line arguments.

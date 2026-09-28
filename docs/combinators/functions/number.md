@@ -12,6 +12,12 @@ Create a number argument schema with optional range validation.
 
 Accepts any numeric value (integer or float).
 
+### Type Parameters
+
+| Name                    | Description                                                    |
+| ----------------------- | -------------------------------------------------------------- |
+| `R` _extends_ `boolean` | The type of `required` in the options, which the schema keeps. |
+
 ### Parameters
 
 | Name   | Type                                                                                                                              | Description    |
@@ -30,10 +36,6 @@ const args = {
 }
 ```
 
-### Tags
-
-- `@typeParam` — R - The type of `required` in the options, which the schema keeps.
-
 ## Call Signature
 
 ```ts
@@ -45,6 +47,12 @@ export function number<const R extends boolean | undefined = boolean | undefined
 Create a number argument schema with optional range validation.
 
 Accepts any numeric value (integer or float).
+
+### Type Parameters
+
+| Name                                                          | Description                                                                                                                                                                                           |
+| ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `R` _extends_ `boolean \| undefined` = `boolean \| undefined` | The type of `required` in the options, which the schema keeps when it may be `false` but not `true`, as for `optional ? { required: false } : {}`, so that a positional argument with it is optional. |
 
 ### Parameters
 
@@ -63,10 +71,6 @@ const args = {
   timeout: number({ min: 0, max: 30000 })
 }
 ```
-
-### Tags
-
-- `@typeParam` — R - The type of `required` in the options, which the schema keeps when it may be `false` but not `true`, as for `optional ? { required: false } : {}`, so that a positional argument with it is optional.
 
 ## Call Signature
 

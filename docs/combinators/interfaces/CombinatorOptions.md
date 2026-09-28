@@ -1,4 +1,4 @@
-# Interface: CombinatorOptions
+# Interface: CombinatorOptions&lt;T&gt;
 
 Options for the [combinator](/docs/combinators/functions/combinator.md) factory function.
 
@@ -11,6 +11,12 @@ Options for the [combinator](/docs/combinators/functions/combinator.md) factory 
 ```ts
 export interface CombinatorOptions<T> extends BaseOptions
 ```
+
+## Type Parameters
+
+| Name | Description            |
+| ---- | ---------------------- |
+| `T`  | The parsed value type. |
 
 ## Properties
 
@@ -28,7 +34,3 @@ export interface CombinatorOptions<T> extends BaseOptions
 ### parse Returns
 
 `T` — The parsed value of type T.
-
-## Tags
-
-- `@typeParam` — T - The parsed value type.

@@ -1,4 +1,4 @@
-# Type Alias: ArgValues
+# Type Alias: ArgValues&lt;T&gt;
 
 An object that contains the values of the arguments.
 
@@ -24,6 +24,8 @@ export type ArgValues<T> = T extends Args
   : { [option: string]: string | boolean | number | (string | boolean | number)[] | undefined }
 ```
 
-## Tags
+## Type Parameters
 
-- `@typeParam` — T - [Arguments](/docs/default/interfaces/Args.md) which is an object that defines the command line arguments.
+| Name | Description                                                                                               |
+| ---- | --------------------------------------------------------------------------------------------------------- |
+| `T`  | [Arguments](/docs/default/interfaces/Args.md) which is an object that defines the command line arguments. |

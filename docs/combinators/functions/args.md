@@ -11,6 +11,12 @@ so that `satisfies Args` is not needed.
 export function args<T extends Args>(fields: T): T
 ```
 
+## Type Parameters
+
+| Name                                                     | Description            |
+| -------------------------------------------------------- | ---------------------- |
+| `T` _extends_ [`Args`](/docs/default/interfaces/Args.md) | The exact schema type. |
+
 ## Parameters
 
 | Name     | Type | Description                 |
@@ -29,7 +35,3 @@ const common = args({
   help: short(boolean(), 'h')
 })
 ```
-
-## Tags
-
-- `@typeParam` — T - The exact schema type.

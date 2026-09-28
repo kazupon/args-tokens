@@ -14,6 +14,12 @@ export function hidden<T extends ArgSchema>(
 ): T extends unknown ? WithFlag<T, CombinatorHidden> & Omit<T, 'hidden'> : never
 ```
 
+## Type Parameters
+
+| Name                                                               | Description      |
+| ------------------------------------------------------------------ | ---------------- |
+| `T` _extends_ [`ArgSchema`](/docs/default/interfaces/ArgSchema.md) | The schema type. |
+
 ## Parameters
 
 | Name     | Type | Description                 |
@@ -31,7 +37,3 @@ const args = {
   legacy: hidden(string())
 }
 ```
-
-## Tags
-
-- `@typeParam` — T - The schema type.

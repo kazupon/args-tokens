@@ -1,4 +1,4 @@
-# Type Alias: ArgExplicitlyProvided
+# Type Alias: ArgExplicitlyProvided&lt;A&gt;
 
 Tracks which arguments were explicitly provided by the user.
 
@@ -15,6 +15,8 @@ the value: the error is reported, and its default is not used.
 export type ArgExplicitlyProvided<A extends Args> = { [K in keyof A]: boolean }
 ```
 
-## Tags
+## Type Parameters
 
-- `@typeParam` — A - [Arguments](/docs/default/interfaces/Args.md), which is an object that defines the command line arguments.
+| Name                                                     | Description                                                                                                |
+| -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `A` _extends_ [`Args`](/docs/default/interfaces/Args.md) | [Arguments](/docs/default/interfaces/Args.md), which is an object that defines the command line arguments. |

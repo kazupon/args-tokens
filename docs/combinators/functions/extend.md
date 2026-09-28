@@ -11,6 +11,13 @@ intentional overrides rather than general composition.
 export function extend<T extends Args, U extends Args>(base: T, overrides: U): Omit<T, keyof U> & U
 ```
 
+## Type Parameters
+
+| Name                                                     | Description            |
+| -------------------------------------------------------- | ---------------------- |
+| `T` _extends_ [`Args`](/docs/default/interfaces/Args.md) | Base schema type.      |
+| `U` _extends_ [`Args`](/docs/default/interfaces/Args.md) | Overrides schema type. |
+
 ## Parameters
 
 | Name        | Type | Description                |
@@ -28,7 +35,3 @@ export function extend<T extends Args, U extends Args>(base: T, overrides: U): O
 const base = args({ port: withDefault(integer(), 8080) })
 const strict = extend(base, { port: required(integer({ min: 1, max: 65535 })) })
 ```
-
-## Tags
-
-- `@typeParam` — T - Base schema type.
