@@ -343,7 +343,7 @@ for (const cause of error?.errors ?? []) {
 }
 ```
 
-The resolver uses stable error codes for required options, required positionals, options given without a value, invalid types, invalid choices, custom parse failures, values given to options that do not take one, arguments that conflict, and defaults of `enum` options that are not one of their choices. The `values` object contains interpolation data such as `name`, `displayName`, `rawName`, `expected`, `actual`, `choices`, `choiceValues`, `reason`, `next`, `suggestion`, `conflictName`, and `conflictDisplayName` depending on the error kind. The `values` of `ArgsValidationErrorKeys.invalidDefault` have the same keys as those of `ArgsValidationErrorKeys.invalidChoice`, with the default as `actual`. An option that is not in the schema is ignored: `resolveArgs` and `parse` never report `ArgsValidationErrorKeys.unknownOption`.
+The resolver uses stable error codes for required options, required positionals, options given without a value, invalid types, invalid choices, custom parse failures, values given to options that do not take one, arguments that conflict, and defaults of `enum` options that are not one of their choices. The `values` object contains interpolation data such as `name`, `displayName`, `rawName`, `expected`, `actual`, `choices`, `choiceValues`, `reason`, `next`, `suggestion`, `conflictName`, and `conflictDisplayName` depending on the error kind. The `values` of `ArgsValidationErrorKeys.invalidDefault` have the same keys as those of `ArgsValidationErrorKeys.invalidChoice`, with the default as `actual`. An option that is not in the schema is not reported: `resolveArgs` and `parse` never report `ArgsValidationErrorKeys.unknownOption`. It takes the argument after it as its value, unless that argument is an option, and the value is dropped: with no `foo` in the schema, `--foo bar` gives no positional argument.
 
 An option that takes a value reports `ArgsValidationErrorKeys.missingValue` when it is given without one, including a required option. The tokens are made without the schema, as `node:util` `parseArgs` makes them without option definitions, so `--port -5` is read as `--port` followed by the option `-5`, and a value that starts with `-`, other than `-` alone, has to be written with `=` or attached to a short option, such as `--port=-5`, `-p=-5` or `-p-5`.
 
@@ -504,7 +504,7 @@ Hides the argument from generated help or usage output. This is renderer metadat
 
 #### `metavar` (optional)
 
-Display name hint for the value of the argument in help text, such as `integer` in `--port <integer>`. Particularly useful for `type: 'custom'` arguments, where the type name would otherwise be unhelpful.
+Display name hint for the value of the argument in help text, such as `integer` in `--port <integer>`. Particularly useful for `type: 'custom'` arguments, where the type name would otherwise be unhelpful. For a `custom` option that is given without a value, it is also the `expected` in the `values` of the `ArgsValidationErrorKeys.missingValue` error, which is `'custom'` without it.
 
 <!-- eslint-skip -->
 
@@ -653,7 +653,7 @@ For an explicit empty value, the default of an `enum` option that is not one of 
 
 #### `toKebab` (optional)
 
-Converts the argument name from camelCase to kebab-case for CLI usage. A property like `maxCount` becomes available as `--max-count`. `--maxCount` is then not accepted, and the key in `values` stays `maxCount`. The `toKebab` option of `resolveArgs()` and `parse()` applies it to all arguments.
+Converts the argument name from camelCase to kebab-case for CLI usage. A property like `maxCount` becomes available as `--max-count`. `--maxCount` is then an option that is not in the schema, and the key in `values` stays `maxCount`. The `toKebab` option of `resolveArgs()` and `parse()` applies it to all arguments.
 
 <!-- eslint-skip -->
 
@@ -821,7 +821,7 @@ const { values } = resolveArgs(schema, tokens)
 - `unrequired(positional())` — Explicitly optional positional argument
 - `choice(values, opts?)` — Enum-like with literal type inference
 
-Each base combinator also takes the common options `description`, `hidden`, `required` and, for an option, `short` (for `choice()`, in its second argument), which set the same properties as `describe()`, `hidden()`, `required()` and `short()`. `combinator()` takes them in its configuration too.
+Each base combinator also takes the common options `description`, `short`, `hidden` and `required` (for `choice()`, in its second argument), which set the same properties as `describe()`, `short()`, `hidden()` and `required()`. `short` has no effect on a positional argument. `combinator()` takes them in its configuration too.
 
 A literal `required: true` or `required: false` in the options is kept in the type: `integer({ required: true })` types the value as present, as `required(integer())` does, and `positional({ required: false })` and `positional(integer({ required: false }))` are optional. So is a positional argument whose `required` may be `false`, such as `positional(integer({ required: flag }))` for a `flag` of type `boolean`, or `positional(string(optional ? { required: false } : {}))`, and so is one with a `required: true` that TypeScript widens to `boolean`, as in `const options = { required: true }`: write such options `as const`. Options whose type only says that `required` is a `boolean` that may be missing, such as `optional ? { required: flag } : {}` or the options that a helper typed `<T extends IntegerOptions>(options: T)` passes on, keep the positional argument typed as present: use `unrequired()` when it may be missing. `positional(multiple(integer()))` resolves to an array, as `multiple(positional(integer()))` does.
 
