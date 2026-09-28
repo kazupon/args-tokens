@@ -732,6 +732,9 @@ describe('positional combinator', () => {
       'parse',
       'type'
     ])
+    // a parser without a metavar gives no metavar, instead of metavar: undefined
+    const custom = positional({ type: 'custom', parse: Number })
+    expect(Object.keys(custom).sort()).toEqual(['parse', 'type'])
   })
 
   test('without a parser, has a parse function that returns the value as is', () => {

@@ -47,13 +47,13 @@ export interface ArgToken {
    * `-x-1` => `-1`.
    * If the `allowCompatible` option is `true`, short option value will be same as Node.js `parseArgs` behavior.
    */
-  value?: string
+  value?: string | undefined
   /**
    * Inline value, e.g. `--foo=bar` => `true`, `-x=bar` => `true`, `-x-1` => `false`, since no `=`
    * is written. Unlike Node.js `parseArgs`, `false` does not mean that the value is the next
    * argument: the value token of `-x-1` has the `index` of that argument.
    */
-  inlineValue?: boolean
+  inlineValue?: boolean | undefined
 }
 
 const HYPHEN_CHAR = '-'

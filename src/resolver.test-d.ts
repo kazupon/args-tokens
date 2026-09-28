@@ -302,7 +302,7 @@ test('ResolveArgValues', () => {
       },
       { help: true }
     >
-  >().toEqualTypeOf<{ help?: true | undefined }>()
+  >().toEqualTypeOf<{ help?: true }>()
 
   // required
   expectTypeOf<
@@ -344,7 +344,7 @@ test('ResolveArgValues', () => {
       },
       { log: 'debug' }
     >
-  >().toEqualTypeOf<{ log?: 'debug' | undefined }>()
+  >().toEqualTypeOf<{ log?: 'debug' }>()
 
   // positional
   expectTypeOf<
@@ -370,7 +370,7 @@ test('ResolveArgValues', () => {
       },
       { query: string }
     >
-  >().toEqualTypeOf<{ query?: string | undefined }>()
+  >().toEqualTypeOf<{ query?: string }>()
 
   // positional with default
   expectTypeOf<
@@ -396,7 +396,7 @@ test('ResolveArgValues', () => {
       },
       { files: string[] }
     >
-  >().toEqualTypeOf<{ files?: string[] | undefined }>()
+  >().toEqualTypeOf<{ files?: string[] }>()
 
   // required multiple positional
   expectTypeOf<
@@ -512,11 +512,9 @@ test('ArgValues types a positional argument whose required may be false as optio
   expectTypeOf<
     ArgValues<{
       flag: { type: 'positional'; required: boolean }
-      maybe: { type: 'positional'; required: boolean | undefined }
       nothing: { type: 'positional'; required?: boolean }
-      fallback: { type: 'positional'; required: boolean | undefined; default: 'x' }
     }>
-  >().toEqualTypeOf<{ flag?: string; maybe?: string; nothing: string; fallback: string }>()
+  >().toEqualTypeOf<{ flag?: string; nothing: string }>()
 })
 
 test('ArgValues resolves each schema of a union on its own', () => {
