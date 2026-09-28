@@ -15,10 +15,10 @@ Uses `const T` generic to infer literal union types from the values array.
 
 ### Parameters
 
-| Name     | Type                                                                                                                          | Description                                    |
-| -------- | ----------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| `values` | `T`                                                                                                                           | Allowed values.                                |
-| `opts`   | [`BaseOptions`](/docs/combinators/interfaces/BaseOptions.md) & { [`required`](/docs/combinators/functions/required.md): `R` } | Common options (description, short, required). |
+| Name     | Type                                                                                                                          | Description                                            |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| `values` | `T`                                                                                                                           | Allowed values.                                        |
+| `opts`   | [`BaseOptions`](/docs/combinators/interfaces/BaseOptions.md) & { [`required`](/docs/combinators/functions/required.md): `R` } | Common options (description, short, hidden, required). |
 
 ### Returns
 
@@ -55,10 +55,10 @@ Uses `const T` generic to infer literal union types from the values array.
 
 ### Parameters
 
-| Name     | Type                                                                                                                           | Description                                                 |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------- |
-| `values` | `T`                                                                                                                            | Allowed values.                                             |
-| `opts`   | [`BaseOptions`](/docs/combinators/interfaces/BaseOptions.md) & { [`required`](/docs/combinators/functions/required.md)?: `R` } | Common options (description, short, required). _(optional)_ |
+| Name     | Type                                                                                                                           | Description                                                         |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
+| `values` | `T`                                                                                                                            | Allowed values.                                                     |
+| `opts`   | [`BaseOptions`](/docs/combinators/interfaces/BaseOptions.md) & { [`required`](/docs/combinators/functions/required.md)?: `R` } | Common options (description, short, hidden, required). _(optional)_ |
 
 ### Returns
 
@@ -92,10 +92,10 @@ Uses `const T` generic to infer literal union types from the values array.
 
 ### Parameters
 
-| Name     | Type                                                         | Description                                                 |
-| -------- | ------------------------------------------------------------ | ----------------------------------------------------------- |
-| `values` | `T`                                                          | Allowed values.                                             |
-| `opts`   | [`BaseOptions`](/docs/combinators/interfaces/BaseOptions.md) | Common options (description, short, required). _(optional)_ |
+| Name     | Type                                                         | Description                                                         |
+| -------- | ------------------------------------------------------------ | ------------------------------------------------------------------- |
+| `values` | `T`                                                          | Allowed values.                                                     |
+| `opts`   | [`BaseOptions`](/docs/combinators/interfaces/BaseOptions.md) | Common options (description, short, hidden, required). _(optional)_ |
 
 ### Returns
 

@@ -5,6 +5,9 @@ Machine-readable error codes for [ArgsValidationError](/docs/default/classes/Arg
 Each code identifies a validation failure category and is also suitable as an
 i18n resource key for localized rendering.
 
+[resolveArgs](/docs/default/functions/resolveArgs.md) and `parse()` do not report `unknownOption`: an option that is not in the
+schema is ignored.
+
 ## Signature
 
 ```ts

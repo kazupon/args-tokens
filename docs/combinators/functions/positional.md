@@ -108,9 +108,9 @@ With `required: false` in the options, the positional argument is optional, in i
 
 ### Parameters
 
-| Name     | Type                                                                                                                          | Description                                  |
-| -------- | ----------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| `parser` | [`BaseOptions`](/docs/combinators/interfaces/BaseOptions.md) & { [`required`](/docs/combinators/functions/required.md): `R` } | Base options (description, short, required). |
+| Name     | Type                                                                                                                          | Description                                   |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| `parser` | [`BaseOptions`](/docs/combinators/interfaces/BaseOptions.md) & { [`required`](/docs/combinators/functions/required.md): `R` } | Base options (description, hidden, required). |
 
 ### Returns
 
@@ -153,9 +153,9 @@ its type too.
 
 ### Parameters
 
-| Name     | Type                                                                                                                           | Description                                                        |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
-| `parser` | [`BaseOptions`](/docs/combinators/interfaces/BaseOptions.md) & { [`required`](/docs/combinators/functions/required.md)?: `R` } | Optional base options (description, short, required). _(optional)_ |
+| Name     | Type                                                                                                                           | Description                                                         |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
+| `parser` | [`BaseOptions`](/docs/combinators/interfaces/BaseOptions.md) & { [`required`](/docs/combinators/functions/required.md)?: `R` } | Optional base options (description, hidden, required). _(optional)_ |
 
 ### Returns
 
@@ -194,9 +194,9 @@ collects the values as strings.
 
 ### Parameters
 
-| Name     | Type                                                         | Description                                                        |
-| -------- | ------------------------------------------------------------ | ------------------------------------------------------------------ |
-| `parser` | [`BaseOptions`](/docs/combinators/interfaces/BaseOptions.md) | Optional base options (description, short, required). _(optional)_ |
+| Name     | Type                                                         | Description                                                         |
+| -------- | ------------------------------------------------------------ | ------------------------------------------------------------------- |
+| `parser` | [`BaseOptions`](/docs/combinators/interfaces/BaseOptions.md) | Optional base options (description, hidden, required). _(optional)_ |
 
 ### Returns
 
