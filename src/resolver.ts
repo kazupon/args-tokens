@@ -474,6 +474,10 @@ export interface ArgSchema {
    * Particularly useful for `type: 'custom'` arguments where the type
    * name would otherwise be unhelpful.
    *
+   * For a `custom` option that is given without a value, it is also the `expected` in the `values`
+   * of the `err:arg:missing-value` error ({@link ArgsValidationErrorKeys}.missingValue), which is
+   * `'custom'` without it.
+   *
    * @example
    * Metavar usage:
    * ```ts
@@ -562,8 +566,9 @@ export interface ArgSchema {
  * Each code identifies a validation failure category and is also suitable as an
  * i18n resource key for localized rendering.
  *
- * {@link resolveArgs} and `parse()` do not report `unknownOption`: an option that is not in the
- * schema is ignored.
+ * {@link resolveArgs} and `parse()` do not report `unknownOption`. An option that is not in the
+ * schema takes the argument after it as its value, unless that argument is an option, and the value
+ * is dropped: with no `foo` in the schema, `--foo bar` gives no positional argument.
  */
 export const ArgsValidationErrorKeys = {
   requiredOption: 'err:arg:required-option',
