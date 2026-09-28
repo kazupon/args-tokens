@@ -6640,6 +6640,31 @@ describe('schema.parse priority', () => {
     expect(values.file).toBe('app.js')
     expect(positionals).toEqual(['app.js'])
   })
+
+  test('analyze phase: boolean with a parse function followed by positional', () => {
+    // a boolean option with a parse function is still a boolean: it does not take the next argument
+    // as its value
+    const schema = {
+      file: {
+        type: 'positional'
+      },
+      verbose: {
+        type: 'boolean',
+        negatable: true,
+        parse: (v: string) => v === 'true'
+      }
+    } as const
+
+    const flag = resolveArgs(schema, parseArgs(['--verbose', 'a.txt']))
+    expect(flag.values).toEqual({ file: 'a.txt', verbose: true })
+    expect(flag.positionals).toEqual(['a.txt'])
+    expect(flag.error).toBeUndefined()
+
+    const negated = resolveArgs(schema, parseArgs(['--no-verbose', 'a.txt']))
+    expect(negated.values).toEqual({ file: 'a.txt', verbose: false })
+    expect(negated.positionals).toEqual(['a.txt'])
+    expect(negated.error).toBeUndefined()
+  })
 })
 
 describe('a mistake in the schema', () => {
