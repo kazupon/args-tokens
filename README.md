@@ -162,6 +162,7 @@ When short options are written with `=`, such as `-p=-5` or `-ab=-1`:
 
 - The rest of the argument is a value token after the last option, even when it starts with `-`: `-n=--` gives `-n` the value `--`, not the option terminator.
 - `-p=` gives an empty value, as `--port=` does.
+- A `=` at the start of a group has no option before it, so it is an option name, as `-=` alone is: `-=5` gives the options `-=` and `-5`, as `node:util` does, and `-==5` gives `-=` the value `5`.
 - With `shortGrouping: true`, `resolveArgs()` gives the value after `=` to the last option.
 - With `shortGrouping: false`, the default of `resolveArgs()` and `parse()`, the other letters of the group are the value of its first option, as in `-p5`: `-ab=-1` gives `-a` the value `b=-1`.
 
