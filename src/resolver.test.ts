@@ -5635,6 +5635,13 @@ describe('option given without a value followed by an argument starting with -',
     expect(result.values).not.toHaveProperty('port')
   })
 
+  test('--name -=5 suggests the long form, as -= and -5 are not defined', () => {
+    // a group that starts with `=` is read as options: `-=` is an option name, as `-=` alone is
+    const result = resolveArgs(args, parseArgs(['--name', '-=5']))
+    expectMissingValueErrors(result.error, [{ ...name, next: '-=5', suggestion: '--name=-=5' }])
+    expect(result.values).not.toHaveProperty('name')
+  })
+
   test('--name -p=5 with allowCompatible suggests nothing, as -p takes =5', () => {
     // with allowCompatible, `-p=5` gives the letters `p`, `=` and `5`, as `node:util` does
     const tokens = parseArgs(['--name', '-p=5'], { allowCompatible: true })

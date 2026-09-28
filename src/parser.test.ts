@@ -92,7 +92,9 @@ describe('short options', () => {
       { argv: ['-n=', '-av'] },
       { argv: ['-n=-', '-av'] },
       { argv: ['-p=-5', '-av', 'x'] },
-      { argv: ['-=5', '-av'] }
+      { argv: ['-=5', '-av'] },
+      { argv: ['-==5', '-av'] },
+      { argv: ['-=--', '-av'] }
     ])('$argv does not change how the next argument is read', ({ argv }) => {
       expect(parseArgs(argv).filter(token => token.index === 1)).toEqual([
         { kind: 'option', name: 'a', rawName: '-a', index: 1 },
@@ -148,10 +150,27 @@ describe('short options', () => {
         { kind: 'option', name: '=', rawName: '-=', index: 0 },
         { kind: 'option', name: '5', rawName: '-5', index: 0 }
       ])
-      // a `=` after an option, `-=` included, ends the options
+      // a `=` after an option, `-=` included, starts the value of that option
       expect(parseArgs(['-==5'])).toEqual([
         { kind: 'option', name: '=', rawName: '-=', index: 0 },
         { kind: 'option', index: 0, value: '5', inlineValue: true }
+      ])
+    })
+
+    test.each([
+      { arg: '-==', rest: [{ kind: 'option', index: 0, value: '', inlineValue: true }] },
+      { arg: '-=-5', rest: [{ kind: 'option', index: 0, value: '-5', inlineValue: false }] },
+      {
+        arg: '-=5=6',
+        rest: [
+          { kind: 'option', name: '5', rawName: '-5', index: 0 },
+          { kind: 'option', index: 0, value: '6', inlineValue: true }
+        ]
+      }
+    ])('$arg is read as -= and the rest of the group', ({ arg, rest }) => {
+      expect(parseArgs([arg])).toEqual([
+        { kind: 'option', name: '=', rawName: '-=', index: 0 },
+        ...rest
       ])
     })
 
