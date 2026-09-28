@@ -500,6 +500,23 @@ Hides the argument from generated help or usage output. This is renderer metadat
 }
 ```
 
+#### `metavar` (optional)
+
+Display name hint for the value of the argument in help text, such as `integer` in `--port <integer>`. Particularly useful for `type: 'custom'` arguments, where the type name would otherwise be unhelpful.
+
+<!-- eslint-skip -->
+
+```js
+{
+  port: {
+    type: 'custom',
+    parse: (value) => parseInt(value, 10),
+    metavar: 'integer',
+    description: 'Port number (1-65535)'
+  }
+}
+```
+
 #### `required` (optional)
 
 Marks the argument as required. When `true`, the argument must be provided. When it is missing, the error is an `ArgResolveError` with `type: 'required'` and the code `ArgsValidationErrorKeys.requiredOption`, or `ArgsValidationErrorKeys.requiredPositional` for a positional argument.
