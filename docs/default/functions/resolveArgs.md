@@ -22,6 +22,12 @@ export function resolveArgs<A extends Args>(
 }
 ```
 
+## Type Parameters
+
+| Name                                                     | Description                                                                                                |
+| -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `A` _extends_ [`Args`](/docs/default/interfaces/Args.md) | [Arguments](/docs/default/interfaces/Args.md), which is an object that defines the command line arguments. |
+
 ## Parameters
 
 | Name          | Type                                                     | Description                                                                                                        |
@@ -89,7 +95,3 @@ values.host // 'localhost'
 explicit.port // true (explicitly provided)
 explicit.host // false (not provided, fallback to default)
 ```
-
-## Tags
-
-- `@typeParam` — A - [Arguments](/docs/default/interfaces/Args.md), which is an object that defines the command line arguments.

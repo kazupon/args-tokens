@@ -13,6 +13,13 @@ Create an enum-like argument schema with literal type inference.
 
 Uses `const T` generic to infer literal union types from the values array.
 
+### Type Parameters
+
+| Name                              | Description                                                    |
+| --------------------------------- | -------------------------------------------------------------- |
+| `T` _extends_ `readonly string[]` | The readonly array of allowed string values.                   |
+| `R` _extends_ `boolean`           | The type of `required` in the options, which the schema keeps. |
+
 ### Parameters
 
 | Name     | Type                                                                                                                          | Description                                            |
@@ -33,10 +40,6 @@ const args = {
 // typeof values.level === 'debug' | 'info' | 'warn' | 'error'
 ```
 
-### Tags
-
-- `@typeParam` — T - The readonly array of allowed string values.
-
 ## Call Signature
 
 ```ts
@@ -52,6 +55,13 @@ export function choice<
 Create an enum-like argument schema with literal type inference.
 
 Uses `const T` generic to infer literal union types from the values array.
+
+### Type Parameters
+
+| Name                                                          | Description                                                                                                                                                                                           |
+| ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `T` _extends_ `readonly string[]`                             | The readonly array of allowed string values.                                                                                                                                                          |
+| `R` _extends_ `boolean \| undefined` = `boolean \| undefined` | The type of `required` in the options, which the schema keeps when it may be `false` but not `true`, as for `optional ? { required: false } : {}`, so that a positional argument with it is optional. |
 
 ### Parameters
 
@@ -73,10 +83,6 @@ const args = {
 // typeof values.level === 'debug' | 'info' | 'warn' | 'error'
 ```
 
-### Tags
-
-- `@typeParam` — T - The readonly array of allowed string values.
-
 ## Call Signature
 
 ```ts
@@ -89,6 +95,12 @@ export function choice<const T extends readonly string[]>(
 Create an enum-like argument schema with literal type inference.
 
 Uses `const T` generic to infer literal union types from the values array.
+
+### Type Parameters
+
+| Name                              | Description                                  |
+| --------------------------------- | -------------------------------------------- |
+| `T` _extends_ `readonly string[]` | The readonly array of allowed string values. |
 
 ### Parameters
 
@@ -109,7 +121,3 @@ const args = {
 }
 // typeof values.level === 'debug' | 'info' | 'warn' | 'error'
 ```
-
-### Tags
-
-- `@typeParam` — T - The readonly array of allowed string values.

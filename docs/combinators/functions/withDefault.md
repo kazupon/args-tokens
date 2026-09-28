@@ -27,6 +27,14 @@ with one type argument, such as `typeof withDefault<number>`, is a type error, s
 overload takes one type argument too, which must be a schema: give `D` as well, as in
 `typeof withDefault<number, number>`.
 
+### Type Parameters
+
+| Name                                                                                                                                                                            | Description                                                                                                                                                                                                                                                       |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `T` _extends_ `string \| boolean \| number`                                                                                                                                     | The schema's parsed type.                                                                                                                                                                                                                                         |
+| `D` _extends_ `T` = `T`                                                                                                                                                         | The type of the default value, which must be assignable to `T`.                                                                                                                                                                                                   |
+| `S` _extends_ [`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\> = [`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\> | The input combinator schema, inferred from `schema`. Its other modifiers are kept. If type arguments are given explicitly without `S`, `S` is `CombinatorSchema<T>`, and the type of the result lacks the other modifiers, although the returned object has them. |
+
 ### Parameters
 
 | Name           | Type                                                                                  | Description                                             |
@@ -45,10 +53,6 @@ const args = {
   port: withDefault(integer({ min: 1, max: 65535 }), 8080)
 }
 ```
-
-### Tags
-
-- `@typeParam` — T - The schema's parsed type.
 
 ## Call Signature
 
@@ -71,6 +75,14 @@ does not go through `parse`.
 Other modifiers on `schema` (for example [multiple](/docs/combinators/functions/multiple.md)) are kept. The default of a `multiple`
 schema is one value of the parsed type, which becomes the only element of the array.
 
+### Type Parameters
+
+| Name                                                                                                                                                                            | Description                                                                        |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `T` _extends_ `string \| boolean \| number`                                                                                                                                     | The schema's parsed type.                                                          |
+| `D` _extends_ `T` = `T`                                                                                                                                                         | The type of the default value, which must be assignable to `T`.                    |
+| `S` _extends_ [`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\> = [`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\> | The input combinator schema, inferred from `schema`. Its other modifiers are kept. |
+
 ### Parameters
 
 | Name           | Type                                                                      | Description                                             |
@@ -89,10 +101,6 @@ const args = {
   port: withDefault(positional(integer()), 8080)
 }
 ```
-
-### Tags
-
-- `@typeParam` — T - The schema's parsed type.
 
 ## Call Signature
 
@@ -117,6 +125,12 @@ is typed as returning a value of any of the types that the schemas parse to:
 `withDefault(strict ? multiple(integer()) : string(), 'none')` resolves to
 `(number | string)[] | number | string`.
 
+### Type Parameters
+
+| Name                                                                                                                        | Description                                                                                                               |
+| --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `S` _extends_ [`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`string` \| `boolean` \| `number`\> | The input combinator schema, inferred from `schema`: a union of schemas of different types. Its other modifiers are kept. |
+
 ### Parameters
 
 | Name           | Type                                                    | Description                                                                            |
@@ -137,7 +151,3 @@ const args = {
 }
 // typeof values.timeout === number | string
 ```
-
-### Tags
-
-- `@typeParam` — S - The input combinator schema, inferred from `schema`: a union of schemas of different types. Its other modifiers are kept.

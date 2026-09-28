@@ -26,6 +26,14 @@ with two type arguments, such as `typeof map<number, string>`, is a type error, 
 overload takes two type arguments too, the first of which must be a schema: give `S` as well, as
 in `typeof map<number, string, CombinatorSchema<number>>`.
 
+### Type Parameters
+
+| Name                                                                                                                                                                            | Description                                                                                                                                                                                                                                                       |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `T`                                                                                                                                                                             | The input schema's parsed type.                                                                                                                                                                                                                                   |
+| `U`                                                                                                                                                                             | The transformed type.                                                                                                                                                                                                                                             |
+| `S` _extends_ [`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\> = [`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\> | The input combinator schema, inferred from `schema`. Its other modifiers are kept. If type arguments are given explicitly without `S`, `S` is `CombinatorSchema<T>`, and the type of the result lacks the other modifiers, although the returned object has them. |
+
 ### Parameters
 
 | Name        | Type                                                                                  | Description                  |
@@ -44,10 +52,6 @@ const args = {
   doubled: map(integer(), n => n * 2)
 }
 ```
-
-### Tags
-
-- `@typeParam` — T - The input schema's parsed type.
 
 ## Call Signature
 
@@ -72,6 +76,14 @@ A default set on `schema` is kept, but it does not go through `transform`: when 
 value is the default as is, although it is typed as `U`. Set the default after `map()`, with a
 transformed value.
 
+### Type Parameters
+
+| Name                                                                                                                                                                            | Description                                                                        |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `T`                                                                                                                                                                             | The input schema's parsed type.                                                    |
+| `U`                                                                                                                                                                             | The transformed type.                                                              |
+| `S` _extends_ [`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\> = [`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\> | The input combinator schema, inferred from `schema`. Its other modifiers are kept. |
+
 ### Parameters
 
 | Name        | Type                                                                      | Description                  |
@@ -90,10 +102,6 @@ const args = {
   doubled: map(positional(integer()), n => n * 2)
 }
 ```
-
-### Tags
-
-- `@typeParam` — T - The input schema's parsed type.
 
 ## Call Signature
 
@@ -117,6 +125,13 @@ A default set on `schema` is kept, but it does not go through `transform`: when 
 value is the default as is, although it is typed as `U`. Set the default after `map()`, with a
 transformed value.
 
+### Type Parameters
+
+| Name                                                                                                | Description                                                                                                               |
+| --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `S` _extends_ [`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`unknown`\> | The input combinator schema, inferred from `schema`: a union of schemas of different types. Its other modifiers are kept. |
+| `U`                                                                                                 | The transformed type.                                                                                                     |
+
 ### Parameters
 
 | Name        | Type                          | Description                                                                                                  |
@@ -137,7 +152,3 @@ const args = {
   timeout: map(strict ? integer({ min: 0 }) : string(), value => String(value))
 }
 ```
-
-### Tags
-
-- `@typeParam` — S - The input combinator schema, inferred from `schema`: a union of schemas of different types. Its other modifiers are kept.

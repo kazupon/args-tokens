@@ -22,6 +22,13 @@ type error, since the overload for a union of schemas and the overloads for opti
 type argument too, which must be a schema for the former and a boolean (the type of `required`)
 for the latter: give `S` as well, as in `typeof positional<number, CombinatorSchema<number>>`.
 
+### Type Parameters
+
+| Name                                                                                                                                                                            | Description                                                                                                                                                                                                                                                                                                                   |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `T`                                                                                                                                                                             | The parser's resolved type.                                                                                                                                                                                                                                                                                                   |
+| `S` _extends_ [`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\> = [`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`T`\> | The type of the parser, inferred from `parser`, whose `required`, `default`, `multiple`, `description`, `hidden` and `metavar` the positional argument keeps. If type arguments are given explicitly without `S`, `S` is `CombinatorSchema<T>`, and the type of the result lacks them, although the returned object has them. |
+
 ### Parameters
 
 | Name     | Type                                                                                  | Description                   |
@@ -42,10 +49,6 @@ const args = {
 }
 ```
 
-### Tags
-
-- `@typeParam` — T - The parser's resolved type.
-
 ## Call Signature
 
 ```ts
@@ -61,6 +64,12 @@ The positional argument resolves to a value of any of their types: a number or a
 `positional(strict ? multiple(integer()) : string())` resolves to an array of numbers or a
 string, and is optional, since a `multiple` positional argument without `required: true` or a
 default may be missing.
+
+### Type Parameters
+
+| Name                                                                                                | Description                                                                            |
+| --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `S` _extends_ [`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`unknown`\> | The type of the parser, inferred from `parser`: a union of schemas of different types. |
 
 ### Parameters
 
@@ -82,10 +91,6 @@ const args = {
 }
 ```
 
-### Tags
-
-- `@typeParam` — S - The type of the parser, inferred from `parser`: a union of schemas of different types.
-
 ## Call Signature
 
 ```ts
@@ -106,6 +111,12 @@ collects the values as strings.
 With `required: false` in the options, the positional argument is optional, in its type too. A
 `required` of type `boolean`, which may be `false`, types it as optional as well.
 
+### Type Parameters
+
+| Name                    | Description                                                                 |
+| ----------------------- | --------------------------------------------------------------------------- |
+| `R` _extends_ `boolean` | The type of `required` in the options, which the positional argument keeps. |
+
 ### Parameters
 
 | Name     | Type                                                                                                                          | Description                                                                                          |
@@ -125,10 +136,6 @@ const args = {
   query: unrequired(positional()) // optional positional
 }
 ```
-
-### Tags
-
-- `@typeParam` — R - The type of `required` in the options, which the positional argument keeps.
 
 ## Call Signature
 
@@ -151,6 +158,12 @@ With a `required: false` that the options have only in some cases, with no `requ
 others, such as `optional ? { required: false } : {}`, the positional argument is optional, in
 its type too.
 
+### Type Parameters
+
+| Name                                                          | Description                                                                                                                                                     |
+| ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `R` _extends_ `boolean \| undefined` = `boolean \| undefined` | The type of `required` in the options, which the positional argument keeps when it may be `false` but not `true`, as for `optional ? { required: false } : {}`. |
+
 ### Parameters
 
 | Name     | Type                                                                                                                           | Description                                                                                                                |
@@ -170,10 +183,6 @@ const args = {
   query: unrequired(positional()) // optional positional
 }
 ```
-
-### Tags
-
-- `@typeParam` — R - The type of `required` in the options, which the positional argument keeps when it may be `false` but not `true`, as for `optional ? { required: false } : {}`.
 
 ## Call Signature
 

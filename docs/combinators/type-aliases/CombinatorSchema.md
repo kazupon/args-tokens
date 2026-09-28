@@ -1,4 +1,4 @@
-# Type Alias: CombinatorSchema
+# Type Alias: CombinatorSchema&lt;T&gt;
 
 A schema produced by combinator factory functions.
 Any [ArgSchema](/docs/default/interfaces/ArgSchema.md) whose parse function returns `T` qualifies. The `parse` of
@@ -11,6 +11,8 @@ that it parses do: `integer()` is not a `CombinatorSchema<string>`.
 export type CombinatorSchema<T> = Omit<ArgSchema, 'parse'> & Combinator<T>
 ```
 
-## Tags
+## Type Parameters
 
-- `@typeParam` — T - The parsed value type.
+| Name | Description            |
+| ---- | ---------------------- |
+| `T`  | The parsed value type. |

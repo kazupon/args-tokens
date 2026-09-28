@@ -13,6 +13,12 @@ export function multiple<S extends CombinatorSchema<unknown>>(
 ): Modified<S, CombinatorMultiple>
 ```
 
+## Type Parameters
+
+| Name                                                                                                | Description                  |
+| --------------------------------------------------------------------------------------------------- | ---------------------------- |
+| `S` _extends_ [`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`unknown`\> | The input combinator schema. |
+
 ## Parameters
 
 | Name     | Type | Description                 |
@@ -31,7 +37,3 @@ const args = {
 }
 // typeof values.tags === string[]
 ```
-
-## Tags
-
-- `@typeParam` — S - The input combinator schema.

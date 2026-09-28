@@ -10,6 +10,12 @@ This function is a convenient API, that is used [parseArgs](/docs/default/functi
 export function parse<A extends Args>(args: string[], options: ParseOptions<A> = {}): ParsedArgs<A>
 ```
 
+## Type Parameters
+
+| Name                                                     | Description                                                                                                       |
+| -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `A` _extends_ [`Args`](/docs/default/interfaces/Args.md) | [Arguments schema](/docs/default/interfaces/Args.md), which is an object that defines the command line arguments. |
+
 ## Parameters
 
 | Name      | Type                                                              | Description                                                                                                         |
@@ -30,7 +36,3 @@ const { values, positionals } = parse(process.argv.slice(2))
 console.log('values', values)
 console.log('positionals', positionals)
 ```
-
-## Tags
-
-- `@typeParam` — A - [Arguments schema](/docs/default/interfaces/Args.md), which is an object that defines the command line arguments.

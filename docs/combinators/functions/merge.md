@@ -10,6 +10,13 @@ Compose multiple [Args](/docs/default/interfaces/Args.md) schemas into one.
 
 On key conflicts the later schema wins (last-write-wins).
 
+### Type Parameters
+
+| Name                                                     | Description         |
+| -------------------------------------------------------- | ------------------- |
+| `A` _extends_ [`Args`](/docs/default/interfaces/Args.md) | First schema type.  |
+| `B` _extends_ [`Args`](/docs/default/interfaces/Args.md) | Second schema type. |
+
 ### Parameters
 
 | Name | Type | Description    |
@@ -29,10 +36,6 @@ const network = args({ host: required(string()), port: withDefault(integer(), 80
 const schema = merge(common, network)
 ```
 
-### Tags
-
-- `@typeParam` — A - First schema type.
-
 ## Call Signature
 
 ```ts
@@ -44,6 +47,14 @@ export function merge<A extends Args, B extends Args, C extends Args>(
 ```
 
 Compose multiple [Args](/docs/default/interfaces/Args.md) schemas into one.
+
+### Type Parameters
+
+| Name                                                     |
+| -------------------------------------------------------- |
+| `A` _extends_ [`Args`](/docs/default/interfaces/Args.md) |
+| `B` _extends_ [`Args`](/docs/default/interfaces/Args.md) |
+| `C` _extends_ [`Args`](/docs/default/interfaces/Args.md) |
 
 ### Parameters
 
@@ -70,6 +81,15 @@ export function merge<A extends Args, B extends Args, C extends Args, D extends 
 
 Compose multiple [Args](/docs/default/interfaces/Args.md) schemas into one.
 
+### Type Parameters
+
+| Name                                                     |
+| -------------------------------------------------------- |
+| `A` _extends_ [`Args`](/docs/default/interfaces/Args.md) |
+| `B` _extends_ [`Args`](/docs/default/interfaces/Args.md) |
+| `C` _extends_ [`Args`](/docs/default/interfaces/Args.md) |
+| `D` _extends_ [`Args`](/docs/default/interfaces/Args.md) |
+
 ### Parameters
 
 | Name | Type | Description    |
@@ -90,6 +110,12 @@ export function merge<T extends Args[]>(...schemas: T): MergeArgs<T>
 ```
 
 Compose multiple [Args](/docs/default/interfaces/Args.md) schemas into one.
+
+### Type Parameters
+
+| Name                                                         |
+| ------------------------------------------------------------ |
+| `T` _extends_ [`Args`](/docs/default/interfaces/Args.md)\[\] |
 
 ### Parameters
 

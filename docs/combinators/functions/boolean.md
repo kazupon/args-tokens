@@ -14,6 +14,12 @@ Boolean arguments are existence-based. The resolver passes `"true"` or `"false"`
 to the parse function based on the presence or negation of the flag, or on an explicit
 `=true` / `=false` value. Other inline values are rejected before the parse function is called.
 
+### Type Parameters
+
+| Name                    | Description                                                    |
+| ----------------------- | -------------------------------------------------------------- |
+| `R` _extends_ `boolean` | The type of `required` in the options, which the schema keeps. |
+
 ### Parameters
 
 | Name   | Type                                                                                                                                | Description      |
@@ -33,10 +39,6 @@ const args = {
 // Usage: --color (true), --no-color (false)
 ```
 
-### Tags
-
-- `@typeParam` — R - The type of `required` in the options, which the schema keeps.
-
 ## Call Signature
 
 ```ts
@@ -50,6 +52,12 @@ Create a boolean argument schema.
 Boolean arguments are existence-based. The resolver passes `"true"` or `"false"`
 to the parse function based on the presence or negation of the flag, or on an explicit
 `=true` / `=false` value. Other inline values are rejected before the parse function is called.
+
+### Type Parameters
+
+| Name                                                          | Description                                                                                                                                                                                           |
+| ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `R` _extends_ `boolean \| undefined` = `boolean \| undefined` | The type of `required` in the options, which the schema keeps when it may be `false` but not `true`, as for `optional ? { required: false } : {}`, so that a positional argument with it is optional. |
 
 ### Parameters
 
@@ -69,10 +77,6 @@ const args = {
 }
 // Usage: --color (true), --no-color (false)
 ```
-
-### Tags
-
-- `@typeParam` — R - The type of `required` in the options, which the schema keeps when it may be `false` but not `true`, as for `optional ? { required: false } : {}`, so that a positional argument with it is optional.
 
 ## Call Signature
 

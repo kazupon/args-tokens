@@ -16,6 +16,13 @@ base combinators ([string](/docs/combinators/functions/string.md), [number](/doc
 
 The returned schema has `type: 'custom'`.
 
+### Type Parameters
+
+| Name                    | Description                                                          |
+| ----------------------- | -------------------------------------------------------------------- |
+| `T`                     | The parsed value type.                                               |
+| `R` _extends_ `boolean` | The type of `required` in the configuration, which the schema keeps. |
+
 ### Parameters
 
 | Name     | Type                                                                                                                                             | Description                                               |
@@ -41,10 +48,6 @@ const date = combinator({
 })
 ```
 
-### Tags
-
-- `@typeParam` — T - The parsed value type.
-
 ## Call Signature
 
 ```ts
@@ -60,6 +63,13 @@ base combinators ([string](/docs/combinators/functions/string.md), [number](/doc
 [float](/docs/combinators/functions/float.md), [boolean](/docs/combinators/functions/boolean.md), [choice](/docs/combinators/functions/choice.md)) fit your needs.
 
 The returned schema has `type: 'custom'`.
+
+### Type Parameters
+
+| Name                                                          | Description                                                                                                                                                                                                 |
+| ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `T`                                                           | The parsed value type.                                                                                                                                                                                      |
+| `R` _extends_ `boolean \| undefined` = `boolean \| undefined` | The type of `required` in the configuration, which the schema keeps when it may be `false` but not `true`, as for `optional ? { required: false } : {}`, so that a positional argument with it is optional. |
 
 ### Parameters
 
@@ -86,10 +96,6 @@ const date = combinator({
 })
 ```
 
-### Tags
-
-- `@typeParam` — T - The parsed value type.
-
 ## Call Signature
 
 ```ts
@@ -103,6 +109,12 @@ base combinators ([string](/docs/combinators/functions/string.md), [number](/doc
 [float](/docs/combinators/functions/float.md), [boolean](/docs/combinators/functions/boolean.md), [choice](/docs/combinators/functions/choice.md)) fit your needs.
 
 The returned schema has `type: 'custom'`.
+
+### Type Parameters
+
+| Name | Description            |
+| ---- | ---------------------- |
+| `T`  | The parsed value type. |
 
 ### Parameters
 
@@ -128,7 +140,3 @@ const date = combinator({
   metavar: 'date'
 })
 ```
-
-### Tags
-
-- `@typeParam` — T - The parsed value type.

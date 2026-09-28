@@ -1,4 +1,4 @@
-# Type Alias: Combinator
+# Type Alias: Combinator&lt;T&gt;
 
 A combinator produced by combinator factory functions.
 
@@ -7,6 +7,12 @@ A combinator produced by combinator factory functions.
 ```ts
 export type Combinator<T> = { parse: (value: string) => T }
 ```
+
+## Type Parameters
+
+| Name | Description            |
+| ---- | ---------------------- |
+| `T`  | The parsed value type. |
 
 ## Properties
 
@@ -23,7 +29,3 @@ export type Combinator<T> = { parse: (value: string) => T }
 ### parse Returns
 
 `T` — The parsed value of type T.
-
-## Tags
-
-- `@typeParam` — T - The parsed value type.

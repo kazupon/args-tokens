@@ -13,6 +13,12 @@ export function required<S extends CombinatorSchema<unknown>>(
 ): Modified<S, CombinatorRequired>
 ```
 
+## Type Parameters
+
+| Name                                                                                                | Description                  |
+| --------------------------------------------------------------------------------------------------- | ---------------------------- |
+| `S` _extends_ [`CombinatorSchema`](/docs/combinators/type-aliases/CombinatorSchema.md)\<`unknown`\> | The input combinator schema. |
+
 ## Parameters
 
 | Name     | Type | Description                 |
@@ -30,7 +36,3 @@ const args = {
   name: required(string())
 }
 ```
-
-## Tags
-
-- `@typeParam` — S - The input combinator schema.
