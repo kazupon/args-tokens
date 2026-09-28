@@ -972,21 +972,6 @@ export function resolveArgs<A extends Args>(
   const positionalTokens: ArgToken[] = []
   const argEntries = Object.entries(args)
 
-  // mistakes in the schema: report them before resolving any argument, whether or not it is given
-  for (const [rawArg, schema] of argEntries) {
-    // an argument with a `parse` function is resolved by it, whatever its type
-    if (typeof schema.parse === 'function') {
-      continue
-    }
-    const arg = getOptionName(rawArg, schema)
-    if (schema.type === 'custom') {
-      throw new TypeError(`argument '${arg}' should have a 'parse' function`)
-    }
-    if (!ARG_TYPES.has(schema.type)) {
-      throw new Error(`Unsupported argument type '${schema.type}' for option '${arg}'`)
-    }
-  }
-
   let currentLongOption: ArgToken | undefined
   let currentShortOption: ArgToken | undefined
   const expandableShortOptions: ArgToken[] = []
@@ -1039,7 +1024,27 @@ export function resolveArgs<A extends Args>(
 
   const schemas = Object.values(args)
   const booleanLongOptionNames = new Set<string>()
-  for (const [rawArg, schema] of Object.entries(args)) {
+  // before resolving any argument, report the mistakes in the schema, whether or not the argument
+  // is given, and collect the long names of the boolean options. This loop runs on every call, so
+  // it reads each entry by index: destructuring an entry allocates
+  for (let i = 0; i < argEntries.length; i++) {
+    const entry = argEntries[i]
+    const rawArg = entry[0]
+    const schema = entry[1]
+    // an argument with a `parse` function is resolved by it, whatever its type. The name in the
+    // error is made only when it is thrown
+    if (typeof schema.parse !== 'function') {
+      if (schema.type === 'custom') {
+        throw new TypeError(
+          `argument '${getOptionName(rawArg, schema)}' should have a 'parse' function`
+        )
+      }
+      if (!ARG_TYPES.has(schema.type)) {
+        throw new Error(
+          `Unsupported argument type '${schema.type}' for option '${getOptionName(rawArg, schema)}'`
+        )
+      }
+    }
     if (schema.type !== 'boolean') {
       continue
     }
