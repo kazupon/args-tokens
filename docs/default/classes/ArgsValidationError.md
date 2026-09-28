@@ -50,7 +50,7 @@ Create an `ArgsValidationError` instance.
 
 ## Properties
 
-| Name                          | Type                                                                               | Description                                                                                                  |
-| ----------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `code` _(optional, readonly)_ | [`ArgsValidationErrorCode`](/docs/default/type-aliases/ArgsValidationErrorCode.md) | Machine-readable error code for this validation failure. This code can also be used as an i18n resource key. |
-| `values` _(readonly)_         | `Record<string, unknown>`                                                          | Interpolation values for `code`.                                                                             |
+| Name                          | Type                                                                                              | Description                                                                                                  |
+| ----------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `code` _(optional, readonly)_ | [`ArgsValidationErrorCode`](/docs/default/type-aliases/ArgsValidationErrorCode.md) \| `undefined` | Machine-readable error code for this validation failure. This code can also be used as an i18n resource key. |
+| `values` _(readonly)_         | `Record<string, unknown>`                                                                         | Interpolation values for `code`.                                                                             |
