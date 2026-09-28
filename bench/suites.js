@@ -35,7 +35,8 @@ const schema = {
   bar: { type: 'number', short: 'b', required: true }
 }
 
-// the arguments and the schema of the benchmark with toKebab, which names each option in kebab case
+// the arguments of the benchmark with toKebab, which names each option in kebab-case, and its
+// schema for the check: like the other benchmarks of the parse suite, it writes the schema inline
 const kebabArgs = ['--dry-run', '--out-dir', 'dist', '--max-workers=8']
 const kebabSchema = {
   dryRun: { type: 'boolean', short: 'n' },
