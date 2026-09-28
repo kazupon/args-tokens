@@ -1174,7 +1174,11 @@ export function resolveArgs<A extends Args>(
   }
 
   let positionalsCount = 0
-  for (const [rawArg, schema] of argEntries) {
+  // this loop also runs on every call, so it reads each entry by index, as the loop above does
+  for (let argIndex = 0; argIndex < argEntries.length; argIndex++) {
+    const entry = argEntries[argIndex]
+    const rawArg = entry[0]
+    const schema = entry[1]
     const arg = getOptionName(rawArg, schema)
 
     // initialize explicit state for all options.
