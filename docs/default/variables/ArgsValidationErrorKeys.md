@@ -5,8 +5,9 @@ Machine-readable error codes for [ArgsValidationError](/docs/default/classes/Arg
 Each code identifies a validation failure category and is also suitable as an
 i18n resource key for localized rendering.
 
-[resolveArgs](/docs/default/functions/resolveArgs.md) and `parse()` do not report `unknownOption`: an option that is not in the
-schema is ignored.
+[resolveArgs](/docs/default/functions/resolveArgs.md) and `parse()` do not report `unknownOption`. An option that is not in the
+schema takes the argument after it as its value, unless that argument is an option, and the value
+is dropped: with no `foo` in the schema, `--foo bar` gives no positional argument.
 
 ## Signature
 
