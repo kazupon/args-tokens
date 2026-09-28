@@ -20,6 +20,11 @@ The positional argument keeps `required`, `default` and `multiple` of the parser
 types: `positional(unrequired(integer()))` is optional, and `positional(multiple(integer()))`
 resolves to an array, as `multiple(positional(integer()))` does.
 
+An instantiation expression with one type argument, such as `typeof positional<number>`, is a
+type error, since the overload for a union of schemas and the overloads for options take one
+type argument too, which must be a schema for the former and a boolean (the type of `required`)
+for the latter: give `S` as well, as in `typeof positional<number, CombinatorSchema<number>>`.
+
 ### Parameters
 
 | Name     | Type                                                                                  | Description                   |

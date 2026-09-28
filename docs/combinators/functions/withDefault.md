@@ -25,7 +25,10 @@ Other modifiers on `schema` (for example [multiple](/docs/combinators/functions/
 schema is one value of the parsed type, which becomes the only element of the array.
 
 A union of schemas of different types, such as `strict ? integer() : string()`, matches the
-last overload, whose default may be a value of any of their types.
+last overload, whose default may be a value of any of their types. An instantiation expression
+with one type argument, such as `typeof withDefault<number>`, is a type error, since that
+overload takes one type argument too, which must be a schema: give `D` as well, as in
+`typeof withDefault<number, number>`.
 
 ### Parameters
 
