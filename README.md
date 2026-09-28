@@ -593,7 +593,7 @@ Enables negation for boolean arguments using `--no-` prefix. Only applicable to 
 
 #### `choices` (optional)
 
-Array of allowed string values for enum-type arguments. Required when `type: 'enum'`.
+Array of allowed string values for enum-type arguments. Required when `type: 'enum'`, unless the argument has a `parse` function: if it is missing or not an array, `resolveArgs()` and `parse()` throw a `TypeError`, whether or not the argument is given. With a `parse` function and no `choices`, any value is passed to the function.
 
 The value given on the command line is checked before `parse`, so `parse` receives only one of the choices. Any other value is reported as an `ArgResolveError` with `type: 'type'` and the code `ArgsValidationErrorKeys.invalidChoice`.
 
