@@ -80,6 +80,7 @@
   "scripts": {
     "bench:mitata": "node --expose-gc bench/mitata.js",
     "bench:positionals": "node --expose-gc bench/positionals.js",
+    "bench:compare": "node bench/compare.mjs",
     "bench:vitest": "vp test bench --run",
     "build": "vp pack",
     "build:docs": "node scripts/generate-docs.mjs && vp fmt docs",
