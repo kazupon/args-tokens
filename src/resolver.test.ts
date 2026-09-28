@@ -6767,6 +6767,22 @@ describe('a mistake in the schema', () => {
     )
   })
 
+  test('a mistake after a boolean option is thrown before resolving any argument', () => {
+    // the mistake comes after a boolean option, whose long names are also collected before any
+    // argument is resolved
+    const parse = vi.fn<(value: string) => string>(value => value)
+    const args = {
+      verbose: { type: 'boolean', negatable: true },
+      name: { type: 'custom', parse },
+      config: { type: 'custom' }
+    } satisfies Args
+
+    expect(() => resolveArgs(args, parseArgs(['--no-verbose', '--name=x']))).toThrow(
+      "argument 'config' should have a 'parse' function"
+    )
+    expect(parse).not.toHaveBeenCalled()
+  })
+
   test('an unsupported type with a parse that is not a function throws', () => {
     const args = { size: { type: 'integer', parse: 'x' } } as unknown as Args
 
