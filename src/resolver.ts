@@ -1026,13 +1026,13 @@ export function resolveArgs<A extends Args>(
   const booleanLongOptionNames = new Set<string>()
   // before resolving any argument, report the mistakes in the schema, whether or not the argument
   // is given, and collect the long names of the boolean options. This loop runs on every call, so
-  // it reads each entry by index: destructuring an entry allocates
+  // it does both in one pass and reads each entry by index: destructuring an entry allocates
   for (let i = 0; i < argEntries.length; i++) {
     const entry = argEntries[i]
     const rawArg = entry[0]
     const schema = entry[1]
     // an argument with a `parse` function is resolved by it, whatever its type. The name in the
-    // error is made only when it is thrown
+    // error is made only when it is thrown: with `toKebab`, making it calls `kebabnize()`
     if (typeof schema.parse !== 'function') {
       if (schema.type === 'custom') {
         throw new TypeError(
@@ -1174,7 +1174,8 @@ export function resolveArgs<A extends Args>(
   }
 
   let positionalsCount = 0
-  // this loop also runs on every call, so it reads each entry by index, as the loop above does
+  // this loop also runs on every call, so it reads each entry by index, as the loop that checks
+  // the schemas does
   for (let argIndex = 0; argIndex < argEntries.length; argIndex++) {
     const entry = argEntries[argIndex]
     const rawArg = entry[0]
