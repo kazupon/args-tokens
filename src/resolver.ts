@@ -76,7 +76,7 @@ export interface ArgSchema {
    * ```ts
    * {
    *   name: { type: 'string' },        // --name value
-   *   verbose: { type: 'boolean' },     // --verbose or --no-verbose
+   *   verbose: { type: 'boolean' },     // --verbose (--no-verbose needs negatable: true)
    *   port: { type: 'number' },         // --port 3000
    *   level: { type: 'enum', choices: ['debug', 'info'] },
    *   file: { type: 'positional' },     // first positional arg
@@ -197,8 +197,9 @@ export interface ArgSchema {
   /**
    * Allows the argument to accept multiple values.
    *
-   * When `true`, the resolved value becomes an array.
-   * For options: can be specified multiple times (--tag foo --tag bar)
+   * When `true`, the resolved value becomes an array. When the argument is not given and has no
+   * `default`, its value is `undefined`, not an empty array.
+   * For options: can be specified multiple times (--tags foo --tags bar)
    * For positional: collects remaining positional arguments after preserving values for
    * later required positional arguments.
    *
@@ -283,7 +284,8 @@ export interface ArgSchema {
    */
   choices?: string[] | readonly string[]
   /**
-   * Default value used when the argument is not provided.
+   * Default value used when the argument is not provided. An option that is given without a value,
+   * or with a value that is rejected, also gets its default, along with the error.
    *
    * The type must match the argument's `type` property:
    * - `string` type: string default
@@ -488,7 +490,7 @@ export interface ArgSchema {
    */
   metavar?: string
   /**
-   * Custom parsing function for `type: 'custom'` arguments.
+   * Custom parsing function, used in place of the parsing of the argument's `type`.
    *
    * Required when `type: 'custom'`: if it is missing or not a function, {@link resolveArgs} and
    * `parse()` throw a `TypeError`, whether or not the argument is given. The function receives the
@@ -559,6 +561,9 @@ export interface ArgSchema {
  *
  * Each code identifies a validation failure category and is also suitable as an
  * i18n resource key for localized rendering.
+ *
+ * {@link resolveArgs} and `parse()` do not report `unknownOption`: an option that is not in the
+ * schema is ignored.
  */
 export const ArgsValidationErrorKeys = {
   requiredOption: 'err:arg:required-option',
