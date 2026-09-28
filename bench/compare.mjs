@@ -1,7 +1,7 @@
 /**
  * Compare two builds of args-tokens with the suites of `bench/suites.js`:
  * `node bench/compare.mjs --base <lib directory> --head <lib directory> [--rounds 5]
- *   [--suites parse,positionals] [--threshold 0.1] [--base-label <name>] [--head-label <name>]
+ *   [--suites parse,positionals] [--threshold 0.05] [--base-label <name>] [--head-label <name>]
  *   [--json out.json] [--markdown out.md]`, or `vp run bench:compare --base … --head …`.
  *
  * Each round runs every suite once for each build, in a new process each time, and alternates which
@@ -32,7 +32,7 @@ const { values: options } = parseArgs({
     head: { type: 'string' },
     rounds: { type: 'string', default: '5' },
     suites: { type: 'string', default: Object.keys(suites).join(',') },
-    threshold: { type: 'string', default: '0.1' },
+    threshold: { type: 'string', default: '0.05' },
     'base-label': { type: 'string' },
     'head-label': { type: 'string' },
     json: { type: 'string' },
