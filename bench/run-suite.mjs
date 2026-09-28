@@ -1,7 +1,9 @@
 /**
- * Run one suite of `bench/suites.js` against one build of args-tokens, and print the result as JSON:
+ * Run one suite of `bench/suites.js` against one build of args-tokens, and print the results as JSON
+ * (for each benchmark, the times per iteration in nanoseconds and the heap per iteration in bytes):
  * `node --expose-gc bench/run-suite.mjs <lib directory> <suite> [--check]`.
- * With `--check`, print what each input resolves to instead of measuring.
+ * With `--check`, print what each input resolves to instead of measuring. A benchmark that throws
+ * fails the run.
  */
 
 import { bench, run } from 'mitata'
@@ -21,13 +23,12 @@ if (flag === '--check') {
   console.log(JSON.stringify(suite.check(lib)))
 } else {
   suite.register(bench, lib)
-  const { benchmarks } = await run({ format: 'quiet' })
+  const { benchmarks } = await run({ format: 'quiet', throw: true })
   const results = {}
   for (const b of benchmarks) {
     for (const r of b.runs) {
-      results[r.name] = r.stats
-        ? { avg: r.stats.avg, p50: r.stats.p50, p99: r.stats.p99, heap: r.stats.heap?.avg ?? null }
-        : { error: String(r.error) }
+      const { avg, p50, p99, heap } = r.stats
+      results[r.name] = { avg, p50, p99, heap: heap?.avg ?? null }
     }
   }
   console.log(JSON.stringify(results))
