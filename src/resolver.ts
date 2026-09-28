@@ -63,7 +63,8 @@ export interface ArgSchema {
    * - `'boolean'`: `true`/`false` flag (can be negatable with `--no-` prefix). `--flag=true` and
    *   `--flag=false` set the value explicitly; any other value after `=` is a type error
    * - `'number'`: Numeric value (parsed as integer or float)
-   * - `'enum'`: One of predefined string values (requires `choices` property)
+   * - `'enum'`: One of predefined string values (requires `choices` property, unless the argument
+   *   has a `parse` function)
    * - `'positional'`: Non-option argument by position
    * - `'custom'`: Custom parsing with user-defined `parse` function
    *
@@ -255,10 +256,10 @@ export interface ArgSchema {
   /**
    * Array of allowed string values for enum-type arguments.
    *
-   * Required when `type: 'enum'`, unless the argument has a `parse` function: if it is missing or
-   * not an array, {@link resolveArgs} and `parse()` throw a `TypeError`, whether or not the
-   * argument is given. With a `parse` function and no `choices`, any value is passed to the
-   * function.
+   * Required when `type: 'enum'`, unless the argument has a `parse` function: if `choices` is
+   * missing or not an array, {@link resolveArgs} and `parse()` throw a `TypeError`, whether or not
+   * the argument is given. With a `parse` function and no `choices`, the value is passed to the
+   * function as for a `string` argument with a `parse` function.
    *
    * The argument value must be one of these choices, otherwise the error is an `ArgResolveError`
    * with type 'type' and the code `err:arg:invalid-choice`

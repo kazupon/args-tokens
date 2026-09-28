@@ -424,7 +424,7 @@ Type of the argument value:
 - `'string'`: Text value
 - `'boolean'`: True/false flag (can be negatable with `--no-` prefix). `--flag=true` and `--flag=false` set the value explicitly; any other value after `=` is an error with the code `ArgsValidationErrorKeys.invalidType`
 - `'number'`: Numeric value (parsed as integer or float)
-- `'enum'`: One of predefined string values (requires `choices` property)
+- `'enum'`: One of predefined string values (requires `choices` property, unless the argument has a `parse` function)
 - `'positional'`: Non-option argument by position
 - `'custom'`: Custom parsing with user-defined `parse` function
 
@@ -593,7 +593,7 @@ Enables negation for boolean arguments using `--no-` prefix. Only applicable to 
 
 #### `choices` (optional)
 
-Array of allowed string values for enum-type arguments. Required when `type: 'enum'`, unless the argument has a `parse` function: if it is missing or not an array, `resolveArgs()` and `parse()` throw a `TypeError`, whether or not the argument is given. With a `parse` function and no `choices`, any value is passed to the function.
+Array of allowed string values for enum-type arguments. Required when `type: 'enum'`, unless the argument has a `parse` function: if `choices` is missing or not an array, `resolveArgs()` and `parse()` throw a `TypeError`, whether or not the argument is given. With a `parse` function and no `choices`, the value is passed to the function as for a `string` argument with a `parse` function.
 
 The value given on the command line is checked before `parse`, so `parse` receives only one of the choices. Any other value is reported as an `ArgResolveError` with `type: 'type'` and the code `ArgsValidationErrorKeys.invalidChoice`.
 
