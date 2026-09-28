@@ -828,7 +828,8 @@ export function positional<S extends CombinatorSchema<unknown>>(parser: S): Posi
  *
  * @typeParam R - The type of `required` in the options, which the positional argument keeps.
  *
- * @param parser - Base options (description, hidden, required).
+ * @param parser - Base options (description, short, hidden, required). `short` has no effect on a
+ *   positional argument.
  * @returns A positional argument schema resolving to string.
  *
  * @example
@@ -861,7 +862,8 @@ export function positional<const R extends boolean>(
  * @typeParam R - The type of `required` in the options, which the positional argument keeps when it
  *   may be `false` but not `true`, as for `optional ? { required: false } : {}`.
  *
- * @param parser - Optional base options (description, hidden, required).
+ * @param parser - Optional base options (description, short, hidden, required). `short` has no
+ *   effect on a positional argument.
  * @returns A positional argument schema resolving to string.
  *
  * @example
@@ -887,7 +889,8 @@ export function positional<const R extends boolean | undefined = boolean | undef
  * modifiers, such as {@link multiple} and {@link withDefault}, take it: `multiple(positional())`
  * collects the values as strings.
  *
- * @param parser - Optional base options (description, hidden, required).
+ * @param parser - Optional base options (description, short, hidden, required). `short` has no
+ *   effect on a positional argument.
  * @returns A positional argument schema resolving to string.
  *
  * @example
