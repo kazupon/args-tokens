@@ -809,10 +809,10 @@ type PositionalOf<S> = S extends unknown ? PositionalWithParser<S> : never
  * types: `positional(unrequired(integer()))` is optional, and `positional(multiple(integer()))`
  * resolves to an array, as `multiple(positional(integer()))` does.
  *
- * An instantiation expression with one type argument, such as `typeof positional<number>`, is
- * applied to the other overloads too, whose type argument must be a schema or the type of
- * `required`, and is a type error: give `S` as well, as in
- * `typeof positional<number, CombinatorSchema<number>>`.
+ * An instantiation expression with one type argument, such as `typeof positional<number>`, is a
+ * type error, since the overload for a union of schemas and the overloads for options take one
+ * type argument too, which must be a schema for the former and a boolean (the type of `required`)
+ * for the latter: give `S` as well, as in `typeof positional<number, CombinatorSchema<number>>`.
  *
  * @typeParam T - The parser's resolved type.
  * @typeParam S - The type of the parser, inferred from `parser`, whose `required`, `default`,
@@ -1264,9 +1264,9 @@ export function combinator<T>(config: CombinatorOptions<T>): CombinatorSchema<T>
  *
  * A union of schemas of different types, such as `strict ? integer() : string()`, matches the
  * last overload, whose `transform` takes a value of any of their types. An instantiation expression
- * with two type arguments, such as `typeof map<number, string>`, is applied to that overload too,
- * whose first type argument must be a schema, and is a type error: give `S` as well, as in
- * `typeof map<number, string, CombinatorSchema<number>>`.
+ * with two type arguments, such as `typeof map<number, string>`, is a type error, since that
+ * overload takes two type arguments too, the first of which must be a schema: give `S` as well, as
+ * in `typeof map<number, string, CombinatorSchema<number>>`.
  *
  * @typeParam T - The input schema's parsed type.
  * @typeParam U - The transformed type.
@@ -1400,8 +1400,8 @@ type CombinatorWithDefault<T> = { default: T }
  *
  * A union of schemas of different types, such as `strict ? integer() : string()`, matches the
  * last overload, whose default may be a value of any of their types. An instantiation expression
- * with one type argument, such as `typeof withDefault<number>`, is applied to that overload too,
- * whose type argument must be a schema, and is a type error: give `D` as well, as in
+ * with one type argument, such as `typeof withDefault<number>`, is a type error, since that
+ * overload takes one type argument too, which must be a schema: give `D` as well, as in
  * `typeof withDefault<number, number>`.
  *
  * @typeParam T - The schema's parsed type.
