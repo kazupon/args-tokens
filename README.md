@@ -343,19 +343,45 @@ for (const cause of error?.errors ?? []) {
 
 The resolver uses stable error codes for required options, required positionals, options given without a value, invalid types, invalid choices, custom parse failures, values given to options that do not take one, arguments that conflict, and defaults of `enum` options that are not one of their choices. The `values` object contains interpolation data such as `name`, `displayName`, `rawName`, `expected`, `actual`, `choices`, `choiceValues`, `reason`, `next`, `suggestion`, `conflictName`, and `conflictDisplayName` depending on the error kind.
 
-An option that takes a value reports `ArgsValidationErrorKeys.missingValue` when it is given without one, including a required option. The tokens are made without the schema, as `node:util` `parseArgs` makes them without option definitions, so `--port -5` is read as `--port` followed by the option `-5`, and a value that starts with `-` has to be written with `=` or attached to a short option, such as `--port=-5`, `-p=-5` or `-p-5`. When the option ends its argument and the next argument is one long option or a group of short options, such as `-5`, `-5.5` or `--foo`, that are not all in the schema, the error has `next` (`'-5'`) and `suggestion` (`'--port=-5'`) in `values`, and the message suggests that form. With `shortGrouping: false`, the default of `resolveArgs()` and `parse()`, only the first letter of a group is an option, and the other letters are its value (a boolean ignores them), so a group whose first letter is in the schema, such as `-p5` or `-vfoo`, gets no suggestion. For `--port -5`, the message is:
+An option that takes a value reports `ArgsValidationErrorKeys.missingValue` when it is given without one, including a required option. The tokens are made without the schema, as `node:util` `parseArgs` makes them without option definitions, so `--port -5` is read as `--port` followed by the option `-5`, and a value that starts with `-` has to be written with `=` or attached to a short option, such as `--port=-5`, `-p=-5` or `-p-5`.
+
+<details>
+<summary>The suggestion for a value that starts with <code>-</code></summary>
+
+When the option ends its argument and the next argument is one long option or a group of short options, such as `-5`, `-5.5` or `--foo`, that are not all in the schema, the error has `next` (`'-5'`) and `suggestion` (`'--port=-5'`) in `values`, and the message suggests that form. With `shortGrouping: false`, the default of `resolveArgs()` and `parse()`, only the first letter of a group is an option, and the other letters are its value (a boolean ignores them), so a group whose first letter is in the schema, such as `-p5` or `-vfoo`, gets no suggestion. For `--port -5`, the message is:
 
 ```
 Optional argument '--port' requires a value (to pass '-5' as its value, write '--port=-5')
 ```
 
-`next`, `suggestion` and the hint in the message are given only when the option can take that value, as far as args-tokens can tell. A `number` option gets them only for a numeric value, and an `enum` option with `choices` only for one of the choices, with or without a `parse` function. So `--port -x` gets no suggestion, and neither does `--level -x` for an `enum` option with `choices: ['debug', 'info']`. The `parse` functions of `string()`, `number()`, `integer()`, `float()` and `choice()` have no side effects, so they are also called with the value to check it: `--count -x` gets no suggestion for `integer()`, `--count -5` does, and `--port -5` gets none for `number({ min: 1 })`. A `parse` function of your own, such as one given to `combinator()`, is never called with a value that the option was not given, and neither is a `map()` transform. An option with such a function is checked by its type or `choices` only: a `number` option or an `enum` option with `choices` gets the suggestion as above, so `--port -5` still gets `--port=-5` for `map(number({ min: 1 }), n => n)`, and any other option gets none. A `string()` whose `pattern` has the `g` or `y` flag is treated the same way, since `test` moves the `lastIndex` of such a pattern.
+`next`, `suggestion` and the hint in the message are given only when the option can take that value, as far as args-tokens can tell. A `number` option gets them only for a numeric value, and an `enum` option with `choices` only for one of the choices, with or without a `parse` function. So `--port -x` gets no suggestion, and neither does `--level -x` for an `enum` option with `choices: ['debug', 'info']`.
+
+The `parse` functions of `string()`, `number()`, `integer()`, `float()` and `choice()` have no side effects, so they are also called with the value to check it: `--count -x` gets no suggestion for `integer()`, `--count -5` does, and `--port -5` gets none for `number({ min: 1 })`. A `parse` function of your own, such as one given to `combinator()`, is never called with a value that the option was not given, and neither is a `map()` transform. An option with such a function is checked by its type or `choices` only: a `number` option or an `enum` option with `choices` gets the suggestion as above, so `--port -5` still gets `--port=-5` for `map(number({ min: 1 }), n => n)`, and any other option gets none. A `string()` whose `pattern` has the `g` or `y` flag is treated the same way, since `test` moves the `lastIndex` of such a pattern.
+
+</details>
+
+<details>
+<summary>A <code>parse</code> function that throws</summary>
 
 When a custom `parse` function throws, args-tokens wraps the failure as `ArgsValidationErrorKeys.customParse` and preserves the thrown value as `cause`. If the parser already throws an `ArgsValidationError`, it is reused without double wrapping, and missing `name`, `displayName`, and `actual` values are filled in. When that update fails, for example because its `values` object is frozen, the thrown error is wrapped like any other thrown value.
 
-`ArgResolveError` now extends `ArgsValidationError` for backward compatibility. Existing checks for `instanceof ArgResolveError`, `.name`, `.type`, `.schema`, and `.message` continue to work. `.name` is the name of the argument on the command line, without the leading dashes and in kebab-case with `toKebab` (`input-file` for the schema key `inputFile`), for every `type` of `ArgResolveError`, `'conflict'` included, while `values.name` is the schema key. A conflict is reported as `ArgsValidationErrorKeys.conflict`. Its `values` has the `displayName` and `name` of the argument whose `conflicts` names the other one, and the `conflictDisplayName` and `conflictName` of the other one. When both name each other, `name` is the one that comes first in the schema. `displayName` and `conflictDisplayName` show an option as it was written, as in the message: with `short: 'p'` and `short: 's'`, `-p 80 -s /run/app.sock` gives `"'-p'"` and `"'-s'"`. A positional argument is shown by its name, as in its other errors, such as `"'file'"` (in kebab-case with `toKebab`). `name` and `conflictName` are the schema keys.
+</details>
+
+<details>
+<summary><code>ArgResolveError</code> and conflicts</summary>
+
+`ArgResolveError` now extends `ArgsValidationError` for backward compatibility. Existing checks for `instanceof ArgResolveError`, `.name`, `.type`, `.schema`, and `.message` continue to work. `.name` is the name of the argument on the command line, without the leading dashes and in kebab-case with `toKebab` (`input-file` for the schema key `inputFile`), for every `type` of `ArgResolveError`, `'conflict'` included, while `values.name` is the schema key.
+
+A conflict is reported as `ArgsValidationErrorKeys.conflict`. Its `values` has the `displayName` and `name` of the argument whose `conflicts` names the other one, and the `conflictDisplayName` and `conflictName` of the other one. When both name each other, `name` is the one that comes first in the schema. `displayName` and `conflictDisplayName` show an option as it was written, as in the message: with `short: 'p'` and `short: 's'`, `-p 80 -s /run/app.sock` gives `"'-p'"` and `"'-s'"`. A positional argument is shown by its name, as in its other errors, such as `"'file'"` (in kebab-case with `toKebab`). `name` and `conflictName` are the schema keys.
+
+</details>
+
+<details>
+<summary><code>isArgsValidationError()</code> across bundled copies of args-tokens</summary>
 
 Since 0.29.0, `isArgsValidationError()` works across bundled copies of `args-tokens`. Each error instance carries a non-enumerable brand keyed by `Symbol.for('args-tokens.ArgsValidationError')`, so the guard recognizes errors created by another copy of the library, for example when a host and a plugin each bundle `args-tokens`, even though `instanceof` does not match. Every copy involved must be 0.29.0 or later, because older versions neither set nor check the brand. The guard does not depend on `error.name`, which `ArgResolveError` overrides with the argument name. It narrows only to `ArgsValidationError`: across copies, `instanceof ArgResolveError` still fails, so do not rely on `type` or `schema` for errors that may come from another copy.
+
+</details>
 
 ## Node.js `parseArgs` tokens compatible
 
