@@ -420,7 +420,7 @@ The `ArgSchema` interface defines the configuration for command-line arguments. 
 Type of the argument value:
 
 - `'string'`: Text value
-- `'boolean'`: True/false flag (can be negatable with `--no-` prefix). `--flag=true` and `--flag=false` set the value explicitly; any other value after `=` is an error
+- `'boolean'`: True/false flag (can be negatable with `--no-` prefix). `--flag=true` and `--flag=false` set the value explicitly; any other value after `=` is an error with the code `ArgsValidationErrorKeys.invalidType`
 - `'number'`: Numeric value (parsed as integer or float)
 - `'enum'`: One of predefined string values (requires `choices` property)
 - `'positional'`: Non-option argument by position
@@ -443,7 +443,7 @@ Any other `type`, or no `type`, is a mistake that only untyped code can make: if
 
 #### `short` (optional)
 
-Single character alias for the long option name. Allows users to use `-x` instead of `--extended-option`.
+Single character alias for the long option name. Allows users to use `-x` instead of `--extended-option`. It is only for options, not for positional arguments.
 
 <!-- eslint-skip -->
 
@@ -547,9 +547,9 @@ For the `values` of the error, an option given without a value or with an explic
 
 #### `multiple` (optional)
 
-Allows the argument to accept multiple values. The resolved value becomes an array.
+Allows the argument to accept multiple values. The resolved value becomes an array. When the argument is not given and has no `default`, its value is `undefined`, not an empty array.
 
-- For options: can be specified multiple times (`--tag foo --tag bar`)
+- For options: can be specified multiple times (`--tags foo --tags bar`)
 - For positional: collects remaining positional arguments after preserving values for later required positional arguments
 
 <!-- eslint-skip -->
@@ -593,7 +593,7 @@ Enables negation for boolean arguments using `--no-` prefix. Only applicable to 
 
 Array of allowed string values for enum-type arguments. Required when `type: 'enum'`.
 
-The value given on the command line is checked before `parse`, so `parse` receives only one of the choices.
+The value given on the command line is checked before `parse`, so `parse` receives only one of the choices. Any other value is reported as an `ArgResolveError` with `type: 'type'` and the code `ArgsValidationErrorKeys.invalidChoice`.
 
 <!-- eslint-skip -->
 
@@ -615,7 +615,7 @@ The value given on the command line is checked before `parse`, so `parse` receiv
 
 #### `default` (optional)
 
-Default value used when the argument is not provided. The type must match the argument's `type` property.
+Default value used when the argument is not provided. An option that is given without a value, or with a value that is rejected, also gets its default, along with the error. The type must match the argument's `type` property.
 
 The default is used as is. It does not go through `parse`. The value of a `multiple` argument is an array, so its default becomes the only element of the array: `default: 'latest'` gives `['latest']`.
 
@@ -651,7 +651,7 @@ For an explicit empty value, the default of an `enum` option that is not one of 
 
 #### `toKebab` (optional)
 
-Converts the argument name from camelCase to kebab-case for CLI usage. A property like `maxCount` becomes available as `--max-count`.
+Converts the argument name from camelCase to kebab-case for CLI usage. A property like `maxCount` becomes available as `--max-count`. `--maxCount` is then not accepted, and the key in `values` stays `maxCount`. The `toKebab` option of `resolveArgs()` and `parse()` applies it to all arguments.
 
 <!-- eslint-skip -->
 
@@ -671,7 +671,7 @@ Converts the argument name from camelCase to kebab-case for CLI usage. A propert
 
 #### `parse` (optional)
 
-Custom parsing function for `type: 'custom'` arguments. Required when `type: 'custom'`: if it is missing or not a function, `resolveArgs()` and `parse()` throw a `TypeError`, whether or not the argument is given. The function should throw an Error if parsing fails.
+Custom parsing function. Required when `type: 'custom'`: if it is missing or not a function, `resolveArgs()` and `parse()` throw a `TypeError`, whether or not the argument is given. An argument of another type uses it too, in place of its own parsing. The function should throw an Error if parsing fails.
 
 `parse` receives the value from the command line, or `'true'` / `'false'` for a `boolean` option. It is called synchronously, and what it returns becomes the value, even `undefined` or `null`, so throw to reject a value.
 
@@ -709,9 +709,9 @@ For an `async` function, an option given without a value or with an explicit emp
 
 Specifies other options that cannot be used together with this option. When conflicting options are provided together, the error is an `ArgResolveError` with `type: 'conflict'` and the code `ArgsValidationErrorKeys.conflict`.
 
-Conflicts only need to be defined on one side - if option A defines a conflict with option B, the conflict is automatically detected when both are used.
+Conflicts only need to be defined on one side - if option A defines a conflict with option B, the conflict is automatically detected when both are used. The names in `conflicts` are the schema keys, such as `inputFile`, not the kebab-case names of `toKebab`. The error names first the argument whose `conflicts` names the other one, or, when both name each other, the one that comes first in the schema.
 
-A positional argument can also be on either side, such as `[file]` and `--stdin`. It conflicts when it is given, and the error shows it by its name, in kebab-case with `toKebab`. The argument named first is chosen as for options, and the message starts with its kind: `Positional argument 'file' conflicts with '--stdin'` or `Optional argument '--stdin' conflicts with 'file'`.
+A positional argument can also be on either side, such as `[file]` and `--stdin`. It conflicts when it is given, and the error shows it by its name, in kebab-case with `toKebab`. The message starts with the kind of the argument named first: `Positional argument 'file' conflicts with '--stdin'` or `Optional argument '--stdin' conflicts with 'file'`.
 
 <!-- eslint-skip -->
 
