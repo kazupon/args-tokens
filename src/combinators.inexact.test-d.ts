@@ -3,7 +3,8 @@ import { string } from './combinators.ts'
 
 import type { ArgValues } from './resolver.ts'
 
-// type-checked without exactOptionalPropertyTypes only: with it, the options do not take undefined
+// type-checked only without exactOptionalPropertyTypes: with it, the options of the combinators
+// do not take an explicit undefined
 
 test('a required option that may be undefined leaves the value optional', () => {
   const strict = Math.random() > 0.5

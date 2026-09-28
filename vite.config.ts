@@ -39,8 +39,10 @@ export default defineConfig({
         }
       },
       {
-        // type-check the sources and the type tests without exactOptionalPropertyTypes too, which
-        // tsconfig.json turns on
+        // type-check the sources and all the type tests without exactOptionalPropertyTypes too,
+        // which tsconfig.json turns on. A type test that can only be written without it goes into a
+        // *.inexact.test-d.ts file, which tsconfig.json and the default project leave out; vp check
+        // and the editor type-check such a file with the default options, without @types/node
         extends: true,
         test: {
           name: 'inexact',

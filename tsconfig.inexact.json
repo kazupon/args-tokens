@@ -4,5 +4,6 @@
     "exactOptionalPropertyTypes": false
   },
   "include": ["src/**/*.ts"],
+  // keep the *.inexact.test-d.ts files, which tsconfig.json leaves out
   "exclude": []
 }
