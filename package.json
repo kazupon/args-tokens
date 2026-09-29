@@ -106,7 +106,7 @@
     "typescript": "^7.0.2",
     "vite": "catalog:",
     "vite-plus": "catalog:",
-    "vitepress-api-references": "^0.3.0",
+    "vitepress-api-references": "^0.4.0",
     "zod": "^4.4.3"
   }
 }
