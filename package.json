@@ -81,7 +81,7 @@
     "bench:mitata": "node --expose-gc bench/mitata.js",
     "bench:positionals": "node --expose-gc bench/positionals.js",
     "bench:compare": "node bench/compare.mjs",
-    "bench:vitest": "vp test bench --run",
+    "bench:vitest": "vp test bench --run --reporter=verbose",
     "build": "vp pack",
     "build:docs": "node scripts/generate-docs.mjs && vp fmt docs",
     "check": "vp check && knip && deno check src",
@@ -93,7 +93,7 @@
     "test": "vp test"
   },
   "devDependencies": {
-    "@kazupon/vp-config": "^0.5.1",
+    "@kazupon/vp-config": "^1.0.0",
     "@types/node": "^25.9.5",
     "bumpp": "^12.0.0",
     "deno": "^2.9.5",

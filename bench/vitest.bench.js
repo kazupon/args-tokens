@@ -1,6 +1,11 @@
 import { parseArgs as parseArgsNode } from 'node:util'
-import { bench, describe } from 'vite-plus/test'
-import { parse, parseArgs } from '../lib/index.js'
+import { describe, test } from 'vite-plus/test'
+import { parse as libParse, parseArgs as libParseArgs } from '../lib/index.js'
+
+// Vitest's module runner turns each imported binding into a getter: call the functions through
+// local constants, so that the benchmarks do not measure the getter
+const parse = libParse
+const parseArgs = libParseArgs
 
 const args = [
   '-x',
@@ -23,52 +28,59 @@ const args = [
 ]
 
 describe('parse and resolve', () => {
-  bench('util.parseArgs', () => {
-    parseArgsNode({
-      allowPositionals: true,
-      strict: false,
-      args,
-      options: {
-        foo: {
-          type: 'boolean',
-          short: 'f'
-        },
-        bar: {
-          type: 'string',
-          short: 'b'
-        }
-      },
-      tokens: true
-    })
-  })
-
-  bench('args-tokens parse', () => {
-    parse(args, {
-      args: {
-        foo: {
-          type: 'boolean',
-          short: 'f'
-        },
-        bar: {
-          type: 'number',
-          short: 'b',
-          required: true
-        }
-      }
-    })
+  test('util.parseArgs and args-tokens parse', async ({ bench }) => {
+    await bench.compare(
+      bench('util.parseArgs', () => {
+        parseArgsNode({
+          allowPositionals: true,
+          strict: false,
+          args,
+          options: {
+            foo: {
+              type: 'boolean',
+              short: 'f'
+            },
+            bar: {
+              type: 'string',
+              short: 'b'
+            }
+          },
+          tokens: true
+        })
+      }),
+      bench('args-tokens parse', () => {
+        parse(args, {
+          args: {
+            foo: {
+              type: 'boolean',
+              short: 'f'
+            },
+            bar: {
+              type: 'number',
+              short: 'b',
+              required: true
+            }
+          }
+        })
+      })
+    )
   })
 })
 
 describe('parseArgs', () => {
-  bench('node:util', () => {
-    parseArgsNode({
-      allowPositionals: true,
-      strict: false,
-      args,
-      tokens: true
-    })
-  })
-  bench('args-tokens', () => {
-    parseArgs(args)
+  test('node:util and args-tokens', async ({ bench }) => {
+    await bench.compare(
+      bench('node:util', () => {
+        parseArgsNode({
+          allowPositionals: true,
+          strict: false,
+          args,
+          tokens: true
+        })
+      }),
+      bench('args-tokens', () => {
+        parseArgs(args)
+      })
+    )
   })
 })
