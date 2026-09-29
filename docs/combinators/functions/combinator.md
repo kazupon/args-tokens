@@ -25,9 +25,9 @@ The returned schema has `type: 'custom'`.
 
 ### Parameters
 
-| Name     | Type                                                                                                                                             | Description                                               |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------- |
-| `config` | [`CombinatorOptions`](/docs/combinators/interfaces/CombinatorOptions.md)\<`T`\> & { [`required`](/docs/combinators/functions/required.md): `R` } | Configuration with a parse function and optional metavar. |
+| Name     | Type                                                                                                  | Description                                               |
+| -------- | ----------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| `config` | [`CombinatorOptions`](/docs/combinators/interfaces/CombinatorOptions.md)\<`T`\> & { `required`: `R` } | Configuration with a parse function and optional metavar. |
 
 ### Returns
 
@@ -73,9 +73,9 @@ The returned schema has `type: 'custom'`.
 
 ### Parameters
 
-| Name     | Type                                                                                                                                              | Description                                               |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| `config` | [`CombinatorOptions`](/docs/combinators/interfaces/CombinatorOptions.md)\<`T`\> & { [`required`](/docs/combinators/functions/required.md)?: `R` } | Configuration with a parse function and optional metavar. |
+| Name     | Type                                                                                                   | Description                                               |
+| -------- | ------------------------------------------------------------------------------------------------------ | --------------------------------------------------------- |
+| `config` | [`CombinatorOptions`](/docs/combinators/interfaces/CombinatorOptions.md)\<`T`\> & { `required`?: `R` } | Configuration with a parse function and optional metavar. |
 
 ### Returns
 

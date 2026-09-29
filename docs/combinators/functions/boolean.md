@@ -22,9 +22,9 @@ to the parse function based on the presence or negation of the flag, or on an ex
 
 ### Parameters
 
-| Name   | Type                                                                                                                                | Description      |
-| ------ | ----------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
-| `opts` | [`BooleanOptions`](/docs/combinators/interfaces/BooleanOptions.md) & { [`required`](/docs/combinators/functions/required.md): `R` } | Boolean options. |
+| Name   | Type                                                                                     | Description      |
+| ------ | ---------------------------------------------------------------------------------------- | ---------------- |
+| `opts` | [`BooleanOptions`](/docs/combinators/interfaces/BooleanOptions.md) & { `required`: `R` } | Boolean options. |
 
 ### Returns
 
@@ -61,9 +61,9 @@ to the parse function based on the presence or negation of the flag, or on an ex
 
 ### Parameters
 
-| Name   | Type                                                                                                                                 | Description                   |
-| ------ | ------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------- |
-| `opts` | [`BooleanOptions`](/docs/combinators/interfaces/BooleanOptions.md) & { [`required`](/docs/combinators/functions/required.md)?: `R` } | Boolean options. _(optional)_ |
+| Name   | Type                                                                                      | Description                   |
+| ------ | ----------------------------------------------------------------------------------------- | ----------------------------- |
+| `opts` | [`BooleanOptions`](/docs/combinators/interfaces/BooleanOptions.md) & { `required`?: `R` } | Boolean options. _(optional)_ |
 
 ### Returns
 

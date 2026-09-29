@@ -20,9 +20,9 @@ Rejects `NaN` and `Infinity` values.
 
 ### Parameters
 
-| Name   | Type                                                                                                                            | Description    |
-| ------ | ------------------------------------------------------------------------------------------------------------------------------- | -------------- |
-| `opts` | [`FloatOptions`](/docs/combinators/interfaces/FloatOptions.md) & { [`required`](/docs/combinators/functions/required.md): `R` } | Range options. |
+| Name   | Type                                                                                 | Description    |
+| ------ | ------------------------------------------------------------------------------------ | -------------- |
+| `opts` | [`FloatOptions`](/docs/combinators/interfaces/FloatOptions.md) & { `required`: `R` } | Range options. |
 
 ### Returns
 
@@ -56,9 +56,9 @@ Rejects `NaN` and `Infinity` values.
 
 ### Parameters
 
-| Name   | Type                                                                                                                             | Description                 |
-| ------ | -------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
-| `opts` | [`FloatOptions`](/docs/combinators/interfaces/FloatOptions.md) & { [`required`](/docs/combinators/functions/required.md)?: `R` } | Range options. _(optional)_ |
+| Name   | Type                                                                                  | Description                 |
+| ------ | ------------------------------------------------------------------------------------- | --------------------------- |
+| `opts` | [`FloatOptions`](/docs/combinators/interfaces/FloatOptions.md) & { `required`?: `R` } | Range options. _(optional)_ |
 
 ### Returns
 
