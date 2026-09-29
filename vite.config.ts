@@ -32,6 +32,9 @@ export default defineConfig({
         extends: true,
         test: {
           name: 'default',
+          // bench/vitest.bench.js measures the built lib/: let Node load it, since the module runner
+          // would make each call between its files go through a getter, which the benchmarks measure
+          server: { deps: { external: [/\/lib\/[^/]+\.js$/] } },
           typecheck: {
             enabled: true,
             exclude: [...configDefaults.typecheck.exclude, 'src/**/*.inexact.test-d.ts']
