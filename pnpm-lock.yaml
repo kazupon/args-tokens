@@ -179,8 +179,8 @@ importers:
   .:
     devDependencies:
       '@kazupon/vp-config':
-        specifier: ^0.5.1
-        version: 0.5.1(vite-plus@0.3.3(@types/node@25.9.5)(jiti@2.7.0)(typescript@7.0.2)(yaml@2.9.0))
+        specifier: ^1.0.0
+        version: 1.0.0(vite-plus@0.3.3(@types/node@25.9.5)(jiti@2.7.0)(typescript@7.0.2)(yaml@2.9.0))
       '@types/node':
         specifier: ^25.9.5
         version: 25.9.5
@@ -313,10 +313,10 @@ packages:
     peerDependencies:
       eslint: ^9.0.0
 
-  '@kazupon/vp-config@0.5.1':
-    resolution: {integrity: sha512-dzXvkUaNz30AgJg5AsmavMlC19T8nqtTxqjoq9yadlJjLe3eLgIsujP5zJsvuRYeR0Q/f4W3lPFFlcfrqTmc3g==}
+  '@kazupon/vp-config@1.0.0':
+    resolution: {integrity: sha512-mUCl5dVuzDU+d426w7dAGx3T5Xs58AmJ1fO1OZTpQMTRnDZswfnOo4w3irmICHgqjR19N6B54pJfYJ1qncLayQ==}
     peerDependencies:
-      vite-plus: '>=0.1.0 <1'
+      vite-plus: ^1.0.0
     peerDependenciesMeta:
       vite-plus:
         optional: true
@@ -960,9 +960,6 @@ packages:
   '@types/deep-eql@4.0.2':
     resolution: {integrity: sha512-c9h9dVVMigMPc4bwTvC5dxqtqJZwQPePsWjPlpSOnojbor6pGqdk541lfA7AqFQr5pB1BRdq0juY9db81BwyFw==}
 
-  '@types/estree@1.0.8':
-    resolution: {integrity: sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w==}
-
   '@types/estree@1.0.9':
     resolution: {integrity: sha512-GhdPgy1el4/ImP05X05Uw4cw2/M93BCUmnEvWZNStlCzEKME4Fkk+YpoA5OiHNQmoS7Cafb8Xa3Pya8m1Qrzeg==}
 
@@ -971,10 +968,6 @@ packages:
 
   '@types/node@25.9.5':
     resolution: {integrity: sha512-OScDchr2fwuUmWdf4kZ9h7PcJiYDVInhJizG/biAq3cAvqwYktuy/TYGGdZNMtNTFUP7rnb0NU4TUdm82kt4Rg==}
-
-  '@typescript-eslint/types@8.54.0':
-    resolution: {integrity: sha512-PDUI9R1BVjqu7AUDsRBbKMtwmjWcn4J3le+5LpcFgWULN3LvHC5rkc9gCVxbrsrGmO1jfPybN5s6h4Jy+OnkAA==}
-    engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
   '@typescript-eslint/types@8.67.0':
     resolution: {integrity: sha512-sBtgslww8nsMYUjhdPBiSyUqSzT8uR6g93A2QXnQC8+cGdjz0CyaOdqHDRJb1AtORbZCNUJBBeFA/tNR2uQmww==}
@@ -2042,8 +2035,8 @@ snapshots:
 
   '@es-joy/jsdoccomment@0.78.0':
     dependencies:
-      '@types/estree': 1.0.8
-      '@typescript-eslint/types': 8.54.0
+      '@types/estree': 1.0.9
+      '@typescript-eslint/types': 8.67.0
       comment-parser: 1.4.1
       esquery: 1.7.0
       jsdoc-type-pratt-parser: 7.0.0
@@ -2067,7 +2060,7 @@ snapshots:
       '@es-joy/jsdoccomment': 0.78.0
       '@eslint/core': 0.17.0
 
-  '@kazupon/vp-config@0.5.1(vite-plus@0.3.3(@types/node@25.9.5)(jiti@2.7.0)(typescript@7.0.2)(yaml@2.9.0))':
+  '@kazupon/vp-config@1.0.0(vite-plus@0.3.3(@types/node@25.9.5)(jiti@2.7.0)(typescript@7.0.2)(yaml@2.9.0))':
     dependencies:
       '@kazupon/eslint-plugin': 0.7.1
       '@ox-jsdoc/eslint-plugin-jsdoc': 0.0.19
@@ -2456,8 +2449,6 @@ snapshots:
 
   '@types/deep-eql@4.0.2': {}
 
-  '@types/estree@1.0.8': {}
-
   '@types/estree@1.0.9': {}
 
   '@types/json-schema@7.0.15': {}
@@ -2465,8 +2456,6 @@ snapshots:
   '@types/node@25.9.5':
     dependencies:
       undici-types: 7.24.6
-
-  '@typescript-eslint/types@8.54.0': {}
 
   '@typescript-eslint/types@8.67.0': {}
 
