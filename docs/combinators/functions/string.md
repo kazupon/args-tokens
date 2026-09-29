@@ -18,9 +18,9 @@ Create a string argument schema with optional validation.
 
 ### Parameters
 
-| Name   | Type                                                                                                                              | Description         |
-| ------ | --------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
-| `opts` | [`StringOptions`](/docs/combinators/interfaces/StringOptions.md) & { [`required`](/docs/combinators/functions/required.md): `R` } | Validation options. |
+| Name   | Type                                                                                   | Description         |
+| ------ | -------------------------------------------------------------------------------------- | ------------------- |
+| `opts` | [`StringOptions`](/docs/combinators/interfaces/StringOptions.md) & { `required`: `R` } | Validation options. |
 
 ### Returns
 
@@ -52,9 +52,9 @@ Create a string argument schema with optional validation.
 
 ### Parameters
 
-| Name   | Type                                                                                                                               | Description                      |
-| ------ | ---------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
-| `opts` | [`StringOptions`](/docs/combinators/interfaces/StringOptions.md) & { [`required`](/docs/combinators/functions/required.md)?: `R` } | Validation options. _(optional)_ |
+| Name   | Type                                                                                    | Description                      |
+| ------ | --------------------------------------------------------------------------------------- | -------------------------------- |
+| `opts` | [`StringOptions`](/docs/combinators/interfaces/StringOptions.md) & { `required`?: `R` } | Validation options. _(optional)_ |
 
 ### Returns
 

@@ -20,9 +20,9 @@ Accepts any numeric value (integer or float).
 
 ### Parameters
 
-| Name   | Type                                                                                                                              | Description    |
-| ------ | --------------------------------------------------------------------------------------------------------------------------------- | -------------- |
-| `opts` | [`NumberOptions`](/docs/combinators/interfaces/NumberOptions.md) & { [`required`](/docs/combinators/functions/required.md): `R` } | Range options. |
+| Name   | Type                                                                                   | Description    |
+| ------ | -------------------------------------------------------------------------------------- | -------------- |
+| `opts` | [`NumberOptions`](/docs/combinators/interfaces/NumberOptions.md) & { `required`: `R` } | Range options. |
 
 ### Returns
 
@@ -56,9 +56,9 @@ Accepts any numeric value (integer or float).
 
 ### Parameters
 
-| Name   | Type                                                                                                                               | Description                 |
-| ------ | ---------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
-| `opts` | [`NumberOptions`](/docs/combinators/interfaces/NumberOptions.md) & { [`required`](/docs/combinators/functions/required.md)?: `R` } | Range options. _(optional)_ |
+| Name   | Type                                                                                    | Description                 |
+| ------ | --------------------------------------------------------------------------------------- | --------------------------- |
+| `opts` | [`NumberOptions`](/docs/combinators/interfaces/NumberOptions.md) & { `required`?: `R` } | Range options. _(optional)_ |
 
 ### Returns
 
