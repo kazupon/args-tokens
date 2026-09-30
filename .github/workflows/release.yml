@@ -55,6 +55,21 @@ jobs:
           ref: ${{ env.TAG }}
           persist-credentials: false
 
+      - name: Resolve dist-tag from tag
+        id: meta
+        # SemVer prerelease: publish it under its first identifier, such as `beta` for
+        # v1.0.0-beta.1, so that `latest` stays on the last stable release. Use `next` for an
+        # identifier that starts with a digit, since npm rejects a dist-tag that is a semver
+        # range, such as `0` of v1.0.0-0.
+        run: |
+          if [[ "$TAG" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+-([A-Za-z][0-9A-Za-z-]*) ]]; then
+            echo "dist_tag=${BASH_REMATCH[1]}" >> "$GITHUB_OUTPUT"
+          elif [[ "$TAG" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+- ]]; then
+            echo "dist_tag=next" >> "$GITHUB_OUTPUT"
+          else
+            echo "dist_tag=latest" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Setup Vite Plus
         uses: voidzero-dev/setup-vp@3754dd7dbdb32bd8f6d28b6043de13ad3a75f21f # v1.21.1
         with:
@@ -73,7 +88,9 @@ jobs:
       - name: Publish to npm
         # OIDC trusted publisher: requires id-token: write, no NPM_TOKEN needed.
         # Provenance is automatically attached via OIDC.
-        run: npm publish --provenance --access public --tag latest
+        run: npm publish --provenance --access public --tag "$DIST_TAG"
+        env:
+          DIST_TAG: ${{ steps.meta.outputs.dist_tag }}
 
   jsr-publish:
     if: >-
