@@ -1,6 +1,6 @@
 {
   "automerge": true,
-  "extends": ["config:base", ":preserveSemverRanges"],
+  "extends": ["config:recommended", ":preserveSemverRanges"],
   "labels": ["deps"],
   "major": {
     "automerge": false
