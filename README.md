@@ -332,7 +332,7 @@ for (const cause of error?.errors ?? []) {
   }
 
   if (cause.code === ArgsValidationErrorKeys.invalidType) {
-    console.log(cause.message) // Optional argument '--port' should be 'number'
+    console.log(cause.message) // Invalid value for '--port': expected number
     console.log(cause.values)
     // {
     //   displayName: "'--port'",
@@ -354,7 +354,7 @@ An option that takes a value reports `ArgsValidationErrorKeys.missingValue` when
 When the option ends its argument and the next argument is one long option or a group of short options, such as `-5`, `-5.5` or `--foo`, that are not all in the schema, the error has `next` (`'-5'`) and `suggestion` (`'--port=-5'`) in `values`, and the message suggests that form. The long form is suggested because it passes such a value in every mode, including `allowCompatible: true`, where `-p=-5` and `-p-5` do not. With `shortGrouping: false`, the default of `resolveArgs()` and `parse()`, only the first letter of a group is an option, and the other letters are its value (a boolean ignores them), so a group whose first letter is in the schema, such as `-p5` or `-vfoo`, gets no suggestion. For `--port -5`, with `port: { type: 'number' }`, the message is:
 
 ```
-Optional argument '--port' requires a value (to pass '-5' as its value, write '--port=-5')
+Option '--port' requires a value (to pass '-5' as its value, write '--port=-5')
 ```
 
 `next`, `suggestion` and the hint in the message are given only when the option can take that value, as far as args-tokens can tell. A `number` option gets them only for a numeric value, and an `enum` option with `choices` only for one of the choices, with or without a `parse` function. So `--port -x` gets no suggestion, and neither does `--level -x` for an `enum` option with `choices: ['debug', 'info']`.
@@ -714,7 +714,7 @@ Specifies other options that cannot be used together with this option. When conf
 
 Conflicts only need to be defined on one side - if option A defines a conflict with option B, the conflict is automatically detected when both are used. The names in `conflicts` are the schema keys, such as `inputFile`, not the kebab-case names of `toKebab`. The error names first the argument whose `conflicts` names the other one, or, when both name each other, the one that comes first in the schema.
 
-A positional argument can also be on either side, such as `[file]` and `--stdin`. It conflicts when it is given, and the error shows it by its name, in kebab-case with `toKebab`. The message starts with the kind of the argument named first: `Positional argument 'file' conflicts with '--stdin'` or `Optional argument '--stdin' conflicts with 'file'`.
+A positional argument can also be on either side, such as `[file]` and `--stdin`. It conflicts when it is given, and the error shows it by its name, in kebab-case with `toKebab`. The message names that argument first: `'file' conflicts with '--stdin'` or `'--stdin' conflicts with 'file'`.
 
 <!-- eslint-skip -->
 
