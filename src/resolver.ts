@@ -376,9 +376,9 @@ export interface ArgSchema {
    */
   toKebab?: true
   /**
-   * Names of other options that conflict with this option.
+   * Names of other arguments that conflict with this argument.
    *
-   * When this option is used together with any of the conflicting options, the error is an
+   * When this argument is used together with any of the conflicting arguments, the error is an
    * `ArgResolveError` with type 'conflict' and the code `err:arg:conflict`
    * ({@link ArgsValidationErrorKeys}.conflict). Its `values` has the `displayName` and `name` of
    * the argument whose `conflicts` names the other one, and the `conflictDisplayName` and
