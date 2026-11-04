@@ -913,6 +913,28 @@ describe('isArgsValidationError', () => {
     expect(validationError.cause).toBe(thrown)
   })
 
+  test('reuses a frozen ArgsValidationError with its code and values, and keeps its message', () => {
+    const thrown = Object.freeze(
+      new ArgsValidationError('Use a finite count', {
+        code: ArgsValidationErrorKeys.invalidType,
+        values: { expected: 'finite-count' }
+      })
+    )
+
+    const { error } = resolveWithThrowingParse(thrown)
+
+    expect(error?.errors.length).toBe(1)
+    const validationError = error?.errors[0] as ArgsValidationError
+    expect(validationError).toBe(thrown)
+    expect(validationError.code).toBe(ArgsValidationErrorKeys.invalidType)
+    expect(validationError.message).toBe('Use a finite count')
+    expect(validationError.values).toMatchObject({
+      expected: 'finite-count',
+      displayName: "'--count'",
+      name: 'count'
+    })
+  })
+
   test('reuses an ArgsValidationError with frozen values that need no update', () => {
     const thrown = new ArgsValidationError('Use a finite count', {
       code: ArgsValidationErrorKeys.customParse,

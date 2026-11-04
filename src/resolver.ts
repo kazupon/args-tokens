@@ -2102,7 +2102,11 @@ function augmentValidationError(
   }
 
   if (!named) {
-    error.message = `Invalid value for ${String(values.displayName)}: ${error.message}`
+    try {
+      error.message = `Invalid value for ${String(values.displayName)}: ${error.message}`
+    } catch {
+      // a frozen error keeps its message, and is still reused with its code and values
+    }
   }
 }
 
