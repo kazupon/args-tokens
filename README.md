@@ -710,7 +710,7 @@ For an `async` function, an option given without a value or with an explicit emp
 
 #### `conflicts` (optional)
 
-Specifies other options that cannot be used together with this option. When conflicting options are provided together, the error is an `ArgResolveError` with `type: 'conflict'` and the code `ArgsValidationErrorKeys.conflict`.
+Specifies other arguments that cannot be used together with this argument. When conflicting arguments are provided together, the error is an `ArgResolveError` with `type: 'conflict'` and the code `ArgsValidationErrorKeys.conflict`.
 
 Conflicts only need to be defined on one side - if option A defines a conflict with option B, the conflict is automatically detected when both are used. The names in `conflicts` are the schema keys, such as `inputFile`, not the kebab-case names of `toKebab`. The error names first the argument whose `conflicts` names the other one, or, when both name each other, the one that comes first in the schema.
 
