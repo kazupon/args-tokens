@@ -64,9 +64,7 @@ describe('resolveArgs', () => {
     const tokens = parseArgs(argv)
     const { error } = resolveArgs(args, tokens)
     expect(error?.errors.length).toBe(1)
-    expect((error?.errors[0] as Error).message).toEqual(
-      "Optional argument '--host' or '-o' is required"
-    )
+    expect((error?.errors[0] as Error).message).toEqual("Option '--host' or '-o' is required")
     expect((error?.errors[0] as ArgResolveError).name).toEqual('host')
     expect((error?.errors[0] as ArgResolveError).type).toEqual('required')
     expect((error?.errors[0] as ArgResolveError).schema.type).toEqual('string')
@@ -99,7 +97,7 @@ describe('resolveArgs', () => {
     const { error } = resolveArgs(args, tokens)
     expect(error?.errors.length).toBe(1)
     expect((error?.errors[0] as ArgResolveError).message).toEqual(
-      "Optional argument '--port' or '-p' should be 'number'"
+      "Invalid value for '--port' or '-p': expected number"
     )
     expect((error?.errors[0] as ArgResolveError).name).toEqual('port')
     expect((error?.errors[0] as ArgResolveError).type).toEqual('type')
@@ -121,12 +119,12 @@ describe('resolveArgs', () => {
     const { error } = resolveArgs(args, tokens)
     expect(error?.errors.length).toBe(2)
     expect((error?.errors[0] as Error).message).toEqual(
-      "Optional argument '--port' or '-p' should be 'number'"
+      "Invalid value for '--port' or '-p': expected number"
     )
     expect((error?.errors[0] as ArgResolveError).name).toEqual('port')
     expect((error?.errors[0] as ArgResolveError).type).toEqual('type')
     expect((error?.errors[1] as ArgResolveError).message).toEqual(
-      "Optional argument '--host' or '-o' is required"
+      "Option '--host' or '-o' is required"
     )
     expect((error?.errors[1] as ArgResolveError).name).toEqual('host')
     expect((error?.errors[1] as ArgResolveError).type).toEqual('required')
@@ -434,9 +432,7 @@ describe('hidden metadata', () => {
     )
 
     expect(error?.errors.length).toBe(1)
-    expect((error?.errors[0] as ArgResolveError).message).toEqual(
-      "Optional argument '--token' is required"
-    )
+    expect((error?.errors[0] as ArgResolveError).message).toEqual("Option '--token' is required")
     expect((error?.errors[0] as ArgResolveError).schema.hidden).toBe(true)
   })
 
@@ -458,7 +454,7 @@ describe('hidden metadata', () => {
 
     expect(error?.errors.length).toBe(1)
     expect((error?.errors[0] as ArgResolveError).message).toEqual(
-      "Optional argument '--legacy' conflicts with '--modern'"
+      "'--legacy' conflicts with '--modern'"
     )
     expect((error?.errors[0] as ArgResolveError).schema.hidden).toBe(true)
   })
@@ -484,7 +480,7 @@ describe('structured validation errors', () => {
     const validationError = error?.errors[0] as ArgsValidationError
     expect(validationError).toBeInstanceOf(ArgsValidationError)
     expect(validationError).not.toBeInstanceOf(ArgResolveError)
-    expect(validationError.message).toBe('Invalid config')
+    expect(validationError.message).toBe("Invalid value for '--config': Invalid config")
     expect(validationError.code).toBe(ArgsValidationErrorKeys.customParse)
     expect(validationError.values).toEqual({
       displayName: "'--config'",
@@ -510,7 +506,7 @@ describe('structured validation errors', () => {
     )
 
     const validationError = error?.errors[0] as ArgsValidationError
-    expect(validationError.message).toBe('Invalid config')
+    expect(validationError.message).toBe("Invalid value for '--config': Invalid config")
     expect(validationError.code).toBe(ArgsValidationErrorKeys.customParse)
     expect(validationError.values).toEqual({
       displayName: "'--config'",
@@ -572,7 +568,7 @@ describe('structured validation errors', () => {
 
     expect(error?.errors.length).toBe(1)
     const validationError = error?.errors[0] as ArgsValidationError
-    expect(validationError.message).toBe('Not a count')
+    expect(validationError.message).toBe("Invalid value for 'counts': Not a count")
     expect(validationError.code).toBe(ArgsValidationErrorKeys.customParse)
     expect(validationError.values).toEqual({
       displayName: "'counts'",
@@ -678,7 +674,7 @@ describe('isArgsValidationError', () => {
       code: ArgsValidationErrorKeys.customParse
     })
     const resolveError = new ArgResolveError(
-      "Optional argument '--foo' is required",
+      "Option '--foo' is required",
       'foo',
       'required',
       { type: 'string', required: true },
@@ -692,7 +688,7 @@ describe('isArgsValidationError', () => {
 
   test('brand is non-enumerable and immutable', () => {
     const error = new ArgResolveError(
-      "Optional argument '--foo' is required",
+      "Option '--foo' is required",
       'foo',
       'required',
       { type: 'string', required: true },
@@ -709,7 +705,7 @@ describe('isArgsValidationError', () => {
     expect(ARGS_VALIDATION_ERROR_BRAND in Object.assign({}, error)).toBe(false)
     // equality with an unbranded error that has the same shape is not affected by the brand
     expect(error).toEqual(
-      Object.assign(new Error("Optional argument '--foo' is required"), {
+      Object.assign(new Error("Option '--foo' is required"), {
         name: 'foo',
         type: 'required',
         schema: { type: 'string', required: true },
@@ -733,7 +729,7 @@ describe('isArgsValidationError', () => {
       code = ArgsValidationErrorKeys.requiredOption
       values = {}
       constructor() {
-        super("Optional argument '--foo' is required")
+        super("Option '--foo' is required")
         this.name = 'foo'
         Object.defineProperty(this, ARGS_VALIDATION_ERROR_BRAND, { value: true })
       }
@@ -898,7 +894,7 @@ describe('isArgsValidationError', () => {
     const validationError = error?.errors[0] as ArgsValidationError
     expect(validationError).not.toBe(thrown)
     expect(validationError.code).toBe(ArgsValidationErrorKeys.customParse)
-    expect(validationError.message).toBe('Use a finite count')
+    expect(validationError.message).toBe("Invalid value for '--count': Use a finite count")
     expect(validationError.cause).toBe(thrown)
   })
 
@@ -1732,7 +1728,7 @@ describe('number option without a value', () => {
     expect(resolveError.type).toBe('type')
     expect(resolveError.code).toBe(ArgsValidationErrorKeys.missingValue)
     expect(resolveError.message).toBe(
-      `Optional argument ${displayName} requires a value${hint ? ` (to pass '${hint.next}' as its value, write '${hint.suggestion}')` : ''}`
+      `Option ${displayName} requires a value${hint ? ` (to pass '${hint.next}' as its value, write '${hint.suggestion}')` : ''}`
     )
     // no `actual`: there is no value, unlike an explicit empty value (`--port=`)
     expect(resolveError.values).toStrictEqual({
@@ -1786,7 +1782,7 @@ describe('number option without a value', () => {
     const resolveError = error?.errors[0] as ArgResolveError
     expect(resolveError.name).toBe('server-port')
     expect(resolveError.code).toBe(ArgsValidationErrorKeys.missingValue)
-    expect(resolveError.message).toBe("Optional argument '--server-port' requires a value")
+    expect(resolveError.message).toBe("Option '--server-port' requires a value")
     expect(resolveError.values).toEqual({
       displayName: "'--server-port'",
       name: 'serverPort',
@@ -1940,7 +1936,7 @@ describe('enum option', () => {
     )
     expect(error?.errors.length).toBe(1)
     expect((error?.errors[0] as ArgResolveError).message).toEqual(
-      `Optional argument '--log' or '-l' should be chosen from 'enum' ["debug", "info", "warn", "error"] values`
+      `Invalid value for '--log' or '-l': expected one of "debug", "info", "warn", "error"`
     )
     expect((error?.errors[0] as ArgResolveError).name).toEqual('log')
     expect((error?.errors[0] as ArgResolveError).type).toEqual('type')
@@ -1973,9 +1969,7 @@ describe('enum option', () => {
       tokens
     )
     expect(error?.errors.length).toBe(1)
-    expect((error?.errors[0] as Error).message).toEqual(
-      "Optional argument '--log' or '-l' is required"
-    )
+    expect((error?.errors[0] as Error).message).toEqual("Option '--log' or '-l' is required")
     expect((error?.errors[0] as ArgResolveError).name).toEqual('log')
     expect((error?.errors[0] as ArgResolveError).type).toEqual('required')
     expect((error?.errors[0] as ArgResolveError).schema.type).toEqual('enum')
@@ -2037,7 +2031,7 @@ describe('enum option', () => {
     expect(error?.errors.length).toBe(1)
     const resolveError = error?.errors[0] as ArgResolveError
     expect(resolveError.code).toBe(ArgsValidationErrorKeys.missingValue)
-    expect(resolveError.message).toEqual(`Optional argument '--log' or '-l' requires a value`)
+    expect(resolveError.message).toEqual(`Option '--log' or '-l' requires a value`)
     expect(resolveError.values).toStrictEqual({
       displayName: "'--log' or '-l'",
       name: 'log',
@@ -2086,8 +2080,7 @@ describe('enum option', () => {
       const resolveError = error?.errors.at(-1) as ArgResolveError
       expect(resolveError).toBeInstanceOf(ArgResolveError)
       expect(resolveError.message).toBe(
-        `Optional argument '--level' or '-l' has the default "verbose", ` +
-          `which is not one of 'enum' ["debug", "info"] values`
+        `Invalid default for '--level' or '-l': "verbose" is not one of "debug", "info"`
       )
       expect(resolveError.values).toStrictEqual({
         displayName: "'--level' or '-l'",
@@ -2119,8 +2112,7 @@ describe('enum option', () => {
       const resolveError = error?.errors[0] as ArgResolveError
       expect(resolveError.code).toBe('err:arg:invalid-default')
       expect(resolveError.message).toBe(
-        `Optional argument '--log-level' has the default "verbose", ` +
-          `which is not one of 'enum' ["debug", "info"] values`
+        `Invalid default for '--log-level': "verbose" is not one of "debug", "info"`
       )
       expect(resolveError.values).toStrictEqual({
         displayName: "'--log-level'",
@@ -2141,10 +2133,7 @@ describe('enum option', () => {
       expect(error?.errors.length).toBe(1)
       const resolveError = error?.errors[0] as ArgResolveError
       expect(resolveError.code).toBe('err:arg:invalid-default')
-      expect(resolveError.message).toBe(
-        `Optional argument '--level' has the default 1, ` +
-          `which is not one of 'enum' ["1", "2"] values`
-      )
+      expect(resolveError.message).toBe(`Invalid default for '--level': 1 is not one of "1", "2"`)
       expect(resolveError.values.actual).toBe(1)
     })
 
@@ -2278,7 +2267,7 @@ describe('enum option with a parse function', () => {
     expect(resolveError.type).toBe('type')
     expect(resolveError.code).toBe(ArgsValidationErrorKeys.invalidChoice)
     expect(resolveError.message).toBe(
-      `Optional argument '--level' or '-l' should be chosen from 'enum' ["debug", "info"] values`
+      `Invalid value for '--level' or '-l': expected one of "debug", "info"`
     )
     expect(resolveError.values).toEqual({
       displayName: "'--level' or '-l'",
@@ -3556,7 +3545,7 @@ describe('options resolved in the order of the arguments', () => {
   test('a conflict names the form written last', () => {
     const { values, error } = resolveArgs(args, parseArgs(['-sv', '--str=x', '--other']))
     expect(error?.errors.length).toBe(1)
-    expect(error?.errors[0].message).toBe("Optional argument '--str' conflicts with '--other'")
+    expect(error?.errors[0].message).toBe("'--str' conflicts with '--other'")
     expect(values).toEqual({ str: 'x', other: true })
   })
 
@@ -4254,7 +4243,7 @@ describe('conflicts', () => {
       conflictName: 'autumn'
     })
     expect((error?.errors[0] as ArgResolveError).message).toBe(
-      "Optional argument '--summer' conflicts with '--autumn'"
+      "'--summer' conflicts with '--autumn'"
     )
   })
 
@@ -4286,7 +4275,7 @@ describe('conflicts', () => {
     expect(conflict.values).toStrictEqual({ ...values, name: 'summer', conflictName: 'autumn' })
     // the message is made from the same names
     expect(conflict.message).toBe(
-      `Optional argument ${values.displayName} conflicts with ${values.conflictDisplayName}`
+      `${values.displayName} conflicts with ${values.conflictDisplayName}`
     )
   })
 
@@ -4303,7 +4292,7 @@ describe('conflicts', () => {
       conflictDisplayName: "'--autumn'",
       conflictName: 'autumn'
     })
-    expect(conflict.message).toBe("Optional argument '--summer' conflicts with '--autumn'")
+    expect(conflict.message).toBe("'--summer' conflicts with '--autumn'")
   })
 
   test('a conflict that both options list names the first one in the schema', () => {
@@ -4320,7 +4309,7 @@ describe('conflicts', () => {
       conflictDisplayName: "'--autumn'",
       conflictName: 'autumn'
     })
-    expect(conflict.message).toBe("Optional argument '--summer' conflicts with '--autumn'")
+    expect(conflict.message).toBe("'--summer' conflicts with '--autumn'")
   })
 
   test('a conflict of kebab-case options has the schema keys as its names', () => {
@@ -4454,7 +4443,7 @@ describe('conflicts', () => {
       conflictDisplayName: "'--stdin'",
       conflictName: 'stdin'
     })
-    expect(conflict.message).toBe("Positional argument 'file' conflicts with '--stdin'")
+    expect(conflict.message).toBe("'file' conflicts with '--stdin'")
   })
 
   test('a conflict of an option with a positional argument shows the latter by its name', () => {
@@ -4470,7 +4459,7 @@ describe('conflicts', () => {
       conflictDisplayName: "'file'",
       conflictName: 'file'
     })
-    expect(conflict.message).toBe("Optional argument '--stdin' conflicts with 'file'")
+    expect(conflict.message).toBe("'--stdin' conflicts with 'file'")
   })
 
   test('a conflict of a positional argument with toKebab shows its kebab-case name', () => {
@@ -4486,7 +4475,7 @@ describe('conflicts', () => {
       conflictDisplayName: "'--stdin'",
       conflictName: 'stdin'
     })
-    expect(conflict.message).toBe("Positional argument 'input-file' conflicts with '--stdin'")
+    expect(conflict.message).toBe("'input-file' conflicts with '--stdin'")
   })
 
   test('a conflict of a multiple positional argument with a short option', () => {
@@ -4502,7 +4491,7 @@ describe('conflicts', () => {
       conflictDisplayName: "'-i'",
       conflictName: 'stdin'
     })
-    expect(conflict.message).toBe("Positional argument 'files' conflicts with '-i'")
+    expect(conflict.message).toBe("'files' conflicts with '-i'")
   })
 
   test('a conflict between positional arguments shows both by their names', () => {
@@ -4518,7 +4507,7 @@ describe('conflicts', () => {
       conflictDisplayName: "'dst'",
       conflictName: 'dst'
     })
-    expect(conflict.message).toBe("Positional argument 'src' conflicts with 'dst'")
+    expect(conflict.message).toBe("'src' conflicts with 'dst'")
   })
 
   test('a conflict of positional arguments with toKebab shows both kebab-case names', () => {
@@ -4534,7 +4523,7 @@ describe('conflicts', () => {
       conflictDisplayName: "'dst-dir'",
       conflictName: 'dstDir'
     })
-    expect(conflict.message).toBe("Positional argument 'src-dir' conflicts with 'dst-dir'")
+    expect(conflict.message).toBe("'src-dir' conflicts with 'dst-dir'")
   })
 
   test('a conflict and a parse error of a positional argument show the same name', () => {
@@ -4587,7 +4576,7 @@ describe('conflicts', () => {
     expect(error).toBeDefined()
     expect(error?.errors.length).toBe(1)
     expect((error?.errors[0] as ArgResolveError).message).toBe(
-      "Optional argument '--summer' conflicts with '--autumn'"
+      "'--summer' conflicts with '--autumn'"
     )
   })
 
@@ -4618,7 +4607,7 @@ describe('conflicts', () => {
     expect(error).toBeDefined()
     expect(error?.errors.length).toBe(1)
     expect((error?.errors[0] as ArgResolveError).message).toBe(
-      "Optional argument '--summer' conflicts with '--winter'"
+      "'--summer' conflicts with '--winter'"
     )
   })
 
@@ -4642,7 +4631,7 @@ describe('conflicts', () => {
     expect(error).toBeDefined()
     expect(error?.errors.length).toBe(1)
     expect((error?.errors[0] as ArgResolveError).message).toBe(
-      "Optional argument '--transport' conflicts with '--socket'"
+      "'--transport' conflicts with '--socket'"
     )
   })
 
@@ -4668,7 +4657,7 @@ describe('conflicts', () => {
     expect(error).toBeDefined()
     expect(error?.errors.length).toBe(1)
     expect((error?.errors[0] as ArgResolveError).message).toBe(
-      "Optional argument '--summer' conflicts with '--autumn'"
+      "'--summer' conflicts with '--autumn'"
     )
   })
 
@@ -4694,9 +4683,7 @@ describe('conflicts', () => {
 
     expect(error).toBeDefined()
     expect(error?.errors.length).toBe(1)
-    expect((error?.errors[0] as ArgResolveError).message).toBe(
-      "Optional argument '--a' conflicts with '--b'"
-    )
+    expect((error?.errors[0] as ArgResolveError).message).toBe("'--a' conflicts with '--b'")
   })
 
   test('detects conflict with short option aliases', () => {
@@ -4719,9 +4706,7 @@ describe('conflicts', () => {
 
     expect(error).toBeDefined()
     expect(error?.errors.length).toBe(1)
-    expect((error?.errors[0] as ArgResolveError).message).toBe(
-      "Optional argument '-s' conflicts with '-a'"
-    )
+    expect((error?.errors[0] as ArgResolveError).message).toBe("'-s' conflicts with '-a'")
   })
 
   test('error message reflects actual input forms (long vs short)', () => {
@@ -4744,9 +4729,7 @@ describe('conflicts', () => {
 
     expect(error).toBeDefined()
     expect(error?.errors.length).toBe(1)
-    expect((error?.errors[0] as ArgResolveError).message).toBe(
-      "Optional argument '--summer' conflicts with '-a'"
-    )
+    expect((error?.errors[0] as ArgResolveError).message).toBe("'--summer' conflicts with '-a'")
   })
 
   test('detects conflict and shows kebab-case names in error message', () => {
@@ -4769,7 +4752,7 @@ describe('conflicts', () => {
 
     expect(error).toBeDefined()
     expect((error?.errors[0] as ArgResolveError).message).toBe(
-      "Optional argument '--summer-season' conflicts with '--autumn-season'"
+      "'--summer-season' conflicts with '--autumn-season'"
     )
   })
 
@@ -4793,7 +4776,7 @@ describe('conflicts', () => {
     expect(error).toBeDefined()
     expect(error?.errors.length).toBe(1)
     expect((error?.errors[0] as ArgResolveError).message).toBe(
-      "Optional argument '--no-color' conflicts with '--format'"
+      "'--no-color' conflicts with '--format'"
     )
   })
 
@@ -4963,7 +4946,7 @@ describe('boolean inline value', () => {
       expect(resolveError.name).toBe('color')
       expect(resolveError.type).toBe('type')
       expect(resolveError.code).toBe('err:arg:unexpected-value')
-      expect(resolveError.message).toBe("Optional argument '--no-color' does not take a value")
+      expect(resolveError.message).toBe("Option '--no-color' does not take a value")
       expect(resolveError.values).toEqual({
         displayName: "'--no-color'",
         name: 'color',
@@ -5240,7 +5223,7 @@ describe('option given without a value', () => {
   ])('$label reports a missing value', ({ schema, values }) => {
     const result = resolveArgs({ x: schema as ArgSchema }, parseArgs(['--x']))
     expectMissingValueError(result.error, values)
-    expect(result.error?.errors[0].message).toBe("Optional argument '--x' requires a value")
+    expect(result.error?.errors[0].message).toBe("Option '--x' requires a value")
     expect(result.values.x).toBeUndefined()
     expect(result.explicit.x).toBe(true)
   })
@@ -5304,7 +5287,7 @@ describe('option given without a value', () => {
       name: 'x',
       expected: 'string'
     })
-    expect(result.error?.errors[0].message).toBe("Optional argument '--x' or '-x' requires a value")
+    expect(result.error?.errors[0].message).toBe("Option '--x' or '-x' requires a value")
     expect(result.values.x).toBeUndefined()
     expect(result.values.verbose).toBe(verbose)
     expect(result.rest).toEqual(rest)
@@ -5333,7 +5316,7 @@ describe('option given without a value', () => {
     ])
     expect((error?.errors[0] as ArgResolveError).code).toBe(ArgsValidationErrorKeys.missingValue)
     // the conflict names the option the way it was given
-    expect(error?.errors[1].message).toBe("Optional argument '-a' conflicts with '--b'")
+    expect(error?.errors[1].message).toBe("'-a' conflicts with '--b'")
   })
 
   test('an explicit empty value is not a missing value', () => {
@@ -5399,7 +5382,7 @@ describe('option given without a value', () => {
       ArgsValidationErrorKeys.requiredOption,
       ArgsValidationErrorKeys.conflict
     ])
-    expect(error?.errors[1].message).toBe("Optional argument '--anon' conflicts with '-n'")
+    expect(error?.errors[1].message).toBe("'--anon' conflicts with '-n'")
     expect((error?.errors[1] as ArgResolveError).values).toStrictEqual({
       displayName: "'--anon'",
       name: 'anon',
@@ -5421,7 +5404,7 @@ describe('option given without a value', () => {
       ArgsValidationErrorKeys.requiredOption,
       ArgsValidationErrorKeys.conflict
     ])
-    expect(error?.errors[1].message).toBe("Optional argument '-n' conflicts with '--anon'")
+    expect(error?.errors[1].message).toBe("'-n' conflicts with '--anon'")
   })
 
   test('a required option given an empty value can take the place of a later conflict', () => {
@@ -5438,7 +5421,7 @@ describe('option given without a value', () => {
       ArgsValidationErrorKeys.requiredOption,
       ArgsValidationErrorKeys.conflict
     ])
-    expect(error?.errors[1].message).toBe("Optional argument '--name' conflicts with '--quiet'")
+    expect(error?.errors[1].message).toBe("'--name' conflicts with '--quiet'")
   })
 
   const booleanArgs = {
@@ -5552,7 +5535,7 @@ describe('option given without a value followed by an argument starting with -',
     const result = resolveArgs(args, parseArgs(argv), options)
     expectMissingValueError(result.error, { ...values, next, suggestion })
     expect(result.error?.errors[0].message).toBe(
-      `Optional argument ${values.displayName} requires a value (to pass '${next}' as its value, write '${suggestion}')`
+      `Option ${values.displayName} requires a value (to pass '${next}' as its value, write '${suggestion}')`
     )
     expect(result.values).not.toHaveProperty(values.name)
   })
@@ -5604,9 +5587,7 @@ describe('option given without a value followed by an argument starting with -',
   ])('$label suggests nothing', ({ argv, options, values }) => {
     const result = resolveArgs(args, parseArgs(argv), options)
     expectMissingValueError(result.error, values)
-    expect(result.error?.errors[0].message).toBe(
-      `Optional argument ${values.displayName} requires a value`
-    )
+    expect(result.error?.errors[0].message).toBe(`Option ${values.displayName} requires a value`)
     expect(result.values).not.toHaveProperty(values.name)
   })
 
@@ -5688,7 +5669,7 @@ describe('option given without a value followed by an argument starting with -',
       suggestion: '--name=-x'
     })
     expect(result.error?.errors[0].message).toBe(
-      "Optional argument '--name' requires a value (to pass '-x' as its value, write '--name=-x')"
+      "Option '--name' requires a value (to pass '-x' as its value, write '--name=-x')"
     )
     expect(result.explicit.name).toBe(true)
   })
@@ -5730,7 +5711,7 @@ describe('option given without a value followed by an argument starting with -',
       choices: '"debug", "info"',
       choiceValues: ['debug', 'info']
     })
-    expect(result.error?.errors[0].message).toBe("Optional argument '--level' requires a value")
+    expect(result.error?.errors[0].message).toBe("Option '--level' requires a value")
     expect(result.values.level).toBeUndefined()
   })
 
@@ -5749,7 +5730,7 @@ describe('option given without a value followed by an argument starting with -',
       suggestion: '--level=-1'
     })
     expect(result.error?.errors[0].message).toBe(
-      "Optional argument '--level' requires a value (to pass '-1' as its value, write '--level=-1')"
+      "Option '--level' requires a value (to pass '-1' as its value, write '--level=-1')"
     )
   })
 
@@ -5765,7 +5746,7 @@ describe('option given without a value followed by an argument starting with -',
       choices: '',
       choiceValues: []
     })
-    expect(result.error?.errors[0].message).toBe("Optional argument '--level' requires a value")
+    expect(result.error?.errors[0].message).toBe("Option '--level' requires a value")
   })
 
   test('choices of an option that is not an enum do not limit the suggestion', () => {
@@ -5781,7 +5762,7 @@ describe('option given without a value followed by an argument starting with -',
       suggestion: '--name=-x'
     })
     expect(result.error?.errors[0].message).toBe(
-      "Optional argument '--name' requires a value (to pass '-x' as its value, write '--name=-x')"
+      "Option '--name' requires a value (to pass '-x' as its value, write '--name=-x')"
     )
   })
 
@@ -5793,7 +5774,7 @@ describe('option given without a value followed by an argument starting with -',
       parseArgs(['--x', '-x'])
     )
     expectMissingValueError(result.error, { displayName: "'--x'", name: 'x', expected: 'number' })
-    expect(result.error?.errors[0].message).toBe("Optional argument '--x' requires a value")
+    expect(result.error?.errors[0].message).toBe("Option '--x' requires a value")
     expect(result.values.x).toBeUndefined()
   })
 
@@ -5810,7 +5791,7 @@ describe('option given without a value followed by an argument starting with -',
       suggestion: '--x=-5'
     })
     expect(result.error?.errors[0].message).toBe(
-      "Optional argument '--x' requires a value (to pass '-5' as its value, write '--x=-5')"
+      "Option '--x' requires a value (to pass '-5' as its value, write '--x=-5')"
     )
   })
 
@@ -5831,7 +5812,7 @@ describe('option given without a value followed by an argument starting with -',
     // a parse function of its own may have side effects: it is not called to check the value, and
     // without the check there is no suggestion
     expectMissingValueError(result.error, { displayName: "'--x'", name: 'x', expected: 'custom' })
-    expect(result.error?.errors[0].message).toBe("Optional argument '--x' requires a value")
+    expect(result.error?.errors[0].message).toBe("Option '--x' requires a value")
     expect(received).toEqual([])
   })
 
@@ -5908,7 +5889,7 @@ describe('option given without a value followed by an argument starting with -',
       name: 'name',
       expected: 'string'
     })
-    expect(result.error?.errors[0].message).toBe("Optional argument '--name' requires a value")
+    expect(result.error?.errors[0].message).toBe("Option '--name' requires a value")
     expect(received).toEqual([])
   })
 
@@ -5924,7 +5905,7 @@ describe('option given without a value followed by an argument starting with -',
       choices: '',
       choiceValues: []
     })
-    expect(result.error?.errors[0].message).toBe("Optional argument '--mode' requires a value")
+    expect(result.error?.errors[0].message).toBe("Option '--mode' requires a value")
   })
 
   test('a parse function marked as free of side effects is called to check the value', () => {
@@ -5943,7 +5924,7 @@ describe('option given without a value followed by an argument starting with -',
     )
     const rejected = resolveArgs({ x: { type: 'custom', parse } }, parseArgs(['--x', '-x']))
     expectMissingValueError(rejected.error, { displayName: "'--x'", name: 'x', expected: 'custom' })
-    expect(rejected.error?.errors[0].message).toBe("Optional argument '--x' requires a value")
+    expect(rejected.error?.errors[0].message).toBe("Option '--x' requires a value")
     const accepted = resolveArgs({ x: { type: 'custom', parse } }, parseArgs(['--x', '-5']))
     expectMissingValueError(accepted.error, {
       displayName: "'--x'",
@@ -5978,7 +5959,7 @@ describe('option given without a value followed by an argument starting with -',
     // reading a property of a revoked proxy throws, and `resolveArgs()` does not throw
     const result = resolveArgs({ x: { type: 'custom', parse: proxy } }, parseArgs(['--x', '-y']))
     expectMissingValueError(result.error, { displayName: "'--x'", name: 'x', expected: 'custom' })
-    expect(result.error?.errors[0].message).toBe("Optional argument '--x' requires a value")
+    expect(result.error?.errors[0].message).toBe("Option '--x' requires a value")
   })
 
   test('the suggested value of an enum passes as one of its choices', () => {
@@ -6156,7 +6137,7 @@ describe('long option with an empty name', () => {
       const suggestion = `--def=${next}`
       expectMissingValueError(error, { ...def, next, suggestion })
       expect(error?.errors[0].message).toBe(
-        `Optional argument '--def' or '-d' requires a value (to pass '${next}' as its value, write '${suggestion}')`
+        `Option '--def' or '-d' requires a value (to pass '${next}' as its value, write '${suggestion}')`
       )
       expect(values).toEqual({})
     }
@@ -6182,19 +6163,19 @@ describe('option with a parse function given without a value', () => {
     {
       label: 'string',
       schema: { type: 'string', parse: (value: string) => value.toUpperCase() },
-      message: "Optional argument '--x' requires a value",
+      message: "Option '--x' requires a value",
       values: { displayName: "'--x'", name: 'x', expected: 'string' }
     },
     {
       label: 'number',
       schema: { type: 'number', parse: (value: string) => Number(value) },
-      message: "Optional argument '--x' requires a value",
+      message: "Option '--x' requires a value",
       values: { displayName: "'--x'", name: 'x', expected: 'number' }
     },
     {
       label: 'enum',
       schema: { type: 'enum', choices: ['a', 'b'], parse: (value: string) => value },
-      message: "Optional argument '--x' requires a value",
+      message: "Option '--x' requires a value",
       values: {
         displayName: "'--x'",
         name: 'x',
@@ -6206,19 +6187,19 @@ describe('option with a parse function given without a value', () => {
     {
       label: 'custom (split)',
       schema: { type: 'custom', parse: (value: string) => value.split(',') },
-      message: "Optional argument '--x' requires a value",
+      message: "Option '--x' requires a value",
       values: { displayName: "'--x'", name: 'x', expected: 'custom' }
     },
     {
       label: 'custom (JSON.parse)',
       schema: { type: 'custom', parse: (value: string) => JSON.parse(value) as unknown },
-      message: "Optional argument '--x' requires a value",
+      message: "Option '--x' requires a value",
       values: { displayName: "'--x'", name: 'x', expected: 'custom' }
     },
     {
       label: 'custom with a metavar',
       schema: { type: 'custom', metavar: 'date', parse: (value: string) => new Date(value) },
-      message: "Optional argument '--x' requires a value",
+      message: "Option '--x' requires a value",
       values: { displayName: "'--x'", name: 'x', expected: 'date' }
     }
   ])('$label reports the missing value', ({ schema, message, values }) => {
@@ -6368,7 +6349,7 @@ describe('option with a parse function given without a value', () => {
         parseArgs(['--x'])
       )
       expectMissingValueError(error, { displayName: "'--x'", name: 'x', expected: type })
-      expect(error?.errors[0].message).toBe("Optional argument '--x' requires a value")
+      expect(error?.errors[0].message).toBe("Option '--x' requires a value")
     }
   )
 
@@ -6530,7 +6511,7 @@ describe('schema.parse priority', () => {
       tokens
     )
     expect(error?.errors.length).toBe(1)
-    expect((error?.errors[0] as Error).message).toBe('Expected integer')
+    expect((error?.errors[0] as Error).message).toBe("Invalid value for 'count': Expected integer")
   })
 
   test('a parse function that returns a promise gives the promise as the value', async () => {

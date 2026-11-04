@@ -52,7 +52,7 @@ describe('string combinator', () => {
       suggestion: '--name=-x'
     })
     expect(validationError.message).toBe(
-      "Optional argument '--name' requires a value (to pass '-x' as its value, write '--name=-x')"
+      "Option '--name' requires a value (to pass '-x' as its value, write '--name=-x')"
     )
   })
 
@@ -82,7 +82,7 @@ describe('string combinator', () => {
       name: 'slug',
       expected: 'string'
     })
-    expect(validationError.message).toBe("Optional argument '--slug' requires a value")
+    expect(validationError.message).toBe("Option '--slug' requires a value")
     expect(values.slug).toBeUndefined()
   })
 
@@ -206,7 +206,7 @@ describe('number combinator', () => {
       name: 'port',
       expected: 'number'
     })
-    expect(validationError.message).toBe("Optional argument '--port' requires a value")
+    expect(validationError.message).toBe("Option '--port' requires a value")
     expect(values.port).toBeUndefined()
   })
 
@@ -220,7 +220,7 @@ describe('number combinator', () => {
       name: 'port',
       expected: 'number'
     })
-    expect(validationError.message).toBe("Optional argument '--port' requires a value")
+    expect(validationError.message).toBe("Option '--port' requires a value")
   })
 
   test('option followed by a negative number', () => {
@@ -235,7 +235,7 @@ describe('number combinator', () => {
       suggestion: '--port=-5'
     })
     expect(validationError.message).toBe(
-      "Optional argument '--port' requires a value (to pass '-5' as its value, write '--port=-5')"
+      "Option '--port' requires a value (to pass '-5' as its value, write '--port=-5')"
     )
   })
 
@@ -325,7 +325,7 @@ describe('integer combinator', () => {
     expect(error!.errors.length).toBe(1)
     const validationError = error!.errors[0] as ArgsValidationError
     expect(validationError.code).toBe(ArgsValidationErrorKeys.missingValue)
-    expect(validationError.message).toBe("Optional argument '--port' requires a value")
+    expect(validationError.message).toBe("Option '--port' requires a value")
     expect(validationError.values).toEqual({
       displayName: "'--port'",
       name: 'port',
@@ -347,7 +347,7 @@ describe('integer combinator', () => {
       suggestion: '--port=-5'
     })
     expect(validationError.message).toBe(
-      "Optional argument '--port' requires a value (to pass '-5' as its value, write '--port=-5')"
+      "Option '--port' requires a value (to pass '-5' as its value, write '--port=-5')"
     )
   })
 
@@ -362,7 +362,7 @@ describe('integer combinator', () => {
       name: 'port',
       expected: 'integer'
     })
-    expect(validationError.message).toBe("Optional argument '--port' requires a value")
+    expect(validationError.message).toBe("Option '--port' requires a value")
     expect(values.port).toBeUndefined()
   })
 
@@ -375,7 +375,7 @@ describe('integer combinator', () => {
       name: 'port',
       expected: 'integer'
     })
-    expect(validationError.message).toBe("Optional argument '--port' requires a value")
+    expect(validationError.message).toBe("Option '--port' requires a value")
   })
 
   test('option followed by a negative integer outside its range', () => {
@@ -391,7 +391,7 @@ describe('integer combinator', () => {
       name: 'port',
       expected: 'integer'
     })
-    expect(validationError.message).toBe("Optional argument '--port' requires a value")
+    expect(validationError.message).toBe("Option '--port' requires a value")
   })
 
   test('basic', () => {
@@ -460,7 +460,7 @@ describe('float combinator', () => {
     expect(error!.errors.length).toBe(1)
     const validationError = error!.errors[0] as ArgsValidationError
     expect(validationError.code).toBe(ArgsValidationErrorKeys.missingValue)
-    expect(validationError.message).toBe("Optional argument '--ratio' requires a value")
+    expect(validationError.message).toBe("Option '--ratio' requires a value")
     expect(validationError.values).toEqual({
       displayName: "'--ratio'",
       name: 'ratio',
@@ -493,7 +493,7 @@ describe('float combinator', () => {
       name: 'ratio',
       expected: 'float'
     })
-    expect(validationError.message).toBe("Optional argument '--ratio' requires a value")
+    expect(validationError.message).toBe("Option '--ratio' requires a value")
     expect(values.ratio).toBeUndefined()
   })
 
@@ -816,7 +816,7 @@ describe('choice combinator', () => {
       choices: '"a", "b"',
       choiceValues: ['a', 'b']
     })
-    expect(validationError.message).toBe("Optional argument '--level' requires a value")
+    expect(validationError.message).toBe("Option '--level' requires a value")
     expect(values.level).toBeUndefined()
   })
 
@@ -834,7 +834,7 @@ describe('choice combinator', () => {
       suggestion: '--level=-1'
     })
     expect(validationError.message).toBe(
-      "Optional argument '--level' requires a value (to pass '-1' as its value, write '--level=-1')"
+      "Option '--level' requires a value (to pass '-1' as its value, write '--level=-1')"
     )
   })
 
@@ -859,7 +859,7 @@ describe('choice combinator', () => {
     // `choices` is checked before `parse`, so the error is the one of an enum option
     expect(error!.errors[0]).toBeInstanceOf(ArgResolveError)
     expect((error!.errors[0] as Error).message).toBe(
-      `Optional argument '--level' should be chosen from 'enum' ["debug", "info", "warn", "error"] values`
+      `Invalid value for '--level': expected one of "debug", "info", "warn", "error"`
     )
     expect((error!.errors[0] as ArgsValidationError).code).toBe(
       ArgsValidationErrorKeys.invalidChoice
@@ -881,7 +881,9 @@ describe('choice combinator', () => {
     )
     // a positional argument has no choices to check, so the error comes from `choice()` itself
     expect(error!.errors[0]).not.toBeInstanceOf(ArgResolveError)
-    expect((error!.errors[0] as Error).message).toBe('Value must be one of: debug, info')
+    expect((error!.errors[0] as Error).message).toBe(
+      "Invalid value for 'level': Value must be one of: debug, info"
+    )
     expect((error!.errors[0] as ArgsValidationError).code).toBe(
       ArgsValidationErrorKeys.invalidChoice
     )
@@ -949,7 +951,7 @@ describe('custom combinator', () => {
       name: 'x',
       expected: 'custom'
     })
-    expect(validationError.message).toBe("Optional argument '--x' requires a value")
+    expect(validationError.message).toBe("Option '--x' requires a value")
     expect(received).toEqual([])
   })
 
@@ -1097,7 +1099,7 @@ describe('map combinator', () => {
       name: 'count',
       expected: 'integer'
     })
-    expect(validationError.message).toBe("Optional argument '--count' requires a value")
+    expect(validationError.message).toBe("Option '--count' requires a value")
     expect(received).toEqual([])
   })
 

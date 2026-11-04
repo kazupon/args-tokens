@@ -388,9 +388,8 @@ export interface ArgSchema {
    *
    * A positional argument can be on either side, such as `[file]` and `--stdin`. It conflicts when
    * it is given, and it is shown by its name, such as `'file'` (in kebab-case with `toKebab`), as
-   * in its other errors. The message starts with the kind of the argument given as `name`:
-   * `Positional argument 'file' conflicts with '--stdin'` or
-   * `Optional argument '--stdin' conflicts with 'file'`.
+   * in its other errors. The message names the argument given as `name` first:
+   * `'file' conflicts with '--stdin'` or `'--stdin' conflicts with 'file'`.
    *
    * Conflicts only need to be defined on one side - if option A defines a conflict
    * with option B, the conflict is automatically detected when both are used,
@@ -429,7 +428,7 @@ export interface ArgSchema {
    *   }
    * }
    * // Usage: --summer --autumn reports an error
-   * // Error: "Optional argument '--summer' conflicts with '--autumn'"
+   * // Error: "'--summer' conflicts with '--autumn'"
    * ```
    *
    * @example
@@ -469,7 +468,7 @@ export interface ArgSchema {
    *     toKebab: true  // Accessible as --autumn-season
    *   }
    * }
-   * // Error: "Optional argument '--summer-season' conflicts with '--autumn-season'"
+   * // Error: "'--summer-season' conflicts with '--autumn-season'"
    * ```
    */
   conflicts?: string | string[]
@@ -1528,7 +1527,7 @@ function createRequireError(rawArg: string, option: string, schema: ArgSchema): 
   const message =
     schema.type === 'positional'
       ? `Positional argument '${option}' is required`
-      : `Optional argument ${createOptionDisplayName(option, schema)} is required`
+      : `Option ${createOptionDisplayName(option, schema)} is required`
   return new ArgResolveError(message, option, 'required', schema, {
     code:
       schema.type === 'positional'
@@ -1725,7 +1724,7 @@ function createTypeError(
   expected: string = schema.type
 ): ArgResolveError {
   return new ArgResolveError(
-    `Optional argument ${createOptionDisplayName(option, schema)} should be '${expected}'`,
+    `Invalid value for ${createOptionDisplayName(option, schema)}: expected ${expected}`,
     option,
     'type',
     schema,
@@ -1769,7 +1768,7 @@ function createMissingValueError(
     suggestion === undefined ? '' : ` (to pass '${next}' as its value, write '${suggestion}')`
   const choices = schema.choices ?? []
   return new ArgResolveError(
-    `Optional argument ${displayName} requires a value${hint}`,
+    `Option ${displayName} requires a value${hint}`,
     option,
     'type',
     schema,
@@ -1937,7 +1936,7 @@ function createUnexpectedValueError(
   const rawName = token.rawName!
   const displayName = `'${rawName}'`
   return new ArgResolveError(
-    `Optional argument ${displayName} does not take a value`,
+    `Option ${displayName} does not take a value`,
     option,
     'type',
     schema,
@@ -1961,7 +1960,7 @@ function createChoiceError(
 ): ArgResolveError {
   const choices = schema.choices ?? []
   return new ArgResolveError(
-    `Optional argument ${createOptionDisplayName(option, schema)} should be chosen from '${schema.type}' [${formatChoices(choices)}] values`,
+    `Invalid value for ${createOptionDisplayName(option, schema)}: expected one of ${formatChoices(choices)}`,
     option,
     'type',
     schema,
@@ -2001,8 +2000,7 @@ function createDefaultChoiceError(
   const actual =
     typeof schema.default === 'string' ? JSON.stringify(schema.default) : String(schema.default)
   return new ArgResolveError(
-    `Optional argument ${displayName} has the default ${actual}, ` +
-      `which is not one of '${schema.type}' [${formatChoices(choices)}] values`,
+    `Invalid default for ${displayName}: ${actual} is not one of ${formatChoices(choices)}`,
     option,
     'type',
     schema,
@@ -2033,10 +2031,11 @@ function createCustomParseError(
   }
 
   const reason = getErrorReason(error)
-  return new ArgsValidationError(reason, {
+  const displayName = createArgumentDisplayName(option, schema)
+  return new ArgsValidationError(`Invalid value for ${displayName}: ${reason}`, {
     code: ArgsValidationErrorKeys.customParse,
     values: {
-      displayName: createArgumentDisplayName(option, schema),
+      displayName,
       name: rawArg,
       reason
     },
@@ -2046,6 +2045,11 @@ function createCustomParseError(
 
 /**
  * Reuse an {@link ArgsValidationError} thrown from a custom `parse` function, filling in missing values.
+ *
+ * An error with no `displayName` in its `values`, such as one thrown by the combinators, gets the
+ * argument before its message, as a custom parse error does:
+ * `Invalid value for '--port': Expected an integer, got 'abc'`. An error that names its argument keeps
+ * its message.
  *
  * @param error - The value thrown from `parse`
  * @param rawArg - The argument key in the schema
@@ -2082,6 +2086,10 @@ function augmentValidationError(
   value: string
 ): void {
   const values = error.values
+  // An error that does not name its argument, such as one of the combinators, has a message that
+  // only speaks of the value (`Expected an integer, got 'abc'`). It gets the argument before its
+  // message, as a custom parse error does. An error that names its argument keeps its own message.
+  const named = values.displayName != null
   values.name ??= rawArg
   values.displayName ??= createArgumentDisplayName(option, schema)
 
@@ -2091,6 +2099,10 @@ function augmentValidationError(
     values.actual == null
   ) {
     values.actual = value
+  }
+
+  if (!named) {
+    error.message = `Invalid value for ${String(values.displayName)}: ${error.message}`
   }
 }
 
@@ -2110,8 +2122,8 @@ function createOptionDisplayName(option: string, schema: ArgSchema): string {
  * Create the error for two arguments that conflict.
  *
  * An option is shown as it was written, such as `'-p'` or `'--no-color'`, and a positional argument
- * by its name, such as `'file'`, as in the message. The message starts with "Positional argument"
- * when `schema` is a positional argument, and with "Optional argument" otherwise.
+ * by its name, such as `'file'`, as in the message. The message names first the argument whose
+ * `conflicts` names the other one.
  *
  * @param rawArg - The argument key of the argument whose `conflicts` names the other one
  * @param option - The name of that argument used on the command line
@@ -2132,9 +2144,8 @@ function createConflictError(
 ): ArgResolveError {
   const displayName = `'${actualName}'`
   const conflictDisplayName = `'${conflictingActualName}'`
-  const kind = schema.type === 'positional' ? 'Positional' : 'Optional'
   return new ArgResolveError(
-    `${kind} argument ${displayName} conflicts with ${conflictDisplayName}`,
+    `${displayName} conflicts with ${conflictDisplayName}`,
     option,
     'conflict',
     schema,
