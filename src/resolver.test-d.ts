@@ -240,6 +240,37 @@ test('ArgSchema hidden metadata', () => {
   }>()
 })
 
+test('ArgSchema deprecated metadata', () => {
+  const withText = {
+    type: 'string',
+    deprecated: 'Use --output.'
+  } satisfies ArgSchema
+
+  const withTrue = {
+    type: 'boolean',
+    deprecated: true
+  } satisfies ArgSchema
+
+  expectTypeOf<ExtractOptionValue<typeof withText>>().toEqualTypeOf<string>()
+  expectTypeOf<ExtractOptionValue<typeof withTrue>>().toEqualTypeOf<boolean>()
+
+  type DeprecatedArgs = {
+    format: {
+      type: 'string'
+      deprecated: 'Use --output.'
+    }
+    target: {
+      type: 'positional'
+      deprecated: true
+    }
+  }
+
+  expectTypeOf<ArgValues<DeprecatedArgs>>().toEqualTypeOf<{
+    format?: string
+    target: string
+  }>()
+})
+
 test('FilterArgs', () => {
   expectTypeOf<
     FilterArgs<

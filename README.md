@@ -503,6 +503,25 @@ Hides the argument from generated help or usage output. This is renderer metadat
 }
 ```
 
+#### `deprecated` (optional)
+
+Marks the argument as deprecated: `true`, or a text that tells what to use instead. Like `hidden`, this is metadata for the tools that read the schema, such as a CLI framework that warns when the argument is given and leaves it out of the help; parsing, validation, required checks, defaults, conflicts, and resolved values are unchanged. `false`, like leaving it out, means that the argument is not deprecated.
+
+<!-- eslint-skip -->
+
+```js
+{
+  output: {
+    type: 'string',
+    description: 'Output format'
+  },
+  format: {
+    type: 'string',
+    deprecated: 'Use --output.'
+  }
+}
+```
+
 #### `metavar` (optional)
 
 Display name hint for the value of the argument in help text, such as `integer` in `--port <integer>`. Particularly useful for `type: 'custom'` arguments, where the type name would otherwise be unhelpful. For a `custom` option that is given without a value, it is also the `expected` in the `values` of the `ArgsValidationErrorKeys.missingValue` error, which is `'custom'` without it.
@@ -831,6 +850,7 @@ A literal `required: true` or `required: false` in the options is kept in the ty
 - `describe(schema, text)` — Set a human-readable description for help text generation
 - `short(schema, alias)` — Set a single-character short alias (e.g., `-v` for `--verbose`)
 - `hidden(schema)` — Hide from generated help or usage output
+- `deprecated(schema, message?)` — Mark as deprecated, with the text that tells what to use instead
 - `required(schema)` — Mark as required (error if not provided)
 - `unrequired(schema)` — Mark as not required (override `required: true`, or make a positional optional)
 - `withDefault(schema, defaultValue)` — Set a default value of the schema's type, which must be a string, number or boolean

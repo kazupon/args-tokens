@@ -4,6 +4,7 @@ import {
   boolean,
   choice,
   combinator,
+  deprecated,
   describe as describeCombinator,
   extend,
   float,
@@ -723,8 +724,11 @@ describe('positional combinator', () => {
   })
 
   test('copies only the properties that its type keeps', () => {
-    const schema = positional(describeCombinator(short(hidden(multiple(integer())), 'p'), 'IDs'))
+    const schema = positional(
+      describeCombinator(short(hidden(deprecated(multiple(integer()))), 'p'), 'IDs')
+    )
     expect(Object.keys(schema).sort()).toEqual([
+      'deprecated',
       'description',
       'hidden',
       'metavar',
@@ -1056,6 +1060,35 @@ describe('custom combinator', () => {
     const withDef = withDefault(base, 0)
     expect((base as ArgSchema).default).toBeUndefined()
     expect(withDef.default).toBe(0)
+  })
+})
+
+describe('deprecated combinator', () => {
+  test('sets deprecated to true, or to the text that tells what to use instead', () => {
+    expect(deprecated(string()).deprecated).toBe(true)
+    expect(deprecated(string(), 'Use --output.').deprecated).toBe('Use --output.')
+  })
+
+  test('does not modify the schema, and keeps what the other modifiers set', () => {
+    const base = short(describeCombinator(string(), 'Format'), 'f')
+    const schema = deprecated(base, 'Use --output.')
+    expect(base).not.toHaveProperty('deprecated')
+    expect(schema).toMatchObject({
+      type: 'string',
+      description: 'Format',
+      short: 'f',
+      deprecated: 'Use --output.'
+    })
+  })
+
+  test('resolves the value as the schema does', () => {
+    const { values, explicit, error } = resolveArgs(
+      { format: deprecated(string(), 'Use --output.') },
+      parseArgs(['--format', 'json'])
+    )
+    expect(error).toBeUndefined()
+    expect(values.format).toBe('json')
+    expect(explicit.format).toBe(true)
   })
 })
 

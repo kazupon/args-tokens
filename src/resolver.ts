@@ -19,7 +19,7 @@ import type { ArgToken } from './parser.ts'
  * An argument schema definition for command-line argument parsing.
  *
  * This schema is similar to the schema of Node.js `util.parseArgs` but with extended features:
- * - Additional `required`, `description`, and `hidden` properties
+ * - Additional `required`, `description`, `hidden`, and `deprecated` properties
  * - Extended `type` support: 'string', 'boolean', 'number', 'enum', 'positional', 'custom'
  * - Simplified `default` property (single type, not union types)
  *
@@ -149,6 +149,32 @@ export interface ArgSchema {
    * ```
    */
   hidden?: boolean
+  /**
+   * Mark the argument as deprecated: `true`, or a text that tells what to use instead, such as
+   * `'Use --output.'`.
+   *
+   * Like {@link ArgSchema.hidden}, this is metadata for the tools that read the schema, such as a CLI
+   * framework that warns when a deprecated argument is given and leaves it out of the help. It does
+   * not affect parsing, validation, required checks, defaults, conflicts, or resolved values: a
+   * deprecated argument still works. `false`, like leaving it out, means that the argument is not
+   * deprecated.
+   *
+   * @example
+   * The old name of an option, kept while the scripts that use it move to the new one:
+   * ```ts
+   * {
+   *   output: {
+   *     type: 'string',
+   *     description: 'Output format'
+   *   },
+   *   format: {
+   *     type: 'string',
+   *     deprecated: 'Use --output.'
+   *   }
+   * }
+   * ```
+   */
+  deprecated?: boolean | string
   /**
    * Marks the argument as required.
    *
