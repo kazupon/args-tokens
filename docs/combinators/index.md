@@ -45,27 +45,28 @@ const { values } = resolveArgs(schema, tokens)
 
 ## Functions
 
-| Function                                                  | Description                                                                 |
-| --------------------------------------------------------- | --------------------------------------------------------------------------- |
-| [args](/docs/combinators/functions/args.md)               | Type-safe schema factory.                                                   |
-| [boolean](/docs/combinators/functions/boolean.md)         | Create a boolean argument schema.                                           |
-| [choice](/docs/combinators/functions/choice.md)           | Create an enum-like argument schema with literal type inference.            |
-| [combinator](/docs/combinators/functions/combinator.md)   | Create a custom argument schema with a user-defined parse function.         |
-| [describe](/docs/combinators/functions/describe.md)       | Set a description on a combinator schema for help text generation.          |
-| [extend](/docs/combinators/functions/extend.md)           | Extend a schema by overriding or adding fields.                             |
-| [float](/docs/combinators/functions/float.md)             | Create a floating-point argument schema with optional range validation.     |
-| [hidden](/docs/combinators/functions/hidden.md)           | Hide a combinator schema from generated help or usage output.               |
-| [integer](/docs/combinators/functions/integer.md)         | Create an integer argument schema with optional range validation.           |
-| [map](/docs/combinators/functions/map.md)                 | Transform the output of a combinator schema.                                |
-| [merge](/docs/combinators/functions/merge.md)             | Compose multiple [Args](/docs/default/interfaces/Args.md) schemas into one. |
-| [multiple](/docs/combinators/functions/multiple.md)       | Mark a combinator schema as accepting multiple values.                      |
-| [number](/docs/combinators/functions/number.md)           | Create a number argument schema with optional range validation.             |
-| [positional](/docs/combinators/functions/positional.md)   | Create a positional argument schema.                                        |
-| [required](/docs/combinators/functions/required.md)       | Mark a combinator schema as required.                                       |
-| [short](/docs/combinators/functions/short.md)             | Set a short alias on a combinator schema.                                   |
-| [string](/docs/combinators/functions/string.md)           | Create a string argument schema with optional validation.                   |
-| [unrequired](/docs/combinators/functions/unrequired.md)   | Mark a combinator schema as not required.                                   |
-| [withDefault](/docs/combinators/functions/withDefault.md) | Set a default value on a combinator schema.                                 |
+| Function                                                  | Description                                                                                 |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| [args](/docs/combinators/functions/args.md)               | Type-safe schema factory.                                                                   |
+| [boolean](/docs/combinators/functions/boolean.md)         | Create a boolean argument schema.                                                           |
+| [choice](/docs/combinators/functions/choice.md)           | Create an enum-like argument schema with literal type inference.                            |
+| [combinator](/docs/combinators/functions/combinator.md)   | Create a custom argument schema with a user-defined parse function.                         |
+| [deprecated](/docs/combinators/functions/deprecated.md)   | Mark a combinator schema as deprecated: `true`, or the text that tells what to use instead. |
+| [describe](/docs/combinators/functions/describe.md)       | Set a description on a combinator schema for help text generation.                          |
+| [extend](/docs/combinators/functions/extend.md)           | Extend a schema by overriding or adding fields.                                             |
+| [float](/docs/combinators/functions/float.md)             | Create a floating-point argument schema with optional range validation.                     |
+| [hidden](/docs/combinators/functions/hidden.md)           | Hide a combinator schema from generated help or usage output.                               |
+| [integer](/docs/combinators/functions/integer.md)         | Create an integer argument schema with optional range validation.                           |
+| [map](/docs/combinators/functions/map.md)                 | Transform the output of a combinator schema.                                                |
+| [merge](/docs/combinators/functions/merge.md)             | Compose multiple [Args](/docs/default/interfaces/Args.md) schemas into one.                 |
+| [multiple](/docs/combinators/functions/multiple.md)       | Mark a combinator schema as accepting multiple values.                                      |
+| [number](/docs/combinators/functions/number.md)           | Create a number argument schema with optional range validation.                             |
+| [positional](/docs/combinators/functions/positional.md)   | Create a positional argument schema.                                                        |
+| [required](/docs/combinators/functions/required.md)       | Mark a combinator schema as required.                                                       |
+| [short](/docs/combinators/functions/short.md)             | Set a short alias on a combinator schema.                                                   |
+| [string](/docs/combinators/functions/string.md)           | Create a string argument schema with optional validation.                                   |
+| [unrequired](/docs/combinators/functions/unrequired.md)   | Mark a combinator schema as not required.                                                   |
+| [withDefault](/docs/combinators/functions/withDefault.md) | Set a default value on a combinator schema.                                                 |
 
 ## Interfaces
 

@@ -4,6 +4,7 @@ import {
   boolean,
   choice,
   combinator,
+  deprecated,
   describe,
   extend,
   float,
@@ -334,6 +335,46 @@ test('hidden metadata type inference', () => {
   const hiddenSchema = hidden(string())
   expectTypeOf<ExtractOptionValue<typeof hiddenSchema>>().toEqualTypeOf<string>()
   expectTypeOf(hiddenSchema.hidden).toEqualTypeOf<true>()
+})
+
+test('deprecated metadata type inference', () => {
+  const schema = deprecated(string())
+  expectTypeOf<ExtractOptionValue<typeof schema>>().toEqualTypeOf<string>()
+  expectTypeOf(schema.deprecated).toEqualTypeOf<true>()
+
+  const withText = deprecated(integer(), 'Use --count.')
+  expectTypeOf<ExtractOptionValue<typeof withText>>().toEqualTypeOf<number>()
+  expectTypeOf(withText.deprecated).toEqualTypeOf<string>()
+
+  // what the earlier and the later modifiers set is kept
+  expectTypeOf(describe(deprecated(string()), 'Legacy').deprecated).toEqualTypeOf<true>()
+  expectTypeOf(deprecated(short(integer(), 'p')).short).toEqualTypeOf<'p'>()
+  expectTypeOf(positional(deprecated(integer())).deprecated).toEqualTypeOf<true>()
+})
+
+test('deprecated() marks each schema of a union of schemas of different types', () => {
+  const strict = Math.random() > 0.5
+  const withText = deprecated(strict ? integer() : string(), 'Use --new.')
+  expectTypeOf(withText.deprecated).toEqualTypeOf<string>()
+  expectTypeOf<ReturnType<typeof withText.parse>>().toEqualTypeOf<number | string>()
+  expectTypeOf(deprecated(strict ? integer() : string()).deprecated).toEqualTypeOf<true>()
+
+  const args = { port: deprecated(strict ? integer() : string(), 'Use --new.') }
+  expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{ port?: number | string }>()
+})
+
+test('deprecated() reads a schema typed as any as hidden() does', () => {
+  const legacy = string() as any
+  const args = {
+    d: withDefault(deprecated(legacy), 1),
+    s: short(deprecated(legacy, 'Use --new.'), 'x')
+  }
+  expectTypeOf<ArgValues<typeof args>>().toEqualTypeOf<{
+    d: unknown
+    s?: unknown
+  }>()
+  const acceptsStrings = (schema: CombinatorSchema<string>) => schema
+  acceptsStrings(deprecated(legacy))
 })
 
 test('unrequired type inference', () => {

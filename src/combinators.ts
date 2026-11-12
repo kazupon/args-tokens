@@ -82,9 +82,10 @@ export type CombinatorSchema<T> = Omit<ArgSchema, 'parse'> & Combinator<T>
 
 /**
  * How {@link short}, {@link describe}, {@link withDefault}, {@link required}, {@link multiple},
- * {@link hidden}, {@link unrequired} and {@link positional} read a schema typed as `any`: its value
- * is typed `unknown`, and the `parse` of {@link ArgSchema}, which returns `any`, is kept, so that
- * the result still fits any {@link CombinatorSchema}, as the schema typed as `any` does.
+ * {@link hidden}, {@link deprecated}, {@link unrequired} and {@link positional} read a schema
+ * typed as `any`: its value is typed `unknown`, and the `parse` of {@link ArgSchema}, which returns
+ * `any`, is kept, so that the result still fits any {@link CombinatorSchema}, as the schema typed
+ * as `any` does.
  *
  * For a schema typed by a type parameter, whether it is `any` is not known, so the result is built
  * from the properties of the type parameter, which TypeScript reads through its constraint.
@@ -722,6 +723,7 @@ type PositionalParserKey =
   | 'metavar'
   | 'description'
   | 'hidden'
+  | 'deprecated'
   | 'required'
   | 'default'
   | 'multiple'
@@ -764,9 +766,9 @@ type PositionalOf<S> = S extends unknown ? PositionalWithParser<S> : never
  *
  * @typeParam T - The parser's resolved type.
  * @typeParam S - The type of the parser, inferred from `parser`, whose `required`, `default`,
- *   `multiple`, `description`, `hidden` and `metavar` the positional argument keeps. If type
- *   arguments are given explicitly without `S`, `S` is `CombinatorSchema<T>`, and the type of the
- *   result lacks them, although the returned object has them.
+ *   `multiple`, `description`, `hidden`, `deprecated` and `metavar` the positional argument keeps.
+ *   If type arguments are given explicitly without `S`, `S` is `CombinatorSchema<T>`, and the type
+ *   of the result lacks them, although the returned object has them.
  *
  * @param parser - The parser combinator schema.
  * @returns A positional argument schema resolving to the parser's type.
@@ -916,6 +918,7 @@ export function positional<T>(
       ...(parser.metavar != null ? { metavar: parser.metavar } : {}),
       ...(parser.description != null ? { description: parser.description } : {}),
       ...(parser.hidden != null ? { hidden: parser.hidden } : {}),
+      ...(parser.deprecated != null ? { deprecated: parser.deprecated } : {}),
       ...(parser.required != null ? { required: parser.required } : {}),
       ...(parser.default != null ? { default: parser.default } : {}),
       ...(parser.multiple != null ? { multiple: parser.multiple } : {})
@@ -1465,8 +1468,9 @@ type Modified<S, F> = S extends unknown ? WithFlag<S, F> : never
  *
  * It maps the properties of `S` itself, so that TypeScript still sees them when `S` is a type
  * parameter with other modifiers on it, and it maps each schema of a union on its own.
- * For a type parameter, TypeScript does not take it for `Omit<S, K>`, so {@link hidden} and
- * {@link unrequired}, whose results were typed `Omit<S, K>` with their flag, return that type too.
+ * For a type parameter, TypeScript does not take it for `Omit<S, K>`, so {@link hidden},
+ * {@link deprecated} and {@link unrequired}, whose results were typed `Omit<S, K>` with their flag,
+ * return that type too.
  */
 type Without<S, K> = { [P in keyof S as P extends K ? never : NamedKey<P>]: S[P] }
 
@@ -1682,6 +1686,55 @@ export function hidden(schema: ArgSchema): ArgSchema & CombinatorHidden {
   return {
     ...schema,
     hidden: true
+  }
+}
+
+/**
+ * Options for the {@link deprecated} combinator: `true`, or the text that tells what to use
+ * instead.
+ */
+type CombinatorDeprecated<M extends true | string> = { deprecated: M }
+
+/**
+ * Mark a combinator schema as deprecated: `true`, or the text that tells what to use instead.
+ *
+ * The original schema is not modified. Like {@link hidden}, this only marks metadata for the tools
+ * that read the schema, such as a CLI framework that warns when the argument is given and leaves it
+ * out of the help. It does not change parsing, validation, required checks, defaults, conflicts,
+ * or resolved values. For a union of schemas, such as `strict ? integer() : string()`, each schema
+ * gets `deprecated`.
+ *
+ * @typeParam T - The schema type.
+ * @typeParam M - The type of `message`: `deprecated` is typed `string` with it, and `true` without
+ *   it.
+ *
+ * @param schema - The base combinator schema.
+ * @param message - The text that tells what to use instead, such as `'Use --output.'`. Without it,
+ *   `deprecated` is `true`.
+ * @returns A new schema with `deprecated` set to `message`, or to `true`.
+ *
+ * @example
+ * ```ts
+ * const args = {
+ *   output: string(),
+ *   format: deprecated(string(), 'Use --output.')
+ * }
+ * ```
+ */
+export function deprecated<T extends ArgSchema, M extends string | undefined = undefined>(
+  schema: T,
+  message?: M
+): T extends unknown
+  ? WithFlag<T, CombinatorDeprecated<M extends string ? string : true>> & Omit<T, 'deprecated'>
+  : never
+// @__NO_SIDE_EFFECTS__
+export function deprecated(
+  schema: ArgSchema,
+  message?: string
+): ArgSchema & CombinatorDeprecated<true | string> {
+  return {
+    ...schema,
+    deprecated: message ?? true
   }
 }
 

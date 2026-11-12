@@ -460,6 +460,54 @@ describe('hidden metadata', () => {
   })
 })
 
+describe('deprecated metadata', () => {
+  test('a deprecated option resolves normally, and is explicit when it is given', () => {
+    const { values, explicit, error } = resolveArgs(
+      {
+        output: { type: 'string' },
+        format: { type: 'string', deprecated: 'Use --output.' }
+      },
+      parseArgs(['--format', 'json'])
+    )
+
+    expect(values).toEqual({ format: 'json' })
+    expect(explicit.format).toBe(true)
+    expect(explicit.output).toBe(false)
+    expect(error).toBeUndefined()
+  })
+
+  test('a deprecated positional resolves normally', () => {
+    const { values, error } = resolveArgs(
+      { target: { type: 'positional', deprecated: true } },
+      parseArgs(['web'])
+    )
+
+    expect(values).toEqual({ target: 'web' })
+    expect(error).toBeUndefined()
+  })
+
+  test('a deprecated option is not explicit when it only has its default', () => {
+    const { values, explicit } = resolveArgs(
+      { format: { type: 'string', deprecated: true, default: 'text' } },
+      parseArgs([])
+    )
+
+    expect(values).toEqual({ format: 'text' })
+    expect(explicit.format).toBe(false)
+  })
+
+  test('a deprecated required option still errors when missing', () => {
+    const { error } = resolveArgs(
+      { token: { type: 'string', deprecated: 'Use --key.', required: true } },
+      parseArgs([])
+    )
+
+    expect(error?.errors.length).toBe(1)
+    expect((error?.errors[0] as ArgResolveError).message).toEqual("Option '--token' is required")
+    expect((error?.errors[0] as ArgResolveError).schema.deprecated).toBe('Use --key.')
+  })
+})
+
 describe('structured validation errors', () => {
   test('wraps custom parse failures with code, values and cause', () => {
     const cause = new Error('Invalid config')
