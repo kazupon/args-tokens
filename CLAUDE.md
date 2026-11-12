@@ -52,7 +52,7 @@ The library is structured into five entry points:
 
 5. **combinators.ts** (`/combinators` export): Parser combinator factory functions
    - Base combinators (`string`, `number`, `integer`, `float`, `boolean`, `positional`, `choice`, `combinator`) generate `ArgSchema` objects
-   - Modifier combinators (`map`, `withDefault`, `multiple`, `required`, `unrequired`, `short`, `describe`, `hidden`) return a new schema without mutating the input
+   - Modifier combinators (`map`, `withDefault`, `multiple`, `required`, `unrequired`, `short`, `describe`, `hidden`, `deprecated`) return a new schema without mutating the input
    - Schema combinators (`args`, `merge`, `extend`) compose schema objects
 
 The library uses a two-phase approach:
