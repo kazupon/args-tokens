@@ -85,8 +85,10 @@ export default defineConfig({
     regexp: {},
     overrides: [
       {
+        // the JSDoc of the suites object in bench/suites.js describes the register and check
+        // methods of each suite
         files: ['bench/**/*.{js,mjs,cjs,ts}'],
-        rules: { '@kazupon/enforce-header-comment': 'off' }
+        rules: { '@kazupon/enforce-header-comment': 'off', 'ox-jsdoc/require-jsdoc': 'off' }
       }
     ]
   }),

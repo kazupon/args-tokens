@@ -93,7 +93,7 @@
     "test": "vp test"
   },
   "devDependencies": {
-    "@kazupon/vp-config": "^1.0.0",
+    "@kazupon/vp-config": "^1.1.1",
     "@types/node": "^26.0.0",
     "bumpp": "^12.0.0",
     "deno": "^2.9.5",
