@@ -53,7 +53,7 @@ import { PURE_PARSE } from './internal.ts'
 import { ArgsValidationError, ArgsValidationErrorKeys } from './resolver.ts'
 import { formatChoices } from './utils.ts'
 
-import type { Args, ArgSchema } from './resolver.ts'
+import type { Args, ArgSchema, ArgsValidationErrorCode } from './resolver.ts'
 
 /**
  * A combinator produced by combinator factory functions.
@@ -110,6 +110,14 @@ function createInvalidTypeError(
       actual
     }
   })
+}
+
+function createConstraintError(
+  message: string,
+  code: ArgsValidationErrorCode,
+  values: Record<string, unknown>
+): ArgsValidationError {
+  return new ArgsValidationError(message, { code, values })
 }
 
 function createInvalidChoiceError(
@@ -292,13 +300,25 @@ export function string(opts?: StringOptions): CombinatorSchema<string> {
     ...(opts?.required != null ? { required: opts.required } : {}),
     parse(value: string): string {
       if (opts?.minLength != null && value.length < opts.minLength) {
-        throw new RangeError(`String must be at least ${opts.minLength} characters`)
+        throw createConstraintError(
+          `String must be at least ${opts.minLength} characters`,
+          ArgsValidationErrorKeys.tooShort,
+          { minLength: opts.minLength, actual: value }
+        )
       }
       if (opts?.maxLength != null && value.length > opts.maxLength) {
-        throw new RangeError(`String must be at most ${opts.maxLength} characters`)
+        throw createConstraintError(
+          `String must be at most ${opts.maxLength} characters`,
+          ArgsValidationErrorKeys.tooLong,
+          { maxLength: opts.maxLength, actual: value }
+        )
       }
       if (opts?.pattern != null && !opts.pattern.test(value)) {
-        throw new Error(`String must match pattern ${opts.pattern}`)
+        throw createConstraintError(
+          `String must match pattern ${opts.pattern}`,
+          ArgsValidationErrorKeys.patternMismatch,
+          { pattern: String(opts.pattern), actual: value }
+        )
       }
       return value
     }
@@ -400,10 +420,26 @@ export function number(opts?: NumberOptions): CombinatorSchema<number> {
         throw createInvalidTypeError(`Expected a number, got '${value}'`, 'number', value)
       }
       if (opts?.min != null && n < opts.min) {
-        throw new RangeError(`Number must be >= ${opts.min}, got ${n}`)
+        throw createConstraintError(
+          `Number must be >= ${opts.min}, got ${n}`,
+          ArgsValidationErrorKeys.tooSmall,
+          {
+            expected: 'number',
+            min: opts.min,
+            actual: value
+          }
+        )
       }
       if (opts?.max != null && n > opts.max) {
-        throw new RangeError(`Number must be <= ${opts.max}, got ${n}`)
+        throw createConstraintError(
+          `Number must be <= ${opts.max}, got ${n}`,
+          ArgsValidationErrorKeys.tooLarge,
+          {
+            expected: 'number',
+            max: opts.max,
+            actual: value
+          }
+        )
       }
       return n
     }
@@ -502,10 +538,26 @@ export function integer(opts?: IntegerOptions): CombinatorSchema<number> {
         throw createInvalidTypeError(`Expected an integer, got '${value}'`, 'integer', value)
       }
       if (opts?.min != null && n < opts.min) {
-        throw new RangeError(`Integer must be >= ${opts.min}, got ${n}`)
+        throw createConstraintError(
+          `Integer must be >= ${opts.min}, got ${n}`,
+          ArgsValidationErrorKeys.tooSmall,
+          {
+            expected: 'integer',
+            min: opts.min,
+            actual: value
+          }
+        )
       }
       if (opts?.max != null && n > opts.max) {
-        throw new RangeError(`Integer must be <= ${opts.max}, got ${n}`)
+        throw createConstraintError(
+          `Integer must be <= ${opts.max}, got ${n}`,
+          ArgsValidationErrorKeys.tooLarge,
+          {
+            expected: 'integer',
+            max: opts.max,
+            actual: value
+          }
+        )
       }
       return n
     }
@@ -605,10 +657,26 @@ export function float(opts?: FloatOptions): CombinatorSchema<number> {
         throw createInvalidTypeError(`Expected a finite float, got '${value}'`, 'float', value)
       }
       if (opts?.min != null && n < opts.min) {
-        throw new RangeError(`Float must be >= ${opts.min}, got ${n}`)
+        throw createConstraintError(
+          `Float must be >= ${opts.min}, got ${n}`,
+          ArgsValidationErrorKeys.tooSmall,
+          {
+            expected: 'float',
+            min: opts.min,
+            actual: value
+          }
+        )
       }
       if (opts?.max != null && n > opts.max) {
-        throw new RangeError(`Float must be <= ${opts.max}, got ${n}`)
+        throw createConstraintError(
+          `Float must be <= ${opts.max}, got ${n}`,
+          ArgsValidationErrorKeys.tooLarge,
+          {
+            expected: 'float',
+            max: opts.max,
+            actual: value
+          }
+        )
       }
       return n
     }
