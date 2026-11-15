@@ -134,9 +134,16 @@ describe('string combinator', () => {
     const tokens = parseArgs(argv)
     const { error } = resolveArgs({ name: { ...string({ minLength: 3 }), required: true } }, tokens)
     expect(error).toBeDefined()
-    expect((error!.errors[0] as Error).message).toContain('at least 3 characters')
-    expect((error!.errors[0] as ArgsValidationError).code).toBe(ArgsValidationErrorKeys.customParse)
-    expect((error!.errors[0] as ArgsValidationError).cause).toBeInstanceOf(RangeError)
+    expect((error!.errors[0] as Error).message).toBe(
+      "Invalid value for '--name': String must be at least 3 characters"
+    )
+    expect((error!.errors[0] as ArgsValidationError).code).toBe(ArgsValidationErrorKeys.tooShort)
+    expect((error!.errors[0] as ArgsValidationError).values).toEqual({
+      minLength: 3,
+      actual: 'a',
+      name: 'name',
+      displayName: "'--name'"
+    })
   })
 
   test('maxLength validation', () => {
@@ -145,6 +152,11 @@ describe('string combinator', () => {
     const { error } = resolveArgs({ name: { ...string({ maxLength: 3 }), required: true } }, tokens)
     expect(error).toBeDefined()
     expect((error!.errors[0] as Error).message).toContain('at most 3 characters')
+    expect((error!.errors[0] as ArgsValidationError).code).toBe(ArgsValidationErrorKeys.tooLong)
+    expect((error!.errors[0] as ArgsValidationError).values).toMatchObject({
+      maxLength: 3,
+      actual: 'toolong'
+    })
   })
 
   test('pattern validation', () => {
@@ -156,6 +168,13 @@ describe('string combinator', () => {
     )
     expect(error).toBeDefined()
     expect((error!.errors[0] as Error).message).toContain('pattern')
+    expect((error!.errors[0] as ArgsValidationError).code).toBe(
+      ArgsValidationErrorKeys.patternMismatch
+    )
+    expect((error!.errors[0] as ArgsValidationError).values).toMatchObject({
+      pattern: '/^\\d+$/',
+      actual: 'abc'
+    })
   })
 
   test('description option', () => {
@@ -274,9 +293,17 @@ describe('number combinator', () => {
     const tokens = parseArgs(argv)
     const { error } = resolveArgs({ port: { ...number({ min: 1 }), required: true } }, tokens)
     expect(error).toBeDefined()
-    expect((error!.errors[0] as Error).message).toContain('>= 1')
-    expect((error!.errors[0] as ArgsValidationError).code).toBe(ArgsValidationErrorKeys.customParse)
-    expect((error!.errors[0] as ArgsValidationError).cause).toBeInstanceOf(RangeError)
+    expect((error!.errors[0] as Error).message).toBe(
+      "Invalid value for '--port': Number must be >= 1, got 0"
+    )
+    expect((error!.errors[0] as ArgsValidationError).code).toBe(ArgsValidationErrorKeys.tooSmall)
+    expect((error!.errors[0] as ArgsValidationError).values).toEqual({
+      expected: 'number',
+      min: 1,
+      actual: '0',
+      name: 'port',
+      displayName: "'--port'"
+    })
   })
 
   test('max validation', () => {
@@ -285,6 +312,12 @@ describe('number combinator', () => {
     const { error } = resolveArgs({ port: { ...number({ max: 65535 }), required: true } }, tokens)
     expect(error).toBeDefined()
     expect((error!.errors[0] as Error).message).toContain('<= 65535')
+    expect((error!.errors[0] as ArgsValidationError).code).toBe(ArgsValidationErrorKeys.tooLarge)
+    expect((error!.errors[0] as ArgsValidationError).values).toMatchObject({
+      expected: 'number',
+      max: 65535,
+      actual: '70000'
+    })
   })
 
   test('description option', () => {
@@ -433,6 +466,34 @@ describe('integer combinator', () => {
     )
     expect(error).toBeDefined()
     expect((error!.errors[0] as Error).message).toContain('<= 10')
+    expect((error!.errors[0] as ArgsValidationError).code).toBe(ArgsValidationErrorKeys.tooLarge)
+    expect((error!.errors[0] as ArgsValidationError).values).toMatchObject({
+      expected: 'integer',
+      max: 10,
+      actual: '100'
+    })
+  })
+
+  test('min validation', () => {
+    const argv = ['--count', '0']
+    const tokens = parseArgs(argv)
+    const { error } = resolveArgs(
+      { count: { ...integer({ min: 1, max: 10 }), required: true } },
+      tokens
+    )
+    expect(error).toBeDefined()
+    expect((error!.errors[0] as Error).message).toBe(
+      "Invalid value for '--count': Integer must be >= 1, got 0"
+    )
+    expect((error!.errors[0] as ArgsValidationError).code).toBe(ArgsValidationErrorKeys.tooSmall)
+    expect((error!.errors[0] as ArgsValidationError).values).toEqual({
+      expected: 'integer',
+      min: 1,
+      actual: '0',
+      name: 'count',
+      displayName: "'--count'"
+    })
+    expect((error!.errors[0] as ArgsValidationError).cause).toBeUndefined()
   })
 
   test('description option', () => {
@@ -537,6 +598,34 @@ describe('float combinator', () => {
     )
     expect(error).toBeDefined()
     expect((error!.errors[0] as Error).message).toContain('<= 1')
+    expect((error!.errors[0] as ArgsValidationError).code).toBe(ArgsValidationErrorKeys.tooLarge)
+    expect((error!.errors[0] as ArgsValidationError).values).toMatchObject({
+      expected: 'float',
+      max: 1,
+      actual: '1.5'
+    })
+  })
+
+  test('min validation', () => {
+    const argv = ['--ratio=-0.5']
+    const tokens = parseArgs(argv)
+    const { error } = resolveArgs(
+      { ratio: { ...float({ min: 0, max: 1 }), required: true } },
+      tokens
+    )
+    expect(error).toBeDefined()
+    expect((error!.errors[0] as Error).message).toBe(
+      "Invalid value for '--ratio': Float must be >= 0, got -0.5"
+    )
+    expect((error!.errors[0] as ArgsValidationError).code).toBe(ArgsValidationErrorKeys.tooSmall)
+    expect((error!.errors[0] as ArgsValidationError).values).toEqual({
+      expected: 'float',
+      min: 0,
+      actual: '-0.5',
+      name: 'ratio',
+      displayName: "'--ratio'"
+    })
+    expect((error!.errors[0] as ArgsValidationError).cause).toBeUndefined()
   })
 
   test('description option', () => {
@@ -695,6 +784,29 @@ describe('positional combinator', () => {
     )
     expect(error!.errors.length).toBe(1)
     expect((error!.errors[0] as Error).message).toContain('Expected an integer')
+  })
+
+  test('with parser constraint error', () => {
+    const argv = ['9']
+    const tokens = parseArgs(argv)
+    const { error } = resolveArgs(
+      {
+        count: positional(integer({ max: 5 }))
+      } as const satisfies Args,
+      tokens
+    )
+    expect(error!.errors.length).toBe(1)
+    expect((error!.errors[0] as Error).message).toBe(
+      "Invalid value for 'count': Integer must be <= 5, got 9"
+    )
+    expect((error!.errors[0] as ArgsValidationError).code).toBe(ArgsValidationErrorKeys.tooLarge)
+    expect((error!.errors[0] as ArgsValidationError).values).toEqual({
+      expected: 'integer',
+      max: 5,
+      actual: '9',
+      name: 'count',
+      displayName: "'count'"
+    })
   })
 
   test('multiple with parser', () => {
@@ -1174,6 +1286,28 @@ describe('map combinator', () => {
     expect(error).toBeDefined()
     expect((error!.errors[0] as Error).message).toContain('Expected an integer')
     expect((error!.errors[0] as ArgsValidationError).code).toBe(ArgsValidationErrorKeys.invalidType)
+    expect((error!.errors[0] as ArgsValidationError).cause).toBeUndefined()
+  })
+
+  test('propagates base constraint error', () => {
+    const argv = ['--count', '9']
+    const tokens = parseArgs(argv)
+    const { error } = resolveArgs(
+      { count: { ...map(integer({ max: 5 }), n => n * 2), required: true } },
+      tokens
+    )
+    expect(error).toBeDefined()
+    expect((error!.errors[0] as Error).message).toBe(
+      "Invalid value for '--count': Integer must be <= 5, got 9"
+    )
+    expect((error!.errors[0] as ArgsValidationError).code).toBe(ArgsValidationErrorKeys.tooLarge)
+    expect((error!.errors[0] as ArgsValidationError).values).toEqual({
+      expected: 'integer',
+      max: 5,
+      actual: '9',
+      name: 'count',
+      displayName: "'--count'"
+    })
     expect((error!.errors[0] as ArgsValidationError).cause).toBeUndefined()
   })
 

@@ -31,6 +31,13 @@ test('ArgsValidationErrorCode', () => {
   expectTypeOf<
     typeof ArgsValidationErrorKeys.unexpectedPositional
   >().toEqualTypeOf<'err:arg:unexpected-positional'>()
+  expectTypeOf<typeof ArgsValidationErrorKeys.tooSmall>().toEqualTypeOf<'err:arg:too-small'>()
+  expectTypeOf<typeof ArgsValidationErrorKeys.tooLarge>().toEqualTypeOf<'err:arg:too-large'>()
+  expectTypeOf<typeof ArgsValidationErrorKeys.tooShort>().toEqualTypeOf<'err:arg:too-short'>()
+  expectTypeOf<typeof ArgsValidationErrorKeys.tooLong>().toEqualTypeOf<'err:arg:too-long'>()
+  expectTypeOf<
+    typeof ArgsValidationErrorKeys.patternMismatch
+  >().toEqualTypeOf<'err:arg:pattern-mismatch'>()
 })
 
 test('isArgsValidationError', () => {
