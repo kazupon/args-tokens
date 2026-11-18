@@ -263,7 +263,7 @@ console.log('values:', values)
 console.log('positionals:', positionals)
 ```
 
-Besides `values` and `positionals`, `resolveArgs` returns `rest`, the arguments after the option terminator `--` (unlike `parseArgs` of `node:util`, they are not in `positionals`), `error`, the validation failures described in “Validation errors” below, `explicit`, which is `true` for each argument given on the command line, and `passthroughIndices`, the indexes of the arguments that the schema does not take with the `passthrough` option, described in “Passing on the arguments that the schema does not take” below, or an empty array without it.
+Besides `values` and `positionals`, `resolveArgs` returns `rest`, the arguments after the option terminator `--` (unlike `parseArgs` of `node:util`, they are not in `positionals`), `error`, the validation failures described in “Validation errors” below, `explicit`, which is `true` for each argument given on the command line, and, with the `passthrough` option, `passthroughIndices`, the indexes of the arguments that the schema does not take, described in “Passing on the arguments that the schema does not take” below.
 
 ## Convenient argument parsing
 
@@ -304,7 +304,7 @@ console.log('values:', values)
 console.log('positionals:', positionals)
 ```
 
-`parse` also takes the options of `parseArgs` and `resolveArgs`, such as `allowCompatible`, `shortGrouping`, `skipPositional`, `toKebab` and `passthrough`, and they work as they do there. It returns what `resolveArgs` returns, the `tokens`, and `passthrough`, the arguments at `passthroughIndices`, or an empty array without the `passthrough` option. Without `args`, it uses a schema with the `boolean` options `help` (`-h`) and `version` (`-v`).
+`parse` also takes the options of `parseArgs` and `resolveArgs`, such as `allowCompatible`, `shortGrouping`, `skipPositional`, `toKebab` and `passthrough`, and they work as they do there. It returns what `resolveArgs` returns and the `tokens`, and, with the `passthrough` option, `passthrough`, the arguments at `passthroughIndices`. Without `args`, it uses a schema with the `boolean` options `help` (`-h`) and `version` (`-v`).
 
 ## Passing on the arguments that the schema does not take
 
@@ -344,6 +344,8 @@ The arguments that the schema does not take are:
 - the arguments after `--`, but not `--` itself. They are in `rest` too, so pass on only one of them
 
 The options of the schema, the arguments that they take as their values, and the positional arguments that the schema takes are not given. The arguments are given even when there are validation errors, as `values` are, so check `error` before passing them on.
+
+Without `passthrough`, the result has neither `passthroughIndices` nor `passthrough`, and the arguments are not collected, as the result of `parseArgs` of `node:util` has `tokens` only with its `tokens` option. With `passthrough: true`, their types are `number[]` and `string[]`, and with a `boolean`, they may be `undefined`.
 
 ## Validation errors
 

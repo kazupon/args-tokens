@@ -639,9 +639,18 @@ test('resolveArgs passthrough', () => {
   expectTypeOf<ResolveArgs['passthrough']>().toEqualTypeOf<boolean | undefined>()
 
   const args = { file: { type: 'positional' } } as const satisfies Args
-  // without passthrough, the result has an empty array, of the same type
-  expectTypeOf(resolveArgs(args, []).passthroughIndices).toEqualTypeOf<number[]>()
-  expectTypeOf(resolveArgs(args, [], { passthrough: true }).passthroughIndices).toEqualTypeOf<
-    number[]
+  // with `passthrough: true`, the result has `passthroughIndices`
+  const withPassthrough = resolveArgs(args, [], { passthrough: true })
+  expectTypeOf(withPassthrough.passthroughIndices).toEqualTypeOf<number[]>()
+  expectTypeOf(withPassthrough.values).toEqualTypeOf<{ file: string }>()
+  // without it, or with `false`, the result does not have it
+  expectTypeOf(resolveArgs(args, [])).not.toHaveProperty('passthroughIndices')
+  expectTypeOf(resolveArgs(args, [], { passthrough: false })).not.toHaveProperty(
+    'passthroughIndices'
+  )
+  // with a boolean, the result may have it
+  const passthrough = Math.random() > 0.5
+  expectTypeOf(resolveArgs(args, [], { passthrough }).passthroughIndices).toEqualTypeOf<
+    number[] | undefined
   >()
 })

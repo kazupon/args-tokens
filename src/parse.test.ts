@@ -229,10 +229,20 @@ describe('passthrough', () => {
     expect(passthrough).toEqual(['--bail=3', '-qk', ''])
   })
 
-  test('gives empty arrays without passthrough, also without args', () => {
-    for (const result of [parse(['run.js', '--watch', 'src'], { args }), parse(['--watch'])]) {
-      expect(result.passthrough).toEqual([])
-      expect(result.passthroughIndices).toEqual([])
+  test('gives no passthrough and passthroughIndices without passthrough, also without args', () => {
+    for (const result of [
+      parse(['run.js', '--watch', 'src'], { args }),
+      parse(['run.js', '--watch', 'src'], { args, passthrough: false }),
+      parse(['--watch'])
+    ]) {
+      expect(Object.keys(result)).toEqual([
+        'values',
+        'positionals',
+        'rest',
+        'error',
+        'explicit',
+        'tokens'
+      ])
     }
   })
 

@@ -7022,7 +7022,7 @@ describe('passthrough', () => {
     expect(result.error?.errors.map(e => (e as ArgsValidationError).code)).toEqual(
       without.error?.errors.map(e => (e as ArgsValidationError).code)
     )
-    expect(without.passthroughIndices).toEqual([])
+    expect(without).not.toHaveProperty('passthroughIndices')
     return result
   }
 
@@ -7132,13 +7132,14 @@ describe('passthrough', () => {
     expect(passthroughIndices).toEqual([2, 4])
   })
 
-  test('gives an empty array without passthrough, a new one each time', () => {
+  test('gives no passthroughIndices without passthrough or with false', () => {
     const tokens = parseArgs(['exec', '--watch', 'src'])
-    const first = resolveArgs(args, tokens)
-    const second = resolveArgs(args, tokens, { passthrough: false })
-    expect(first.passthroughIndices).toEqual([])
-    expect(second.passthroughIndices).toEqual([])
-    expect(first.passthroughIndices).not.toBe(second.passthroughIndices)
+    for (const result of [
+      resolveArgs(args, tokens),
+      resolveArgs(args, tokens, { passthrough: false })
+    ]) {
+      expect(Object.keys(result)).toEqual(['values', 'positionals', 'rest', 'error', 'explicit'])
+    }
   })
 
   test.each([

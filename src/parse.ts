@@ -62,17 +62,6 @@ export type ParsedArgs<A extends Args> = {
    * rejected. See {@link ArgExplicitlyProvided}.
    */
   explicit: ArgExplicitlyProvided<A>
-  /**
-   * The indexes of the arguments that the schema does not take, same as `passthroughIndices` in
-   * {@link resolveArgs}. An empty array without the `passthrough` option.
-   */
-  passthroughIndices: number[]
-  /**
-   * The arguments that the schema does not take, as they were given and in their order, with the
-   * `passthrough` option: the arguments at `passthroughIndices`. An empty array without it. See
-   * {@link ResolveArgs.passthrough} for which arguments they are.
-   */
-  passthrough: string[]
 }
 
 const DEFAULT_OPTIONS = {
@@ -95,7 +84,7 @@ const DEFAULT_OPTIONS = {
  *
  * @param args - command line arguments
  * @param options - parse options, about details see {@link ParseOptions}
- * @returns An object that contains the values of the arguments, positional arguments, rest arguments, {@link AggregateError | validation errors}, explicit provision status, {@link ArgToken | argument tokens}, and the arguments that the schema does not take and their indexes, with {@link ResolveArgs.passthrough | passthrough}.
+ * @returns An object that contains the values of the arguments, positional arguments, rest arguments, {@link AggregateError | validation errors}, explicit provision status, and {@link ArgToken | argument tokens}.
  *
  * @example
  * ```js
@@ -108,6 +97,72 @@ const DEFAULT_OPTIONS = {
  */
 export function parse<A extends Args>(
   args: string[],
+  options?: ParseOptions<A> & { passthrough?: false }
+): ParsedArgs<A>
+/**
+ * Parse command line arguments, and give the arguments that the schema does not take, with
+ * {@link ResolveArgs.passthrough | passthrough}.
+ *
+ * @typeParam A - {@link Args | Arguments schema}, which is an object that defines the command line arguments.
+ *
+ * @param args - command line arguments
+ * @param options - parse options with `passthrough: true`, about details see {@link ParseOptions}
+ * @returns An object that contains the values of the arguments, positional arguments, rest arguments, {@link AggregateError | validation errors}, explicit provision status, {@link ArgToken | argument tokens}, and the arguments that the schema does not take and their indexes.
+ *
+ * @example
+ * ```js
+ * import { spawnSync } from 'node:child_process'
+ * import { parse } from 'args-tokens'
+ *
+ * // mytool test --reporter=dot src
+ * const { passthrough } = parse(process.argv.slice(2), {
+ *   args: { command: { type: 'positional' } },
+ *   passthrough: true
+ * })
+ * // passthrough: ['--reporter=dot', 'src']
+ * spawnSync('vitest', ['run', ...passthrough])
+ * ```
+ */
+export function parse<A extends Args>(
+  args: string[],
+  options: ParseOptions<A> & { passthrough: true }
+): ParsedArgs<A> & {
+  /**
+   * The indexes of the arguments that the schema does not take, same as `passthroughIndices` in
+   * {@link resolveArgs}.
+   */
+  passthroughIndices: number[]
+  /**
+   * The arguments that the schema does not take, as they were given and in their order: the
+   * arguments at `passthroughIndices`. See {@link ResolveArgs.passthrough} for which arguments they
+   * are.
+   */
+  passthrough: string[]
+}
+/**
+ * Parse command line arguments, with `passthrough` that may be `true` or not, such as a `boolean`.
+ *
+ * @typeParam A - {@link Args | Arguments schema}, which is an object that defines the command line arguments.
+ *
+ * @param args - command line arguments
+ * @param options - parse options, about details see {@link ParseOptions}
+ * @returns The result of one of the overloads above, by whether `passthrough` is `true`.
+ */
+export function parse<A extends Args>(
+  args: string[],
+  options?: ParseOptions<A>
+): ParsedArgs<A> & {
+  /**
+   * Only with {@link ResolveArgs.passthrough | passthrough}.
+   */
+  passthroughIndices?: number[]
+  /**
+   * Only with {@link ResolveArgs.passthrough | passthrough}.
+   */
+  passthrough?: string[]
+}
+export function parse<A extends Args>(
+  args: string[],
   options: ParseOptions<A> = {}
 ): ParsedArgs<A> {
   const { args: _args, allowCompatible = false } = options
@@ -118,6 +173,9 @@ export function parse<A extends Args>(
   // the options of `resolveArgs()`, such as `shortGrouping`, are in `options` too
   const resolved = resolveArgs<A>((_args as A) || DEFAULT_OPTIONS, tokens, options)
   const indices = resolved.passthroughIndices
+  if (indices === undefined) {
+    return Object.assign(Object.create(null), resolved, { tokens }) as ParsedArgs<A>
+  }
   const passthrough: string[] = []
   for (let i = 0; i < indices.length; i++) {
     passthrough.push(given[indices[i]])

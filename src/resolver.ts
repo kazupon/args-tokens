@@ -943,23 +943,23 @@ export interface ResolveArgs {
    * Whether to give the arguments that the schema does not take, such as for a CLI that passes them
    * on to another program.
    *
-   * When `true`, `passthroughIndices` of the result has the indexes, in the arguments given to
+   * When `true`, the result has `passthroughIndices`: the indexes, in the arguments given to
    * `parseArgs()`, of the arguments that the schema does not take, in ascending order. They are an
    * option that is not in the schema, with the argument that it takes as its value: as without
    * `passthrough`, it takes the next argument when it has no value of its own, such as `--bail=3`,
-   * and that argument is not an option or `--`. A short option group
-   * with an option that is not in the schema is given whole, as it was given, such as `-qk` with `q`
-   * in the schema, whose options in the schema are still resolved. Without `shortGrouping`, a group
-   * is its first option, with the other letters as its value, so it is given only when that option
-   * is not in the schema. A positional argument that no positional argument of the schema takes,
-   * after the ones up to `skipPositional`, and the arguments after `--`, but not `--` itself, are
-   * given too.
+   * and that argument is not an option or `--`. A short option group with an option that is not in
+   * the schema is given whole, as it was given, such as `-qk` with `q` in the schema, whose options
+   * in the schema are still resolved. Without `shortGrouping`, a group is its first option, with the
+   * other letters as its value, so it is given only when that option is not in the schema. A
+   * positional argument that no positional argument of the schema takes, after the ones up to
+   * `skipPositional`, and the arguments after `--`, but not `--` itself, are given too.
    *
    * An option of the schema, the argument that it takes as its value, and a positional argument that
    * the schema takes are not given. The indexes are given even when there are validation errors, as
    * `values` are. `parse()` also gives the arguments at the indexes, as `passthrough`.
    *
-   * When `false`, the indexes are not collected, and `passthroughIndices` is an empty array.
+   * Without it, the indexes are not collected, and the result has no `passthroughIndices`, as the
+   * result of `parseArgs()` of `node:util` has `tokens` only with its `tokens` option.
    *
    * @default false
    */
@@ -1001,7 +1001,7 @@ export type ArgExplicitlyProvided<A extends Args> = {
  * @param args - An arguments that contains {@link ArgSchema | arguments schema}.
  * @param tokens - An array of {@link ArgToken | tokens}.
  * @param resolveArgs - An arguments that contains {@link ResolveArgs | resolve arguments}.
- * @returns An object that contains the values of the arguments, positional arguments, rest arguments, {@link AggregateError | validation errors}, explicit provision status, and the indexes of the arguments that the schema does not take, with {@link ResolveArgs.passthrough | passthrough}.
+ * @returns An object that contains the values of the arguments, positional arguments, rest arguments, {@link AggregateError | validation errors}, and explicit provision status.
  *
  * @example
  * ```typescript
@@ -1028,12 +1028,43 @@ export type ArgExplicitlyProvided<A extends Args> = {
 export function resolveArgs<A extends Args>(
   args: A,
   tokens: ArgToken[],
-  {
-    shortGrouping = false,
-    skipPositional = SKIP_POSITIONAL_DEFAULT,
-    toKebab = false,
-    passthrough = false
-  }: ResolveArgs = {}
+  resolveArgs?: ResolveArgs & { passthrough?: false }
+): {
+  values: ArgValues<A>
+  positionals: string[]
+  rest: string[]
+  error: AggregateError | undefined
+  explicit: ArgExplicitlyProvided<A>
+}
+/**
+ * Resolve command line arguments, and give the indexes of the arguments that the schema does not
+ * take, with {@link ResolveArgs.passthrough | passthrough}.
+ *
+ * @typeParam A - {@link Args | Arguments}, which is an object that defines the command line arguments.
+ *
+ * @param args - An arguments that contains {@link ArgSchema | arguments schema}.
+ * @param tokens - An array of {@link ArgToken | tokens}.
+ * @param resolveArgs - An arguments that contains {@link ResolveArgs | resolve arguments}, with `passthrough: true`.
+ * @returns An object that contains the values of the arguments, positional arguments, rest arguments, {@link AggregateError | validation errors}, explicit provision status, and the indexes of the arguments that the schema does not take.
+ *
+ * @example
+ * ```typescript
+ * // passed tokens: exec run.js --watch src
+ *
+ * const { values, passthroughIndices } = resolveArgs(
+ *   { script: { type: 'positional' } },
+ *   parsedTokens,
+ *   { skipPositional: 0, passthrough: true }
+ * )
+ *
+ * values.script // 'run.js'
+ * passthroughIndices // [2, 3], the indexes of `--watch` and `src`
+ * ```
+ */
+export function resolveArgs<A extends Args>(
+  args: A,
+  tokens: ArgToken[],
+  resolveArgs: ResolveArgs & { passthrough: true }
 ): {
   values: ArgValues<A>
   positionals: string[]
@@ -1042,11 +1073,45 @@ export function resolveArgs<A extends Args>(
   explicit: ArgExplicitlyProvided<A>
   /**
    * The indexes, in the arguments given to `parseArgs()`, of the arguments that the schema does not
-   * take, in ascending order, with {@link ResolveArgs.passthrough | passthrough}. An empty array
-   * without it.
+   * take, in ascending order. See {@link ResolveArgs.passthrough} for which arguments they are.
    */
   passthroughIndices: number[]
-} {
+}
+/**
+ * Resolve command line arguments, with `passthrough` that may be `true` or not, such as a `boolean`.
+ *
+ * @typeParam A - {@link Args | Arguments}, which is an object that defines the command line arguments.
+ *
+ * @param args - An arguments that contains {@link ArgSchema | arguments schema}.
+ * @param tokens - An array of {@link ArgToken | tokens}.
+ * @param resolveArgs - An arguments that contains {@link ResolveArgs | resolve arguments}.
+ * @returns The result of one of the overloads above, by whether `passthrough` is `true`.
+ */
+export function resolveArgs<A extends Args>(
+  args: A,
+  tokens: ArgToken[],
+  resolveArgs?: ResolveArgs
+): {
+  values: ArgValues<A>
+  positionals: string[]
+  rest: string[]
+  error: AggregateError | undefined
+  explicit: ArgExplicitlyProvided<A>
+  /**
+   * Only with {@link ResolveArgs.passthrough | passthrough}.
+   */
+  passthroughIndices?: number[]
+}
+export function resolveArgs<A extends Args>(
+  args: A,
+  tokens: ArgToken[],
+  {
+    shortGrouping = false,
+    skipPositional = SKIP_POSITIONAL_DEFAULT,
+    toKebab = false,
+    passthrough = false
+  }: ResolveArgs = {}
+) {
   const skipPositionalIndex =
     typeof skipPositional === 'number'
       ? Math.max(skipPositional, SKIP_POSITIONAL_DEFAULT)
@@ -1472,33 +1537,33 @@ export function resolveArgs<A extends Args>(
   const conflictErrors = checkConflicts(args, explicit, toKebab, actualInputNames)
   errors.push(...conflictErrors)
 
+  const positionals = positionalTokens.map(token => token.value!)
+  const error = errors.length > 0 ? new AggregateError(errors) : undefined
+  if (matched === undefined || tookValue === undefined) {
+    return { values, positionals, rest, error, explicit }
+  }
   return {
     values,
-    positionals: positionalTokens.map(token => token.value!),
+    positionals,
     rest,
-    error: errors.length > 0 ? new AggregateError(errors) : undefined,
+    error,
     explicit,
-    passthroughIndices:
-      matched !== undefined && tookValue !== undefined
-        ? collectPassthroughIndices(
-            tokens,
-            optionTokens,
-            matched,
-            tookValue,
-            positionalTokens,
-            // the positional arguments up to `skipPositional` are skipped even when the schema has no
-            // positional argument, which is when `positionalsCount` does not count them. They are
-            // counted as the loop that skips them does: a fractional one skips up to the integer
-            // below it, and `NaN` skips none
-            Math.max(
-              positionalsCount,
-              skipPositionalIndex > SKIP_POSITIONAL_DEFAULT
-                ? Math.floor(skipPositionalIndex) + 1
-                : 0
-            ),
-            rest.length
-          )
-        : []
+    passthroughIndices: collectPassthroughIndices(
+      tokens,
+      optionTokens,
+      matched,
+      tookValue,
+      positionalTokens,
+      // the positional arguments up to `skipPositional` are skipped even when the schema has no
+      // positional argument, which is when `positionalsCount` does not count them. They are
+      // counted as the loop that skips them does: a fractional one skips up to the integer
+      // below it, and `NaN` skips none
+      Math.max(
+        positionalsCount,
+        skipPositionalIndex > SKIP_POSITIONAL_DEFAULT ? Math.floor(skipPositionalIndex) + 1 : 0
+      ),
+      rest.length
+    )
   }
 }
 
