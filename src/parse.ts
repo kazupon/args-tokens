@@ -111,13 +111,16 @@ export function parse<A extends Args>(
   options: ParseOptions<A> = {}
 ): ParsedArgs<A> {
   const { args: _args, allowCompatible = false } = options
-  const tokens = parseArgs(args, { allowCompatible })
+  // with `passthrough`, the indexes are read in the arguments as they are tokenized, even if a
+  // `parse` function changes the array
+  const given = options.passthrough ? [...args] : args
+  const tokens = parseArgs(given, { allowCompatible })
   // the options of `resolveArgs()`, such as `shortGrouping`, are in `options` too
   const resolved = resolveArgs<A>((_args as A) || DEFAULT_OPTIONS, tokens, options)
   const indices = resolved.passthroughIndices
   const passthrough: string[] = []
   for (let i = 0; i < indices.length; i++) {
-    passthrough.push(args[indices[i]])
+    passthrough.push(given[indices[i]])
   }
   return Object.assign(Object.create(null), resolved, { tokens, passthrough }) as ParsedArgs<A>
 }

@@ -247,4 +247,24 @@ describe('passthrough', () => {
     expect(values).toEqual({ script: 'run.js', env: '=stage', quiet: true })
     expect(passthrough).toEqual(['--watch=1', 'x'])
   })
+
+  test('gives the arguments as they were tokenized, even if a parse function changes them', () => {
+    const argv = ['--env', 'ci', 'src']
+    const { values, passthrough, passthroughIndices } = parse(argv, {
+      args: {
+        env: {
+          type: 'string',
+          parse: (value: string) => {
+            argv.pop()
+            return value
+          }
+        }
+      },
+      passthrough: true
+    })
+    expect(values).toEqual({ env: 'ci' })
+    expect(argv).toEqual(['--env', 'ci'])
+    expect(passthroughIndices).toEqual([2])
+    expect(passthrough).toEqual(['src'])
+  })
 })

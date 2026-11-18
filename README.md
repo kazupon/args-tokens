@@ -328,15 +328,17 @@ if (error) {
 
 // values: { command: 'test', env: 'ci' }
 // passthrough: ['--reporter=dot', 'src']
-spawnSync('vitest', ['run', ...passthrough], {
+const { status } = spawnSync('vitest', ['run', ...passthrough], {
   stdio: 'inherit',
   env: { ...process.env, APP_ENV: values.env }
 })
+// a program that could not start or was killed by a signal has no status
+process.exitCode = status ?? 1
 ```
 
 The arguments that the schema does not take are:
 
-- an option that is not in the schema, with the argument that it takes as its value. As without `passthrough`, it takes the next argument unless that argument is an option, so `--watch src` gives both, and `mytool --watch test` gives `--watch test` and reports the missing `command`. Write the value of such an option with `=`, or put the option after the positional arguments of the schema
+- an option that is not in the schema, with the argument that it takes as its value. As without `passthrough`, it takes the next argument when it has no value of its own, such as `--watch=src`, and that argument is not an option or `--`, so `--watch src` gives both, and `mytool --watch test` gives `--watch test` and reports the missing `command`. Write the value of such an option with `=`, or put the option after the positional arguments of the schema
 - a short option group with an option that is not in the schema, whole and as it was given, such as `-qk` with `q` in the schema, whose `q` is still resolved. Without `shortGrouping`, the default, a group is its first option, with the other letters as its value (a boolean ignores them), so it is given only when that option is not in the schema
 - a positional argument that no positional argument of the schema takes, after the ones up to `skipPositional`
 - the arguments after `--`, but not `--` itself. They are in `rest` too, so pass on only one of them

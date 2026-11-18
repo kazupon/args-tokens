@@ -945,8 +945,9 @@ export interface ResolveArgs {
    *
    * When `true`, `passthroughIndices` of the result has the indexes, in the arguments given to
    * `parseArgs()`, of the arguments that the schema does not take, in ascending order. They are an
-   * option that is not in the schema, with the argument that it takes as its value, which is the
-   * next argument unless that argument is an option, as without `passthrough`. A short option group
+   * option that is not in the schema, with the argument that it takes as its value: as without
+   * `passthrough`, it takes the next argument when it has no value of its own, such as `--bail=3`,
+   * and that argument is not an option or `--`. A short option group
    * with an option that is not in the schema is given whole, as it was given, such as `-qk` with `q`
    * in the schema, whose options in the schema are still resolved. Without `shortGrouping`, a group
    * is its first option, with the other letters as its value, so it is given only when that option
@@ -1479,8 +1480,15 @@ export function resolveArgs<A extends Args>(
             valueIndices,
             positionalTokens,
             // the positional arguments up to `skipPositional` are skipped even when the schema has no
-            // positional argument, which is when `positionalsCount` does not count them
-            Math.max(positionalsCount, skipPositionalIndex + 1),
+            // positional argument, which is when `positionalsCount` does not count them. They are
+            // counted as the loop that skips them does: a fractional one skips up to the integer
+            // below it, and `NaN` skips none
+            Math.max(
+              positionalsCount,
+              skipPositionalIndex > SKIP_POSITIONAL_DEFAULT
+                ? Math.floor(skipPositionalIndex) + 1
+                : 0
+            ),
             restIndices
           )
         : []

@@ -7054,6 +7054,7 @@ describe('passthrough', () => {
     { label: 'one with an inline value', argv: ['--bail=3'], indices: [2] },
     { label: 'one with the argument that it takes', argv: ['--watch', 'src'], indices: [2, 3] },
     { label: 'one followed by an option', argv: ['--watch', '-q'], indices: [2] },
+    { label: 'one followed by --', argv: ['--watch', '--', 'x'], indices: [2, 4] },
     {
       label: 'the no- form of an option that is not negatable, with its value',
       argv: ['--no-quiet', 'x'],
@@ -7230,6 +7231,30 @@ describe('passthrough', () => {
     ).toEqual([])
     expect(resolveWithPassthrough(schema, ['exec', 'x']).passthroughIndices).toEqual([0, 1])
   })
+
+  test.each([
+    { skipPositional: 0.5, file: 'file', withFile: [2], withoutFile: [1, 2] },
+    { skipPositional: Number.NaN, file: 'sub', withFile: [1, 2], withoutFile: [0, 1, 2] },
+    {
+      skipPositional: Number.POSITIVE_INFINITY,
+      file: undefined,
+      withFile: [],
+      withoutFile: []
+    }
+  ])(
+    'skipPositional: $skipPositional skips as the resolver does',
+    ({ skipPositional, file, withFile, withoutFile }) => {
+      // a fractional one skips up to the integer below it, NaN skips none, and Infinity skips all
+      const argv = ['sub', 'file', 'x']
+      const schema = { file: { type: 'positional', required: false } } as const satisfies Args
+      const result = resolveWithPassthrough(schema, argv, { skipPositional })
+      expect(result.values.file).toBe(file)
+      expect(result.passthroughIndices).toEqual(withFile)
+      expect(resolveWithPassthrough({}, argv, { skipPositional }).passthroughIndices).toEqual(
+        withoutFile
+      )
+    }
+  )
 })
 
 /* oxlint-enable no-unsafe-optional-chaining */
