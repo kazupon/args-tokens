@@ -1134,7 +1134,8 @@ export function resolveArgs<A extends Args>(
 
   let currentLongOption: ArgToken | undefined
   let currentShortOption: ArgToken | undefined
-  const expandableShortOptions: ArgToken[] = []
+  // without shortGrouping, the names of the other letters of the current short option group
+  let shortLetters: string | undefined
 
   function getOptionName(rawArg: string, schema: ArgSchema): string {
     return toKebab || schema.toKebab ? kebabnize(rawArg) : rawArg
@@ -1149,22 +1150,15 @@ export function resolveArgs<A extends Args>(
   }
 
   function toShortValue(): string | undefined {
-    if (expandableShortOptions.length === 0) {
-      return undefined
-    } else {
-      let value = ''
-      for (let i = 0; i < expandableShortOptions.length; i++) {
-        value += expandableShortOptions[i].name ?? ''
-      }
-      expandableShortOptions.length = 0
-      return value
-    }
+    const value = shortLetters
+    shortLetters = undefined
+    return value
   }
 
   function applyLongOptionValue(value?: string): void {
     if (currentLongOption) {
       currentLongOption.value = value
-      optionTokens.push({ ...currentLongOption })
+      optionTokens.push(currentLongOption)
       currentLongOption = undefined
     }
   }
@@ -1172,7 +1166,7 @@ export function resolveArgs<A extends Args>(
   function applyShortOptionValue(value?: string): void {
     if (currentShortOption) {
       currentShortOption.value = value ?? toShortValue()
-      optionTokens.push({ ...currentShortOption })
+      optionTokens.push(currentShortOption)
       currentShortOption = undefined
     }
   }
@@ -1182,8 +1176,9 @@ export function resolveArgs<A extends Args>(
    * separate tokens into positionals, long and short options, after that resolve values
    */
 
-  const schemas = Object.values(args)
   const booleanLongOptionNames = new Set<string>()
+  // whether a schema has `conflicts`, which only then are checked
+  let hasConflicts = false
   // before resolving any argument, report the mistakes in the schema, whether or not the argument
   // is given, and collect the long names of the boolean options. This loop runs on every call, so
   // it does both in one pass and reads each entry by index: destructuring an entry allocates
@@ -1211,6 +1206,9 @@ export function resolveArgs<A extends Args>(
         )
       }
     }
+    if (schema.conflicts) {
+      hasConflicts = true
+    }
     if (schema.type !== 'boolean') {
       continue
     }
@@ -1231,11 +1229,9 @@ export function resolveArgs<A extends Args>(
         continue
       }
       if (currentShortOption) {
-        const isBoolean = schemas.find(
-          schema => schema.short === currentShortOption!.name && schema.type === 'boolean'
-        )
+        const isBoolean = isBooleanShortOption(argEntries, currentShortOption.name)
         // without shortGrouping, the other letters of the group are already the value of its first option
-        if (isBoolean || expandableShortOptions.length > 0) {
+        if (isBoolean || shortLetters !== undefined) {
           positionalTokens.push({ ...token })
           applyShortOptionValue() // finalize without taking the positional as a value
         } else {
@@ -1274,14 +1270,14 @@ export function resolveArgs<A extends Args>(
             if (currentShortOption.index === token.index) {
               if (shortGrouping) {
                 currentShortOption.value = token.value
-                optionTokens.push({ ...currentShortOption })
+                optionTokens.push(currentShortOption)
                 currentShortOption = { ...token }
               } else {
-                expandableShortOptions.push({ ...token })
+                shortLetters = (shortLetters ?? '') + (token.name ?? '')
               }
             } else {
               currentShortOption.value = toShortValue()
-              optionTokens.push({ ...currentShortOption })
+              optionTokens.push(currentShortOption)
               currentShortOption = { ...token }
             }
             // check if previous long option is not resolved
@@ -1302,7 +1298,7 @@ export function resolveArgs<A extends Args>(
               ? token.value
               : `${letters}${token.inlineValue ? '=' : ''}${token.value ?? ''}`
           currentShortOption.inlineValue = token.inlineValue
-          optionTokens.push({ ...currentShortOption })
+          optionTokens.push(currentShortOption)
           currentShortOption = undefined
         }
         // check if previous long option is not resolved
@@ -1336,10 +1332,11 @@ export function resolveArgs<A extends Args>(
     ? new Uint8Array(optionTokens.length)
     : undefined
   const explicit = Object.create(null) as ArgExplicitlyProvided<A>
-  const actualInputNames = new Map<string, string>()
+  const actualInputNames: Map<string, string> | undefined = hasConflicts ? new Map() : undefined
   let requiredPositionalsAfter: Record<string, number> | undefined
 
-  const positionalItemCount = tokens.filter(token => token.kind === 'positional').length
+  const positionalItemCount =
+    skipPositionalIndex > SKIP_POSITIONAL_DEFAULT ? countPositionalTokens(tokens) : 0
   function getPositionalSkipIndex() {
     return Math.min(skipPositionalIndex, positionalItemCount)
   }
@@ -1449,15 +1446,20 @@ export function resolveArgs<A extends Args>(
     }
 
     if (schema.required) {
-      const found = optionTokens.find(token => {
-        return (
+      let found = false
+      for (let i = 0; i < optionTokens.length; i++) {
+        const token = optionTokens[i]
+        if (
           (schema.short &&
             token.name === schema.short &&
             token.rawName != undefined &&
             isShortOption(token.rawName)) ||
           checkLongTokenName(arg, schema, token)
-        )
-      })
+        ) {
+          found = true
+          break
+        }
+      }
       if (!found) {
         errors.push(createRequireError(rawArg, arg, schema))
         continue
@@ -1483,10 +1485,11 @@ export function resolveArgs<A extends Args>(
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(kazupon): Allow any type for resolving
         ;(explicit as any)[rawArg] = true
 
-        // Record the actual input name used (e.g., '-v' or '--verbose')
-        const rawName = token.rawName!
-        const actualInputName = isShortOption(rawName) ? `-${token.name}` : rawName
-        actualInputNames.set(rawArg, actualInputName)
+        // Record the actual input name used (e.g., '-v' or '--verbose'), which only conflicts show
+        if (actualInputNames !== undefined) {
+          const rawName = token.rawName!
+          actualInputNames.set(rawArg, isShortOption(rawName) ? `-${token.name}` : rawName)
+        }
 
         // an option given without a value (not an empty one such as `--name=`) is a missing value,
         // also when it is required: the option itself was given
@@ -1540,8 +1543,9 @@ export function resolveArgs<A extends Args>(
   }
 
   // check for conflicts
-  const conflictErrors = checkConflicts(args, explicit, toKebab, actualInputNames)
-  errors.push(...conflictErrors)
+  if (actualInputNames !== undefined) {
+    errors.push(...checkConflicts(args, explicit, toKebab, actualInputNames))
+  }
 
   const positionals = positionalTokens.map(token => token.value!)
   const error = errors.length > 0 ? new AggregateError(errors) : undefined
@@ -1571,6 +1575,42 @@ export function resolveArgs<A extends Args>(
       rest.length
     )
   }
+}
+
+/**
+ * Check whether a schema has a boolean option with a short name.
+ *
+ * @param argEntries - The entries of the schema
+ * @param name - The short name
+ * @returns Whether a boolean option of the schema has the short name.
+ */
+function isBooleanShortOption(
+  argEntries: [string, ArgSchema][],
+  name: string | undefined
+): boolean {
+  for (let i = 0; i < argEntries.length; i++) {
+    const schema = argEntries[i][1]
+    if (schema.short === name && schema.type === 'boolean') {
+      return true
+    }
+  }
+  return false
+}
+
+/**
+ * Count the positional tokens.
+ *
+ * @param tokens - The tokens
+ * @returns How many of the tokens are positional.
+ */
+function countPositionalTokens(tokens: ArgToken[]): number {
+  let count = 0
+  for (let i = 0; i < tokens.length; i++) {
+    if (tokens[i].kind === 'positional') {
+      count++
+    }
+  }
+  return count
 }
 
 /**
