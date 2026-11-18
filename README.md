@@ -347,6 +347,8 @@ The options of the schema, the arguments that they take as their values, and the
 
 Without `passthrough`, the result has neither `passthroughIndices` nor `passthrough`, and the arguments are not collected, as the result of `parseArgs` of `node:util` has `tokens` only with its `tokens` option. With `passthrough: true`, their types are `number[]` and `string[]`, and with a `boolean`, they may be `undefined`.
 
+The indexes are the `index` of the tokens. With `allowCompatible`, `parseArgs` splits a short option group with `-` in it, such as `-p-5`, at an option terminator, as `node:util` does, and the tokens after it have indexes past the arguments that they come from, so `passthroughIndices` of `resolveArgs` can reach past the last argument. `parse` leaves those out, which leaves the indexes of the arguments after the group; the pieces of the group after its `-` are not given.
+
 ## Validation errors
 
 `resolveArgs` and `parse` return validation failures as an `AggregateError` in the `error` field. Each argument validation failure is an `ArgsValidationError`, which has an English `message` as a fallback, and a `code` and `values` for localization or custom rendering.

@@ -958,6 +958,12 @@ export interface ResolveArgs {
    * the schema takes are not given. The indexes are given even when there are validation errors, as
    * `values` are. `parse()` also gives the arguments at the indexes, as `passthrough`.
    *
+   * The indexes are the `index` of the tokens. With `allowCompatible`, `parseArgs()` splits a short
+   * option group with `-` in it, such as `-p-5`, at an option terminator, as `node:util` does, and
+   * the tokens after it have indexes past the arguments that they come from: the indexes after the
+   * group can reach past the last argument. `parse()` leaves those out, which leaves the indexes of
+   * the arguments after the group; the pieces of the group after its `-` are not given.
+   *
    * Without it, the indexes are not collected, and the result has no `passthroughIndices`, as the
    * result of `parseArgs()` of `node:util` has `tokens` only with its `tokens` option.
    *
@@ -1118,9 +1124,9 @@ export function resolveArgs<A extends Args>(
       : SKIP_POSITIONAL_DEFAULT
 
   const rest = [] as string[]
-  // with `passthrough` only: whether each option token, by its position in `optionTokens`, takes
-  // the next argument as its value. `optionTokens` has at most one entry for each token
-  const tookValue: Uint8Array | undefined = passthrough ? new Uint8Array(tokens.length) : undefined
+  // with `passthrough` only: for each option token that takes a positional argument as its value,
+  // the position of the option token in `optionTokens`, then the index of the argument
+  const takenValues: number[] | undefined = passthrough ? [] : undefined
 
   const optionTokens: ArgToken[] = []
   const positionalTokens: ArgToken[] = []
@@ -1234,8 +1240,8 @@ export function resolveArgs<A extends Args>(
           applyShortOptionValue() // finalize without taking the positional as a value
         } else {
           applyShortOptionValue(token.value)
-          if (tookValue !== undefined) {
-            tookValue[optionTokens.length - 1] = 1
+          if (takenValues !== undefined) {
+            takenValues.push(optionTokens.length - 1, token.index)
           }
         }
       } else if (currentLongOption) {
@@ -1244,8 +1250,8 @@ export function resolveArgs<A extends Args>(
           applyLongOptionValue() // finalize boolean without value
         } else {
           applyLongOptionValue(token.value)
-          if (tookValue !== undefined) {
-            tookValue[optionTokens.length - 1] = 1
+          if (takenValues !== undefined) {
+            takenValues.push(optionTokens.length - 1, token.index)
           }
         }
       } else {
@@ -1539,7 +1545,7 @@ export function resolveArgs<A extends Args>(
 
   const positionals = positionalTokens.map(token => token.value!)
   const error = errors.length > 0 ? new AggregateError(errors) : undefined
-  if (matched === undefined || tookValue === undefined) {
+  if (matched === undefined || takenValues === undefined) {
     return { values, positionals, rest, error, explicit }
   }
   return {
@@ -1552,7 +1558,7 @@ export function resolveArgs<A extends Args>(
       tokens,
       optionTokens,
       matched,
-      tookValue,
+      takenValues,
       positionalTokens,
       // the positional arguments up to `skipPositional` are skipped even when the schema has no
       // positional argument, which is when `positionalsCount` does not count them. They are
@@ -1571,16 +1577,17 @@ export function resolveArgs<A extends Args>(
  * Collect the indexes of the arguments that the schema does not take, for `passthrough`.
  *
  * Each argument is marked by its index: an option token that does not match the schema, with the
- * next argument when the token takes it as its value; the positional arguments that the schema
- * does not take; and the arguments after `--`, which are the last tokens, one for each argument in
- * `rest`. The tokens of a short option group have the index of the group, so the group is marked
- * when one of its tokens does not match; without `shortGrouping`, the group has only the token of
- * its first option. The marked indexes are then read in order.
+ * token that it takes as its value; the positional arguments that the schema does not take; and
+ * the arguments after `--`, which are the last tokens, one for each argument in `rest`. The tokens
+ * of a short option group have the index of the group, so the group is marked when one of its
+ * tokens does not match; without `shortGrouping`, the group has only the token of its first
+ * option. The marked indexes are then read in order.
  *
  * @param tokens - The tokens given to `resolveArgs()`
  * @param optionTokens - The option tokens, each with its value
  * @param matched - Whether each option token matches the schema
- * @param tookValue - Whether each option token takes the next argument as its value
+ * @param takenValues - For each option token that takes a positional argument as its value, the
+ * position of the option token in `optionTokens`, then the index of the argument
  * @param positionalTokens - The positional tokens before `--`, without the ones taken as values
  * @param taken - How many of `positionalTokens` are skipped or taken by the schema, from the first
  * @param restCount - How many arguments are after `--`
@@ -1590,21 +1597,23 @@ function collectPassthroughIndices(
   tokens: ArgToken[],
   optionTokens: ArgToken[],
   matched: Uint8Array,
-  tookValue: Uint8Array,
+  takenValues: number[],
   positionalTokens: ArgToken[],
   taken: number,
   restCount: number
 ): number[] {
-  // the tokens are in the order of the arguments, so the last one has the largest index
+  // the tokens are in the order of the arguments, also when a caller leaves some of them out, so the
+  // last one has the largest index
   const count = tokens.length === 0 ? 0 : tokens[tokens.length - 1].index + 1
   const given = new Uint8Array(count)
   for (let i = 0; i < optionTokens.length; i++) {
     if (matched[i] === 0) {
-      const index = optionTokens[i].index
-      given[index] = 1
-      if (tookValue[i] === 1) {
-        given[index + 1] = 1
-      }
+      given[optionTokens[i].index] = 1
+    }
+  }
+  for (let i = 0; i < takenValues.length; i += 2) {
+    if (matched[takenValues[i]] === 0) {
+      given[takenValues[i + 1]] = 1
     }
   }
   for (let i = taken; i < positionalTokens.length; i++) {

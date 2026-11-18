@@ -258,6 +258,28 @@ describe('passthrough', () => {
     expect(passthrough).toEqual(['--watch=1', 'x'])
   })
 
+  test('leaves out the indexes past the last argument, with allowCompatible', () => {
+    // as node:util does, `-p-5` is split into `-p`, `--` and `-5`, and the tokens after the group
+    // have indexes past the arguments that they come from
+    const argv = ['-p-5', 'input']
+    const tokens = parseArgs(argv, { allowCompatible: true })
+    expect(tokens.map(token => token.index)).toEqual([0, 0, 1, 2])
+    expect(resolveArgs({}, tokens, { passthrough: true }).passthroughIndices).toEqual([0, 1, 2])
+    const all = parse(argv, { args: {}, allowCompatible: true, passthrough: true })
+    expect(all.passthroughIndices).toEqual([0, 1])
+    expect(all.passthrough).toEqual(['-p-5', 'input'])
+    // with `p` in the schema, the group is not given, nor its `-5` after `--`
+    const withP = parse(argv, {
+      args: { p: { type: 'boolean', short: 'p' } },
+      allowCompatible: true,
+      passthrough: true
+    })
+    expect(withP.values).toEqual({ p: true })
+    expect(withP.rest).toEqual(['-5', 'input'])
+    expect(withP.passthroughIndices).toEqual([1])
+    expect(withP.passthrough).toEqual(['input'])
+  })
+
   test('gives the arguments as they were tokenized, even if a parse function changes them', () => {
     const argv = ['--env', 'ci', 'src']
     const { values, passthrough, passthroughIndices } = parse(argv, {

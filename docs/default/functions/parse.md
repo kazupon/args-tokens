@@ -49,7 +49,8 @@ export function parse<A extends Args>(
 ): ParsedArgs<A> & {
   /**
    * The indexes of the arguments that the schema does not take, same as `passthroughIndices` in
-   * {@link resolveArgs}.
+   * {@link resolveArgs}, without the indexes past the last argument. See
+   * {@link ResolveArgs.passthrough} for when there are such indexes.
    */
   passthroughIndices: number[]
   /**

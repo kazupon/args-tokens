@@ -7132,6 +7132,14 @@ describe('passthrough', () => {
     expect(passthroughIndices).toEqual([2, 4])
   })
 
+  test('gives the value of an option by the index of its token, when tokens are left out', () => {
+    // a caller may leave out some of the tokens, such as those of an option that it reads itself
+    const tokens = parseArgs(['--watch', '--internal=1', 'src']).filter(
+      token => token.name !== 'internal'
+    )
+    expect(resolveArgs({}, tokens, { passthrough: true }).passthroughIndices).toEqual([0, 2])
+  })
+
   test('gives no passthroughIndices without passthrough or with false', () => {
     const tokens = parseArgs(['exec', '--watch', 'src'])
     for (const result of [

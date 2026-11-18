@@ -129,7 +129,8 @@ export function parse<A extends Args>(
 ): ParsedArgs<A> & {
   /**
    * The indexes of the arguments that the schema does not take, same as `passthroughIndices` in
-   * {@link resolveArgs}.
+   * {@link resolveArgs}, without the indexes past the last argument. See
+   * {@link ResolveArgs.passthrough} for when there are such indexes.
    */
   passthroughIndices: number[]
   /**
@@ -176,6 +177,15 @@ export function parse<A extends Args>(
   if (indices === undefined) {
     return Object.assign(Object.create(null), resolved, { tokens }) as ParsedArgs<A>
   }
+  // with `allowCompatible`, the tokens after a short option group with `-` in it, such as `-p-5`,
+  // have indexes past the arguments that they come from, as in `parseArgs()` of `node:util`. The
+  // indexes in ascending order that are past the last argument are left out, and the others are
+  // then those of the arguments after the group
+  let count = indices.length
+  while (count > 0 && indices[count - 1] >= given.length) {
+    count--
+  }
+  indices.length = count
   const passthrough: string[] = []
   for (let i = 0; i < indices.length; i++) {
     passthrough.push(given[indices[i]])
