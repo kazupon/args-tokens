@@ -173,9 +173,18 @@ export function parse<A extends Args>(
   const tokens = parseArgs(given, { allowCompatible })
   // the options of `resolveArgs()`, such as `shortGrouping`, are in `options` too
   const resolved = resolveArgs<A>((_args as A) || DEFAULT_OPTIONS, tokens, options)
+  // the result has no prototype, so it keeps its keys in a dictionary: the keys are added one by
+  // one, in the order of `resolveArgs()` and then `tokens`, which is faster than `Object.assign()`
+  const result: Record<string, unknown> = Object.create(null)
+  result.values = resolved.values
+  result.positionals = resolved.positionals
+  result.rest = resolved.rest
+  result.error = resolved.error
+  result.explicit = resolved.explicit
   const indices = resolved.passthroughIndices
   if (indices === undefined) {
-    return Object.assign(Object.create(null), resolved, { tokens }) as ParsedArgs<A>
+    result.tokens = tokens
+    return result as ParsedArgs<A>
   }
   // with `allowCompatible`, the tokens after a short option group with `-` in it, such as `-p-5`,
   // have indexes past the arguments that they come from, as in `parseArgs()` of `node:util`. The
@@ -190,5 +199,8 @@ export function parse<A extends Args>(
   for (let i = 0; i < indices.length; i++) {
     passthrough.push(given[indices[i]])
   }
-  return Object.assign(Object.create(null), resolved, { tokens, passthrough }) as ParsedArgs<A>
+  result.passthroughIndices = indices
+  result.tokens = tokens
+  result.passthrough = passthrough
+  return result as ParsedArgs<A>
 }
