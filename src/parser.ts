@@ -99,14 +99,20 @@ export function parseArgs(args: string[], options: ParserOptions = {}): ArgToken
   const { allowCompatible = false } = options
 
   const tokens: ArgToken[] = []
-  const remainings = [...args]
+  // the arguments are read in order by `next`, and the pieces that a short option group is expanded
+  // into by `piece`, before the arguments after the group: the same order as shifting them from a
+  // copy of the arguments with the pieces put in front, without moving the other arguments
+  const list = Array.isArray(args) ? args : [...(args as Iterable<string>)]
+  let next = 0
+  let pieces: string[] = []
+  let piece = 0
   let index = -1
   let groupCount = 0
   let hasShortGroupValue = false
   let shortGroupValueInline = true
 
-  while (remainings.length > 0) {
-    const arg = remainings.shift()
+  while (piece < pieces.length || next < list.length) {
+    const arg = piece < pieces.length ? pieces[piece++] : list[next++]
 
     if (arg == undefined) {
       break
@@ -125,10 +131,12 @@ export function parseArgs(args: string[], options: ParserOptions = {}): ArgToken
         kind: 'option-terminator',
         index
       })
-      const mapped = remainings.map(arg => {
-        return { kind: 'positional', index: ++index, value: arg }
-      }) satisfies ArgToken[]
-      tokens.push(...mapped)
+      while (piece < pieces.length) {
+        tokens.push({ kind: 'positional', index: ++index, value: pieces[piece++] })
+      }
+      while (next < list.length) {
+        tokens.push({ kind: 'positional', index: ++index, value: list[next++] })
+      }
       break
     }
 
@@ -149,7 +157,7 @@ export function parseArgs(args: string[], options: ParserOptions = {}): ArgToken
         // the last element of a group with a value after `=` or `-` is the value, even when it
         // starts with `-`
         if (groupCount === 1 && hasShortGroupValue) {
-          value = remainings.shift()
+          value = piece < pieces.length ? pieces[piece++] : list[next++]
           inlineValue = shortGroupValueInline
           hasShortGroupValue = false
           tokens.push({
@@ -214,7 +222,8 @@ export function parseArgs(args: string[], options: ParserOptions = {}): ArgToken
       if (separated) {
         expanded.push(shortValue)
       }
-      remainings.unshift(...expanded)
+      pieces = piece < pieces.length ? [...expanded, ...pieces.slice(piece)] : expanded
+      piece = 0
       groupCount = expanded.length
       continue
     }
