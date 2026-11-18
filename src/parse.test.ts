@@ -1,7 +1,7 @@
-import { expect, test } from 'vite-plus/test'
+import { describe, expect, test } from 'vite-plus/test'
 import { parse } from './parse.ts'
 import { parseArgs } from './parser.ts'
-import { ArgsValidationErrorKeys } from './resolver.ts'
+import { ArgsValidationErrorKeys, resolveArgs } from './resolver.ts'
 
 import type { Args, ArgsValidationError } from './resolver.ts'
 
@@ -197,4 +197,106 @@ test('an enum argument without choices throws, whether or not it is given', () =
   expect(() => parse(['--level=debug'], { args })).toThrow(
     "argument 'level' should have a 'choices' array"
   )
+})
+
+describe('passthrough', () => {
+  const args = {
+    script: { type: 'positional' },
+    env: { type: 'string', short: 'e' },
+    quiet: { type: 'boolean', short: 'q' }
+  } as const satisfies Args
+
+  test('gives the arguments that the schema does not take, as they were given', () => {
+    const argv = ['exec', 'run.js', '-e', 'prod', '--watch', 'src', '-qk', '--', '--env', 'x']
+    const options = { args, shortGrouping: true, skipPositional: 0, passthrough: true }
+    const { values, rest, passthrough, passthroughIndices } = parse(argv, options)
+    expect(values).toEqual({ script: 'run.js', env: 'prod', quiet: true })
+    expect(rest).toEqual(['--env', 'x'])
+    expect(passthrough).toEqual(['--watch', 'src', '-qk', '--env', 'x'])
+    // the same indexes as `resolveArgs()`
+    expect(passthroughIndices).toEqual([4, 5, 6, 8, 9])
+    expect(passthroughIndices).toEqual(
+      resolveArgs(args, parseArgs(argv), options).passthroughIndices
+    )
+  })
+
+  test('keeps an inline value, a group and an empty argument as they were given', () => {
+    const { passthrough } = parse(['run.js', '--bail=3', '-qk', '', '-e=stage'], {
+      args,
+      shortGrouping: true,
+      passthrough: true
+    })
+    expect(passthrough).toEqual(['--bail=3', '-qk', ''])
+  })
+
+  test('gives no passthrough and passthroughIndices without passthrough, also without args', () => {
+    for (const result of [
+      parse(['run.js', '--watch', 'src'], { args }),
+      parse(['run.js', '--watch', 'src'], { args, passthrough: false }),
+      parse(['--watch'])
+    ]) {
+      expect(Object.keys(result)).toEqual([
+        'values',
+        'positionals',
+        'rest',
+        'error',
+        'explicit',
+        'tokens'
+      ])
+    }
+  })
+
+  test('works with allowCompatible', () => {
+    // with allowCompatible, `-e=stage` is `-e` with `=stage`, as in `node:util` `parseArgs`
+    const { values, passthrough, error } = parse(['run.js', '-e=stage', '--watch=1', '-q', 'x'], {
+      args,
+      allowCompatible: true,
+      passthrough: true
+    })
+    expect(error).toBeUndefined()
+    expect(values).toEqual({ script: 'run.js', env: '=stage', quiet: true })
+    expect(passthrough).toEqual(['--watch=1', 'x'])
+  })
+
+  test('leaves out the indexes past the last argument, with allowCompatible', () => {
+    // as node:util does, `-p-5` is split into `-p`, `--` and `-5`, and the tokens after the group
+    // have indexes past the arguments that they come from
+    const argv = ['-p-5', 'input']
+    const tokens = parseArgs(argv, { allowCompatible: true })
+    expect(tokens.map(token => token.index)).toEqual([0, 0, 1, 2])
+    expect(resolveArgs({}, tokens, { passthrough: true }).passthroughIndices).toEqual([0, 1, 2])
+    const all = parse(argv, { args: {}, allowCompatible: true, passthrough: true })
+    expect(all.passthroughIndices).toEqual([0, 1])
+    expect(all.passthrough).toEqual(['-p-5', 'input'])
+    // with `p` in the schema, the group is not given, nor its `-5` after `--`
+    const withP = parse(argv, {
+      args: { p: { type: 'boolean', short: 'p' } },
+      allowCompatible: true,
+      passthrough: true
+    })
+    expect(withP.values).toEqual({ p: true })
+    expect(withP.rest).toEqual(['-5', 'input'])
+    expect(withP.passthroughIndices).toEqual([1])
+    expect(withP.passthrough).toEqual(['input'])
+  })
+
+  test('gives the arguments as they were tokenized, even if a parse function changes them', () => {
+    const argv = ['--env', 'ci', 'src']
+    const { values, passthrough, passthroughIndices } = parse(argv, {
+      args: {
+        env: {
+          type: 'string',
+          parse: (value: string) => {
+            argv.pop()
+            return value
+          }
+        }
+      },
+      passthrough: true
+    })
+    expect(values).toEqual({ env: 'ci' })
+    expect(argv).toEqual(['--env', 'ci'])
+    expect(passthroughIndices).toEqual([2])
+    expect(passthrough).toEqual(['src'])
+  })
 })

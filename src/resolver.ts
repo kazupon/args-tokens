@@ -939,6 +939,37 @@ export interface ResolveArgs {
    * @default false
    */
   toKebab?: boolean
+  /**
+   * Whether to give the arguments that the schema does not take, such as for a CLI that passes them
+   * on to another program.
+   *
+   * When `true`, the result has `passthroughIndices`: the indexes, in the arguments given to
+   * `parseArgs()`, of the arguments that the schema does not take, in ascending order. They are an
+   * option that is not in the schema, with the argument that it takes as its value: as without
+   * `passthrough`, it takes the next argument when it has no value of its own, such as `--bail=3`,
+   * and that argument is not an option or `--`. A short option group with an option that is not in
+   * the schema is given whole, as it was given, such as `-qk` with `q` in the schema, whose options
+   * in the schema are still resolved. Without `shortGrouping`, a group is its first option, with the
+   * other letters as its value, so it is given only when that option is not in the schema. A
+   * positional argument that no positional argument of the schema takes, after the ones up to
+   * `skipPositional`, and the arguments after `--`, but not `--` itself, are given too.
+   *
+   * An option of the schema, the argument that it takes as its value, and a positional argument that
+   * the schema takes are not given. The indexes are given even when there are validation errors, as
+   * `values` are. `parse()` also gives the arguments at the indexes, as `passthrough`.
+   *
+   * The indexes are the `index` of the tokens. With `allowCompatible`, `parseArgs()` splits a short
+   * option group with `-` in it, such as `-p-5`, at an option terminator, as `node:util` does, and
+   * the tokens after it have indexes past the arguments that they come from: the indexes after the
+   * group can reach past the last argument. `parse()` leaves those out, which leaves the indexes of
+   * the arguments after the group; the pieces of the group after its `-` are not given.
+   *
+   * Without it, the indexes are not collected, and the result has no `passthroughIndices`, as the
+   * result of `parseArgs()` of `node:util` has `tokens` only with its `tokens` option.
+   *
+   * @default false
+   */
+  passthrough?: boolean
 }
 
 const SKIP_POSITIONAL_DEFAULT = -1
@@ -1003,24 +1034,99 @@ export type ArgExplicitlyProvided<A extends Args> = {
 export function resolveArgs<A extends Args>(
   args: A,
   tokens: ArgToken[],
-  {
-    shortGrouping = false,
-    skipPositional = SKIP_POSITIONAL_DEFAULT,
-    toKebab = false
-  }: ResolveArgs = {}
+  resolveArgs?: ResolveArgs & { passthrough?: false }
 ): {
   values: ArgValues<A>
   positionals: string[]
   rest: string[]
   error: AggregateError | undefined
   explicit: ArgExplicitlyProvided<A>
-} {
+}
+/**
+ * Resolve command line arguments, and give the indexes of the arguments that the schema does not
+ * take, with {@link ResolveArgs.passthrough | passthrough}.
+ *
+ * @typeParam A - {@link Args | Arguments}, which is an object that defines the command line arguments.
+ *
+ * @param args - An arguments that contains {@link ArgSchema | arguments schema}.
+ * @param tokens - An array of {@link ArgToken | tokens}.
+ * @param resolveArgs - An arguments that contains {@link ResolveArgs | resolve arguments}, with `passthrough: true`.
+ * @returns An object that contains the values of the arguments, positional arguments, rest arguments, {@link AggregateError | validation errors}, explicit provision status, and the indexes of the arguments that the schema does not take.
+ *
+ * @example
+ * ```typescript
+ * // passed tokens: exec run.js --watch src
+ *
+ * const { values, passthroughIndices } = resolveArgs(
+ *   { script: { type: 'positional' } },
+ *   parsedTokens,
+ *   { skipPositional: 0, passthrough: true }
+ * )
+ *
+ * values.script // 'run.js'
+ * passthroughIndices // [2, 3], the indexes of `--watch` and `src`
+ * ```
+ */
+export function resolveArgs<A extends Args>(
+  args: A,
+  tokens: ArgToken[],
+  resolveArgs: ResolveArgs & { passthrough: true }
+): {
+  values: ArgValues<A>
+  positionals: string[]
+  rest: string[]
+  error: AggregateError | undefined
+  explicit: ArgExplicitlyProvided<A>
+  /**
+   * The indexes, in the arguments given to `parseArgs()`, of the arguments that the schema does not
+   * take, in ascending order. See {@link ResolveArgs.passthrough} for which arguments they are.
+   */
+  passthroughIndices: number[]
+}
+/**
+ * Resolve command line arguments, with `passthrough` that may be `true` or not, such as a `boolean`.
+ *
+ * @typeParam A - {@link Args | Arguments}, which is an object that defines the command line arguments.
+ *
+ * @param args - An arguments that contains {@link ArgSchema | arguments schema}.
+ * @param tokens - An array of {@link ArgToken | tokens}.
+ * @param resolveArgs - An arguments that contains {@link ResolveArgs | resolve arguments}.
+ * @returns The result of one of the overloads above, by whether `passthrough` is `true`.
+ */
+export function resolveArgs<A extends Args>(
+  args: A,
+  tokens: ArgToken[],
+  resolveArgs?: ResolveArgs
+): {
+  values: ArgValues<A>
+  positionals: string[]
+  rest: string[]
+  error: AggregateError | undefined
+  explicit: ArgExplicitlyProvided<A>
+  /**
+   * Only with {@link ResolveArgs.passthrough | passthrough}.
+   */
+  passthroughIndices?: number[]
+}
+export function resolveArgs<A extends Args>(
+  args: A,
+  tokens: ArgToken[],
+  {
+    shortGrouping = false,
+    skipPositional = SKIP_POSITIONAL_DEFAULT,
+    toKebab = false,
+    passthrough = false
+  }: ResolveArgs = {}
+) {
   const skipPositionalIndex =
     typeof skipPositional === 'number'
       ? Math.max(skipPositional, SKIP_POSITIONAL_DEFAULT)
       : SKIP_POSITIONAL_DEFAULT
 
   const rest = [] as string[]
+  // with `passthrough` only: for each option token that takes a positional argument as its value,
+  // the position of the option token in `optionTokens`, then the index of the argument
+  const takenValues: number[] | undefined = passthrough ? [] : undefined
 
   const optionTokens: ArgToken[] = []
   const positionalTokens: ArgToken[] = []
@@ -1134,6 +1240,9 @@ export function resolveArgs<A extends Args>(
           applyShortOptionValue() // finalize without taking the positional as a value
         } else {
           applyShortOptionValue(token.value)
+          if (takenValues !== undefined) {
+            takenValues.push(optionTokens.length - 1, token.index)
+          }
         }
       } else if (currentLongOption) {
         if (booleanLongOptionNames.has(currentLongOption.name!)) {
@@ -1141,6 +1250,9 @@ export function resolveArgs<A extends Args>(
           applyLongOptionValue() // finalize boolean without value
         } else {
           applyLongOptionValue(token.value)
+          if (takenValues !== undefined) {
+            takenValues.push(optionTokens.length - 1, token.index)
+          }
         }
       } else {
         positionalTokens.push({ ...token })
@@ -1219,6 +1331,10 @@ export function resolveArgs<A extends Args>(
 
   const values = Object.create(null) as ArgValues<A>
   const errors: Error[] = []
+  // with `passthrough` only: whether each option token matches the schema
+  const matched: Uint8Array | undefined = passthrough
+    ? new Uint8Array(optionTokens.length)
+    : undefined
   const explicit = Object.create(null) as ArgExplicitlyProvided<A>
   const actualInputNames = new Map<string, string>()
   let requiredPositionalsAfter: Record<string, number> | undefined
@@ -1358,6 +1474,10 @@ export function resolveArgs<A extends Args>(
         checkLongTokenName(arg, schema, token) ||
         (schema.short === token.name && token.rawName != undefined && isShortOption(token.rawName))
       ) {
+        // the schema takes the token, even if its value is rejected below
+        if (matched !== undefined) {
+          matched[i] = 1
+        }
         // mark as explicitly set when we find a matching token, even if its value is rejected below
         // keyof explicit is generic and cannot be indexed for settings value.
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(kazupon): Allow any type for resolving
@@ -1423,13 +1543,92 @@ export function resolveArgs<A extends Args>(
   const conflictErrors = checkConflicts(args, explicit, toKebab, actualInputNames)
   errors.push(...conflictErrors)
 
+  const positionals = positionalTokens.map(token => token.value!)
+  const error = errors.length > 0 ? new AggregateError(errors) : undefined
+  if (matched === undefined || takenValues === undefined) {
+    return { values, positionals, rest, error, explicit }
+  }
   return {
     values,
-    positionals: positionalTokens.map(token => token.value!),
+    positionals,
     rest,
-    error: errors.length > 0 ? new AggregateError(errors) : undefined,
-    explicit
+    error,
+    explicit,
+    passthroughIndices: collectPassthroughIndices(
+      tokens,
+      optionTokens,
+      matched,
+      takenValues,
+      positionalTokens,
+      // the positional arguments up to `skipPositional` are skipped even when the schema has no
+      // positional argument, which is when `positionalsCount` does not count them. They are
+      // counted as the loop that skips them does: a fractional one skips up to the integer
+      // below it, and `NaN` skips none
+      Math.max(
+        positionalsCount,
+        skipPositionalIndex > SKIP_POSITIONAL_DEFAULT ? Math.floor(skipPositionalIndex) + 1 : 0
+      ),
+      rest.length
+    )
   }
+}
+
+/**
+ * Collect the indexes of the arguments that the schema does not take, for `passthrough`.
+ *
+ * Each argument is marked by its index: an option token that does not match the schema, with the
+ * token that it takes as its value; the positional arguments that the schema does not take; and
+ * the arguments after `--`, which are the last tokens, one for each argument in `rest`. The tokens
+ * of a short option group have the index of the group, so the group is marked when one of its
+ * tokens does not match; without `shortGrouping`, the group has only the token of its first
+ * option. The marked indexes are then read in order.
+ *
+ * @param tokens - The tokens given to `resolveArgs()`
+ * @param optionTokens - The option tokens, each with its value
+ * @param matched - Whether each option token matches the schema
+ * @param takenValues - For each option token that takes a positional argument as its value, the
+ * position of the option token in `optionTokens`, then the index of the argument
+ * @param positionalTokens - The positional tokens before `--`, without the ones taken as values
+ * @param taken - How many of `positionalTokens` are skipped or taken by the schema, from the first
+ * @param restCount - How many arguments are after `--`
+ * @returns The indexes, in ascending order, each once
+ */
+function collectPassthroughIndices(
+  tokens: ArgToken[],
+  optionTokens: ArgToken[],
+  matched: Uint8Array,
+  takenValues: number[],
+  positionalTokens: ArgToken[],
+  taken: number,
+  restCount: number
+): number[] {
+  // the tokens are in the order of the arguments, also when a caller leaves some of them out, so the
+  // last one has the largest index
+  const count = tokens.length === 0 ? 0 : tokens[tokens.length - 1].index + 1
+  const given = new Uint8Array(count)
+  for (let i = 0; i < optionTokens.length; i++) {
+    if (matched[i] === 0) {
+      given[optionTokens[i].index] = 1
+    }
+  }
+  for (let i = 0; i < takenValues.length; i += 2) {
+    if (matched[takenValues[i]] === 0) {
+      given[takenValues[i + 1]] = 1
+    }
+  }
+  for (let i = taken; i < positionalTokens.length; i++) {
+    given[positionalTokens[i].index] = 1
+  }
+  for (let i = tokens.length - restCount; i < tokens.length; i++) {
+    given[tokens[i].index] = 1
+  }
+  const indices: number[] = []
+  for (let i = 0; i < count; i++) {
+    if (given[i] === 1) {
+      indices.push(i)
+    }
+  }
+  return indices
 }
 
 /**

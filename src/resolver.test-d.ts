@@ -1,6 +1,11 @@
 import { expectTypeOf, test } from 'vite-plus/test'
 import { z } from 'zod/v4-mini'
-import { ArgsValidationError, ArgsValidationErrorKeys, isArgsValidationError } from './resolver.ts'
+import {
+  ArgsValidationError,
+  ArgsValidationErrorKeys,
+  isArgsValidationError,
+  resolveArgs
+} from './resolver.ts'
 
 import type {
   ArgExplicitlyProvided,
@@ -10,6 +15,7 @@ import type {
   ArgsValidationErrorCode,
   ExtractOptionValue,
   FilterArgs,
+  ResolveArgs,
   ResolveArgValues
 } from './resolver.ts'
 
@@ -627,4 +633,24 @@ test('ArgExplicitlyProvided', () => {
     regularOption: boolean
     custom: boolean
   }>()
+})
+
+test('resolveArgs passthrough', () => {
+  expectTypeOf<ResolveArgs['passthrough']>().toEqualTypeOf<boolean | undefined>()
+
+  const args = { file: { type: 'positional' } } as const satisfies Args
+  // with `passthrough: true`, the result has `passthroughIndices`
+  const withPassthrough = resolveArgs(args, [], { passthrough: true })
+  expectTypeOf(withPassthrough.passthroughIndices).toEqualTypeOf<number[]>()
+  expectTypeOf(withPassthrough.values).toEqualTypeOf<{ file: string }>()
+  // without it, or with `false`, the result does not have it
+  expectTypeOf(resolveArgs(args, [])).not.toHaveProperty('passthroughIndices')
+  expectTypeOf(resolveArgs(args, [], { passthrough: false })).not.toHaveProperty(
+    'passthroughIndices'
+  )
+  // with a boolean, the result may have it
+  const passthrough = Math.random() > 0.5
+  expectTypeOf(resolveArgs(args, [], { passthrough }).passthroughIndices).toEqualTypeOf<
+    number[] | undefined
+  >()
 })
