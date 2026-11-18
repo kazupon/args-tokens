@@ -12,7 +12,7 @@ import {
   resolveArgs
 } from './resolver.ts'
 
-import type { Args, ArgSchema } from './resolver.ts'
+import type { Args, ArgSchema, ResolveArgs } from './resolver.ts'
 
 const args = {
   help: {
@@ -6973,6 +6973,262 @@ describe('a mistake in the schema', () => {
       "argument 'level' should have a 'choices' array"
     )
     expect(parse).not.toHaveBeenCalled()
+  })
+})
+
+describe('passthrough', () => {
+  // `exec` is the name of a command, skipped with `skipPositional: 0`
+  const args = {
+    script: {
+      type: 'positional'
+    },
+    env: {
+      type: 'string',
+      short: 'e'
+    },
+    quiet: {
+      type: 'boolean',
+      short: 'q'
+    },
+    verbose: {
+      type: 'boolean',
+      short: 'v'
+    },
+    color: {
+      type: 'boolean',
+      negatable: true
+    },
+    dryRun: {
+      type: 'boolean',
+      toKebab: true
+    }
+  } as const satisfies Args
+
+  /**
+   * Resolve with `passthrough`, and check that the other results are the same as without it.
+   *
+   * @param schema - The arguments schema
+   * @param argv - The arguments
+   * @param options - The other options of `resolveArgs()`
+   * @returns The result with `passthrough`
+   */
+  function resolveWithPassthrough(schema: Args, argv: string[], options: ResolveArgs = {}) {
+    const result = resolveArgs(schema, parseArgs(argv), { ...options, passthrough: true })
+    const without = resolveArgs(schema, parseArgs(argv), options)
+    expect(result.values).toEqual(without.values)
+    expect(result.positionals).toEqual(without.positionals)
+    expect(result.rest).toEqual(without.rest)
+    expect(result.explicit).toEqual(without.explicit)
+    expect(result.error?.errors.map(e => (e as ArgsValidationError).code)).toEqual(
+      without.error?.errors.map(e => (e as ArgsValidationError).code)
+    )
+    expect(without.passthroughIndices).toEqual([])
+    return result
+  }
+
+  test('gives the arguments that the schema does not take, in order', () => {
+    const argv = ['exec', 'run.js', '-e', 'prod', '--watch', 'src', '-qk', '--', '--env', 'x']
+    for (const shortGrouping of [true, false]) {
+      const { values, rest, passthroughIndices } = resolveWithPassthrough(args, argv, {
+        shortGrouping,
+        skipPositional: 0
+      })
+      expect(values).toEqual({ script: 'run.js', env: 'prod', quiet: true })
+      expect(rest).toEqual(['--env', 'x'])
+      // without shortGrouping, `-qk` is `-q`, which ignores `k`
+      expect(passthroughIndices, `shortGrouping: ${shortGrouping}`).toEqual(
+        shortGrouping ? [4, 5, 6, 8, 9] : [4, 5, 8, 9]
+      )
+    }
+  })
+
+  test.each([
+    { label: 'the name of the command and the positional of the schema', argv: [], indices: [] },
+    {
+      label: 'the options of the schema',
+      argv: ['--env', 'prod', '-q', '--verbose', '--no-color', '--dry-run'],
+      indices: []
+    },
+    { label: 'an inline value of the schema', argv: ['--env=prod', '-e=stage'], indices: [] },
+    { label: 'an option that is not in the schema', argv: ['--watch'], indices: [2] },
+    { label: 'one with an inline value', argv: ['--bail=3'], indices: [2] },
+    { label: 'one with the argument that it takes', argv: ['--watch', 'src'], indices: [2, 3] },
+    { label: 'one followed by an option', argv: ['--watch', '-q'], indices: [2] },
+    {
+      label: 'the no- form of an option that is not negatable, with its value',
+      argv: ['--no-quiet', 'x'],
+      indices: [2, 3]
+    },
+    { label: 'the camelCase name of a toKebab option', argv: ['--dryRun'], indices: [2] },
+    { label: 'a positional that the schema does not take', argv: ['extra'], indices: [2] },
+    { label: 'a group with an option not in the schema', argv: ['-qk'], indices: [2] },
+    {
+      label: 'a group whose last option not in the schema takes the next argument',
+      argv: ['-qk', 'src'],
+      indices: [2, 3]
+    },
+    {
+      label: 'a group whose last option of the schema takes the next argument',
+      argv: ['-ke', 'prod'],
+      indices: [2]
+    },
+    { label: 'a group of options of the schema', argv: ['-qv'], indices: [] },
+    { label: 'a group of options not in the schema', argv: ['-kx'], indices: [2] },
+    { label: 'the arguments after --, but not --', argv: ['--', '-q', 'x'], indices: [3, 4] }
+  ])('with shortGrouping, $label', ({ argv, indices }) => {
+    const { passthroughIndices } = resolveWithPassthrough(args, ['exec', 'run.js', ...argv], {
+      shortGrouping: true,
+      skipPositional: 0
+    })
+    expect(passthroughIndices).toEqual(indices)
+  })
+
+  test.each([
+    { label: 'a boolean group, which ignores the other letters', argv: ['-qk'], indices: [] },
+    {
+      label: 'a boolean group, which ignores an option of the schema',
+      argv: ['-qe', 'dev'],
+      indices: [3]
+    },
+    {
+      label: 'a group whose first option is not in the schema',
+      argv: ['-kx', 'y'],
+      indices: [2, 3]
+    },
+    {
+      label: 'a short option not in the schema, with the argument that it takes',
+      argv: ['-k', 'y'],
+      indices: [2, 3]
+    },
+    {
+      label: 'a group that is an option of the schema with its value',
+      argv: ['-eprod'],
+      indices: []
+    },
+    {
+      label: 'a group whose first option is not in the schema, before a positional',
+      argv: ['-ke', 'prod'],
+      indices: [2, 3]
+    }
+  ])('without shortGrouping, $label', ({ argv, indices }) => {
+    const { passthroughIndices } = resolveWithPassthrough(args, ['exec', 'run.js', ...argv], {
+      skipPositional: 0
+    })
+    expect(passthroughIndices).toEqual(indices)
+  })
+
+  test('gives the indexes even when there are validation errors', () => {
+    const { error, passthroughIndices } = resolveWithPassthrough(
+      args,
+      ['exec', 'run.js', '-eprod', '--quiet=1', 'x'],
+      { shortGrouping: true, skipPositional: 0 }
+    )
+    expect(error?.errors.map(e => (e as ArgsValidationError).code)).toEqual([
+      ArgsValidationErrorKeys.missingValue,
+      ArgsValidationErrorKeys.invalidType
+    ])
+    // `-eprod` has `e` of the schema and `p`, `r`, `o` and `d`, which are not in the schema
+    expect(passthroughIndices).toEqual([2, 4])
+  })
+
+  test('gives an empty array without passthrough, a new one each time', () => {
+    const tokens = parseArgs(['exec', '--watch', 'src'])
+    const first = resolveArgs(args, tokens)
+    const second = resolveArgs(args, tokens, { passthrough: false })
+    expect(first.passthroughIndices).toEqual([])
+    expect(second.passthroughIndices).toEqual([])
+    expect(first.passthroughIndices).not.toBe(second.passthroughIndices)
+  })
+
+  test.each([
+    {
+      label: 'an empty name with an inline value, before a positional',
+      argv: ['--=x=y', 'z'],
+      positionals: ['exec', 'run.js', 'z']
+    },
+    {
+      label: 'an empty name with = as its inline value, before a positional',
+      argv: ['--==', 'z'],
+      positionals: ['exec', 'run.js', 'z']
+    },
+    {
+      label: 'the name =x, which takes the next argument',
+      argv: ['--=x', 'z'],
+      positionals: ['exec', 'run.js']
+    }
+  ])('a long option with $label', ({ argv, positionals }) => {
+    const result = resolveWithPassthrough(args, ['exec', 'run.js', ...argv], { skipPositional: 0 })
+    expect(result.positionals).toEqual(positionals)
+    expect(result.passthroughIndices).toEqual([2, 3])
+  })
+
+  test.each([
+    { label: '-', argv: ['-'], indices: [2] },
+    { label: 'an empty argument', argv: [''], indices: [2] },
+    { label: 'an empty argument taken as a value', argv: ['--watch', ''], indices: [2, 3] }
+  ])('$label', ({ argv, indices }) => {
+    const { passthroughIndices } = resolveWithPassthrough(args, ['exec', 'run.js', ...argv], {
+      skipPositional: 0
+    })
+    expect(passthroughIndices).toEqual(indices)
+  })
+
+  test('the camelCase name of an option with toKebab, with the argument that it takes', () => {
+    const schema = { maxCount: { type: 'number', toKebab: true } } as const satisfies Args
+    expect(resolveWithPassthrough(schema, ['--maxCount', '3']).passthroughIndices).toEqual([0, 1])
+    expect(resolveWithPassthrough(schema, ['--max-count', '3']).passthroughIndices).toEqual([])
+  })
+
+  test('a multiple positional argument takes every positional', () => {
+    const schema = {
+      files: { type: 'positional', multiple: true },
+      quiet: { type: 'boolean', short: 'q' }
+    } as const satisfies Args
+    const { values, passthroughIndices } = resolveWithPassthrough(schema, ['a', 'b', '-q', 'c'])
+    expect(values).toEqual({ files: ['a', 'b', 'c'], quiet: true })
+    expect(passthroughIndices).toEqual([])
+  })
+
+  test('an optional positional argument before a required one', () => {
+    const schema = {
+      first: { type: 'positional', required: false },
+      second: { type: 'positional' }
+    } as const satisfies Args
+    // the required one takes the only positional
+    expect(resolveWithPassthrough(schema, ['a']).passthroughIndices).toEqual([])
+    expect(resolveWithPassthrough(schema, ['a', 'b', 'c']).passthroughIndices).toEqual([2])
+  })
+
+  test('a positional argument whose value parse rejects is taken by the schema', () => {
+    const schema = {
+      count: {
+        type: 'positional',
+        parse: (value: string) => {
+          const count = Number(value)
+          if (Number.isNaN(count)) {
+            throw new TypeError(`not a number: ${value}`)
+          }
+          return count
+        }
+      }
+    } as const satisfies Args
+    const { error, passthroughIndices } = resolveWithPassthrough(schema, ['abc', 'extra'])
+    expect(error?.errors.map(e => (e as ArgsValidationError).code)).toEqual([
+      ArgsValidationErrorKeys.customParse
+    ])
+    expect(passthroughIndices).toEqual([1])
+  })
+
+  test('skipPositional skips the positional arguments when the schema has no positional', () => {
+    const schema = { quiet: { type: 'boolean', short: 'q' } } as const satisfies Args
+    expect(
+      resolveWithPassthrough(schema, ['exec', 'sub', 'x', '-q'], { skipPositional: 1 })
+        .passthroughIndices
+    ).toEqual([2])
+    expect(
+      resolveWithPassthrough(schema, ['exec'], { skipPositional: 3 }).passthroughIndices
+    ).toEqual([])
+    expect(resolveWithPassthrough(schema, ['exec', 'x']).passthroughIndices).toEqual([0, 1])
   })
 })
 

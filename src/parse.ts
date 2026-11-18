@@ -62,6 +62,17 @@ export type ParsedArgs<A extends Args> = {
    * rejected. See {@link ArgExplicitlyProvided}.
    */
   explicit: ArgExplicitlyProvided<A>
+  /**
+   * The indexes of the arguments that the schema does not take, same as `passthroughIndices` in
+   * {@link resolveArgs}. An empty array without the `passthrough` option.
+   */
+  passthroughIndices: number[]
+  /**
+   * The arguments that the schema does not take, as they were given and in their order, with the
+   * `passthrough` option: the arguments at `passthroughIndices`. An empty array without it. See
+   * {@link ResolveArgs.passthrough} for which arguments they are.
+   */
+  passthrough: string[]
 }
 
 const DEFAULT_OPTIONS = {
@@ -84,7 +95,7 @@ const DEFAULT_OPTIONS = {
  *
  * @param args - command line arguments
  * @param options - parse options, about details see {@link ParseOptions}
- * @returns An object that contains the values of the arguments, positional arguments, rest arguments, {@link AggregateError | validation errors}, explicit provision status, and {@link ArgToken | argument tokens}.
+ * @returns An object that contains the values of the arguments, positional arguments, rest arguments, {@link AggregateError | validation errors}, explicit provision status, {@link ArgToken | argument tokens}, and the arguments that the schema does not take and their indexes, with {@link ResolveArgs.passthrough | passthrough}.
  *
  * @example
  * ```js
@@ -101,10 +112,12 @@ export function parse<A extends Args>(
 ): ParsedArgs<A> {
   const { args: _args, allowCompatible = false } = options
   const tokens = parseArgs(args, { allowCompatible })
-  return Object.assign(
-    Object.create(null),
-    // the options of `resolveArgs()`, such as `shortGrouping`, are in `options` too
-    resolveArgs<A>((_args as A) || DEFAULT_OPTIONS, tokens, options),
-    { tokens }
-  ) as ParsedArgs<A>
+  // the options of `resolveArgs()`, such as `shortGrouping`, are in `options` too
+  const resolved = resolveArgs<A>((_args as A) || DEFAULT_OPTIONS, tokens, options)
+  const indices = resolved.passthroughIndices
+  const passthrough: string[] = []
+  for (let i = 0; i < indices.length; i++) {
+    passthrough.push(args[indices[i]])
+  }
+  return Object.assign(Object.create(null), resolved, { tokens, passthrough }) as ParsedArgs<A>
 }

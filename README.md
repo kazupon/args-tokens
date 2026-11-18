@@ -263,7 +263,7 @@ console.log('values:', values)
 console.log('positionals:', positionals)
 ```
 
-Besides `values` and `positionals`, `resolveArgs` returns `rest`, the arguments after the option terminator `--` (unlike `parseArgs` of `node:util`, they are not in `positionals`), `error`, the validation failures described in “Validation errors” below, and `explicit`, which is `true` for each argument given on the command line.
+Besides `values` and `positionals`, `resolveArgs` returns `rest`, the arguments after the option terminator `--` (unlike `parseArgs` of `node:util`, they are not in `positionals`), `error`, the validation failures described in “Validation errors” below, `explicit`, which is `true` for each argument given on the command line, and `passthroughIndices`, the indexes of the arguments that the schema does not take with the `passthrough` option, described in “Passing on the arguments that the schema does not take” below, or an empty array without it.
 
 ## Convenient argument parsing
 
@@ -304,7 +304,44 @@ console.log('values:', values)
 console.log('positionals:', positionals)
 ```
 
-`parse` also takes the options of `parseArgs` and `resolveArgs`, such as `allowCompatible`, `shortGrouping`, `skipPositional` and `toKebab`, and they work as they do there. It returns what `resolveArgs` returns, and the `tokens`. Without `args`, it uses a schema with the `boolean` options `help` (`-h`) and `version` (`-v`).
+`parse` also takes the options of `parseArgs` and `resolveArgs`, such as `allowCompatible`, `shortGrouping`, `skipPositional`, `toKebab` and `passthrough`, and they work as they do there. It returns what `resolveArgs` returns, the `tokens`, and `passthrough`, the arguments at `passthroughIndices`, or an empty array without the `passthrough` option. Without `args`, it uses a schema with the `boolean` options `help` (`-h`) and `version` (`-v`).
+
+## Passing on the arguments that the schema does not take
+
+A CLI that wraps another program can take its own arguments and pass the others on. With `passthrough: true`, `parse` gives them in `passthrough`, as they were given and in their order, and `resolveArgs` gives their indexes in the arguments given to `parseArgs` in `passthroughIndices`:
+
+```js
+import { spawnSync } from 'node:child_process'
+import { parse } from 'args-tokens'
+
+// mytool test --env ci --reporter=dot src
+const { values, passthrough, error } = parse(process.argv.slice(2), {
+  args: {
+    command: { type: 'positional' },
+    env: { type: 'string', short: 'e' }
+  },
+  passthrough: true
+})
+if (error) {
+  throw error
+}
+
+// values: { command: 'test', env: 'ci' }
+// passthrough: ['--reporter=dot', 'src']
+spawnSync('vitest', ['run', ...passthrough], {
+  stdio: 'inherit',
+  env: { ...process.env, APP_ENV: values.env }
+})
+```
+
+The arguments that the schema does not take are:
+
+- an option that is not in the schema, with the argument that it takes as its value. As without `passthrough`, it takes the next argument unless that argument is an option, so `--watch src` gives both, and `mytool --watch test` gives `--watch test` and reports the missing `command`. Write the value of such an option with `=`, or put the option after the positional arguments of the schema
+- a short option group with an option that is not in the schema, whole and as it was given, such as `-qk` with `q` in the schema, whose `q` is still resolved. Without `shortGrouping`, the default, a group is its first option, with the other letters as its value (a boolean ignores them), so it is given only when that option is not in the schema
+- a positional argument that no positional argument of the schema takes, after the ones up to `skipPositional`
+- the arguments after `--`, but not `--` itself. They are in `rest` too, so pass on only one of them
+
+The options of the schema, the arguments that they take as their values, and the positional arguments that the schema takes are not given. The arguments are given even when there are validation errors, as `values` are, so check `error` before passing them on.
 
 ## Validation errors
 

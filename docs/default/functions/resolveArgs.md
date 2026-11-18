@@ -11,7 +11,8 @@ export function resolveArgs<A extends Args>(
   {
     shortGrouping = false,
     skipPositional = SKIP_POSITIONAL_DEFAULT,
-    toKebab = false
+    toKebab = false,
+    passthrough = false
   }: ResolveArgs = {}
 ): {
   values: ArgValues<A>
@@ -19,6 +20,12 @@ export function resolveArgs<A extends Args>(
   rest: string[]
   error: AggregateError | undefined
   explicit: ArgExplicitlyProvided<A>
+  /**
+   * The indexes, in the arguments given to `parseArgs()`, of the arguments that the schema does not
+   * take, in ascending order, with {@link ResolveArgs.passthrough | passthrough}. An empty array
+   * without it.
+   */
+  passthroughIndices: number[]
 }
 ```
 
@@ -38,7 +45,7 @@ export function resolveArgs<A extends Args>(
 
 ## Returns
 
-`object` — An object that contains the values of the arguments, positional arguments, rest arguments, validation errors, and explicit provision status.
+`object` — An object that contains the values of the arguments, positional arguments, rest arguments, validation errors, explicit provision status, and the indexes of the arguments that the schema does not take, with [passthrough](/docs/default/interfaces/ResolveArgs.md#property-passthrough).
 
 ### error
 
@@ -51,6 +58,14 @@ error: AggregateError | undefined
 ```ts
 explicit: ArgExplicitlyProvided<A>
 ```
+
+### passthroughIndices
+
+```ts
+passthroughIndices: number[];
+```
+
+The indexes, in the arguments given to `parseArgs()`, of the arguments that the schema does not take, in ascending order, with [passthrough](/docs/default/interfaces/ResolveArgs.md#property-passthrough). An empty array without it.
 
 ### positionals
 

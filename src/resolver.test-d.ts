@@ -1,6 +1,11 @@
 import { expectTypeOf, test } from 'vite-plus/test'
 import { z } from 'zod/v4-mini'
-import { ArgsValidationError, ArgsValidationErrorKeys, isArgsValidationError } from './resolver.ts'
+import {
+  ArgsValidationError,
+  ArgsValidationErrorKeys,
+  isArgsValidationError,
+  resolveArgs
+} from './resolver.ts'
 
 import type {
   ArgExplicitlyProvided,
@@ -10,6 +15,7 @@ import type {
   ArgsValidationErrorCode,
   ExtractOptionValue,
   FilterArgs,
+  ResolveArgs,
   ResolveArgValues
 } from './resolver.ts'
 
@@ -627,4 +633,15 @@ test('ArgExplicitlyProvided', () => {
     regularOption: boolean
     custom: boolean
   }>()
+})
+
+test('resolveArgs passthrough', () => {
+  expectTypeOf<ResolveArgs['passthrough']>().toEqualTypeOf<boolean | undefined>()
+
+  const args = { file: { type: 'positional' } } as const satisfies Args
+  // without passthrough, the result has an empty array, of the same type
+  expectTypeOf(resolveArgs(args, []).passthroughIndices).toEqualTypeOf<number[]>()
+  expectTypeOf(resolveArgs(args, [], { passthrough: true }).passthroughIndices).toEqualTypeOf<
+    number[]
+  >()
 })

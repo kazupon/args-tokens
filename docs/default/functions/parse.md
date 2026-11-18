@@ -25,7 +25,7 @@ export function parse<A extends Args>(args: string[], options: ParseOptions<A> =
 
 ## Returns
 
-[`ParsedArgs`](/docs/default/type-aliases/ParsedArgs.md)\<`A`\> — An object that contains the values of the arguments, positional arguments, rest arguments, validation errors, explicit provision status, and [argument tokens](/docs/default/interfaces/ArgToken.md).
+[`ParsedArgs`](/docs/default/type-aliases/ParsedArgs.md)\<`A`\> — An object that contains the values of the arguments, positional arguments, rest arguments, validation errors, explicit provision status, [argument tokens](/docs/default/interfaces/ArgToken.md), and the arguments that the schema does not take and their indexes, with [passthrough](/docs/default/interfaces/ResolveArgs.md#property-passthrough).
 
 ## Examples
 
