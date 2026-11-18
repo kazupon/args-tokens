@@ -62,6 +62,8 @@ const HYPHEN_CODE = HYPHEN_CHAR.codePointAt(0)!
 const EQUAL_CHAR = '='
 const EQUAL_CODE = EQUAL_CHAR.codePointAt(0)!
 const TERMINATOR = '--'
+
+const ARRAY_ITERATOR = Array.prototype[Symbol.iterator]
 const SHORT_OPTION_PREFIX = HYPHEN_CHAR
 const LONG_OPTION_PREFIX = '--'
 
@@ -102,7 +104,12 @@ export function parseArgs(args: string[], options: ParserOptions = {}): ArgToken
   // the arguments are read in order by `next`, and the pieces that a short option group is expanded
   // into by `piece`, before the arguments after the group: the same order as shifting them from a
   // copy of the arguments with the pieces put in front, without moving the other arguments
-  const list = Array.isArray(args) ? args : [...(args as Iterable<string>)]
+  // an array with an iterator of its own, or a value that is not an array, gives what its iterator
+  // gives, as when the arguments were copied with a spread
+  const list =
+    Array.isArray(args) && args[Symbol.iterator] === ARRAY_ITERATOR
+      ? args
+      : [...(args as Iterable<string>)]
   let next = 0
   let pieces: string[] = []
   let piece = 0

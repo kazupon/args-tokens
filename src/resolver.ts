@@ -1141,14 +1141,6 @@ export function resolveArgs<A extends Args>(
     return toKebab || schema.toKebab ? kebabnize(rawArg) : rawArg
   }
 
-  function checkLongTokenName(option: string, schema: ArgSchema, token: ArgToken): boolean {
-    if (token.rawName == undefined || !hasLongOptionPrefix(token.rawName)) {
-      return false
-    }
-
-    return token.name === option || isNegatedToken(token, option, schema)
-  }
-
   function toShortValue(): string | undefined {
     const value = shortLetters
     shortLetters = undefined
@@ -1177,8 +1169,6 @@ export function resolveArgs<A extends Args>(
    */
 
   const booleanLongOptionNames = new Set<string>()
-  // whether a schema has `conflicts`, which only then are checked
-  let hasConflicts = false
   // before resolving any argument, report the mistakes in the schema, whether or not the argument
   // is given, and collect the long names of the boolean options. This loop runs on every call, so
   // it does both in one pass and reads each entry by index: destructuring an entry allocates
@@ -1205,9 +1195,6 @@ export function resolveArgs<A extends Args>(
           `Unsupported argument type '${schema.type}' for option '${getOptionName(rawArg, schema)}'`
         )
       }
-    }
-    if (schema.conflicts) {
-      hasConflicts = true
     }
     if (schema.type !== 'boolean') {
       continue
@@ -1332,7 +1319,6 @@ export function resolveArgs<A extends Args>(
     ? new Uint8Array(optionTokens.length)
     : undefined
   const explicit = Object.create(null) as ArgExplicitlyProvided<A>
-  const actualInputNames: Map<string, string> | undefined = hasConflicts ? new Map() : undefined
   let requiredPositionalsAfter: Record<string, number> | undefined
 
   const positionalItemCount =
@@ -1485,12 +1471,6 @@ export function resolveArgs<A extends Args>(
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- NOTE(kazupon): Allow any type for resolving
         ;(explicit as any)[rawArg] = true
 
-        // Record the actual input name used (e.g., '-v' or '--verbose'), which only conflicts show
-        if (actualInputNames !== undefined) {
-          const rawName = token.rawName!
-          actualInputNames.set(rawArg, isShortOption(rawName) ? `-${token.name}` : rawName)
-        }
-
         // an option given without a value (not an empty one such as `--name=`) is a missing value,
         // also when it is required: the option itself was given
         const missing = schema.type !== 'boolean' && token.value === undefined
@@ -1542,9 +1522,17 @@ export function resolveArgs<A extends Args>(
     }
   }
 
-  // check for conflicts
-  if (actualInputNames !== undefined) {
-    errors.push(...checkConflicts(args, explicit, toKebab, actualInputNames))
+  // check for conflicts, with the schema as it is now, since a `parse` function may change it. The
+  // names of the options as given, which the error shows, are found only for a conflict
+  if (hasGivenConflicts(argEntries, explicit)) {
+    errors.push(
+      ...checkConflicts(
+        args,
+        explicit,
+        toKebab,
+        findActualInputNames(argEntries, optionTokens, toKebab)
+      )
+    )
   }
 
   const positionals = positionalTokens.map(token => token.value!)
@@ -1575,6 +1563,78 @@ export function resolveArgs<A extends Args>(
       rest.length
     )
   }
+}
+
+/**
+ * Check whether an option token is the long form of an option, or its negated form.
+ *
+ * @param option - The option name used on the command line (after `toKebab` conversion)
+ * @param schema - The argument schema
+ * @param token - The option token
+ * @returns Whether the token is the long form or the negated form of the option.
+ */
+function checkLongTokenName(option: string, schema: ArgSchema, token: ArgToken): boolean {
+  if (token.rawName == undefined || !hasLongOptionPrefix(token.rawName)) {
+    return false
+  }
+
+  return token.name === option || isNegatedToken(token, option, schema)
+}
+
+/**
+ * Check whether a given argument has `conflicts`, as {@link checkConflicts} checks them. It reads
+ * the schemas as they are now, since a `parse` function may change them.
+ *
+ * @param argEntries - The argument schemas
+ * @param explicit - Whether each argument is given
+ * @returns Whether `checkConflicts()` may find a conflict.
+ */
+function hasGivenConflicts(
+  argEntries: [string, ArgSchema][],
+  explicit: Record<string, boolean>
+): boolean {
+  for (let i = 0; i < argEntries.length; i++) {
+    if (argEntries[i][1].conflicts && explicit[argEntries[i][0]]) {
+      return true
+    }
+  }
+  return false
+}
+
+/**
+ * Find the name as given of each option of the schema, such as `-v` or `--verbose`: the name of the
+ * last option token that matches it, as `resolveArgs()` matches the tokens to read the values.
+ *
+ * @param argEntries - The argument schemas
+ * @param optionTokens - The option tokens
+ * @param toKebab - Whether every option name is converted to kebab-case
+ * @returns The names as given, by the keys of the schema.
+ */
+function findActualInputNames(
+  argEntries: [string, ArgSchema][],
+  optionTokens: ArgToken[],
+  toKebab: boolean
+): Map<string, string> {
+  const names = new Map<string, string>()
+  for (let i = 0; i < argEntries.length; i++) {
+    const rawArg = argEntries[i][0]
+    const schema = argEntries[i][1]
+    if (schema.type === 'positional') {
+      continue
+    }
+    const option = toKebab || schema.toKebab ? kebabnize(rawArg) : rawArg
+    for (let j = 0; j < optionTokens.length; j++) {
+      const token = optionTokens[j]
+      if (
+        checkLongTokenName(option, schema, token) ||
+        (schema.short === token.name && token.rawName != undefined && isShortOption(token.rawName))
+      ) {
+        const rawName = token.rawName!
+        names.set(rawArg, isShortOption(rawName) ? `-${token.name}` : rawName)
+      }
+    }
+  }
+  return names
 }
 
 /**

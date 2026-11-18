@@ -4912,6 +4912,33 @@ describe('conflicts', () => {
     expect(values.socket).toBe('/tmp/app.sock')
     expect(values.port).toBe(8080)
   })
+
+  test('checks the conflicts that a parse function adds, with the names as given', () => {
+    // the conflicts are checked with the schema as it is after the values are read
+    const args = {
+      alpha: {
+        type: 'string',
+        short: 'a',
+        parse: (value: string) => {
+          ;(args.alpha as ArgSchema).conflicts = 'beta'
+          return value
+        }
+      },
+      beta: { type: 'boolean' }
+    } satisfies Args
+
+    const { error } = resolveArgs(args, parseArgs(['-a', 'x', '--beta']))
+
+    const errors = error?.errors as ArgResolveError[] | undefined
+    expect(errors?.map(e => e.code)).toEqual([ArgsValidationErrorKeys.conflict])
+    expect(errors?.[0].message).toBe("'-a' conflicts with '--beta'")
+    expect(errors?.[0].values).toEqual({
+      displayName: "'-a'",
+      name: 'alpha',
+      conflictDisplayName: "'--beta'",
+      conflictName: 'beta'
+    })
+  })
 })
 
 describe('boolean inline value', () => {

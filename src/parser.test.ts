@@ -408,3 +408,14 @@ test('option terminator', () => {
   const actualTokens = parseArgs(args)
   expect(actualTokens).toEqual(expectTokens)
 })
+
+test('reads the arguments that the iterator of an array gives', () => {
+  // as when the arguments were copied with a spread
+  const args = ['--version']
+  Object.defineProperty(args, Symbol.iterator, {
+    value: function* () {
+      yield '--help'
+    }
+  })
+  expect(parseArgs(args).map(token => token.name)).toEqual(['help'])
+})
